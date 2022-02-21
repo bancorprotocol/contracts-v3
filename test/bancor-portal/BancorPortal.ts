@@ -96,73 +96,71 @@ describe('BancorPortal', () => {
     describe('general', () => {
         it("reverts when none of the pair's tokens are whitelisted", async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
-            const token0 = await createToken(new TokenData(TokenSymbol.TKN));
             const token1 = await createToken(new TokenData(TokenSymbol.TKN1));
-            await uniswapV2Pair.setTokens(token0.address, token1.address);
-            await uniswapV2Factory.setTokens(token0.address, token1.address);
+            const token2 = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Pair.setTokens(token1.address, token2.address);
+            await uniswapV2Factory.setTokens(token1.address, token2.address);
 
             await expect(
-                bancorPortal.connect(user).migrateUniswapV2Position(token0.address, token1.address, 10)
+                bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
             ).to.be.revertedWith('UnsupportedTokens');
         });
 
         it('reverts if the migration is not approved', async () => {
-            const token0 = await createToken(new TokenData(TokenSymbol.TKN));
             const token1 = await createToken(new TokenData(TokenSymbol.TKN1));
-            await uniswapV2Factory.setTokens(token0.address, token1.address);
+            const token2 = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Factory.setTokens(token1.address, token2.address);
             await expect(
-                bancorPortal.connect(user).migrateUniswapV2Position(token0.address, token1.address, 10)
+                bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
             ).to.be.revertedWith('ERC20: transfer amount exceeds allowance');
         });
 
         it('reverts if the input amount is 0', async () => {
-            const token0 = await createToken(new TokenData(TokenSymbol.TKN));
             const token1 = await createToken(new TokenData(TokenSymbol.TKN1));
-            await uniswapV2Factory.setTokens(token0.address, token1.address);
+            const token2 = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Factory.setTokens(token1.address, token2.address);
             await expect(
-                bancorPortal.connect(user).migrateUniswapV2Position(token0.address, token1.address, 0)
+                bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 0)
             ).to.be.revertedWith('ZeroValue()');
         });
 
         it('reverts if there is no Uniswap pair for specified tokens', async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
-            const token0 = await createToken(new TokenData(TokenSymbol.TKN));
             const token1 = await createToken(new TokenData(TokenSymbol.TKN1));
-            await uniswapV2Pair.setTokens(token0.address, token1.address);
+            const token2 = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Pair.setTokens(token1.address, token2.address);
             await expect(
-                bancorPortal.connect(user).migrateUniswapV2Position(token0.address, token1.address, 10)
+                bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
             ).to.be.revertedWith('NoPairForTokens()');
         });
 
         it('returns the correct values', async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
-            const { poolToken: poolToken0, token: whitelistedToken0 } = await preparePoolAndToken(TokenSymbol.ETH);
-            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN);
-            await uniswapV2Pair.setTokens(whitelistedToken0.address, whitelistedToken1.address);
-            await uniswapV2Factory.setTokens(whitelistedToken0.address, whitelistedToken1.address);
-            const res = await testDeposit([
-                { reserveToken: whitelistedToken0, poolToken: poolToken0 },
-                { reserveToken: whitelistedToken1, poolToken: poolToken1 }
+            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.ETH);
+            const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.TKN1);
+            await uniswapV2Pair.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            await uniswapV2Factory.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            const res = await testMigrationDeposit([
+                { reserveToken: whitelistedToken1, poolToken: poolToken1 },
+                { reserveToken: whitelistedToken2, poolToken: poolToken2 }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken0.address, whitelistedToken1.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, whitelistedToken1.address, whitelistedToken2.address, AMOUNT, AMOUNT);
         });
     });
 
     describe('construction', () => {
-        const validAddress = NATIVE_TOKEN_ADDRESS; // random valid address
-
         it('reverts when initializing with an invalid network contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
                     ZERO_ADDRESS,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress
+                    networkSettings.address,
+                    networkToken.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -170,13 +168,13 @@ describe('BancorPortal', () => {
         it('reverts when initializing with an invalid networkSettings contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
-                    validAddress,
+                    network.address,
                     ZERO_ADDRESS,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress
+                    networkToken.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -184,13 +182,13 @@ describe('BancorPortal', () => {
         it('reverts when initializing with an invalid networkToken contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
-                    validAddress,
-                    validAddress,
+                    network.address,
+                    networkSettings.address,
                     ZERO_ADDRESS,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -198,13 +196,13 @@ describe('BancorPortal', () => {
         it('reverts when initializing with an invalid uniswapV2Router contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
-                    validAddress,
-                    validAddress,
-                    validAddress,
+                    network.address,
+                    networkSettings.address,
+                    networkToken.address,
                     ZERO_ADDRESS,
-                    validAddress,
-                    validAddress,
-                    validAddress
+                    uniswapV2Factory.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -212,13 +210,13 @@ describe('BancorPortal', () => {
         it('reverts when initializing with an invalid sushiSwapV2Router contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
+                    network.address,
+                    networkSettings.address,
+                    networkToken.address,
+                    uniswapV2Router02.address,
                     ZERO_ADDRESS,
-                    validAddress,
-                    validAddress
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -226,13 +224,13 @@ describe('BancorPortal', () => {
         it('reverts when initializing with an invalid sushiSwapV2Factory contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
+                    network.address,
+                    networkSettings.address,
+                    networkToken.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address,
                     ZERO_ADDRESS,
-                    validAddress
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -240,12 +238,12 @@ describe('BancorPortal', () => {
         it('reverts when initializing with an invalid network contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
-                    validAddress,
+                    network.address,
+                    networkSettings.address,
+                    networkToken.address,
+                    uniswapV2Router02.address,
+                    uniswapV2Factory.address,
+                    uniswapV2Router02.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -261,36 +259,36 @@ describe('BancorPortal', () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
         });
 
-        it("transfers funds to the user's wallet when only token0 is whitelisted", async () => {
-            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
-            await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
-            await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
-            await testTransfer(whitelistedToken, unlistedToken);
-        });
-
         it("transfers funds to the user's wallet when only token1 is whitelisted", async () => {
-            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
-            await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
-            await uniswapV2Factory.setTokens(unlistedToken.address, whitelistedToken.address);
-            await testTransfer(unlistedToken, whitelistedToken);
+            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
+            await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
+            await testMigrationTransfer(whitelistedToken, unlistedToken);
         });
 
-        it("transfers funds to the user's wallet when token0 is the native token and token1 is whitelisted", async () => {
-            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
+        it("transfers funds to the user's wallet when only token2 is whitelisted", async () => {
+            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
+            await uniswapV2Factory.setTokens(unlistedToken.address, whitelistedToken.address);
+            await testMigrationTransfer(unlistedToken, whitelistedToken);
+        });
+
+        it("transfers funds to the user's wallet when token1 is the native token and token2 is whitelisted", async () => {
+            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
             await uniswapV2Factory.setTokens(unlistedToken.address, whitelistedToken.address);
-            await testTransfer(unlistedToken, whitelistedToken);
+            await testMigrationTransfer(unlistedToken, whitelistedToken);
         });
 
-        it("transfers funds to the user's wallet when token0 is whitelisted and token1 is the native token", async () => {
-            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
+        it("transfers funds to the user's wallet when token1 is whitelisted and token2 is the native token", async () => {
+            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
-            await testTransfer(whitelistedToken, unlistedToken);
+            await testMigrationTransfer(whitelistedToken, unlistedToken);
         });
     });
 
@@ -299,12 +297,12 @@ describe('BancorPortal', () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
         });
 
-        it('deposits when only token0 is whitelisted', async () => {
-            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+        it('deposits when only token1 is whitelisted', async () => {
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken, poolToken },
                 { reserveToken: unlistedToken }
             ]);
@@ -313,12 +311,12 @@ describe('BancorPortal', () => {
                 .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO);
         });
 
-        it('deposits when only token1 is whitelisted', async () => {
-            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+        it('deposits when only token2 is whitelisted', async () => {
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
             await uniswapV2Factory.setTokens(unlistedToken.address, whitelistedToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: unlistedToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
@@ -328,25 +326,25 @@ describe('BancorPortal', () => {
         });
 
         it('deposits both tokens when possible', async () => {
-            const { poolToken: poolToken0, token: token0 } = await preparePoolAndToken(TokenSymbol.TKN);
             const { poolToken: poolToken1, token: token1 } = await preparePoolAndToken(TokenSymbol.TKN1);
-            await uniswapV2Pair.setTokens(token0.address, token1.address);
-            await uniswapV2Factory.setTokens(token0.address, token1.address);
-            const res = await testDeposit([
-                { reserveToken: token0, poolToken: poolToken0 },
-                { reserveToken: token1, poolToken: poolToken1 }
+            const { poolToken: poolToken2, token: token2 } = await preparePoolAndToken(TokenSymbol.TKN2);
+            await uniswapV2Pair.setTokens(token1.address, token2.address);
+            await uniswapV2Factory.setTokens(token1.address, token2.address);
+            const res = await testMigrationDeposit([
+                { reserveToken: token1, poolToken: poolToken1 },
+                { reserveToken: token2, poolToken: poolToken2 }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, token0.address, token1.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, token1.address, token2.address, AMOUNT, AMOUNT);
         });
 
-        it('deposits when token0 is the native token and token1 is unlisted', async () => {
+        it('deposits when token1 is the native token and token2 is unlisted', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken, poolToken },
                 { reserveToken: unlistedToken }
             ]);
@@ -355,26 +353,26 @@ describe('BancorPortal', () => {
                 .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO);
         });
 
-        it('deposits when token0 is the native token and token1 is whitelisted', async () => {
-            const { poolToken: poolToken0, token: whitelistedToken0 } = await preparePoolAndToken(TokenSymbol.ETH);
-            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN);
-            await uniswapV2Pair.setTokens(whitelistedToken0.address, whitelistedToken1.address);
-            await uniswapV2Factory.setTokens(whitelistedToken0.address, whitelistedToken1.address);
-            const res = await testDeposit([
-                { reserveToken: whitelistedToken0, poolToken: poolToken0 },
-                { reserveToken: whitelistedToken1, poolToken: poolToken1 }
+        it('deposits when token1 is the native token and token2 is whitelisted', async () => {
+            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.ETH);
+            const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.TKN1);
+            await uniswapV2Pair.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            await uniswapV2Factory.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            const res = await testMigrationDeposit([
+                { reserveToken: whitelistedToken1, poolToken: poolToken1 },
+                { reserveToken: whitelistedToken2, poolToken: poolToken2 }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken0.address, whitelistedToken1.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, whitelistedToken1.address, whitelistedToken2.address, AMOUNT, AMOUNT);
         });
 
-        it('deposits when token0 is unlisted and token1 is the native token', async () => {
+        it('deposits when token1 is unlisted and token2 is the native token', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
             await uniswapV2Factory.setTokens(unlistedToken.address, whitelistedToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: unlistedToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
@@ -383,28 +381,28 @@ describe('BancorPortal', () => {
                 .withArgs(user.address, unlistedToken.address, whitelistedToken.address, ZERO, AMOUNT);
         });
 
-        it('deposits when token0 is whitelisted and token1 is the native token', async () => {
-            const { poolToken: poolToken0, token: whitelistedToken0 } = await preparePoolAndToken(TokenSymbol.TKN);
-            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.ETH);
-            await uniswapV2Pair.setTokens(whitelistedToken0.address, whitelistedToken1.address);
-            await uniswapV2Factory.setTokens(whitelistedToken0.address, whitelistedToken1.address);
-            const res = await testDeposit([
-                { reserveToken: whitelistedToken0, poolToken: poolToken0 },
-                { reserveToken: whitelistedToken1, poolToken: poolToken1 }
+        it('deposits when token1 is whitelisted and token2 is the native token', async () => {
+            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.ETH);
+            await uniswapV2Pair.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            await uniswapV2Factory.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            const res = await testMigrationDeposit([
+                { reserveToken: whitelistedToken1, poolToken: poolToken1 },
+                { reserveToken: whitelistedToken2, poolToken: poolToken2 }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken0.address, whitelistedToken1.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, whitelistedToken1.address, whitelistedToken2.address, AMOUNT, AMOUNT);
         });
 
-        it('deposits when token0 is bnt and token1 is unlisted', async () => {
-            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
+        it('deposits when token1 is bnt and token2 is unlisted', async () => {
+            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Pair.setTokens(networkToken.address, unlistedToken.address);
             await uniswapV2Factory.setTokens(networkToken.address, unlistedToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: networkToken, poolToken: masterPoolToken },
                 { reserveToken: unlistedToken }
             ]);
@@ -413,14 +411,14 @@ describe('BancorPortal', () => {
                 .withArgs(user.address, networkToken.address, unlistedToken.address, AMOUNT, ZERO);
         });
 
-        it('deposits when token0 is unlisted and token1 is bnt', async () => {
-            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
+        it('deposits when token1 is unlisted and token2 is bnt', async () => {
+            const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Pair.setTokens(unlistedToken.address, networkToken.address);
             await uniswapV2Factory.setTokens(unlistedToken.address, networkToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: unlistedToken },
                 { reserveToken: networkToken, poolToken: masterPoolToken }
             ]);
@@ -429,13 +427,13 @@ describe('BancorPortal', () => {
                 .withArgs(user.address, unlistedToken.address, networkToken.address, ZERO, AMOUNT);
         });
 
-        it('deposits when token0 is bnt and token1 is whitelisted', async () => {
-            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
+        it('deposits when token1 is bnt and token2 is whitelisted', async () => {
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
             await uniswapV2Pair.setTokens(networkToken.address, whitelistedToken.address);
             await uniswapV2Factory.setTokens(networkToken.address, whitelistedToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: networkToken, poolToken: masterPoolToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
@@ -444,13 +442,13 @@ describe('BancorPortal', () => {
                 .withArgs(user.address, networkToken.address, whitelistedToken.address, AMOUNT, AMOUNT);
         });
 
-        it('deposits when token0 is whitelisted and token1 is bnt', async () => {
-            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
+        it('deposits when token1 is whitelisted and token2 is bnt', async () => {
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
             await uniswapV2Pair.setTokens(whitelistedToken.address, networkToken.address);
             await uniswapV2Factory.setTokens(whitelistedToken.address, networkToken.address);
-            const res = await testDeposit([
+            const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken, poolToken },
                 { reserveToken: networkToken, poolToken: masterPoolToken }
             ]);
@@ -468,11 +466,11 @@ describe('BancorPortal', () => {
         });
 
         it('emits a SushiSwap event post succesful SushiSwap migration', async () => {
-            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN);
-            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN1));
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
             await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
-            const res = await testDeposit(
+            const res = await testMigrationDeposit(
                 [{ reserveToken: whitelistedToken, poolToken }, { reserveToken: unlistedToken }],
                 true
             );
@@ -482,41 +480,41 @@ describe('BancorPortal', () => {
         });
     });
 
-    const testTransfer = async (token0: TokenWithAddress, token1: TokenWithAddress) => {
+    const testMigrationTransfer = async (token1: TokenWithAddress, token2: TokenWithAddress) => {
         // prepare Uniswap mocks
-        await transfer(deployer, token0, uniswapV2Pair.address, AMOUNT);
         await transfer(deployer, token1, uniswapV2Pair.address, AMOUNT);
+        await transfer(deployer, token2, uniswapV2Pair.address, AMOUNT);
 
         // save state
-        const previousBalances = await getBalances([token0, token1], user);
+        const previousBalances = await getBalances([token1, token2], user);
 
         // execute
-        const res = await bancorPortal.connect(user).migrateUniswapV2Position(token0.address, token1.address, AMOUNT);
+        const res = await bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, AMOUNT);
 
         // assert
-        const newBalances = await getBalances([token0, token1], user);
-        const whitelist = await getWhitelist(token0, token1);
-        if (whitelist[token0.address] && whitelist[token1.address]) {
-            expect(newBalances[token0.address].eq(previousBalances[token0.address].add(AMOUNT))).to.be.true;
+        const newBalances = await getBalances([token1, token2], user);
+        const whitelist = await getWhitelist(token1, token2);
+        if (whitelist[token1.address] && whitelist[token2.address]) {
             expect(newBalances[token1.address].eq(previousBalances[token1.address].add(AMOUNT))).to.be.true;
+            expect(newBalances[token2.address].eq(previousBalances[token2.address].add(AMOUNT))).to.be.true;
         } else {
-            if (whitelist[token0.address]) {
+            if (whitelist[token1.address]) {
+                const transactionCost = isNativeToken(token2) ? await getTransactionCost(res) : 0;
+                expect(newBalances[token1.address].eq(previousBalances[token1.address])).to.be.true;
+                expect(
+                    newBalances[token2.address].eq(previousBalances[token2.address].add(AMOUNT).sub(transactionCost))
+                ).to.be.true;
+            } else {
                 const transactionCost = isNativeToken(token1) ? await getTransactionCost(res) : 0;
-                expect(newBalances[token0.address].eq(previousBalances[token0.address])).to.be.true;
                 expect(
                     newBalances[token1.address].eq(previousBalances[token1.address].add(AMOUNT).sub(transactionCost))
                 ).to.be.true;
-            } else {
-                const transactionCost = isNativeToken(token0) ? await getTransactionCost(res) : 0;
-                expect(
-                    newBalances[token0.address].eq(previousBalances[token0.address].add(AMOUNT).sub(transactionCost))
-                ).to.be.true;
-                expect(newBalances[token1.address].eq(previousBalances[token1.address])).to.be.true;
+                expect(newBalances[token2.address].eq(previousBalances[token2.address])).to.be.true;
             }
         }
     };
 
-    const testDeposit = async (
+    const testMigrationDeposit = async (
         bundles: ReserveTokenAndPoolTokenBundle[],
         sushiSwap = false
     ): Promise<ContractTransaction> => {
@@ -561,11 +559,11 @@ describe('BancorPortal', () => {
     };
 
     const getPoolTokenBalances = async (
-        poolToken0?: PoolToken,
-        poolToken1?: PoolToken
+        poolToken1?: PoolToken,
+        poolToken2?: PoolToken
     ): Promise<AddressValueDictionary> => {
         const balances: AddressValueDictionary = {};
-        for (const t of [poolToken0, poolToken1]) {
+        for (const t of [poolToken1, poolToken2]) {
             if (t) {
                 balances[t.address] = await t.balanceOf(user.address);
             }
@@ -574,11 +572,11 @@ describe('BancorPortal', () => {
     };
 
     const getStakedBalances = async (
-        token0: TokenWithAddress,
-        token1: TokenWithAddress
+        token1: TokenWithAddress,
+        token2: TokenWithAddress
     ): Promise<AddressValueDictionary> => {
         const balances: { [address: string]: BigNumber } = {};
-        for (const t of [token0, token1]) {
+        for (const t of [token1, token2]) {
             if (isNetworkToken(t)) continue;
 
             balances[t.address] = (await poolCollection.poolData(t.address)).liquidity[2];
@@ -586,10 +584,10 @@ describe('BancorPortal', () => {
         return balances;
     };
 
-    const getWhitelist = async (token0: TokenWithAddress, token1: TokenWithAddress): Promise<Whitelist> => {
+    const getWhitelist = async (token1: TokenWithAddress, token2: TokenWithAddress): Promise<Whitelist> => {
         return {
-            [token0.address]: isNetworkToken(token0) || (await networkSettings.isTokenWhitelisted(token0.address)),
-            [token1.address]: isNetworkToken(token1) || (await networkSettings.isTokenWhitelisted(token1.address))
+            [token1.address]: isNetworkToken(token1) || (await networkSettings.isTokenWhitelisted(token1.address)),
+            [token2.address]: isNetworkToken(token2) || (await networkSettings.isTokenWhitelisted(token2.address))
         };
     };
 
