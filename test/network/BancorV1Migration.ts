@@ -20,13 +20,14 @@ import { expect } from 'chai';
 import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
-const FUNDING_RATE = { n: BigNumber.from(1), d: BigNumber.from(2) };
-const FUNDING_LIMIT = BigNumber.from(100_000_000);
-const MIN_LIQUIDITY = BigNumber.from(100_000);
-const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
-const DEPOSIT_AMOUNT = BigNumber.from(100_000_000);
-
 describe('BancorV1Migration', () => {
+    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BASE_TOKEN_FUNDING_RATE = 2;
+    const FUNDING_LIMIT = BigNumber.from(100_000_000);
+    const MIN_LIQUIDITY = BigNumber.from(100_000);
+    const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
+    const DEPOSIT_AMOUNT = BigNumber.from(100_000_000);
+
     let deployer: SignerWithAddress;
     let provider: SignerWithAddress;
 
@@ -231,7 +232,11 @@ describe('BancorV1Migration', () => {
                             // ensure that enough funding has been requested before a migration
                             await deposit(DEPOSIT_AMOUNT, isNativeToken);
 
-                            await poolCollection.enableTrading(baseToken.address, FUNDING_RATE);
+                            await poolCollection.enableTrading(
+                                baseToken.address,
+                                NETWORK_TOKEN_FUNDING_RATE,
+                                BASE_TOKEN_FUNDING_RATE
+                            );
 
                             for (let i = 0; i < 5; i++) {
                                 await deposit(DEPOSIT_AMOUNT, isNativeToken);

@@ -490,13 +490,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev enabled trading in a given pool and updates its trading liquidity
+     * @dev enables trading in a given pool, by providing the funding rate as two virtual balances, and updates its
+     * trading liquidity
      *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
-    function enableTrading(Token pool, Fraction memory fundingRate) external onlyOwner validRate(fundingRate) {
+    function enableTrading(
+        Token pool,
+        uint256 networkTokenRate,
+        uint256 baseTokenRate
+    ) external onlyOwner {
+        Fraction memory fundingRate = Fraction({ n: networkTokenRate, d: baseTokenRate });
+        _validRate(fundingRate);
+
         Pool storage data = _poolStorage(pool);
 
         if (data.tradingEnabled) {

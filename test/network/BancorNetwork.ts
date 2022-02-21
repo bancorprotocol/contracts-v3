@@ -67,7 +67,8 @@ describe('BancorNetwork', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
-    const FUNDING_RATE = { n: 1, d: 2 };
+    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BASE_TOKEN_FUNDING_RATE = 2;
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
@@ -86,15 +87,15 @@ describe('BancorNetwork', () => {
         trader: SignerWithAddress,
         sourceToken: TokenWithAddress,
         targetToken: TokenWithAddress,
-        amount: BigNumber,
-        minReturnAmount: BigNumber,
+        amount: BigNumberish,
+        minReturnAmount: BigNumberish,
         deadline: BigNumberish,
         beneficiary: string,
         network: TestBancorNetwork
     ) => {
         let value = BigNumber.from(0);
         if (sourceToken.address === NATIVE_TOKEN_ADDRESS) {
-            value = amount;
+            value = BigNumber.from(amount);
         } else {
             const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
 
@@ -286,6 +287,7 @@ describe('BancorNetwork', () => {
             await expectRole(network, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
             await expectRole(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, Roles.Upgradeable.ROLE_ADMIN);
+            await expectRole(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
 
             expect(await network.isPaused()).to.be.false;
             expect(await network.poolCollections()).to.be.empty;
@@ -344,7 +346,7 @@ describe('BancorNetwork', () => {
                     await network.connect(emergencyStopper).pause();
                 });
 
-                it('should revert when a non-emergency stopper is attempting resume', async () => {
+                it('should revert when attempting to resume', async () => {
                     await expect(network.connect(sender).resume()).to.be.revertedWith('AccessDenied');
                 });
             });
@@ -877,7 +879,8 @@ describe('BancorNetwork', () => {
                         tokenData: new TokenData(symbol),
                         balance: INITIAL_LIQUIDITY,
                         requestedLiquidity: INITIAL_LIQUIDITY.mul(1000),
-                        fundingRate: FUNDING_RATE
+                        networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                        baseTokenRate: BASE_TOKEN_FUNDING_RATE
                     },
                     deployer,
                     network,
@@ -1059,7 +1062,9 @@ describe('BancorNetwork', () => {
             let poolToken: PoolToken;
             let token: TokenWithAddress;
 
-            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n).mul(2);
+            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
+                .div(NETWORK_TOKEN_FUNDING_RATE)
+                .mul(2);
 
             beforeEach(async () => {
                 if (tokenData.isNetworkToken()) {
@@ -1084,7 +1089,11 @@ describe('BancorNetwork', () => {
                         await network.deposit(token.address, INITIAL_LIQUIDITY);
                     }
 
-                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
+                    await poolCollection.enableTrading(
+                        token.address,
+                        NETWORK_TOKEN_FUNDING_RATE,
+                        BASE_TOKEN_FUNDING_RATE
+                    );
                 }
 
                 await setTime(await latest());
@@ -1691,7 +1700,11 @@ describe('BancorNetwork', () => {
                 }
 
                 if (!tokenData.isNetworkToken()) {
-                    await poolCollection.enableTrading(token.address, FUNDING_RATE);
+                    await poolCollection.enableTrading(
+                        token.address,
+                        NETWORK_TOKEN_FUNDING_RATE,
+                        BASE_TOKEN_FUNDING_RATE
+                    );
                 }
             });
 
@@ -1803,8 +1816,8 @@ describe('BancorNetwork', () => {
                             'when the matched target network liquidity is above the minimum liquidity for trading',
                             () => {
                                 beforeEach(async () => {
-                                    const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d)
-                                        .div(FUNDING_RATE.n)
+                                    const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
+                                        .div(NETWORK_TOKEN_FUNDING_RATE)
                                         .mul(10_000);
 
                                     await transfer(deployer, token, masterVault, extraLiquidity);
@@ -2677,13 +2690,15 @@ describe('BancorNetwork', () => {
                     tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    fundingRate: FUNDING_RATE
+                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 {
                     tokenData: targetTokenData,
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
-                    fundingRate: FUNDING_RATE
+                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 0
             );
@@ -2704,7 +2719,8 @@ describe('BancorNetwork', () => {
                                             tradingFeePPM: sourceTokenData.isNetworkToken()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            fundingRate: FUNDING_RATE
+                                            networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                         },
                                         {
                                             tokenData: new TokenData(targetSymbol),
@@ -2713,7 +2729,8 @@ describe('BancorNetwork', () => {
                                             tradingFeePPM: targetTokenData.isNetworkToken()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            fundingRate: FUNDING_RATE
+                                            networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                         },
                                         toPPM(networkFeePercent),
                                         BigNumber.from(amount)
@@ -2726,14 +2743,16 @@ describe('BancorNetwork', () => {
                                                 balance: sourceBalance,
                                                 requestedLiquidity: sourceBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent),
-                                                fundingRate: FUNDING_RATE
+                                                networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                             },
                                             {
                                                 tokenData: new TokenData(targetSymbol),
                                                 balance: targetBalance,
                                                 requestedLiquidity: targetBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent2),
-                                                fundingRate: FUNDING_RATE
+                                                networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                             },
                                             toPPM(networkFeePercent),
                                             BigNumber.from(amount)
@@ -2785,7 +2804,8 @@ describe('BancorNetwork', () => {
                         tokenData: new TokenData(TokenSymbol.TKN),
                         balance: BALANCE,
                         requestedLiquidity: BALANCE.mul(1000),
-                        fundingRate: FUNDING_RATE
+                        networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                        baseTokenRate: BASE_TOKEN_FUNDING_RATE
                     },
                     deployer,
                     network,
@@ -2860,7 +2880,8 @@ describe('BancorNetwork', () => {
                         tokenData,
                         balance: BALANCE,
                         requestedLiquidity: BALANCE.mul(1000),
-                        fundingRate: FUNDING_RATE
+                        networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                        baseTokenRate: BASE_TOKEN_FUNDING_RATE
                     },
                     deployer,
                     network,
@@ -3021,7 +3042,9 @@ describe('BancorNetwork', () => {
             let owner: SignerWithAddress;
             let provider: SignerWithAddress;
 
-            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(FUNDING_RATE.d).div(FUNDING_RATE.n).mul(2);
+            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
+                .div(NETWORK_TOKEN_FUNDING_RATE)
+                .mul(2);
 
             const expectInRange = (x: BigNumber, y: BigNumber) => {
                 expect(x).to.gte(y.sub(maxOffset.negative));
@@ -3145,7 +3168,11 @@ describe('BancorNetwork', () => {
                     await network.deposit(baseToken.address, INITIAL_LIQUIDITY);
                 }
 
-                await poolCollection.enableTrading(baseToken.address, FUNDING_RATE);
+                await poolCollection.enableTrading(
+                    baseToken.address,
+                    NETWORK_TOKEN_FUNDING_RATE,
+                    BASE_TOKEN_FUNDING_RATE
+                );
 
                 await networkToken.approve(converter.address, reserve2Amount);
 
@@ -3522,7 +3549,8 @@ describe('BancorNetwork', () => {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
                     requestedLiquidity: BALANCE.mul(1000),
-                    fundingRate: FUNDING_RATE
+                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 provider as any as SignerWithAddress,
                 network,
@@ -3650,6 +3678,112 @@ describe('BancorNetwork', () => {
             });
         });
     });
+
+    describe('network fees management', () => {
+        let network: TestBancorNetwork;
+        let networkInfo: BancorNetworkInfo;
+        let networkSettings: NetworkSettings;
+        let networkToken: IERC20;
+        let poolCollection: TestPoolCollection;
+        let token: TokenWithAddress;
+
+        let emergencyStopper: SignerWithAddress;
+        let networkFeeManager: SignerWithAddress;
+
+        const INITIAL_LIQUIDITY = toWei(50_000_000);
+        const TRADING_FEE_PPM = toPPM(10);
+        const NETWORK_FEE_PPM = toPPM(20);
+
+        before(async () => {
+            [, emergencyStopper, networkFeeManager] = await ethers.getSigners();
+        });
+
+        beforeEach(async () => {
+            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            await networkSettings.setNetworkFeePPM(NETWORK_FEE_PPM);
+
+            ({ token } = await setupFundedPool(
+                {
+                    tokenData: new TokenData(TokenSymbol.TKN),
+                    balance: INITIAL_LIQUIDITY,
+                    requestedLiquidity: INITIAL_LIQUIDITY.mul(1000),
+                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    baseTokenRate: BASE_TOKEN_FUNDING_RATE,
+                    tradingFeePPM: TRADING_FEE_PPM
+                },
+                deployer,
+                network,
+                networkInfo,
+                networkSettings,
+                poolCollection
+            ));
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, networkFeeManager.address);
+        });
+
+        it('should revert when a non-network fee manager is attempting to withdraw the fees', async () => {
+            await expect(network.connect(deployer).pause()).to.be.revertedWith('AccessDenied');
+        });
+
+        context('without any pending network fees', () => {
+            it('should not withdraw any pending network fees', async () => {
+                const prevNetworkBalance = await networkToken.balanceOf(networkFeeManager.address);
+
+                await network.connect(networkFeeManager).withdrawNetworkFees();
+
+                expect(await networkToken.balanceOf(networkFeeManager.address)).to.equal(prevNetworkBalance);
+            });
+        });
+
+        context('with pending network fees', () => {
+            beforeEach(async () => {
+                await tradeBySourceAmount(
+                    deployer,
+                    networkToken,
+                    token,
+                    toWei(1000),
+                    1,
+                    MAX_UINT256,
+                    deployer.address,
+                    network
+                );
+
+                expect(await network.pendingNetworkFeeAmount()).to.be.gt(0);
+            });
+
+            it('should withdraw all the pending network fees', async () => {
+                const prevNetworkBalance = await networkToken.balanceOf(networkFeeManager.address);
+                const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
+
+                await network.connect(networkFeeManager).withdrawNetworkFees();
+
+                expect(await networkToken.balanceOf(networkFeeManager.address)).to.equal(
+                    prevNetworkBalance.add(pendingNetworkFeeAmount)
+                );
+
+                expect(await network.pendingNetworkFeeAmount()).to.equal(0);
+            });
+
+            context('when paused', () => {
+                beforeEach(async () => {
+                    await network.connect(emergencyStopper).pause();
+                });
+
+                it('should revert when attempting to withdraw the pending network fees', async () => {
+                    await expect(network.connect(networkFeeManager).withdrawNetworkFees()).to.be.revertedWith(
+                        'Pausable: paused'
+                    );
+                });
+            });
+        });
+    });
 });
 
 describe('BancorNetwork Financial Verification', () => {
@@ -3768,8 +3902,8 @@ describe('BancorNetwork Financial Verification', () => {
             .tradeBySourceAmount(networkToken.address, baseToken.address, wei, 1, MAX_UINT256, users[userId].address);
     };
 
-    const enableTrading = async (rate: { fundingRateN: number; fundingRateD: number }) => {
-        await poolCollection.enableTrading(baseToken.address, { n: rate.fundingRateN, d: rate.fundingRateD });
+    const enableTrading = async (networkTokenRate: number, baseTokenRate: number) => {
+        await poolCollection.enableTrading(baseToken.address, networkTokenRate, baseTokenRate);
     };
 
     /* eslint-disable indent */
@@ -3944,9 +4078,12 @@ describe('BancorNetwork Financial Verification', () => {
                     await tradeBNT(userId, amount);
                     break;
 
-                case 'enableTrading':
-                    await enableTrading(amount as any);
+                case 'enableTrading': {
+                    const { networkTokenRate, baseTokenRate } = amount as any;
+                    await enableTrading(networkTokenRate, baseTokenRate);
+
                     break;
+                }
             }
 
             await verifyState(decimalize(expected) as State);

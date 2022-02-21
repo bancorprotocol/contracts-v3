@@ -113,4 +113,14 @@ interface IBancorNetworkInfo is IUpgradeable {
      * @dev returns whether the given request is ready for withdrawal
      */
     function isReadyForWithdrawal(uint256 id) external view returns (bool);
+
+    /**
+     * @dev converts the specified pool token amount to the underlying network token amount
+     */
+    function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256);
+
+    /**
+     * @dev converts the specified underlying base token amount to pool token amount
+     */
+    function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256);
 }

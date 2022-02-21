@@ -99,6 +99,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the emergency manager role is required to pause/unpause the network
     bytes32 private constant ROLE_EMERGENCY_STOPPER = keccak256("ROLE_EMERGENCY_STOPPER");
 
+    // the network fee manager role is required to pull the accumulated pending network fees
+    bytes32 private constant ROLE_NETWORK_FEE_MANAGER = keccak256("ROLE_NETWORK_FEE_MANAGER");
+
     // the address of the network token
     IERC20 private immutable _networkToken;
 
@@ -289,6 +292,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // set up administrative roles
         _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_EMERGENCY_STOPPER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_NETWORK_FEE_MANAGER, ROLE_ADMIN);
     }
 
     // solhint-enable func-name-mixedcase
@@ -326,6 +330,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function roleEmergencyStopper() external pure returns (bytes32) {
         return ROLE_EMERGENCY_STOPPER;
+    }
+
+    /**
+     * @dev returns the network fee manager role
+     */
+    function roleNetworkFeeManager() external pure returns (bytes32) {
+        return ROLE_NETWORK_FEE_MANAGER;
     }
 
     /**
@@ -829,6 +840,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         emit FundsMigrated(contextId, token, provider, amount, availableAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function withdrawNetworkFees() external whenNotPaused onlyRoleMember(ROLE_NETWORK_FEE_MANAGER) {
+        uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
+        if (pendingNetworkFeeAmount == 0) {
+            return;
+        }
+
+        _pendingNetworkFeeAmount = 0;
+
+        _masterVault.withdrawFunds(
+            Token(address(_networkToken)),
+            payable(address(msg.sender)),
+            pendingNetworkFeeAmount
+        );
     }
 
     /**

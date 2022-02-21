@@ -24,5 +24,8 @@ describeDeployment('1642682502-network-proxy', ContractName.BancorNetworkProxy, 
         expect(await network.getRoleAdmin(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER)).to.equal(
             await network.DEFAULT_ADMIN_ROLE()
         );
+        expect(await network.getRoleAdmin(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER)).to.equal(
+            await network.DEFAULT_ADMIN_ROLE()
+        );
     });
 });

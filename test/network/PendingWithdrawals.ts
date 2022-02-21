@@ -27,6 +27,9 @@ describe('PendingWithdrawals', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
+    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BASE_TOKEN_FUNDING_RATE = 2;
+
     shouldHaveGap('PendingWithdrawals', '_lockDuration');
 
     before(async () => {
@@ -248,7 +251,8 @@ describe('PendingWithdrawals', () => {
                                 tokenData: new TokenData(TokenSymbol.TKN),
                                 balance: toWei(1_000_000),
                                 requestedLiquidity: toWei(1_000_000).mul(1000),
-                                fundingRate: { n: 1, d: 2 }
+                                networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
                             },
                             provider as any as SignerWithAddress,
                             network,
@@ -318,7 +322,8 @@ describe('PendingWithdrawals', () => {
                             tokenData: new TokenData(TokenSymbol.TKN),
                             balance: toWei(1_000_000),
                             requestedLiquidity: toWei(1_000_000).mul(1000),
-                            fundingRate: { n: 1, d: 2 }
+                            networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
                         },
                         provider1,
                         network,
@@ -443,7 +448,8 @@ describe('PendingWithdrawals', () => {
                             tokenData: new TokenData(TokenSymbol.TKN),
                             balance: toWei(1_000_000),
                             requestedLiquidity: toWei(1_000_000).mul(1000),
-                            fundingRate: { n: 1, d: 2 }
+                            networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
                         },
                         provider,
                         network,
