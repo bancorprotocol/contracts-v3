@@ -67,11 +67,11 @@ import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
 // base token withdrawal output amounts
 struct WithdrawalAmounts {
     uint256 baseTokensToTransferFromMasterVault; // base token amount to transfer from the master vault to the provider
-    uint256 bntsToMintForProvider; // BNT amount to mint directly for the provider
+    uint256 bntToMintForProvider; // BNT amount to mint directly for the provider
     uint256 baseTokensToTransferFromEPV; // base token amount to transfer from the external protection vault to the provider
     Sint256 baseTokensTradingLiquidityDelta; // base token amount to add to the trading liquidity
-    Sint256 bntsTradingLiquidityDelta; // BNT amount to add to the trading liquidity and to the master vault
-    Sint256 bntsProtocolHoldingsDelta; // BNT amount add to the protocol equity
+    Sint256 bntTradingLiquidityDelta; // BNT amount to add to the trading liquidity and to the master vault
+    Sint256 bntProtocolHoldingsDelta; // BNT amount add to the protocol equity
     uint256 baseTokensWithdrawalFee; // base token amount to keep in the pool as a withdrawal fee
     uint256 poolTokenTotalSupply; // base pool token's total supply
     uint256 newBaseTokenTradingLiquidity; // new base token trading liquidity
@@ -865,11 +865,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         return
             WithdrawalAmounts({
                 baseTokensToTransferFromMasterVault: output.s,
-                bntsToMintForProvider: output.t,
+                bntToMintForProvider: output.t,
                 baseTokensToTransferFromEPV: output.u,
                 baseTokensTradingLiquidityDelta: output.r,
-                bntsTradingLiquidityDelta: output.p,
-                bntsProtocolHoldingsDelta: output.q,
+                bntTradingLiquidityDelta: output.p,
+                bntProtocolHoldingsDelta: output.q,
                 baseTokensWithdrawalFee: output.v,
                 poolTokenTotalSupply: poolTokenTotalSupply,
                 newBaseTokenTradingLiquidity: output.r.isNeg
@@ -926,23 +926,23 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         liquidity.baseTokenTradingLiquidity = amounts.newBaseTokenTradingLiquidity;
         liquidity.bntTradingLiquidity = amounts.newBNTTradingLiquidity;
 
-        if (amounts.bntsProtocolHoldingsDelta.value > 0) {
-            assert(amounts.bntsProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
+        if (amounts.bntProtocolHoldingsDelta.value > 0) {
+            assert(amounts.bntProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
 
-            _masterPool.renounceFunding(contextId, pool, amounts.bntsProtocolHoldingsDelta.value);
+            _masterPool.renounceFunding(contextId, pool, amounts.bntProtocolHoldingsDelta.value);
         }
 
-        if (amounts.bntsTradingLiquidityDelta.value > 0) {
-            if (amounts.bntsTradingLiquidityDelta.isNeg) {
-                _masterPool.burnFromVault(amounts.bntsTradingLiquidityDelta.value);
+        if (amounts.bntTradingLiquidityDelta.value > 0) {
+            if (amounts.bntTradingLiquidityDelta.isNeg) {
+                _masterPool.burnFromVault(amounts.bntTradingLiquidityDelta.value);
             } else {
-                _masterPool.mint(address(_masterVault), amounts.bntsTradingLiquidityDelta.value);
+                _masterPool.mint(address(_masterVault), amounts.bntTradingLiquidityDelta.value);
             }
         }
 
         // if the provider should receive some BNT - ask the master pool to mint BNT to the provider
-        if (amounts.bntsToMintForProvider > 0) {
-            _masterPool.mint(address(provider), amounts.bntsToMintForProvider);
+        if (amounts.bntToMintForProvider > 0) {
+            _masterPool.mint(address(provider), amounts.bntToMintForProvider);
         }
 
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from
@@ -985,7 +985,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             tokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
-            bntAmount: amounts.bntsToMintForProvider,
+            bntAmount: amounts.bntToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });
 

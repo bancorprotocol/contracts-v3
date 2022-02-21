@@ -1536,7 +1536,7 @@ describe('PoolCollection', () => {
                             withdrawalAmounts.baseTokensToTransferFromMasterVault,
                             poolTokenAmount,
                             withdrawalAmounts.baseTokensToTransferFromEPV,
-                            withdrawalAmounts.bntsToMintForProvider,
+                            withdrawalAmounts.bntToMintForProvider,
                             withdrawalAmounts.baseTokensWithdrawalFee
                         );
 
@@ -2279,7 +2279,7 @@ describe('PoolCollection', () => {
                                 newStakedBalance,
                                 prevFunding.sub(
                                     withdrawalAmounts.newBNTTradingLiquidity.add(
-                                        withdrawalAmounts.bntsProtocolHoldingsDelta.value
+                                        withdrawalAmounts.bntProtocolHoldingsDelta.value
                                     )
                                 ),
                                 TradingStatusUpdateReason.MinLiquidity
