@@ -135,7 +135,7 @@ describe('BancorV1Migration', () => {
             BigNumber.from(amount).sub(BigNumber.from(amount).mul(withdrawalFee).div(PPM_RESOLUTION));
 
         const prevProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
-        const prevConverterNetworkBalance = await getBalance(bnt, converter.address);
+        const prevConverterBNTBalance = await getBalance(bnt, converter.address);
         const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
         const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const prevPoolTokenSupply = await poolToken.totalSupply();
@@ -146,7 +146,7 @@ describe('BancorV1Migration', () => {
         await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
 
         const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
-        const currConverterNetworkBalance = await getBalance(bnt, converter.address);
+        const currConverterBNTBalance = await getBalance(bnt, converter.address);
         const currConverterBaseBalance = await getBalance(baseToken, converter.address);
         const currVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const currPoolTokenSupply = await poolToken.totalSupply();
@@ -154,16 +154,14 @@ describe('BancorV1Migration', () => {
         const migratedBaseAmount = portionOf(baseAmount);
 
         expect(currProviderPoolTokenBalance).to.equal(prevProviderPoolTokenBalance.sub(poolTokenAmount));
-        expect(currConverterNetworkBalance).to.equal(
-            prevConverterNetworkBalance.sub(
-                prevConverterNetworkBalance.mul(migratedBaseAmount).div(prevConverterBaseBalance)
-            )
+        expect(currConverterBNTBalance).to.equal(
+            prevConverterBNTBalance.sub(prevConverterBNTBalance.mul(migratedBaseAmount).div(prevConverterBaseBalance))
         );
         expect(currConverterBaseBalance).to.equal(prevConverterBaseBalance.sub(migratedBaseAmount));
         expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(migratedBaseAmount));
         expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
-        const prevProviderNetworkBalance = await getBalance(bnt, provider);
+        const prevProviderBNTBalance = await getBalance(bnt, provider);
 
         const masterPoolTokenAmount = await getBalance(masterPoolToken, provider.address);
         await masterPoolToken.connect(provider).approve(network.address, masterPoolTokenAmount);
@@ -188,12 +186,10 @@ describe('BancorV1Migration', () => {
             transactionCost = await getTransactionCost(res);
         }
 
-        const currProviderNetworkBalance = await getBalance(bnt, provider);
+        const currProviderBNTBalance = await getBalance(bnt, provider);
         const currProviderBaseBalance = await getBalance(baseToken, provider);
 
-        expect(currProviderNetworkBalance).to.equal(
-            prevProviderNetworkBalance.add(deductFee(portionOf(networkAmount)))
-        );
+        expect(currProviderBNTBalance).to.equal(prevProviderBNTBalance.add(deductFee(portionOf(networkAmount))));
         expect(currProviderBaseBalance.add(transactionCost)).to.equal(
             prevProviderBaseBalance.add(deductFee(migratedBaseAmount))
         );
