@@ -346,19 +346,19 @@ contract MasterPool is IMasterPool, Vault {
         // liquidity requiring the protocol to transfer the provider more protocol tokens than it holds
         _poolToken.transfer(provider, poolTokenAmount);
 
-        // burn the previously received BNTs
+        // burn the previously received BNT
         _bntGovernance.burn(bntAmount);
 
         uint256 vbntAmount = poolTokenAmount;
 
-        // the provider should receive pool tokens and VBNTs in equal amounts. since the provider might already have
-        // some VBNTs during migration, the contract only mints the delta between the full amount and the amount the
+        // the provider should receive pool tokens and VBNT in equal amounts. since the provider might already have
+        // some VBNT during migration, the contract only mints the delta between the full amount and the amount the
         // provider already has
         if (isMigrating) {
             vbntAmount = MathEx.subMax0(vbntAmount, originalVBNTAmount);
         }
 
-        // mint VBNTs to the provider
+        // mint VBNT to the provider
         if (vbntAmount > 0) {
             _vbntGovernance.mint(provider, vbntAmount);
         }
@@ -388,7 +388,7 @@ contract MasterPool is IMasterPool, Vault {
         // burn the respective VBNT amount
         _vbntGovernance.burn(poolTokenAmount);
 
-        // mint BNTs to the provider
+        // mint BNT to the provider
         _bntGovernance.mint(provider, amounts.bntAmount);
 
         emit TokenWithdrawn({
@@ -443,7 +443,7 @@ contract MasterPool is IMasterPool, Vault {
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
 
-        // mint BNTs to the vault
+        // mint BNT to the vault
         _bntGovernance.mint(address(_masterVault), bntAmount);
 
         emit FundingRequested({
@@ -494,7 +494,7 @@ contract MasterPool is IMasterPool, Vault {
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // burn all the BNTs from the master vault
+        // burn all BNT from the master vault
         _masterVault.burn(Token(address(_bnt)), bntAmount);
 
         emit FundingRenounced({
@@ -562,10 +562,10 @@ contract MasterPool is IMasterPool, Vault {
      * @dev returns withdrawal amounts
      */
     function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
-        // calculate the BNT amount to transfer
+        // calculate BNT amount to transfer
         uint256 bntAmount = _poolTokenToUnderlying(poolTokenAmount);
 
-        // deduct the exit fee from the BNT amount
+        // deduct the exit fee from BNT amount
         uint256 withdrawalFeeAmount = MathEx.mulDivF(bntAmount, _networkSettings.withdrawalFeePPM(), PPM_RESOLUTION);
 
         bntAmount -= withdrawalFeeAmount;

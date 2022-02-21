@@ -28,13 +28,13 @@ describeDeployment('1640637513-bnt', ContractName.BNT, async () => {
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     });
 
-    it('should deploy the BNT', async () => {
+    it('should deploy the BNT contract', async () => {
         expect(await bnt.name()).to.equal(bntData.name());
         expect(await bnt.symbol()).to.equal(bntData.symbol());
         expect(await bnt.decimals()).to.equal(bntData.decimals());
     });
 
-    it('should deploy and configure the BNT governance', async () => {
+    it('should deploy and configure the BNT governance contract', async () => {
         expect(await bntGovernance.token()).to.equal(bnt.address);
 
         expect(await bnt.owner()).to.equal(bntGovernance.address);

@@ -73,7 +73,7 @@ describe('AutoCompoundingStakingRewards', () => {
             poolCollection
         );
 
-        // if we're rewarding the BNT - no additional funding is needed
+        // if we're rewarding BNT - no additional funding is needed
         if (!tokenData.isBNT()) {
             // deposit pool tokens as staking rewards
             await depositToPool(stakingRewardsProvider, token, totalRewards, network);

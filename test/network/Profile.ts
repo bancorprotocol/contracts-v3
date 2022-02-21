@@ -608,7 +608,7 @@ describe('Profile @profile', () => {
                 await networkSettings.setNetworkFeePPM(networkFeePPM);
             }
 
-            // increase the BNT liquidity by the growth factor a few times
+            // increase BNT liquidity by the growth factor a few times
             for (let i = 0; i < 5; i++) {
                 await depositToPool(deployer, sourceToken, 1, network);
             }
@@ -974,8 +974,8 @@ describe('Profile @profile', () => {
                     for (const amount of [toWei(100)]) {
                         for (const tradingFeePercent of [0, 5]) {
                             for (const networkFeePercent of [0, 20]) {
-                                // if either the source or the target token is the BNT - only test fee in one of
-                                // the directions
+                                // if either the source or the target token is BNT - only test fee in one of the
+                                // directions
                                 if (sourceTokenData.isBNT() || targetTokenData.isBNT()) {
                                     testTrades(
                                         {
@@ -1225,7 +1225,7 @@ describe('Profile @profile', () => {
                 poolCollection
             );
 
-            // if we're rewarding the BNT - no additional funding is needed
+            // if we're rewarding BNT - no additional funding is needed
             if (!tokenData.isBNT()) {
                 // deposit pool tokens as staking rewards
                 await depositToPool(stakingRewardsProvider, token, totalRewards, network);

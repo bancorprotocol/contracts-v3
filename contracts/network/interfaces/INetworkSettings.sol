@@ -8,9 +8,9 @@ import { Token } from "../../token/Token.sol";
 error NotWhitelisted();
 
 struct VortexRewards {
-    // the percentage of the converted BNTs to be sent to the caller of the burning event (in units of PPM)
+    // the percentage of converted BNT to be sent to the initiator of the burning event (in units of PPM)
     uint32 burnRewardPPM;
-    // the maximum burn reward to be sent to the caller of the burning event
+    // the maximum burn reward to be sent to the initiator of the burning event
     uint256 burnRewardMaxAmount;
 }
 
@@ -29,7 +29,7 @@ interface INetworkSettings is IUpgradeable {
     function isTokenWhitelisted(Token pool) external view returns (bool);
 
     /**
-     * @dev returns the BNT funding limit for a given pool
+     * @dev returns BNT funding limit for a given pool
      */
     function poolFundingLimit(Token pool) external view returns (uint256);
 

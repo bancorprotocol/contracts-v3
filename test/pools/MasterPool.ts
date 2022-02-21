@@ -172,7 +172,7 @@ describe('MasterPool', () => {
         });
     });
 
-    describe('minting BNTs', () => {
+    describe('minting BNT', () => {
         let bnt: IERC20;
         let masterPool: TestMasterPool;
 
@@ -211,7 +211,7 @@ describe('MasterPool', () => {
         });
     });
 
-    describe('burning BNTs from the vault', () => {
+    describe('burning BNT from the vault', () => {
         let bnt: IERC20;
         let masterPool: TestMasterPool;
         let masterVault: MasterVault;
@@ -625,8 +625,8 @@ describe('MasterPool', () => {
                     isMigrating: boolean,
                     originalVBNTAmount: BigNumber
                 ) => {
-                    // since this is only a unit test, we will simulate a proper transfer of the BNT amount
-                    // from the network to the master pool
+                    // since this is only a unit test, we will simulate a proper transfer of BNT amount from the network
+                    // to the master pool
                     await bnt.connect(deployer).transfer(masterPool.address, amount);
 
                     const prevStakedBalance = await masterPool.stakedBalance();
@@ -690,7 +690,7 @@ describe('MasterPool', () => {
                     );
                 };
 
-                it('should revert when attempting to deposit without sending the BNTs', async () => {
+                it('should revert when attempting to deposit without sending BNT', async () => {
                     const amount = 1;
 
                     await expect(
@@ -799,8 +799,8 @@ describe('MasterPool', () => {
                     beforeEach(async () => {
                         const prevProviderPoolTokenBalance = await masterPoolToken.balanceOf(provider.address);
 
-                        // since this is only a unit test, we will simulate a proper transfer of the BNT amount
-                        // from the network to the master pool
+                        // since this is only a unit test, we will simulate a proper transfer of BNT amount from the
+                        // network to the master pool
                         const depositAmount = toWei(1_000_000);
                         await bnt.connect(deployer).transfer(masterPool.address, depositAmount);
 
@@ -895,7 +895,7 @@ describe('MasterPool', () => {
                         ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
                     });
 
-                    it('should revert when attempting to deposit without sending the VBNTs', async () => {
+                    it('should revert when attempting to deposit without sending VBNT', async () => {
                         const poolTokenAmount = 1000;
 
                         await masterPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
@@ -906,7 +906,7 @@ describe('MasterPool', () => {
                         ).to.be.revertedWith(new TokenData(TokenSymbol.VBNT).errors().exceedsBalance);
                     });
 
-                    it('should revert when attempting to deposit without approving the BNTs', async () => {
+                    it('should revert when attempting to deposit without approving BNT', async () => {
                         const poolTokenAmount = 1000;
                         await vbnt.connect(provider).transfer(masterPool.address, poolTokenAmount);
 

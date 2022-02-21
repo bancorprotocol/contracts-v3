@@ -27,13 +27,13 @@ describeDeployment('1640637514-vbnt', ContractName.VBNT, () => {
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     });
 
-    it('should deploy the VBNT', async () => {
+    it('should deploy the VBNT contract', async () => {
         expect(await vbnt.name()).to.equal(vbntData.name());
         expect(await vbnt.symbol()).to.equal(vbntData.symbol());
         expect(await vbnt.decimals()).to.equal(vbntData.decimals());
     });
 
-    it('should deploy and configure the VBNT governance', async () => {
+    it('should deploy and configure the VBNT governance contract', async () => {
         expect(await vbntGovernance.token()).to.equal(vbnt.address);
         expect(await vbnt.owner()).to.equal(vbntGovernance.address);
 

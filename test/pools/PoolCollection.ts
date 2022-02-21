@@ -1257,7 +1257,7 @@ describe('PoolCollection', () => {
                     });
 
                     context('when below the deposit limit', () => {
-                        context('when the BNT liquidity for trading is below the minimum liquidity for trading', () => {
+                        context('when BNT liquidity for trading is below the minimum liquidity for trading', () => {
                             beforeEach(async () => {
                                 const { baseTokenTradingLiquidity, stakedBalance } = await poolCollection.poolLiquidity(
                                     token.address
@@ -1994,7 +1994,7 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
-                    it('should revert when attempting to trade or query without using the BNT as one of the pools', async () => {
+                    it('should revert when attempting to trade or query without using BNT as one of the pools', async () => {
                         const reserveToken2 = await createTestToken();
 
                         await expect(
@@ -2036,7 +2036,7 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
-                    it('should revert when attempting to trade or query using the BNT as both of the pools', async () => {
+                    it('should revert when attempting to trade or query using BNT as both of the pools', async () => {
                         await expect(
                             network.tradeBySourcePoolCollectionT(
                                 poolCollection.address,
@@ -2172,7 +2172,7 @@ describe('PoolCollection', () => {
 
                     context('when BNT liquidity falls below the minimum liquidity for trading', () => {
                         beforeEach(async () => {
-                            // increase the BNT liquidity by the growth factor a few times
+                            // increase BNT liquidity by the growth factor a few times
                             for (let i = 0; i < 5; i++) {
                                 await depositToPool(deployer, reserveToken, 1, network);
                             }
@@ -2182,8 +2182,8 @@ describe('PoolCollection', () => {
                             const targetBNTLiquidity = MIN_LIQUIDITY_FOR_TRADING.div(4);
                             const bntTradeAmountToTrade = prevLiquidity.bntTradingLiquidity.sub(targetBNTLiquidity);
 
-                            // trade enough BNTs out such that the total BNT liquidity for trading
-                            // falls bellow the minimum liquidity for trading
+                            // trade enough BNT out such that the total BNT liquidity for trading falls bellow the
+                            // minimum liquidity for trading
                             const { amount } = await poolCollection.tradeInputAndFeeByTargetAmount(
                                 reserveToken.address,
                                 bnt.address,

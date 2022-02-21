@@ -164,7 +164,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
             revert InvalidToken();
         }
 
-        // allow vaults to burn network and VBNTs via their respective token governance modules
+        // allow vaults to burn BNT and VBNT via their respective token governance modules
         if (token.isEqual(_bnt)) {
             _bntGovernance.burn(amount);
         } else if (token.isEqual(_vbnt)) {

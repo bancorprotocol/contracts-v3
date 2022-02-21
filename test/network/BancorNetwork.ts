@@ -1767,7 +1767,7 @@ describe('BancorNetwork', () => {
                 });
 
                 if (tokenData.isBNT()) {
-                    it('should revert when attempting to withdraw without approving the VBNT amount', async () => {
+                    it('should revert when attempting to withdraw without approving VBNT', async () => {
                         await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
                             new TokenData(TokenSymbol.VBNT).errors().exceedsAllowance
                         );
@@ -1786,7 +1786,7 @@ describe('BancorNetwork', () => {
 
                     if (tokenData.isBNT()) {
                         it('should revert when attempting to withdraw with an insufficient VBNT amount', async () => {
-                            // ensure that there isn't enough VBNTs left to process a single withdrawal
+                            // ensure that there aren't enough VBNT left to process a single withdrawal
                             await vbnt
                                 .connect(provider)
                                 .transfer(deployer.address, (await vbnt.balanceOf(provider.address)).sub(1));
@@ -1916,7 +1916,7 @@ describe('BancorNetwork', () => {
                 await networkSettings.setNetworkFeePPM(networkFeePPM);
             }
 
-            // increase the BNT liquidity by the growth factor a few times
+            // increase BNT liquidity by the growth factor a few times
             for (let i = 0; i < 5; i++) {
                 await depositToPool(deployer, sourceToken, 1, network);
             }
@@ -2292,9 +2292,9 @@ describe('BancorNetwork', () => {
                         sourceToken.address,
                         bnt.address,
                         sourceAmount,
-                        // when providing the source amount, the target amount represents how many BNTs we
-                        // have received, while when providing the source target, it represents how many source tokens
-                        // we were required to trade
+                        // when providing the source amount, the target amount represents how many BNT we have received,
+                        // while when providing the source target, it represents how many source tokens we were required
+                        // to trade
                         bySourceAmount ? hop1.amount : hop2.amount,
                         bySourceAmount ? hop1.amount : hop2.amount,
                         hop1.tradingFeeAmount,
@@ -2313,9 +2313,9 @@ describe('BancorNetwork', () => {
                         targetToken.address,
                         bnt.address,
                         targetToken.address,
-                        // when providing the source amount, the source amount represents how many BNTs we
-                        // were required to trade, while when providing the target amount, it represents how many
-                        // target tokens we have received by trading BNTs for them
+                        // when providing the source amount, the source amount represents how many BNT we were required
+                        // to trade, while when providing the target amount, it represents how many target tokens we
+                        // have received by trading BNT for them
                         bySourceAmount ? hop1.amount : hop2.amount,
                         targetAmount,
                         bySourceAmount ? hop1.amount : hop2.amount,
@@ -2349,8 +2349,7 @@ describe('BancorNetwork', () => {
                 prevVaultTargetTokenAmount.sub(targetAmount)
             );
 
-            // if neither the source or the target tokens are the BNT - ensure that no BNTs have
-            // left the system
+            // if neither the source nor the target tokens is BNT - ensure that no BNT have left the system
             if (!isSourceBNT && !isTargetBNT) {
                 expect(await getBalance(bnt, traderAddress)).to.equal(prevTraderBNTAmount);
                 expect(await getBalance(bnt, beneficiary)).to.equal(prevBeneficiaryBNTAmount);
@@ -2696,8 +2695,8 @@ describe('BancorNetwork', () => {
                     for (const amount of [10_000, toWei(100)]) {
                         for (const tradingFeePercent of [0, 5]) {
                             for (const networkFeePercent of [0, 20]) {
-                                // if either the source or the target token is the BNT - only test fee in one of
-                                // the directions
+                                // if either the source or the target token is BNT - only test fee in one of the
+                                // directions
                                 if (sourceTokenData.isBNT() || targetTokenData.isBNT()) {
                                     testTrades(
                                         {

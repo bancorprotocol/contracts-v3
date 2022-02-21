@@ -324,7 +324,7 @@ describe('BancorNetworkInfo', () => {
                 poolCollection
             ));
 
-            // increase the BNT liquidity by the growth factor a few times
+            // increase BNT liquidity by the growth factor a few times
             for (let i = 0; i < 5; i++) {
                 await depositToPool(deployer, sourceToken, 1, network);
             }

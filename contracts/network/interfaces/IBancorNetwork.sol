@@ -146,7 +146,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the provider must have already initiated a withdrawal and received the specified id
      * - the specified withdrawal request is eligible for completion
-     * - the provider must have approved the network to transfer the VBNT amount on its behalf, when withdrawing BNT
+     * - the provider must have approved the network to transfer VBNT amount on its behalf, when withdrawing BNT
      * liquidity
      */
     function withdraw(uint256 id) external;
