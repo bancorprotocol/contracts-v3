@@ -97,7 +97,7 @@ interface IPoolCollection is IVersioned {
     function poolToken(Token pool) external view returns (IPoolToken);
 
     /**
-     * @dev converts the specified pool token amount to the underlying BNT amount
+     * @dev converts the specified pool token amount to the underlying base token amount
      */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256);
 
