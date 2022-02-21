@@ -29,7 +29,7 @@ interface INetworkSettings is IUpgradeable {
     function isTokenWhitelisted(Token pool) external view returns (bool);
 
     /**
-     * @dev returns BNT funding limit for a given pool
+     * @dev returns the BNT funding limit for a given pool
      */
     function poolFundingLimit(Token pool) external view returns (uint256);
 
