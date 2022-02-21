@@ -2292,7 +2292,7 @@ describe('BancorNetwork', () => {
                         sourceToken.address,
                         bnt.address,
                         sourceAmount,
-                        // when providing the source amount, the target amount represents how many BNT we have received,
+                        // when providing the source amount, the target amount represents how much BNT we have received,
                         // while when providing the source target, it represents how many source tokens we were required
                         // to trade
                         bySourceAmount ? hop1.amount : hop2.amount,
@@ -2313,7 +2313,7 @@ describe('BancorNetwork', () => {
                         targetToken.address,
                         bnt.address,
                         targetToken.address,
-                        // when providing the source amount, the source amount represents how many BNT we were required
+                        // when providing the source amount, the source amount represents how much BNT we were required
                         // to trade, while when providing the target amount, it represents how many target tokens we
                         // have received by trading BNT for them
                         bySourceAmount ? hop1.amount : hop2.amount,
