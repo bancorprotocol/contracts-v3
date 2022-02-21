@@ -365,7 +365,7 @@ describe('BancorNetworkInfo', () => {
                     }
                 });
 
-                it('should revert when attempting to query using an invalid source pool', async () => {
+                it('should revert when attempting to query using an invalid source token', async () => {
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
                     ).to.be.revertedWith('InvalidAddress');
@@ -374,7 +374,7 @@ describe('BancorNetworkInfo', () => {
                     ).to.be.revertedWith('InvalidAddress');
                 });
 
-                it('should revert when attempting to query using an invalid target pool', async () => {
+                it('should revert when attempting to query using an invalid target token', async () => {
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
                     ).to.be.revertedWith('InvalidAddress');

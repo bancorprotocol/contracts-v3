@@ -626,7 +626,7 @@ describe('OmniPool', () => {
                     const prevPoolTokenBalance = await bnt.balanceOf(omniPool.address);
                     const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
 
-                    const prevGovTotalSupply = await vbnt.totalSupply();
+                    const prevVBNTTotalSupply = await vbnt.totalSupply();
                     const prevPoolVBNTBalance = await vbnt.balanceOf(omniPool.address);
                     const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
 
@@ -670,7 +670,7 @@ describe('OmniPool', () => {
                     expect(await bnt.balanceOf(omniPool.address)).to.equal(prevPoolTokenBalance.sub(amount));
                     expect(await bnt.balanceOf(provider.address)).to.equal(prevProviderTokenBalance);
 
-                    expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply.add(expectedVBNTAmount));
+                    expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.add(expectedVBNTAmount));
                     expect(await vbnt.balanceOf(omniPool.address)).to.equal(prevPoolVBNTBalance);
                     expect(await vbnt.balanceOf(provider.address)).to.equal(
                         prevProviderVBNTBalance.add(expectedVBNTAmount)
@@ -813,7 +813,7 @@ describe('OmniPool', () => {
                         const prevPoolTokenBalance = await bnt.balanceOf(omniPool.address);
                         const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
 
-                        const prevGovTotalSupply = await vbnt.totalSupply();
+                        const prevVBNTTotalSupply = await vbnt.totalSupply();
                         const prevPoolVBNTBalance = await vbnt.balanceOf(omniPool.address);
                         const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
 
@@ -855,7 +855,7 @@ describe('OmniPool', () => {
                             prevProviderTokenBalance.add(expectedBNTAmount)
                         );
 
-                        expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply.sub(poolTokenAmount));
+                        expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.sub(poolTokenAmount));
                         expect(await vbnt.balanceOf(omniPool.address)).to.equal(
                             prevPoolVBNTBalance.sub(poolTokenAmount)
                         );
@@ -1094,7 +1094,7 @@ describe('OmniPool', () => {
                     const poolTokenAmountToBurn = await omniPool.poolTokenAmountToBurn(bntAmount);
 
                     // ensure that burning the resulted pool token amount increases the underlying by the
-                    // specified network amount while taking into account pool tokens owned by the protocol
+                    // specified BNT amount while taking into account pool tokens owned by the protocol
                     await omniPool.burnPoolTokenT(poolTokenAmountToBurn);
 
                     expect(await omniPool.poolTokenToUnderlying(poolTokenAmount)).to.equal(

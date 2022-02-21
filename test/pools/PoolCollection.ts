@@ -1536,7 +1536,7 @@ describe('PoolCollection', () => {
                             withdrawalAmounts.baseTokensToTransferFromOmniVault,
                             poolTokenAmount,
                             withdrawalAmounts.baseTokensToTransferFromEPV,
-                            withdrawalAmounts.bntsToMintForProvider,
+                            withdrawalAmounts.bntToMintForProvider,
                             withdrawalAmounts.baseTokensWithdrawalFee
                         );
 
@@ -1862,7 +1862,7 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('AccessDenied');
                     });
 
-                    it('should revert when attempting to trade or query using an invalid source pool', async () => {
+                    it('should revert when attempting to trade or query using an invalid source token', async () => {
                         await expect(
                             network.tradeBySourcePoolCollectionT(
                                 poolCollection.address,
@@ -1894,7 +1894,7 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
-                    it('should revert when attempting to trade or query using an invalid target pool', async () => {
+                    it('should revert when attempting to trade or query using an invalid target token', async () => {
                         await expect(
                             network.tradeBySourcePoolCollectionT(
                                 poolCollection.address,
@@ -1926,7 +1926,7 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
-                    it('should revert when attempting to trade or query using a non-existing source pool', async () => {
+                    it('should revert when attempting to trade or query using a non-existing source token', async () => {
                         const reserveToken2 = await createTestToken();
 
                         await expect(
@@ -1960,7 +1960,7 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
-                    it('should revert when attempting to trade or query using a non-existing target pool', async () => {
+                    it('should revert when attempting to trade or query using a non-existing target token', async () => {
                         const reserveToken2 = await createTestToken();
 
                         await expect(
@@ -1994,7 +1994,7 @@ describe('PoolCollection', () => {
                         ).to.be.revertedWith('DoesNotExist');
                     });
 
-                    it('should revert when attempting to trade or query without using BNT as one of the pools', async () => {
+                    it('should revert when attempting to trade or query without using BNT as one of the tokens', async () => {
                         const reserveToken2 = await createTestToken();
 
                         await expect(
@@ -2129,7 +2129,7 @@ describe('PoolCollection', () => {
                             await setTradingLiquidity(MIN_LIQUIDITY_FOR_TRADING, 0);
                         });
 
-                        context('with sufficient target and source pool balances', () => {
+                        context('with sufficient target and source token balances', () => {
                             beforeEach(async () => {
                                 const bntTradingLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(1000);
 
@@ -2279,7 +2279,7 @@ describe('PoolCollection', () => {
                                 newStakedBalance,
                                 prevFunding.sub(
                                     withdrawalAmounts.newBNTTradingLiquidity.add(
-                                        withdrawalAmounts.bntsProtocolHoldingsDelta.value
+                                        withdrawalAmounts.bntProtocolHoldingsDelta.value
                                     )
                                 ),
                                 TradingStatusUpdateReason.MinLiquidity
@@ -2317,7 +2317,7 @@ describe('PoolCollection', () => {
                             await networkSettings.setMinLiquidityForTrading(0);
                         });
 
-                        context('source pool', () => {
+                        context('source token', () => {
                             const amount = BigNumber.from(12_345);
 
                             context('empty', () => {
@@ -2370,7 +2370,7 @@ describe('PoolCollection', () => {
                             });
                         });
 
-                        context('target pool', () => {
+                        context('target token', () => {
                             context('empty', () => {
                                 const amount = 12_345;
 
@@ -3119,7 +3119,7 @@ describe('PoolCollection', () => {
                             );
 
                             // ensure that burning the resulted pool token amount increases the underlying by the
-                            // specified network amount while taking into account pool tokens owned by the protocol
+                            // specified BNT amount while taking into account pool tokens owned by the protocol
                             // (note that, for this test, it doesn't matter where from the pool tokens are being burned)
                             await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
 
