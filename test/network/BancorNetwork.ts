@@ -1786,7 +1786,7 @@ describe('BancorNetwork', () => {
 
                     if (tokenData.isBNT()) {
                         it('should revert when attempting to withdraw with an insufficient VBNT amount', async () => {
-                            // ensure that there aren't enough VBNT left to process a single withdrawal
+                            // ensure that there isn't enough VBNT left to process a single withdrawal
                             await vbnt
                                 .connect(provider)
                                 .transfer(deployer.address, (await vbnt.balanceOf(provider.address)).sub(1));
