@@ -3119,7 +3119,7 @@ describe('PoolCollection', () => {
                             );
 
                             // ensure that burning the resulted pool token amount increases the underlying by the
-                            // specified network amount while taking into account pool tokens owned by the protocol
+                            // specified BNT amount while taking into account pool tokens owned by the protocol
                             // (note that, for this test, it doesn't matter where from the pool tokens are being burned)
                             await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
 

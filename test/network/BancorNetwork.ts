@@ -1114,7 +1114,7 @@ describe('BancorNetwork', () => {
 
                 const prevBNTTotalSupply = await bnt.totalSupply();
 
-                const prevGovTotalSupply = await vbnt.totalSupply();
+                const prevVBNTTotalSupply = await vbnt.totalSupply();
                 const prevProviderVBNTBalance = await vbnt.balanceOf(providerAddress);
                 const prevSenderVBNTBalance = await vbnt.balanceOf(senderAddress);
 
@@ -1134,7 +1134,7 @@ describe('BancorNetwork', () => {
 
                     expect(await bnt.totalSupply()).to.equal(prevBNTTotalSupply.sub(amount));
 
-                    expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply.add(expectedPoolTokenAmount));
+                    expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.add(expectedPoolTokenAmount));
                     expect(await vbnt.balanceOf(providerAddress)).to.equal(
                         prevProviderVBNTBalance.add(expectedPoolTokenAmount)
                     );
@@ -1161,7 +1161,7 @@ describe('BancorNetwork', () => {
 
                     expect(await getBalance(token, masterVault.address)).to.equal(prevVaultTokenBalance.add(amount));
 
-                    expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply);
+                    expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply);
                     expect(await vbnt.balanceOf(providerAddress)).to.equal(prevProviderVBNTBalance);
                 }
 
@@ -1710,7 +1710,7 @@ describe('BancorNetwork', () => {
 
                     const prevProviderTokenBalance = await getBalance(token, provider.address);
 
-                    const prevGovTotalSupply = await vbnt.totalSupply();
+                    const prevVBNTTotalSupply = await vbnt.totalSupply();
                     const prevPoolVBNTBalance = await vbnt.balanceOf(masterPool.address);
                     const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
 
@@ -1724,7 +1724,7 @@ describe('BancorNetwork', () => {
                             prevPoolPoolTokenBalance.add(request.poolTokenAmount)
                         );
 
-                        expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply.sub(request.poolTokenAmount));
+                        expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.sub(request.poolTokenAmount));
 
                         expect(await vbnt.balanceOf(provider.address)).to.equal(
                             prevProviderVBNTBalance.sub(request.poolTokenAmount)
@@ -1741,7 +1741,7 @@ describe('BancorNetwork', () => {
                         );
                         expect(await poolToken.balanceOf(masterPool.address)).to.equal(prevPoolPoolTokenBalance);
 
-                        expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply);
+                        expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply);
                         expect(await vbnt.balanceOf(provider.address)).to.equal(prevProviderVBNTBalance);
                     }
 
@@ -3253,8 +3253,8 @@ describe('BancorNetwork', () => {
                         const balance = await getBalance(baseToken, owner.address);
                         expect(balance).to.equal(prevBalance.sub(transactionCost));
 
-                        const govBalance = await vbnt.balanceOf(owner.address);
-                        expect(govBalance).to.equal(prevGovBalance);
+                        const vbntBalance = await vbnt.balanceOf(owner.address);
+                        expect(vbntBalance).to.equal(prevGovBalance);
 
                         const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
                         expect(protectionPoolBalance).to.equal(0);
@@ -3290,8 +3290,8 @@ describe('BancorNetwork', () => {
                         expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount.div(2)));
                         expect(vaultBNTBalance).to.equal(prevVaultBNTBalance);
 
-                        const govBalance = await vbnt.balanceOf(owner.address);
-                        expect(govBalance).to.equal(prevGovBalance);
+                        const vbntBalance = await vbnt.balanceOf(owner.address);
+                        expect(vbntBalance).to.equal(prevGovBalance);
 
                         const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
                         expect(protectionPoolBalance).to.equal(0);
@@ -3408,8 +3408,8 @@ describe('BancorNetwork', () => {
                         relation: Relation.LesserOrEqual
                     });
 
-                    const govBalance = await vbnt.balanceOf(owner.address);
-                    expect(govBalance).to.equal(prevGovBalance);
+                    const vbntBalance = await vbnt.balanceOf(owner.address);
+                    expect(vbntBalance).to.equal(prevGovBalance);
 
                     const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
                     expect(protectionPoolBalance).to.equal(0);

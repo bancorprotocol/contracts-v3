@@ -639,7 +639,7 @@ describe('MasterPool', () => {
                     const prevPoolTokenBalance = await bnt.balanceOf(masterPool.address);
                     const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
 
-                    const prevGovTotalSupply = await vbnt.totalSupply();
+                    const prevVBNTTotalSupply = await vbnt.totalSupply();
                     const prevPoolVBNTBalance = await vbnt.balanceOf(masterPool.address);
                     const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
 
@@ -683,7 +683,7 @@ describe('MasterPool', () => {
                     expect(await bnt.balanceOf(masterPool.address)).to.equal(prevPoolTokenBalance.sub(amount));
                     expect(await bnt.balanceOf(provider.address)).to.equal(prevProviderTokenBalance);
 
-                    expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply.add(expectedVBNTAmount));
+                    expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.add(expectedVBNTAmount));
                     expect(await vbnt.balanceOf(masterPool.address)).to.equal(prevPoolVBNTBalance);
                     expect(await vbnt.balanceOf(provider.address)).to.equal(
                         prevProviderVBNTBalance.add(expectedVBNTAmount)
@@ -827,7 +827,7 @@ describe('MasterPool', () => {
                         const prevPoolTokenBalance = await bnt.balanceOf(masterPool.address);
                         const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
 
-                        const prevGovTotalSupply = await vbnt.totalSupply();
+                        const prevVBNTTotalSupply = await vbnt.totalSupply();
                         const prevPoolVBNTBalance = await vbnt.balanceOf(masterPool.address);
                         const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
 
@@ -875,7 +875,7 @@ describe('MasterPool', () => {
                             prevProviderTokenBalance.add(expectedBNTAmount)
                         );
 
-                        expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply.sub(poolTokenAmount));
+                        expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.sub(poolTokenAmount));
                         expect(await vbnt.balanceOf(masterPool.address)).to.equal(
                             prevPoolVBNTBalance.sub(poolTokenAmount)
                         );
@@ -1117,7 +1117,7 @@ describe('MasterPool', () => {
                     const poolTokenAmountToBurn = await masterPool.poolTokenAmountToBurn(bntAmount);
 
                     // ensure that burning the resulted pool token amount increases the underlying by the
-                    // specified network amount while taking into account pool tokens owned by the protocol
+                    // specified BNT amount while taking into account pool tokens owned by the protocol
                     await masterPool.burnPoolTokenT(poolTokenAmountToBurn);
 
                     expect(await masterPool.poolTokenToUnderlying(poolTokenAmount)).to.equal(
