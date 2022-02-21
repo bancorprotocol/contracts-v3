@@ -1268,7 +1268,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 limit,
         bool bySourceAmount
     ) private view returns (TradeIntermediateResult memory result) {
-        // ensure that BNT is either the source or the target pool
+        // ensure that BNT is either the source or the target token
         bool isSourceBNT = sourceToken.isEqual(_bnt);
         bool isTargetBNT = targetToken.isEqual(_bnt);
 
@@ -1279,7 +1279,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             result.isSourceBNT = false;
             result.pool = sourceToken;
         } else {
-            // BNT isn't one of the pools or is both of them
+            // BNT isn't one of the tokens or is both of them
             revert DoesNotExist();
         }
 
