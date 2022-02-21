@@ -9,24 +9,24 @@ import { INetworkSettings } from "../network/interfaces/IBancorNetwork.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { MasterPool } from "../pools/MasterPool.sol";
+import { OmniPool } from "../pools/OmniPool.sol";
 
-contract TestMasterPool is MasterPool {
+contract TestOmniPool is OmniPool {
     constructor(
         IBancorNetwork initNetwork,
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
-        IPoolToken initMasterPoolToken
+        IPoolToken initOmniPoolToken
     )
-        MasterPool(
+        OmniPool(
             initNetwork,
             initBNTGovernance,
             initVBNTGovernance,
             initNetworkSettings,
             initMasterVault,
-            initMasterPoolToken
+            initOmniPoolToken
         )
     {}
 

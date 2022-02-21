@@ -11,11 +11,11 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const masterVault = await DeployedContracts.MasterVaultV1.deployed();
-    const masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
+    const omniPoolToken = await DeployedContracts.OmniPoolTokenV1.deployed();
 
-    const masterPoolAddress = await deployProxy(
+    const omniPoolAddress = await deployProxy(
         {
-            name: ContractName.MasterPoolV1,
+            name: ContractName.OmniPoolV1,
             from: deployer,
             args: [
                 networkProxy.address,
@@ -23,7 +23,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
                 vbntGovernance.address,
                 networkSettings.address,
                 masterVault.address,
-                masterPoolToken.address
+                omniPoolToken.address
             ]
         },
         {
@@ -32,20 +32,20 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     );
 
     await execute({
-        name: ContractName.MasterPoolTokenV1,
+        name: ContractName.OmniPoolTokenV1,
         methodName: 'transferOwnership',
-        args: [masterPoolAddress],
+        args: [omniPoolAddress],
         from: deployer
     });
 
     await execute({
-        name: ContractName.MasterPoolV1,
+        name: ContractName.OmniPoolV1,
         methodName: 'initialize',
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.MasterPoolV1,
+        name: ContractName.OmniPoolV1,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkProxy.address,
         from: deployer
@@ -54,36 +54,36 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await grantRole({
         name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
-        member: masterPoolAddress,
+        member: omniPoolAddress,
         from: deployer
     });
 
     await grantRole({
         name: ContractName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
-        member: masterPoolAddress,
+        member: omniPoolAddress,
         from: deployer
     });
 
     await grantRole({
         name: ContractName.MasterVaultV1,
         id: Roles.MasterVault.ROLE_BNT_MANAGER,
-        member: masterPoolAddress,
+        member: omniPoolAddress,
         from: deployer
     });
 
     return true;
 };
 
-func.id = ContractName.MasterPoolV1;
+func.id = ContractName.OmniPoolV1;
 func.dependencies = [
     DeploymentTag.V2,
     ContractName.ProxyAdmin,
     ContractName.BancorNetworkProxy,
     ContractName.NetworkSettingsV1,
     ContractName.MasterVaultV1,
-    ContractName.MasterPoolTokenV1
+    ContractName.OmniPoolTokenV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.MasterPoolV1];
+func.tags = [DeploymentTag.V3, ContractName.OmniPoolV1];
 
 export default func;

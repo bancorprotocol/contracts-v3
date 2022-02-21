@@ -60,7 +60,7 @@ import {
     TradeAmountAndFee
 } from "./interfaces/IPoolCollection.sol";
 
-import { IMasterPool } from "./interfaces/IMasterPool.sol";
+import { IOmniPool } from "./interfaces/IOmniPool.sol";
 
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
 
@@ -142,8 +142,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     // the master vault contract
     IMasterVault private immutable _masterVault;
 
-    // the master pool contract
-    IMasterPool internal immutable _masterPool;
+    // the omni pool contract
+    IOmniPool internal immutable _omniPool;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
@@ -257,7 +257,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         IERC20 initBNT,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
-        IMasterPool initMasterPool,
+        IOmniPool initOmniPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
@@ -266,7 +266,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         validAddress(address(initBNT))
         validAddress(address(initNetworkSettings))
         validAddress(address(initMasterVault))
-        validAddress(address(initMasterPool))
+        validAddress(address(initOmniPool))
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initPoolTokenFactory))
         validAddress(address(initPoolCollectionUpgrader))
@@ -275,7 +275,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         _bnt = initBNT;
         _networkSettings = initNetworkSettings;
         _masterVault = initMasterVault;
-        _masterPool = initMasterPool;
+        _omniPool = initOmniPool;
         _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
@@ -929,20 +929,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         if (amounts.bntsProtocolHoldingsDelta.value > 0) {
             assert(amounts.bntsProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
 
-            _masterPool.renounceFunding(contextId, pool, amounts.bntsProtocolHoldingsDelta.value);
+            _omniPool.renounceFunding(contextId, pool, amounts.bntsProtocolHoldingsDelta.value);
         }
 
         if (amounts.bntsTradingLiquidityDelta.value > 0) {
             if (amounts.bntsTradingLiquidityDelta.isNeg) {
-                _masterPool.burnFromVault(amounts.bntsTradingLiquidityDelta.value);
+                _omniPool.burnFromVault(amounts.bntsTradingLiquidityDelta.value);
             } else {
-                _masterPool.mint(address(_masterVault), amounts.bntsTradingLiquidityDelta.value);
+                _omniPool.mint(address(_masterVault), amounts.bntsTradingLiquidityDelta.value);
             }
         }
 
-        // if the provider should receive some BNT - ask the master pool to mint BNT to the provider
+        // if the provider should receive some BNT - ask the omni pool to mint BNT to the provider
         if (amounts.bntsToMintForProvider > 0) {
-            _masterPool.mint(address(provider), amounts.bntsToMintForProvider);
+            _omniPool.mint(address(provider), amounts.bntsToMintForProvider);
         }
 
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from
@@ -1107,7 +1107,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 _networkSettings.poolFundingLimit(pool),
                 MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
             ),
-            liquidity.bntTradingLiquidity + _masterPool.availableFunding(pool)
+            liquidity.bntTradingLiquidity + _omniPool.availableFunding(pool)
         );
 
         // ensure that the target is above the minimum liquidity for trading
@@ -1143,11 +1143,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             );
         }
 
-        // update funding from the master pool
+        // update funding from the omni pool
         if (targetBNTTradingLiquidity > liquidity.bntTradingLiquidity) {
-            _masterPool.requestFunding(contextId, pool, targetBNTTradingLiquidity - liquidity.bntTradingLiquidity);
+            _omniPool.requestFunding(contextId, pool, targetBNTTradingLiquidity - liquidity.bntTradingLiquidity);
         } else if (targetBNTTradingLiquidity < liquidity.bntTradingLiquidity) {
-            _masterPool.renounceFunding(contextId, pool, liquidity.bntTradingLiquidity - targetBNTTradingLiquidity);
+            _omniPool.renounceFunding(contextId, pool, liquidity.bntTradingLiquidity - targetBNTTradingLiquidity);
         }
 
         // calculate the base token trading liquidity based on the new BNT trading liquidity and the effective
@@ -1253,7 +1253,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // renounce all network liquidity
         if (currentBNTTradingLiquidity > 0) {
-            _masterPool.renounceFunding(contextId, pool, currentBNTTradingLiquidity);
+            _omniPool.renounceFunding(contextId, pool, currentBNTTradingLiquidity);
         }
     }
 

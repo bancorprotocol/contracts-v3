@@ -12,7 +12,7 @@ import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVaul
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
-import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
+import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
@@ -61,11 +61,11 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     // the address of the external protection vault
     IExternalRewardsVault private immutable _externalRewardsVault;
 
-    // the master pool contract
-    IMasterPool private immutable _masterPool;
+    // the omni pool contract
+    IOmniPool private immutable _omniPool;
 
-    // the master pool token
-    IPoolToken private immutable _masterPoolToken;
+    // the omni pool token
+    IPoolToken private immutable _omniPoolToken;
 
     // the pending withdrawals contract
     IPendingWithdrawals private immutable _pendingWithdrawals;
@@ -87,7 +87,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IExternalRewardsVault initExternalRewardsVault,
-        IMasterPool initMasterPool,
+        IOmniPool initOmniPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) {
@@ -98,7 +98,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _validAddress(address(initMasterVault));
         _validAddress(address(initExternalProtectionVault));
         _validAddress(address(initExternalRewardsVault));
-        _validAddress(address(initMasterPool));
+        _validAddress(address(initOmniPool));
         _validAddress(address(initPendingWithdrawals));
         _validAddress(address(initPoolCollectionUpgrader));
 
@@ -111,8 +111,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _masterVault = initMasterVault;
         _externalProtectionVault = initExternalProtectionVault;
         _externalRewardsVault = initExternalRewardsVault;
-        _masterPool = initMasterPool;
-        _masterPoolToken = initMasterPool.poolToken();
+        _omniPool = initOmniPool;
+        _omniPoolToken = initOmniPool.poolToken();
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
     }
@@ -233,15 +233,15 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function masterPool() external view returns (IMasterPool) {
-        return _masterPool;
+    function omniPool() external view returns (IOmniPool) {
+        return _omniPool;
     }
 
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function masterPoolToken() external view returns (IPoolToken) {
-        return _masterPoolToken;
+    function omniPoolToken() external view returns (IPoolToken) {
+        return _omniPoolToken;
     }
 
     /**
@@ -293,7 +293,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
         return
             _isBNT(pool)
-                ? _masterPool.poolTokenToUnderlying(poolTokenAmount)
+                ? _omniPool.poolTokenToUnderlying(poolTokenAmount)
                 : _poolCollection(pool).poolTokenToUnderlying(pool, poolTokenAmount);
     }
 
@@ -303,7 +303,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
         return
             _isBNT(pool)
-                ? _masterPool.underlyingToPoolToken(tokenAmount)
+                ? _omniPool.underlyingToPoolToken(tokenAmount)
                 : _poolCollection(pool).underlyingToPoolToken(pool, tokenAmount);
     }
 

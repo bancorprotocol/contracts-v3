@@ -20,7 +20,7 @@ describeDeployment('1642778028-revoke-roles', DeploymentTag.V3, () => {
             ContractName.BancorNetworkV1,
             ContractName.ExternalProtectionVaultV1,
             ContractName.ExternalRewardsVaultV1,
-            ContractName.MasterPoolV1,
+            ContractName.OmniPoolV1,
             ContractName.MasterVaultV1,
             ContractName.NetworkSettingsV1,
             ContractName.PendingWithdrawalsV1,

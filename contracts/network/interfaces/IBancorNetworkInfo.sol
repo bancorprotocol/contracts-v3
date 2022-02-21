@@ -11,7 +11,7 @@ import { IExternalRewardsVault } from "../../vaults/interfaces/IExternalRewardsV
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
-import { IMasterPool } from "../../pools/interfaces/IMasterPool.sol";
+import { IOmniPool } from "../../pools/interfaces/IOmniPool.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -72,14 +72,14 @@ interface IBancorNetworkInfo is IUpgradeable {
     function externalRewardsVault() external view returns (IExternalRewardsVault);
 
     /**
-     * @dev returns the master pool contract
+     * @dev returns the omni pool contract
      */
-    function masterPool() external view returns (IMasterPool);
+    function omniPool() external view returns (IOmniPool);
 
     /**
-     * @dev returns the master pool token contract
+     * @dev returns the omni pool token contract
      */
-    function masterPoolToken() external view returns (IPoolToken);
+    function omniPoolToken() external view returns (IPoolToken);
 
     /**
      * @dev returns the pending withdrawals contract

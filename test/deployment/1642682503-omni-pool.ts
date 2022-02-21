@@ -1,6 +1,6 @@
 import {
     AccessControlEnumerable,
-    MasterPool,
+    OmniPool,
     MasterVault,
     PoolToken,
     ProxyAdmin,
@@ -13,7 +13,7 @@ import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682503-master-pool', ContractName.MasterPoolV1, () => {
+describeDeployment('1642682503-omni-pool', ContractName.OmniPoolV1, () => {
     let deployer: string;
     let liquidityProtection: string;
     let stakingRewards: string;
@@ -22,8 +22,8 @@ describeDeployment('1642682503-master-pool', ContractName.MasterPoolV1, () => {
     let vbntGovernance: TokenGovernance;
     let masterVault: MasterVault;
     let networkProxy: TransparentUpgradeableProxyImmutable;
-    let masterPool: MasterPool;
-    let masterPoolToken: PoolToken;
+    let omniPool: OmniPool;
+    let omniPoolToken: PoolToken;
 
     before(async () => {
         ({ deployer, liquidityProtection, stakingRewards } = await getNamedAccounts());
@@ -35,32 +35,32 @@ describeDeployment('1642682503-master-pool', ContractName.MasterPoolV1, () => {
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         masterVault = await DeployedContracts.MasterVaultV1.deployed();
-        masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
-        masterPool = await DeployedContracts.MasterPoolV1.deployed();
+        omniPoolToken = await DeployedContracts.OmniPoolTokenV1.deployed();
+        omniPool = await DeployedContracts.OmniPoolV1.deployed();
     });
 
-    it('should deploy and configure the master pool contract', async () => {
-        expect(await proxyAdmin.getProxyAdmin(masterPool.address)).to.equal(proxyAdmin.address);
+    it('should deploy and configure the omni pool contract', async () => {
+        expect(await proxyAdmin.getProxyAdmin(omniPool.address)).to.equal(proxyAdmin.address);
 
-        expect(await masterPool.version()).to.equal(1);
+        expect(await omniPool.version()).to.equal(1);
 
-        expect(await masterPool.poolToken()).to.equal(masterPoolToken.address);
+        expect(await omniPool.poolToken()).to.equal(omniPoolToken.address);
 
-        await expectRoleMembers(masterPool, Roles.Upgradeable.ROLE_ADMIN, [deployer, networkProxy.address]);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_BNT_MANAGER);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER);
+        await expectRoleMembers(omniPool, Roles.Upgradeable.ROLE_ADMIN, [deployer, networkProxy.address]);
+        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER);
+        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_MANAGER);
+        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_VAULT_MANAGER);
+        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_FUNDING_MANAGER);
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address]
+            isMainnet() ? [omniPool.address, liquidityProtection, stakingRewards] : [omniPool.address]
         );
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address]
+            isMainnet() ? [omniPool.address, liquidityProtection] : [omniPool.address]
         );
-        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER, [masterPool.address]);
+        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER, [omniPool.address]);
     });
 });

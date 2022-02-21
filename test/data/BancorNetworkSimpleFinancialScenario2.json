@@ -51,7 +51,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "0"
+                    "omniPool": "0"
                 },
                 "bntCurrentPoolFunding": "0",
                 "tknStakedBalance": "1000000",
@@ -88,7 +88,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "0"
+                    "omniPool": "0"
                 },
                 "bntCurrentPoolFunding": "0",
                 "tknStakedBalance": "5500000",
@@ -128,7 +128,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "2000000"
+                    "omniPool": "2000000"
                 },
                 "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "5500000",
@@ -165,7 +165,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "100000",
-                    "masterPool": "1900000"
+                    "omniPool": "1900000"
                 },
                 "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "5500000",
@@ -202,7 +202,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "100000",
-                    "masterPool": "1900000"
+                    "omniPool": "1900000"
                 },
                 "bntCurrentPoolFunding": "2000002.498750624687656171",
                 "tknStakedBalance": "5500000",
@@ -239,7 +239,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "100000",
-                    "masterPool": "1900000"
+                    "omniPool": "1900000"
                 },
                 "bntCurrentPoolFunding": "2000002.498750624687656171",
                 "tknStakedBalance": "5500002.50124625000562218",
@@ -276,7 +276,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "100000",
-                    "masterPool": "1900000"
+                    "omniPool": "1900000"
                 },
                 "bntCurrentPoolFunding": "2000002.498750624687656171",
                 "tknStakedBalance": "2750001.25062312500281109",
@@ -313,7 +313,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "50000",
-                    "masterPool": "1950000"
+                    "omniPool": "1950000"
                 },
                 "bntCurrentPoolFunding": "2000002.498750624687656171",
                 "tknStakedBalance": "2750001.25062312500281109",

@@ -10,7 +10,7 @@ import Contracts, {
     TestBancorNetwork,
     TestERC20Token,
     TestFlashLoanRecipient,
-    TestMasterPool,
+    TestOmniPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
@@ -402,7 +402,7 @@ describe('Profile @profile', () => {
         let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let masterPoolToken: PoolToken;
+        let omniPoolToken: PoolToken;
 
         const setTime = async (time: number) => {
             await network.setTime(time);
@@ -410,7 +410,7 @@ describe('Profile @profile', () => {
         };
 
         beforeEach(async () => {
-            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, masterPoolToken } =
+            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, omniPoolToken } =
                 await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -441,7 +441,7 @@ describe('Profile @profile', () => {
             beforeEach(async () => {
                 if (tokenData.isBNT()) {
                     token = bnt;
-                    poolToken = masterPoolToken;
+                    poolToken = omniPoolToken;
 
                     const reserveToken = await createTestToken();
                     await createPool(reserveToken, network, networkSettings, poolCollection);
@@ -1197,7 +1197,7 @@ describe('Profile @profile', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let masterPool: TestMasterPool;
+        let omniPool: TestOmniPool;
         let bnt: IERC20;
         let poolCollection: TestPoolCollection;
         let externalRewardsVault: ExternalRewardsVault;
@@ -1251,20 +1251,20 @@ describe('Profile @profile', () => {
             let rewardsVault: IVault;
 
             beforeEach(async () => {
-                ({ network, networkInfo, networkSettings, bnt, masterPool, poolCollection, externalRewardsVault } =
+                ({ network, networkInfo, networkSettings, bnt, omniPool, poolCollection, externalRewardsVault } =
                     await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                 ({ token } = await prepareSimplePool(tokenData, providerStake, totalRewards));
 
-                rewardsVault = tokenData.isBNT() ? masterPool : externalRewardsVault;
+                rewardsVault = tokenData.isBNT() ? omniPool : externalRewardsVault;
 
                 autoCompoundingStakingRewards = await createStakingRewards(
                     network,
                     networkSettings,
                     bnt,
-                    masterPool,
+                    omniPool,
                     externalRewardsVault
                 );
             });

@@ -22,11 +22,11 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 // prettier-ignore
 import {
-    IMasterPool,
+    IOmniPool,
     ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
-} from "./interfaces/IMasterPool.sol";
+} from "./interfaces/IOmniPool.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
@@ -40,9 +40,9 @@ import { IVault } from "../vaults/interfaces/IVault.sol";
 import { PoolToken } from "./PoolToken.sol";
 
 /**
- * @dev Master Pool contract
+ * @dev Omni Pool contract
  */
-contract MasterPool is IMasterPool, Vault {
+contract OmniPool is IOmniPool, Vault {
     using TokenLibrary for Token;
 
     error FundingLimitExceeded();
@@ -52,8 +52,8 @@ contract MasterPool is IMasterPool, Vault {
         uint256 withdrawalFeeAmount;
     }
 
-    // the master pool token manager role is required to access the master pool token reserve
-    bytes32 private constant ROLE_MASTER_POOL_TOKEN_MANAGER = keccak256("ROLE_MASTER_POOL_TOKEN_MANAGER");
+    // the omni pool token manager role is required to access the omni pool token reserve
+    bytes32 private constant ROLE_OMNI_POOL_TOKEN_MANAGER = keccak256("ROLE_OMNI_POOL_TOKEN_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -64,7 +64,7 @@ contract MasterPool is IMasterPool, Vault {
     // the master vault contract
     IMasterVault private immutable _masterVault;
 
-    // the master pool token
+    // the omni pool token
     IPoolToken internal immutable _poolToken;
 
     // the total staked BNT balance in the network
@@ -110,7 +110,7 @@ contract MasterPool is IMasterPool, Vault {
     event FundingRenounced(bytes32 indexed contextId, Token indexed pool, uint256 bntAmount, uint256 poolTokenAmount);
 
     /**
-     * @dev triggered when the total liquidity in the master pool is updated
+     * @dev triggered when the total liquidity in the omni pool is updated
      */
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
@@ -128,25 +128,25 @@ contract MasterPool is IMasterPool, Vault {
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
-        IPoolToken initMasterPoolToken
+        IPoolToken initOmniPoolToken
     )
         Vault(initBNTGovernance, initVBNTGovernance)
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initMasterVault))
-        validAddress(address(initMasterPoolToken))
+        validAddress(address(initOmniPoolToken))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
         _masterVault = initMasterVault;
-        _poolToken = initMasterPoolToken;
+        _poolToken = initOmniPoolToken;
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __MasterPool_init();
+        __OmniPool_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -154,20 +154,20 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __MasterPool_init() internal onlyInitializing {
+    function __OmniPool_init() internal onlyInitializing {
         __Vault_init();
 
-        __MasterPool_init_unchained();
+        __OmniPool_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __MasterPool_init_unchained() internal onlyInitializing {
+    function __OmniPool_init_unchained() internal onlyInitializing {
         _poolToken.acceptOwnership();
 
         // set up administrative roles
-        _setRoleAdmin(ROLE_MASTER_POOL_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_OMNI_POOL_TOKEN_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_BNT_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_VAULT_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_FUNDING_MANAGER, ROLE_ADMIN);
@@ -205,10 +205,10 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @dev returns the master pool token manager role
+     * @dev returns the omni pool token manager role
      */
-    function roleMasterPoolTokenManager() external pure returns (bytes32) {
-        return ROLE_MASTER_POOL_TOKEN_MANAGER;
+    function roleOmniPoolTokenManager() external pure returns (bytes32) {
+        return ROLE_OMNI_POOL_TOKEN_MANAGER;
     }
 
     /**
@@ -237,8 +237,8 @@ contract MasterPool is IMasterPool, Vault {
      *
      * requirements:
      *
-     * - reserve token must be the master pool token
-     * - the caller must have the ROLE_MASTER_POOL_TOKEN_MANAGER role
+     * - reserve token must be the omni pool token
+     * - the caller must have the ROLE_OMNI_POOL_TOKEN_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,
@@ -246,53 +246,53 @@ contract MasterPool is IMasterPool, Vault {
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return token.isEqual(_poolToken) && hasRole(ROLE_MASTER_POOL_TOKEN_MANAGER, caller);
+        return token.isEqual(_poolToken) && hasRole(ROLE_OMNI_POOL_TOKEN_MANAGER, caller);
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function poolToken() external view returns (IPoolToken) {
         return _poolToken;
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function stakedBalance() external view returns (uint256) {
         return _stakedBalance;
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function currentPoolFunding(Token pool) external view returns (uint256) {
         return _currentPoolFunding[pool];
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function availableFunding(Token pool) external view returns (uint256) {
         return MathEx.subMax0(_networkSettings.poolFundingLimit(pool), _currentPoolFunding[pool]);
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function poolTokenToUnderlying(uint256 poolTokenAmount) external view returns (uint256) {
         return _poolTokenToUnderlying(poolTokenAmount);
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function underlyingToPoolToken(uint256 bntAmount) external view returns (uint256) {
         return _underlyingToPoolToken(bntAmount);
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function poolTokenAmountToBurn(uint256 bntAmountToDistribute) external view returns (uint256) {
         if (bntAmountToDistribute == 0) {
@@ -311,7 +311,7 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function mint(address recipient, uint256 bntAmount)
         external
@@ -323,14 +323,14 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function burnFromVault(uint256 bntAmount) external onlyRoleMember(ROLE_VAULT_MANAGER) greaterThanZero(bntAmount) {
         _masterVault.burn(Token(address(_bnt)), bntAmount);
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function depositFor(
         bytes32 contextId,
@@ -373,7 +373,7 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function withdraw(
         bytes32 contextId,
@@ -402,7 +402,7 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function requestFunding(
         bytes32 contextId,
@@ -462,7 +462,7 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function renounceFunding(
         bytes32 contextId,
@@ -513,7 +513,7 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @inheritdoc IMasterPool
+     * @inheritdoc IOmniPool
      */
     function onFeesCollected(
         Token pool,
