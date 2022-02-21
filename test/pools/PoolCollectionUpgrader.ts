@@ -60,7 +60,7 @@ describe('PoolCollectionUpgrader', () => {
 
     describe('pool upgrade', () => {
         let network: TestBancorNetwork;
-        let networkToken: IERC20;
+        let bnt: IERC20;
         let networkSettings: NetworkSettings;
         let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
@@ -74,7 +74,7 @@ describe('PoolCollectionUpgrader', () => {
         beforeEach(async () => {
             ({
                 network,
-                networkToken,
+                bnt,
                 networkSettings,
                 masterVault,
                 externalProtectionVault,
@@ -120,7 +120,7 @@ describe('PoolCollectionUpgrader', () => {
             const reserveToken2 = await createTestToken();
             const poolCollection2 = await createPoolCollection(
                 network,
-                networkToken,
+                bnt,
                 networkSettings,
                 masterVault,
                 masterPool,
@@ -134,7 +134,7 @@ describe('PoolCollectionUpgrader', () => {
             const reserveToken3 = await createTestToken();
             const poolCollection3 = await createPoolCollection(
                 network,
-                networkToken,
+                bnt,
                 networkSettings,
                 masterVault,
                 masterPool,
@@ -156,7 +156,7 @@ describe('PoolCollectionUpgrader', () => {
             beforeEach(async () => {
                 targetPoolCollection = await createPoolCollection(
                     network,
-                    networkToken,
+                    bnt,
                     networkSettings,
                     masterVault,
                     masterPool,

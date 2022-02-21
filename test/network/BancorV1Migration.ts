@@ -21,7 +21,7 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('BancorV1Migration', () => {
-    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BNT_FUNDING_RATE = 1;
     const BASE_TOKEN_FUNDING_RATE = 2;
     const FUNDING_LIMIT = BigNumber.from(100_000_000);
     const MIN_LIQUIDITY = BigNumber.from(100_000);
@@ -31,12 +31,12 @@ describe('BancorV1Migration', () => {
     let deployer: SignerWithAddress;
     let provider: SignerWithAddress;
 
-    let networkTokenGovernance: TokenGovernance;
-    let govTokenGovernance: TokenGovernance;
-    let govToken: IERC20;
+    let bntGovernance: TokenGovernance;
+    let vbntGovernance: TokenGovernance;
+    let vbnt: IERC20;
     let network: TestBancorNetwork;
     let networkSettings: NetworkSettings;
-    let networkToken: IERC20;
+    let bnt: IERC20;
     let masterPoolToken: PoolToken;
     let basePoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
@@ -53,29 +53,29 @@ describe('BancorV1Migration', () => {
 
     beforeEach(async () => {
         ({
-            networkTokenGovernance,
-            govTokenGovernance,
-            govToken,
+            bntGovernance,
+            vbntGovernance,
+            vbnt,
             network,
             networkSettings,
-            networkToken,
+            bnt,
             masterPoolToken,
             pendingWithdrawals,
             poolCollection,
             masterVault
         } = await createSystem());
 
-        bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address, networkToken.address);
+        bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address, bnt.address);
     });
 
     describe('construction', () => {
         it('should revert when attempting to create with an invalid network contract', async () => {
-            await expect(Contracts.BancorV1Migration.deploy(ZERO_ADDRESS, networkToken.address)).to.be.revertedWith(
+            await expect(Contracts.BancorV1Migration.deploy(ZERO_ADDRESS, bnt.address)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
-        it('should revert when attempting to create with an invalid network token contract', async () => {
+        it('should revert when attempting to create with an invalid BNT contract', async () => {
             await expect(Contracts.BancorV1Migration.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
@@ -93,14 +93,14 @@ describe('BancorV1Migration', () => {
             deployer,
             network,
             masterVault,
-            networkToken,
-            networkTokenGovernance,
-            govTokenGovernance,
+            bnt,
+            bntGovernance,
+            vbntGovernance,
             baseToken
         ));
 
-        await networkTokenGovernance.mint(deployer.address, TOTAL_SUPPLY);
-        await networkToken.transfer(provider.address, networkAmount);
+        await bntGovernance.mint(deployer.address, TOTAL_SUPPLY);
+        await bnt.transfer(provider.address, networkAmount);
 
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
 
@@ -109,7 +109,7 @@ describe('BancorV1Migration', () => {
 
         await pendingWithdrawals.setLockDuration(0);
 
-        await networkToken.connect(provider).approve(converter.address, networkAmount);
+        await bnt.connect(provider).approve(converter.address, networkAmount);
         if (!isNativeToken) {
             const token = await Contracts.TestERC20Token.attach(baseToken.address);
             await token.transfer(provider.address, baseAmount);
@@ -118,7 +118,7 @@ describe('BancorV1Migration', () => {
 
         await converter
             .connect(provider)
-            .addLiquidity([networkToken.address, baseToken.address], [networkAmount, baseAmount], 1, {
+            .addLiquidity([bnt.address, baseToken.address], [networkAmount, baseAmount], 1, {
                 value: isNativeToken ? baseAmount : BigNumber.from(0)
             });
     };
@@ -135,7 +135,7 @@ describe('BancorV1Migration', () => {
             BigNumber.from(amount).sub(BigNumber.from(amount).mul(withdrawalFee).div(PPM_RESOLUTION));
 
         const prevProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
-        const prevConverterNetworkBalance = await getBalance(networkToken, converter.address);
+        const prevConverterNetworkBalance = await getBalance(bnt, converter.address);
         const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
         const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const prevPoolTokenSupply = await poolToken.totalSupply();
@@ -146,7 +146,7 @@ describe('BancorV1Migration', () => {
         await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
 
         const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
-        const currConverterNetworkBalance = await getBalance(networkToken, converter.address);
+        const currConverterNetworkBalance = await getBalance(bnt, converter.address);
         const currConverterBaseBalance = await getBalance(baseToken, converter.address);
         const currVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const currPoolTokenSupply = await poolToken.totalSupply();
@@ -163,7 +163,7 @@ describe('BancorV1Migration', () => {
         expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(migratedBaseAmount));
         expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
-        const prevProviderNetworkBalance = await getBalance(networkToken, provider);
+        const prevProviderNetworkBalance = await getBalance(bnt, provider);
 
         const masterPoolTokenAmount = await getBalance(masterPoolToken, provider.address);
         await masterPoolToken.connect(provider).approve(network.address, masterPoolTokenAmount);
@@ -171,7 +171,7 @@ describe('BancorV1Migration', () => {
         await network.connect(provider).initWithdrawal(masterPoolToken.address, masterPoolTokenAmount);
 
         const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-        await govToken.connect(provider).approve(network.address, await getBalance(govToken, provider.address));
+        await vbnt.connect(provider).approve(network.address, await getBalance(vbnt, provider.address));
         await network.connect(provider).withdraw(networkIds[0]);
 
         const basePoolTokenAmount = await getBalance(basePoolToken, provider.address);
@@ -188,7 +188,7 @@ describe('BancorV1Migration', () => {
             transactionCost = await getTransactionCost(res);
         }
 
-        const currProviderNetworkBalance = await getBalance(networkToken, provider);
+        const currProviderNetworkBalance = await getBalance(bnt, provider);
         const currProviderBaseBalance = await getBalance(baseToken, provider);
 
         expect(currProviderNetworkBalance).to.equal(
@@ -234,7 +234,7 @@ describe('BancorV1Migration', () => {
 
                             await poolCollection.enableTrading(
                                 baseToken.address,
-                                NETWORK_TOKEN_FUNDING_RATE,
+                                BNT_FUNDING_RATE,
                                 BASE_TOKEN_FUNDING_RATE
                             );
 

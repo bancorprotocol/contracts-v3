@@ -32,24 +32,24 @@ interface IBancorNetworkInfo is IUpgradeable {
     function network() external view returns (IBancorNetwork);
 
     /**
-     * @dev returns the network token contract
+     * @dev returns the BNT contract
      */
-    function networkToken() external view returns (IERC20);
+    function bnt() external view returns (IERC20);
 
     /**
-     * @dev returns the network token governance contract
+     * @dev returns the BNT governance contract
      */
-    function networkTokenGovernance() external view returns (ITokenGovernance);
+    function bntGovernance() external view returns (ITokenGovernance);
 
     /**
-     * @dev returns the governance token contract
+     * @dev returns the VBNT contract
      */
-    function govToken() external view returns (IERC20);
+    function vbnt() external view returns (IERC20);
 
     /**
-     * @dev returns the governance token governance contract
+     * @dev returns the VBNT governance contract
      */
-    function govTokenGovernance() external view returns (ITokenGovernance);
+    function vbntGovernance() external view returns (ITokenGovernance);
 
     /**
      * @dev returns the network settings contract
@@ -115,7 +115,7 @@ interface IBancorNetworkInfo is IUpgradeable {
     function isReadyForWithdrawal(uint256 id) external view returns (bool);
 
     /**
-     * @dev converts the specified pool token amount to the underlying network token amount
+     * @dev converts the specified pool token amount to the underlying BNT amount
      */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256);
 

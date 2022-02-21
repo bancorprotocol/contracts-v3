@@ -22,31 +22,31 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     using SafeERC20 for IERC20;
     using TokenLibrary for Token;
 
-    // the address of the network token
-    IERC20 internal immutable _networkToken;
+    // the address of the BNT token
+    IERC20 internal immutable _bnt;
 
-    // the address of the network token governance
-    ITokenGovernance internal immutable _networkTokenGovernance;
+    // the address of the BNT token governance
+    ITokenGovernance internal immutable _bntGovernance;
 
-    // the address of the governance token
-    IERC20 internal immutable _govToken;
+    // the address of the VBNT token
+    IERC20 internal immutable _vbnt;
 
-    // the address of the governance token governance
-    ITokenGovernance internal immutable _govTokenGovernance;
+    // the address of the VBNT token governance
+    ITokenGovernance internal immutable _vbntGovernance;
 
     // solhint-disable func-name-mixedcase
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
-        validAddress(address(initNetworkTokenGovernance))
-        validAddress(address(initGovTokenGovernance))
+    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
+        validAddress(address(initBNTGovernance))
+        validAddress(address(initVBNTGovernance))
     {
-        _networkTokenGovernance = initNetworkTokenGovernance;
-        _networkToken = initNetworkTokenGovernance.token();
-        _govTokenGovernance = initGovTokenGovernance;
-        _govToken = initGovTokenGovernance.token();
+        _bntGovernance = initBNTGovernance;
+        _bnt = initBNTGovernance.token();
+        _vbntGovernance = initVBNTGovernance;
+        _vbnt = initVBNTGovernance.token();
     }
 
     /**
@@ -164,11 +164,11 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
             revert InvalidToken();
         }
 
-        // allow vaults to burn network and governance tokens via their respective token governance modules
-        if (token.isEqual(_networkToken)) {
-            _networkTokenGovernance.burn(amount);
-        } else if (token.isEqual(_govToken)) {
-            _govTokenGovernance.burn(amount);
+        // allow vaults to burn network and VBNTs via their respective token governance modules
+        if (token.isEqual(_bnt)) {
+            _bntGovernance.burn(amount);
+        } else if (token.isEqual(_vbnt)) {
+            _vbntGovernance.burn(amount);
         } else {
             IERC20Burnable(address(token)).burn(amount);
         }

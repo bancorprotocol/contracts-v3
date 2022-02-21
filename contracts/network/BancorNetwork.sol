@@ -40,7 +40,7 @@ import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgr
 // prettier-ignore
 import {
     IMasterPool,
-    ROLE_NETWORK_TOKEN_MANAGER,
+    ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
 } from "../pools/interfaces/IMasterPool.sol";
@@ -102,17 +102,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the network fee manager role is required to pull the accumulated pending network fees
     bytes32 private constant ROLE_NETWORK_FEE_MANAGER = keccak256("ROLE_NETWORK_FEE_MANAGER");
 
-    // the address of the network token
-    IERC20 private immutable _networkToken;
+    // the address of the BNT token
+    IERC20 private immutable _bnt;
 
-    // the address of the network token governance
-    ITokenGovernance private immutable _networkTokenGovernance;
+    // the address of the BNT token governance
+    ITokenGovernance private immutable _bntGovernance;
 
-    // the address of the governance token
-    IERC20 private immutable _govToken;
+    // the address of the VBNT token
+    IERC20 private immutable _vbnt;
 
-    // the address of the governance token governance
-    ITokenGovernance private immutable _govTokenGovernance;
+    // the address of the VBNT token governance
+    ITokenGovernance private immutable _vbntGovernance;
 
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
@@ -198,9 +198,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token indexed targetToken,
         uint256 sourceAmount,
         uint256 targetAmount,
-        uint256 networkTokenAmount,
+        uint256 bntAmount,
         uint256 targetFeeAmount,
-        uint256 networkTokenFeeAmount,
+        uint256 bntFeeAmount,
         address trader
     );
 
@@ -219,24 +219,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(
-        ITokenGovernance initNetworkTokenGovernance,
-        ITokenGovernance initGovTokenGovernance,
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initMasterPoolToken
     )
-        validAddress(address(initNetworkTokenGovernance))
-        validAddress(address(initGovTokenGovernance))
+        validAddress(address(initBNTGovernance))
+        validAddress(address(initVBNTGovernance))
         validAddress(address(initNetworkSettings))
         validAddress(address(initMasterVault))
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initMasterPoolToken))
     {
-        _networkTokenGovernance = initNetworkTokenGovernance;
-        _networkToken = initNetworkTokenGovernance.token();
-        _govTokenGovernance = initGovTokenGovernance;
-        _govToken = initGovTokenGovernance.token();
+        _bntGovernance = initBNTGovernance;
+        _bnt = initBNTGovernance.token();
+        _vbntGovernance = initVBNTGovernance;
+        _vbnt = initVBNTGovernance.token();
 
         _networkSettings = initNetworkSettings;
         _masterVault = initMasterVault;
@@ -471,14 +471,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc IBancorNetwork
      */
     function isPoolValid(Token pool) external view returns (bool) {
-        return address(pool) == address(_networkToken) || _liquidityPools.contains(address(pool));
+        return address(pool) == address(_bnt) || _liquidityPools.contains(address(pool));
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
     function createPool(uint16 poolType, Token token) external nonReentrant validAddress(address(token)) {
-        if (_isNetworkToken(token)) {
+        if (_isBNT(token)) {
             revert InvalidToken();
         }
 
@@ -601,7 +601,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
         if (completedRequest.poolToken == _masterPoolToken) {
-            _withdrawNetworkToken(contextId, provider, completedRequest);
+            _withdrawBNT(contextId, provider, completedRequest);
         } else {
             _withdrawBaseToken(contextId, provider, completedRequest);
         }
@@ -725,7 +725,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         nonReentrant
     {
-        if (!_isNetworkToken(token) && !_networkSettings.isTokenWhitelisted(token)) {
+        if (!_isBNT(token) && !_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
 
@@ -754,7 +754,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // notify the pool of accrued fees
-        if (_isNetworkToken(token)) {
+        if (_isBNT(token)) {
             IMasterPool cachedMasterPool = _masterPool;
 
             cachedMasterPool.onFeesCollected(token, feeAmount, false);
@@ -833,8 +833,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             abi.encodePacked(msg.sender, _time(), token, provider, amount, availableAmount, originalAmount)
         );
 
-        if (_isNetworkToken(token)) {
-            _depositNetworkTokenFor(contextId, provider, amount, msg.sender, true, originalAmount);
+        if (_isBNT(token)) {
+            _depositBNTFor(contextId, provider, amount, msg.sender, true, originalAmount);
         } else {
             _depositBaseTokenFor(contextId, provider, token, amount, msg.sender, availableAmount);
         }
@@ -853,11 +853,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _pendingNetworkFeeAmount = 0;
 
-        _masterVault.withdrawFunds(
-            Token(address(_networkToken)),
-            payable(address(msg.sender)),
-            pendingNetworkFeeAmount
-        );
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(address(msg.sender)), pendingNetworkFeeAmount);
     }
 
     /**
@@ -954,24 +950,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, caller);
 
-        if (_isNetworkToken(pool)) {
-            _depositNetworkTokenFor(contextId, provider, tokenAmount, caller, false, 0);
+        if (_isBNT(pool)) {
+            _depositBNTFor(contextId, provider, tokenAmount, caller, false, 0);
         } else {
             _depositBaseTokenFor(contextId, provider, pool, tokenAmount, caller, tokenAmount);
         }
     }
 
     /**
-     * @dev deposits network token liquidity for the specified provider from caller
+     * @dev deposits BNT liquidity for the specified provider from caller
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer network tokens to on its behalf
+     * - the caller must have approved the network to transfer BNTs to on its behalf
      */
-    function _depositNetworkTokenFor(
+    function _depositBNTFor(
         bytes32 contextId,
         address provider,
-        uint256 networkTokenAmount,
+        uint256 bntAmount,
         address caller,
         bool isMigrating,
         uint256 originalAmount
@@ -979,10 +975,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IMasterPool cachedMasterPool = _masterPool;
 
         // transfer the tokens from the caller to the master pool
-        _networkToken.transferFrom(caller, address(cachedMasterPool), networkTokenAmount);
+        _bnt.transferFrom(caller, address(cachedMasterPool), bntAmount);
 
         // process master pool deposit
-        cachedMasterPool.depositFor(contextId, provider, networkTokenAmount, isMigrating, originalAmount);
+        cachedMasterPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
     }
 
     /**
@@ -1020,8 +1016,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Signature memory signature,
         address caller
     ) private {
-        // neither the network token nor ETH support EIP2612 permit requests
-        if (_isNetworkToken(token) || token.isNative()) {
+        // neither the BNT or ETH support EIP2612 permit requests
+        if (_isBNT(token) || token.isNative()) {
             revert PermitUnsupported();
         }
 
@@ -1068,9 +1064,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev handles network token withdrawal
+     * @dev handles BNT withdrawal
      */
-    function _withdrawNetworkToken(
+    function _withdrawBNT(
         bytes32 contextId,
         address provider,
         CompletedWithdrawal memory completedRequest
@@ -1081,8 +1077,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // pending withdrawal, on behalf of the network
         completedRequest.poolToken.approve(address(cachedMasterPool), completedRequest.poolTokenAmount);
 
-        // transfer governance tokens from the caller to the master pool
-        _govToken.transferFrom(provider, address(cachedMasterPool), completedRequest.poolTokenAmount);
+        // transfer VBNTs from the caller to the master pool
+        _vbnt.transferFrom(provider, address(cachedMasterPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the master pool
         cachedMasterPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
@@ -1175,10 +1171,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // perform either a single or double hop trade, based on the source and the target pool
         TradeAmountAndNetworkFee memory tradeResult;
-        if (_isNetworkToken(sourceToken)) {
-            tradeResult = _tradeNetworkToken(contextId, targetToken, true, params, trader);
-        } else if (_isNetworkToken(targetToken)) {
-            tradeResult = _tradeNetworkToken(contextId, sourceToken, false, params, trader);
+        if (_isBNT(sourceToken)) {
+            tradeResult = _tradeBNT(contextId, targetToken, true, params, trader);
+        } else if (_isBNT(targetToken)) {
+            tradeResult = _tradeBNT(contextId, sourceToken, false, params, trader);
         } else {
             tradeResult = _tradeBaseTokens(contextId, sourceToken, targetToken, params, trader);
         }
@@ -1198,7 +1194,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a single hop between the network token and a base token trade by providing either the source or
+     * @dev performs a single hop between the BNT and a base token trade by providing either the source or
      * the target amount
      *
      * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
@@ -1206,16 +1202,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * - when trading by the target amount, the amount represents the target amount and the limit is the maximum source
      *   amount
      */
-    function _tradeNetworkToken(
+    function _tradeBNT(
         bytes32 contextId,
         Token pool,
-        bool isSourceNetworkToken,
+        bool isSourceBNT,
         TradeParams memory params,
         address trader
     ) private returns (TradeAmountAndNetworkFee memory) {
-        TradeTokens memory tokens = isSourceNetworkToken
-            ? TradeTokens({ sourceToken: Token(address(_networkToken)), targetToken: pool })
-            : TradeTokens({ sourceToken: pool, targetToken: Token(address(_networkToken)) });
+        TradeTokens memory tokens = isSourceBNT
+            ? TradeTokens({ sourceToken: Token(address(_bnt)), targetToken: pool })
+            : TradeTokens({ sourceToken: pool, targetToken: Token(address(_bnt)) });
 
         TradeAmountAndFee memory tradeAmountsAndFee = params.bySourceAmount
             ? _poolCollection(pool).tradeBySourceAmount(
@@ -1233,8 +1229,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is the network token, notify the master pool on collected fees
-        if (!isSourceNetworkToken) {
+        // if the target token is the BNT, notify the master pool on collected fees
+        if (!isSourceBNT) {
             _masterPool.onFeesCollected(
                 pool,
                 tradeAmountsAndFee.tradingFeeAmount - tradeAmountsAndFee.networkFeeAmount,
@@ -1253,11 +1249,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             targetToken: tokens.targetToken,
             sourceAmount: tradeAmounts.sourceAmount,
             targetAmount: tradeAmounts.targetAmount,
-            networkTokenAmount: isSourceNetworkToken ? tradeAmounts.sourceAmount : tradeAmounts.targetAmount,
+            bntAmount: isSourceBNT ? tradeAmounts.sourceAmount : tradeAmounts.targetAmount,
             targetFeeAmount: tradeAmountsAndFee.tradingFeeAmount,
-            networkTokenFeeAmount: isSourceNetworkToken
-                ? tradeAmountsAndFee.networkFeeAmount
-                : tradeAmountsAndFee.tradingFeeAmount,
+            bntFeeAmount: isSourceBNT ? tradeAmountsAndFee.networkFeeAmount : tradeAmountsAndFee.tradingFeeAmount,
             trader: trader
         });
 
@@ -1287,8 +1281,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             uint256 sourceAmount = params.amount;
             uint256 minReturnAmount = params.limit;
 
-            // trade source tokens to network tokens (while accepting any return amount)
-            TradeAmountAndNetworkFee memory targetHop1 = _tradeNetworkToken(
+            // trade source tokens to BNTs (while accepting any return amount)
+            TradeAmountAndNetworkFee memory targetHop1 = _tradeBNT(
                 contextId,
                 sourceToken,
                 false,
@@ -1296,9 +1290,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 trader
             );
 
-            // trade the received network token target amount to target tokens (while respecting the minimum return
+            // trade the received BNT target amount to target tokens (while respecting the minimum return
             // amount)
-            TradeAmountAndNetworkFee memory targetHop2 = _tradeNetworkToken(
+            TradeAmountAndNetworkFee memory targetHop2 = _tradeBNT(
                 contextId,
                 targetToken,
                 true,
@@ -1314,9 +1308,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 targetAmount = params.amount;
         uint256 maxSourceAmount = params.limit;
 
-        // trade any amount of network tokens to get the requested target amount (we will use the actual traded amount
+        // trade any amount of BNTs to get the requested target amount (we will use the actual traded amount
         // to restrict the trade from the source)
-        TradeAmountAndNetworkFee memory sourceHop1 = _tradeNetworkToken(
+        TradeAmountAndNetworkFee memory sourceHop1 = _tradeBNT(
             contextId,
             targetToken,
             true,
@@ -1324,8 +1318,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             trader
         );
 
-        // trade source tokens to the required amount of network tokens (while respecting the maximum source amount)
-        TradeAmountAndNetworkFee memory sourceHop2 = _tradeNetworkToken(
+        // trade source tokens to the required amount of BNTs (while respecting the maximum source amount)
+        TradeAmountAndNetworkFee memory sourceHop2 = _tradeBNT(
             contextId,
             sourceToken,
             false,
@@ -1382,10 +1376,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns whether the specified token is the network token
+     * @dev returns whether the specified token is the BNT
      */
-    function _isNetworkToken(Token token) private view returns (bool) {
-        return token.isEqual(_networkToken);
+    function _isBNT(Token token) private view returns (bool) {
+        return token.isEqual(_bnt);
     }
 
     /**
@@ -1410,13 +1404,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address poolCollectionAddress = address(poolCollection);
 
         if (set) {
-            _masterPool.grantRole(ROLE_NETWORK_TOKEN_MANAGER, poolCollectionAddress);
+            _masterPool.grantRole(ROLE_BNT_MANAGER, poolCollectionAddress);
             _masterPool.grantRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
             _masterPool.grantRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
             _masterVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
             _externalProtectionVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
         } else {
-            _masterPool.revokeRole(ROLE_NETWORK_TOKEN_MANAGER, poolCollectionAddress);
+            _masterPool.revokeRole(ROLE_BNT_MANAGER, poolCollectionAddress);
             _masterPool.revokeRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
             _masterPool.revokeRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
             _masterVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);

@@ -6,7 +6,7 @@ export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 export enum TokenSymbol {
     ETH = 'ETH',
     BNT = 'BNT',
-    vBNT = 'vBNT',
+    VBNT = 'VBNT',
     bnBNT = 'bnBNT',
     TKN = 'TKN',
     TKN1 = 'TKN1',
@@ -32,7 +32,7 @@ const TOKEN_DATA = {
             exceedsBalance: 'SafeERC20: low-level call failed'
         }
     },
-    [TokenSymbol.vBNT]: {
+    [TokenSymbol.VBNT]: {
         name: 'Bancor Governance Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
@@ -118,7 +118,7 @@ export class TokenData {
         return this._symbol === TokenSymbol.ETH;
     }
 
-    isNetworkToken() {
+    isBNT() {
         return this._symbol === TokenSymbol.BNT;
     }
 }

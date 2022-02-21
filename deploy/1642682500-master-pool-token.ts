@@ -13,12 +13,12 @@ interface PoolTokenCreated {
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const networkToken = await DeployedContracts.NetworkToken.deployed();
+    const bnt = await DeployedContracts.BNT.deployed();
 
     const { events } = await execute({
         name: ContractName.PoolTokenFactoryV1,
         methodName: 'createPoolToken',
-        args: [networkToken.address],
+        args: [bnt.address],
         from: deployer
     });
 

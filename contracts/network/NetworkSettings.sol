@@ -20,7 +20,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // a set of tokens which are eligible for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
-    // a mapping of network token funding limits per pool
+    // a mapping of BNT funding limits per pool
     mapping(Token => uint256) private _poolFundingLimits;
 
     // below that amount, trading is disabled and co-investments use the initial rate
@@ -175,7 +175,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev updates the amount of network tokens that the protocol can fund a specific pool
+     * @dev updates the amount of BNTs that the protocol can fund a specific pool
      *
      * requirements:
      *

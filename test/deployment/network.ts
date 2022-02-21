@@ -27,8 +27,8 @@ describe('network', () => {
     let stakingRewards: string;
 
     let network: BancorNetwork;
-    let networkTokenGovernance: TokenGovernance;
-    let govTokenGovernance: TokenGovernance;
+    let bntGovernance: TokenGovernance;
+    let vbntGovernance: TokenGovernance;
     let networkSettings: NetworkSettings;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
@@ -49,8 +49,8 @@ describe('network', () => {
         await performTestDeployment(DeploymentTag.V3);
 
         network = await DeployedContracts.BancorNetworkV1.deployed();
-        networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
-        govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
+        bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+        vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
         masterVault = await DeployedContracts.MasterVaultV1.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
@@ -66,33 +66,29 @@ describe('network', () => {
 
     it('should have the correct set of roles', async () => {
         await expectRoleMembers(
-            networkTokenGovernance as any as AccessControlEnumerable,
+            bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
+        await expectRoleMembers(bntGovernance as any as AccessControlEnumerable, Roles.TokenGovernance.ROLE_GOVERNOR, [
+            deployer
+        ]);
         await expectRoleMembers(
-            networkTokenGovernance as any as AccessControlEnumerable,
-            Roles.TokenGovernance.ROLE_GOVERNOR,
-            [deployer]
-        );
-        await expectRoleMembers(
-            networkTokenGovernance as any as AccessControlEnumerable,
+            bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address]
         );
 
         await expectRoleMembers(
-            govTokenGovernance as any as AccessControlEnumerable,
+            vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
+        await expectRoleMembers(vbntGovernance as any as AccessControlEnumerable, Roles.TokenGovernance.ROLE_GOVERNOR, [
+            deployer
+        ]);
         await expectRoleMembers(
-            govTokenGovernance as any as AccessControlEnumerable,
-            Roles.TokenGovernance.ROLE_GOVERNOR,
-            [deployer]
-        );
-        await expectRoleMembers(
-            govTokenGovernance as any as AccessControlEnumerable,
+            vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address]
         );
@@ -119,7 +115,7 @@ describe('network', () => {
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, [
             autoCompoundingStakingRewards.address
         ]);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_BNT_MANAGER, [poolCollection.address]);
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
 

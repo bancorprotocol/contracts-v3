@@ -23,7 +23,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 // prettier-ignore
 import {
     IMasterPool,
-    ROLE_NETWORK_TOKEN_MANAGER,
+    ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
 } from "./interfaces/IMasterPool.sol";
@@ -48,7 +48,7 @@ contract MasterPool is IMasterPool, Vault {
     error FundingLimitExceeded();
 
     struct WithdrawalAmounts {
-        uint256 networkTokenAmount;
+        uint256 bntAmount;
         uint256 withdrawalFeeAmount;
     }
 
@@ -67,7 +67,7 @@ contract MasterPool is IMasterPool, Vault {
     // the master pool token
     IPoolToken internal immutable _poolToken;
 
-    // the total staked network token balance in the network
+    // the total staked BNT balance in the network
     uint256 internal _stakedBalance;
 
     // a mapping between pools and their current funding
@@ -82,9 +82,9 @@ contract MasterPool is IMasterPool, Vault {
     event TokenDeposited(
         bytes32 indexed contextId,
         address indexed provider,
-        uint256 networkTokenAmount,
+        uint256 bntAmount,
         uint256 poolTokenAmount,
-        uint256 govTokenAmount
+        uint256 vbntAmount
     );
 
     /**
@@ -93,31 +93,21 @@ contract MasterPool is IMasterPool, Vault {
     event TokenWithdrawn(
         bytes32 indexed contextId,
         address indexed provider,
-        uint256 networkTokenAmount,
+        uint256 bntAmount,
         uint256 poolTokenAmount,
-        uint256 govTokenAmount,
+        uint256 vbntAmount,
         uint256 withdrawalFeeAmount
     );
 
     /**
      * @dev triggered when funding is requested
      */
-    event FundingRequested(
-        bytes32 indexed contextId,
-        Token indexed pool,
-        uint256 networkTokenAmount,
-        uint256 poolTokenAmount
-    );
+    event FundingRequested(bytes32 indexed contextId, Token indexed pool, uint256 bntAmount, uint256 poolTokenAmount);
 
     /**
      * @dev triggered when funding is renounced
      */
-    event FundingRenounced(
-        bytes32 indexed contextId,
-        Token indexed pool,
-        uint256 networkTokenAmount,
-        uint256 poolTokenAmount
-    );
+    event FundingRenounced(bytes32 indexed contextId, Token indexed pool, uint256 bntAmount, uint256 poolTokenAmount);
 
     /**
      * @dev triggered when the total liquidity in the master pool is updated
@@ -134,13 +124,13 @@ contract MasterPool is IMasterPool, Vault {
      */
     constructor(
         IBancorNetwork initNetwork,
-        ITokenGovernance initNetworkTokenGovernance,
-        ITokenGovernance initGovTokenGovernance,
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IPoolToken initMasterPoolToken
     )
-        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+        Vault(initBNTGovernance, initVBNTGovernance)
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initMasterVault))
@@ -178,7 +168,7 @@ contract MasterPool is IMasterPool, Vault {
 
         // set up administrative roles
         _setRoleAdmin(ROLE_MASTER_POOL_TOKEN_MANAGER, ROLE_ADMIN);
-        _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_BNT_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_VAULT_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_FUNDING_MANAGER, ROLE_ADMIN);
     }
@@ -222,10 +212,10 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @dev returns the network token manager role
+     * @dev returns the BNT manager role
      */
-    function roleNetworkTokenManager() external pure returns (bytes32) {
-        return ROLE_NETWORK_TOKEN_MANAGER;
+    function roleBNTManager() external pure returns (bytes32) {
+        return ROLE_BNT_MANAGER;
     }
 
     /**
@@ -297,20 +287,20 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function underlyingToPoolToken(uint256 networkTokenAmount) external view returns (uint256) {
-        return _underlyingToPoolToken(networkTokenAmount);
+    function underlyingToPoolToken(uint256 bntAmount) external view returns (uint256) {
+        return _underlyingToPoolToken(bntAmount);
     }
 
     /**
      * @inheritdoc IMasterPool
      */
-    function poolTokenAmountToBurn(uint256 networkTokenAmountToDistribute) external view returns (uint256) {
-        if (networkTokenAmountToDistribute == 0) {
+    function poolTokenAmountToBurn(uint256 bntAmountToDistribute) external view returns (uint256) {
+        if (bntAmountToDistribute == 0) {
             return 0;
         }
 
         uint256 poolTokenSupply = _poolToken.totalSupply();
-        uint256 val = networkTokenAmountToDistribute * poolTokenSupply;
+        uint256 val = bntAmountToDistribute * poolTokenSupply;
 
         return
             MathEx.mulDivF(
@@ -323,24 +313,20 @@ contract MasterPool is IMasterPool, Vault {
     /**
      * @inheritdoc IMasterPool
      */
-    function mint(address recipient, uint256 networkTokenAmount)
+    function mint(address recipient, uint256 bntAmount)
         external
-        onlyRoleMember(ROLE_NETWORK_TOKEN_MANAGER)
+        onlyRoleMember(ROLE_BNT_MANAGER)
         validAddress(recipient)
-        greaterThanZero(networkTokenAmount)
+        greaterThanZero(bntAmount)
     {
-        _networkTokenGovernance.mint(recipient, networkTokenAmount);
+        _bntGovernance.mint(recipient, bntAmount);
     }
 
     /**
      * @inheritdoc IMasterPool
      */
-    function burnFromVault(uint256 networkTokenAmount)
-        external
-        onlyRoleMember(ROLE_VAULT_MANAGER)
-        greaterThanZero(networkTokenAmount)
-    {
-        _masterVault.burn(Token(address(_networkToken)), networkTokenAmount);
+    function burnFromVault(uint256 bntAmount) external onlyRoleMember(ROLE_VAULT_MANAGER) greaterThanZero(bntAmount) {
+        _masterVault.burn(Token(address(_bnt)), bntAmount);
     }
 
     /**
@@ -349,40 +335,40 @@ contract MasterPool is IMasterPool, Vault {
     function depositFor(
         bytes32 contextId,
         address provider,
-        uint256 networkTokenAmount,
+        uint256 bntAmount,
         bool isMigrating,
-        uint256 originalGovTokenAmount
-    ) external only(address(_network)) validAddress(provider) greaterThanZero(networkTokenAmount) {
+        uint256 originalVBNTAmount
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(bntAmount) {
         // calculate the pool token amount to transfer
-        uint256 poolTokenAmount = _underlyingToPoolToken(networkTokenAmount);
+        uint256 poolTokenAmount = _underlyingToPoolToken(bntAmount);
 
         // transfer pool tokens from the protocol to the provider. Please note that it's not possible to deposit
         // liquidity requiring the protocol to transfer the provider more protocol tokens than it holds
         _poolToken.transfer(provider, poolTokenAmount);
 
-        // burn the previously received network tokens
-        _networkTokenGovernance.burn(networkTokenAmount);
+        // burn the previously received BNTs
+        _bntGovernance.burn(bntAmount);
 
-        uint256 govTokenAmount = poolTokenAmount;
+        uint256 vbntAmount = poolTokenAmount;
 
-        // the provider should receive pool tokens and gov tokens in equal amounts. since the provider might already
-        // have some gov tokens during migration, the contract only mints the delta between the full amount and the
-        // amount the provider already has
+        // the provider should receive pool tokens and VBNTs in equal amounts. since the provider might already have
+        // some VBNTs during migration, the contract only mints the delta between the full amount and the amount the
+        // provider already has
         if (isMigrating) {
-            govTokenAmount = MathEx.subMax0(govTokenAmount, originalGovTokenAmount);
+            vbntAmount = MathEx.subMax0(vbntAmount, originalVBNTAmount);
         }
 
-        // mint governance tokens to the provider
-        if (govTokenAmount > 0) {
-            _govTokenGovernance.mint(provider, govTokenAmount);
+        // mint VBNTs to the provider
+        if (vbntAmount > 0) {
+            _vbntGovernance.mint(provider, vbntAmount);
         }
 
         emit TokenDeposited({
             contextId: contextId,
             provider: provider,
-            networkTokenAmount: networkTokenAmount,
+            bntAmount: bntAmount,
             poolTokenAmount: poolTokenAmount,
-            govTokenAmount: govTokenAmount
+            vbntAmount: vbntAmount
         });
     }
 
@@ -399,18 +385,18 @@ contract MasterPool is IMasterPool, Vault {
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
 
-        // burn the respective governance token amount
-        _govTokenGovernance.burn(poolTokenAmount);
+        // burn the respective VBNT amount
+        _vbntGovernance.burn(poolTokenAmount);
 
-        // mint network tokens to the provider
-        _networkTokenGovernance.mint(provider, amounts.networkTokenAmount);
+        // mint BNTs to the provider
+        _bntGovernance.mint(provider, amounts.bntAmount);
 
         emit TokenWithdrawn({
             contextId: contextId,
             provider: provider,
-            networkTokenAmount: amounts.networkTokenAmount,
+            bntAmount: amounts.bntAmount,
             poolTokenAmount: poolTokenAmount,
-            govTokenAmount: poolTokenAmount,
+            vbntAmount: poolTokenAmount,
             withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
     }
@@ -421,11 +407,11 @@ contract MasterPool is IMasterPool, Vault {
     function requestFunding(
         bytes32 contextId,
         Token pool,
-        uint256 networkTokenAmount
-    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(networkTokenAmount) {
+        uint256 bntAmount
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(bntAmount) {
         uint256 currentFunding = _currentPoolFunding[pool];
         uint256 fundingLimit = _networkSettings.poolFundingLimit(pool);
-        uint256 newFunding = currentFunding + networkTokenAmount;
+        uint256 newFunding = currentFunding + bntAmount;
 
         // verify that the new funding amount doesn't exceed the limit
         if (newFunding > fundingLimit) {
@@ -437,18 +423,18 @@ contract MasterPool is IMasterPool, Vault {
         uint256 poolTokenAmount;
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
         if (poolTokenTotalSupply == 0) {
-            // if this is the initial liquidity provision - use a one-to-one pool token to network token rate
+            // if this is the initial liquidity provision - use a one-to-one pool token to BNT rate
             if (currentStakedBalance > 0) {
                 revert InvalidStakedBalance();
             }
 
-            poolTokenAmount = networkTokenAmount;
+            poolTokenAmount = bntAmount;
         } else {
-            poolTokenAmount = _underlyingToPoolToken(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+            poolTokenAmount = _underlyingToPoolToken(bntAmount, poolTokenTotalSupply, currentStakedBalance);
         }
 
         // update the staked balance
-        uint256 newStakedBalance = currentStakedBalance + networkTokenAmount;
+        uint256 newStakedBalance = currentStakedBalance + bntAmount;
         _stakedBalance = newStakedBalance;
 
         // update the current funding amount
@@ -457,13 +443,13 @@ contract MasterPool is IMasterPool, Vault {
         // mint pool tokens to the protocol
         _poolToken.mint(address(this), poolTokenAmount);
 
-        // mint network tokens to the vault
-        _networkTokenGovernance.mint(address(_masterVault), networkTokenAmount);
+        // mint BNTs to the vault
+        _bntGovernance.mint(address(_masterVault), bntAmount);
 
         emit FundingRequested({
             contextId: contextId,
             pool: pool,
-            networkTokenAmount: networkTokenAmount,
+            bntAmount: bntAmount,
             poolTokenAmount: poolTokenAmount
         });
 
@@ -471,7 +457,7 @@ contract MasterPool is IMasterPool, Vault {
             contextId: contextId,
             poolTokenSupply: poolTokenTotalSupply,
             stakedBalance: newStakedBalance,
-            actualBalance: _networkToken.balanceOf(address(_masterVault))
+            actualBalance: _bnt.balanceOf(address(_masterVault))
         });
     }
 
@@ -481,13 +467,13 @@ contract MasterPool is IMasterPool, Vault {
     function renounceFunding(
         bytes32 contextId,
         Token pool,
-        uint256 networkTokenAmount
-    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(networkTokenAmount) {
+        uint256 bntAmount
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(bntAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
         // calculate the renounced amount to deduct from both the staked balance and current pool funding
         uint256 currentFunding = _currentPoolFunding[pool];
-        uint256 reduceFundingAmount = Math.min(currentFunding, networkTokenAmount);
+        uint256 reduceFundingAmount = Math.min(currentFunding, bntAmount);
 
         // calculate the pool token amount to burn
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
@@ -508,13 +494,13 @@ contract MasterPool is IMasterPool, Vault {
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // burn all the network tokens from the master vault
-        _masterVault.burn(Token(address(_networkToken)), networkTokenAmount);
+        // burn all the BNTs from the master vault
+        _masterVault.burn(Token(address(_bnt)), bntAmount);
 
         emit FundingRenounced({
             contextId: contextId,
             pool: pool,
-            networkTokenAmount: networkTokenAmount,
+            bntAmount: bntAmount,
             poolTokenAmount: poolTokenAmount
         });
 
@@ -522,7 +508,7 @@ contract MasterPool is IMasterPool, Vault {
             contextId: contextId,
             poolTokenSupply: poolTokenTotalSupply,
             stakedBalance: newStakedBalance,
-            actualBalance: _networkToken.balanceOf(address(_masterVault))
+            actualBalance: _bnt.balanceOf(address(_masterVault))
         });
     }
 
@@ -548,46 +534,42 @@ contract MasterPool is IMasterPool, Vault {
     }
 
     /**
-     * @dev converts the specified pool token amount to the underlying network token amount
+     * @dev converts the specified pool token amount to the underlying BNT amount
      */
     function _poolTokenToUnderlying(uint256 poolTokenAmount) private view returns (uint256) {
         return MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
     }
 
     /**
-     * @dev converts the specified underlying network token amount to pool token amount
+     * @dev converts the specified underlying BNT amount to pool token amount
      */
-    function _underlyingToPoolToken(uint256 networkTokenAmount) private view returns (uint256) {
-        return _underlyingToPoolToken(networkTokenAmount, _poolToken.totalSupply(), _stakedBalance);
+    function _underlyingToPoolToken(uint256 bntAmount) private view returns (uint256) {
+        return _underlyingToPoolToken(bntAmount, _poolToken.totalSupply(), _stakedBalance);
     }
 
     /**
-     * @dev converts the specified underlying network token amount to pool token amount
+     * @dev converts the specified underlying BNT amount to pool token amount
      */
     function _underlyingToPoolToken(
-        uint256 networkTokenAmount,
+        uint256 bntAmount,
         uint256 poolTokenTotalSupply,
         uint256 currentStakedBalance
     ) private pure returns (uint256) {
-        return MathEx.mulDivF(networkTokenAmount, poolTokenTotalSupply, currentStakedBalance);
+        return MathEx.mulDivF(bntAmount, poolTokenTotalSupply, currentStakedBalance);
     }
 
     /**
      * @dev returns withdrawal amounts
      */
     function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
-        // calculate the network token amount to transfer
-        uint256 networkTokenAmount = _poolTokenToUnderlying(poolTokenAmount);
+        // calculate the BNT amount to transfer
+        uint256 bntAmount = _poolTokenToUnderlying(poolTokenAmount);
 
-        // deduct the exit fee from the network token amount
-        uint256 withdrawalFeeAmount = MathEx.mulDivF(
-            networkTokenAmount,
-            _networkSettings.withdrawalFeePPM(),
-            PPM_RESOLUTION
-        );
+        // deduct the exit fee from the BNT amount
+        uint256 withdrawalFeeAmount = MathEx.mulDivF(bntAmount, _networkSettings.withdrawalFeePPM(), PPM_RESOLUTION);
 
-        networkTokenAmount -= withdrawalFeeAmount;
+        bntAmount -= withdrawalFeeAmount;
 
-        return WithdrawalAmounts({ networkTokenAmount: networkTokenAmount, withdrawalFeeAmount: withdrawalFeeAmount });
+        return WithdrawalAmounts({ bntAmount: bntAmount, withdrawalFeeAmount: withdrawalFeeAmount });
     }
 }

@@ -14,16 +14,16 @@ import { MasterPool } from "../pools/MasterPool.sol";
 contract TestMasterPool is MasterPool {
     constructor(
         IBancorNetwork initNetwork,
-        ITokenGovernance initNetworkTokenGovernance,
-        ITokenGovernance initGovTokenGovernance,
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IPoolToken initMasterPoolToken
     )
         MasterPool(
             initNetwork,
-            initNetworkTokenGovernance,
-            initGovTokenGovernance,
+            initBNTGovernance,
+            initVBNTGovernance,
             initNetworkSettings,
             initMasterVault,
             initMasterPoolToken

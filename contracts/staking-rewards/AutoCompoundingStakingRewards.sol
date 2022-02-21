@@ -57,8 +57,8 @@ contract AutoCompoundingStakingRewards is
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the network token contract
-    IERC20 private immutable _networkToken;
+    // the BNT contract
+    IERC20 private immutable _bnt;
 
     // the master pool contract
     IMasterPool private immutable _masterPool;
@@ -113,17 +113,17 @@ contract AutoCompoundingStakingRewards is
     constructor(
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
-        IERC20 initNetworkToken,
+        IERC20 initBNT,
         IMasterPool initMasterPool
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
-        validAddress(address(initNetworkToken))
+        validAddress(address(initBNT))
         validAddress(address(initMasterPool))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
-        _networkToken = initNetworkToken;
+        _bnt = initBNT;
         _masterPool = initMasterPool;
         _masterPoolToken = initMasterPool.poolToken();
     }
@@ -217,7 +217,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         IPoolToken poolToken;
-        if (_isNetworkToken(pool)) {
+        if (_isBNT(pool)) {
             if (rewardsVault != _masterPool) {
                 revert InvalidParam();
             }
@@ -380,7 +380,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p,
         uint256 tokenAmountToDistribute
     ) private view returns (uint256) {
-        if (_isNetworkToken(pool)) {
+        if (_isBNT(pool)) {
             return _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         }
 
@@ -400,10 +400,10 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns whether the specified token is the network token
+     * @dev returns whether the specified token is the BNT
      */
-    function _isNetworkToken(Token token) private view returns (bool) {
-        return token.isEqual(_networkToken);
+    function _isBNT(Token token) private view returns (bool) {
+        return token.isEqual(_bnt);
     }
 
     /**

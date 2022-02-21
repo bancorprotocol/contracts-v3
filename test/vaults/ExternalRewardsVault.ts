@@ -14,24 +14,24 @@ describe('ExternalRewardsVault', () => {
     shouldHaveGap('ExternalRewardsVault');
 
     describe('construction', () => {
-        let networkTokenGovernance: TokenGovernance;
-        let govTokenGovernance: TokenGovernance;
+        let bntGovernance: TokenGovernance;
+        let vbntGovernance: TokenGovernance;
         let externalRewardsVault: ExternalRewardsVault;
 
         beforeEach(async () => {
-            ({ networkTokenGovernance, govTokenGovernance, externalRewardsVault } = await createSystem());
+            ({ bntGovernance, vbntGovernance, externalRewardsVault } = await createSystem());
         });
 
-        it('should revert when attempting to create with an invalid network token governance contract', async () => {
+        it('should revert when attempting to create with an invalid BNT governance contract', async () => {
             await expect(
-                Contracts.ExternalRewardsVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)
+                Contracts.ExternalRewardsVault.deploy(ZERO_ADDRESS, vbntGovernance.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid gov token governance contract', async () => {
-            await expect(
-                Contracts.ExternalRewardsVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)
-            ).to.be.revertedWith('InvalidAddress');
+        it('should revert when attempting to create with an invalid VBNT governance contract', async () => {
+            await expect(Contracts.ExternalRewardsVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -59,7 +59,7 @@ describe('ExternalRewardsVault', () => {
         const amount = 1_000_000;
 
         let externalRewardsVault: ExternalRewardsVault;
-        let networkToken: IERC20;
+        let bnt: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;
@@ -90,9 +90,9 @@ describe('ExternalRewardsVault', () => {
             const tokenData = new TokenData(symbol);
 
             beforeEach(async () => {
-                ({ externalRewardsVault, networkToken } = await createSystem());
+                ({ externalRewardsVault, bnt } = await createSystem());
 
-                token = tokenData.isNetworkToken() ? networkToken : await createTestToken();
+                token = tokenData.isBNT() ? bnt : await createTestToken();
 
                 transfer(deployer, token, externalRewardsVault.address, amount);
             });

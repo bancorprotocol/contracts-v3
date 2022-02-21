@@ -26,6 +26,6 @@ describeDeployment('1642682496-master-vault', ContractName.MasterVaultV1, () => 
 
         await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
         await expectRoleMembers(masterVault, Roles.Vault.ROLE_ASSET_MANAGER);
-        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER);
+        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER);
     });
 });
