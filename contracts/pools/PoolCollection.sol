@@ -940,8 +940,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             }
         }
 
-        // if the provider should receive some BNTs - ask the master pool to mint BNTs to the
-        // provider
+        // if the provider should receive some BNT - ask the master pool to mint BNT to the provider
         if (amounts.bntsToMintForProvider > 0) {
             _masterPool.mint(address(provider), amounts.bntsToMintForProvider);
         }
@@ -1059,8 +1058,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     ) private {
         bool isFundingRateValid = isFractionPositive(fundingRate);
 
-        // if we aren't bootstrapping the pool, ensure that the BNT trading liquidity is above the minimum
-        // liquidity for trading
+        // if we aren't bootstrapping the pool, ensure that BNT trading liquidity is above the minimum liquidity for
+        // trading
         if (liquidity.bntTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
@@ -1152,8 +1151,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         }
 
         // calculate the base token trading liquidity based on the new BNT trading liquidity and the effective
-        // funding rate (please note that the effective funding rate is always the rate between the BNT and
-        // the base token)
+        // funding rate (please note that the effective funding rate is always the rate between BNT and the base token)
         uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
             targetBNTTradingLiquidity,
             effectiveFundingRate.d,
@@ -1270,7 +1268,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 limit,
         bool bySourceAmount
     ) private view returns (TradeIntermediateResult memory result) {
-        // ensure that the BNT is either the source or the target pool
+        // ensure that BNT is either the source or the target pool
         bool isSourceBNT = sourceToken.isEqual(_bnt);
         bool isTargetBNT = targetToken.isEqual(_bnt);
 
@@ -1281,7 +1279,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             result.isSourceBNT = false;
             result.pool = sourceToken;
         } else {
-            // the BNT isn't one of the pools or is both of them
+            // BNT isn't one of the pools or is both of them
             revert DoesNotExist();
         }
 
@@ -1428,7 +1426,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        // trade the network fee (taken from the base token) to the BNT
+        // trade the network fee (taken from the base token) to BNT
         result.networkFeeAmount = _tradeAmountAndFeeBySourceAmount(
             result.targetBalance,
             result.sourceBalance,
@@ -1436,9 +1434,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             targetNetworkFeeAmount
         ).amount;
 
-        // since we have received the network fee in base tokens and have traded them for BNTs (so that
-        // the network fee is always kept in BNTs), we'd need to adapt the trading liquidity and the
-        // staked balance accordingly
+        // since we have received the network fee in base tokens and have traded them for BNT (so that the network fee
+        // is always kept in BNT), we'd need to adapt the trading liquidity and the staked balance accordingly
         result.targetBalance += targetNetworkFeeAmount;
         result.sourceBalance -= result.networkFeeAmount;
         result.stakedBalance -= targetNetworkFeeAmount;

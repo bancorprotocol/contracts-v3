@@ -16,10 +16,10 @@ import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
-// the BNT manager role is required to request the master pool to mint BNTs
+// the BNT manager role is required to request the master pool to mint BNT
 bytes32 constant ROLE_BNT_MANAGER = keccak256("ROLE_BNT_MANAGER");
 
-// the vault manager role is required to request the master pool to burn BNTs from the master vault
+// the vault manager role is required to request the master pool to burn BNT from the master vault
 bytes32 constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
 
 // the funding manager role is required to request or renounce funding from the master pool
@@ -66,7 +66,7 @@ interface IMasterPool is IVault {
     function poolTokenAmountToBurn(uint256 bntAmountToDistribute) external view returns (uint256);
 
     /**
-     * @dev mints BNTs to the recipient
+     * @dev mints BNT to the recipient
      *
      * requirements:
      *
@@ -75,7 +75,7 @@ interface IMasterPool is IVault {
     function mint(address recipient, uint256 bntAmount) external;
 
     /**
-     * @dev burns BNTs from the vault
+     * @dev burns BNT from the vault
      *
      * requirements:
      *
@@ -89,7 +89,7 @@ interface IMasterPool is IVault {
      * requirements:
      *
      * - the caller must be the network contract
-     * - the BNTs must have been already deposited into the contract
+     * - BNT tokens must have been already deposited into the contract
      */
     function depositFor(
         bytes32 contextId,
@@ -100,13 +100,13 @@ interface IMasterPool is IVault {
     ) external;
 
     /**
-     * @dev withdraws BNT liquidity on behalf of a specific provider and returns the withdrawn BNT
-     * amount and burned pool token amount
+     * @dev withdraws BNT liquidity on behalf of a specific provider and returns the withdrawn BNT amount and burned
+     * pool token amount
      *
      * requirements:
      *
      * - the caller must be the network contract
-     * - the VBNTs must have been already deposited into the contract
+     * - VBNT token must have been already deposited into the contract
      */
     function withdraw(
         bytes32 contextId,

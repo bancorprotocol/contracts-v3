@@ -962,7 +962,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer BNTs to on its behalf
+     * - the caller must have approved the network to transfer BNT on its behalf
      */
     function _depositBNTFor(
         bytes32 contextId,
@@ -1016,7 +1016,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Signature memory signature,
         address caller
     ) private {
-        // neither the BNT or ETH support EIP2612 permit requests
+        // neither BNT nor ETH support EIP2612 permit requests
         if (_isBNT(token) || token.isNative()) {
             revert PermitUnsupported();
         }
@@ -1077,7 +1077,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // pending withdrawal, on behalf of the network
         completedRequest.poolToken.approve(address(cachedMasterPool), completedRequest.poolTokenAmount);
 
-        // transfer VBNTs from the caller to the master pool
+        // transfer VBNT from the caller to the master pool
         _vbnt.transferFrom(provider, address(cachedMasterPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the master pool
@@ -1194,8 +1194,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev performs a single hop between the BNT and a base token trade by providing either the source or
-     * the target amount
+     * @dev performs a single hop between BNT and a base token trade by providing either the source or the target amount
      *
      * - when trading by the source amount, the amount represents the source amount and the limit is the minimum return
      *   amount
@@ -1229,7 +1228,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is the BNT, notify the master pool on collected fees
+        // if the target token is BNT, notify the master pool on collected fees
         if (!isSourceBNT) {
             _masterPool.onFeesCollected(
                 pool,
@@ -1281,7 +1280,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             uint256 sourceAmount = params.amount;
             uint256 minReturnAmount = params.limit;
 
-            // trade source tokens to BNTs (while accepting any return amount)
+            // trade source tokens to BNT (while accepting any return amount)
             TradeAmountAndNetworkFee memory targetHop1 = _tradeBNT(
                 contextId,
                 sourceToken,
@@ -1290,8 +1289,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 trader
             );
 
-            // trade the received BNT target amount to target tokens (while respecting the minimum return
-            // amount)
+            // trade the received BNT target amount to target tokens (while respecting the minimum return amount)
             TradeAmountAndNetworkFee memory targetHop2 = _tradeBNT(
                 contextId,
                 targetToken,
@@ -1308,8 +1306,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 targetAmount = params.amount;
         uint256 maxSourceAmount = params.limit;
 
-        // trade any amount of BNTs to get the requested target amount (we will use the actual traded amount
-        // to restrict the trade from the source)
+        // trade any amount of BNT to get the requested target amount (we will use the actual traded amount to restrict
+        // the trade from the source)
         TradeAmountAndNetworkFee memory sourceHop1 = _tradeBNT(
             contextId,
             targetToken,
@@ -1318,7 +1316,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             trader
         );
 
-        // trade source tokens to the required amount of BNTs (while respecting the maximum source amount)
+        // trade source tokens to the required amount of BNT (while respecting the maximum source amount)
         TradeAmountAndNetworkFee memory sourceHop2 = _tradeBNT(
             contextId,
             sourceToken,

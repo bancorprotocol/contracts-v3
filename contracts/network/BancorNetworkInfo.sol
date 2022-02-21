@@ -320,7 +320,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         bool isSourceBNT = _isBNT(sourceToken);
         bool isTargetBNT = _isBNT(targetToken);
 
-        // return the trade amount when trading the BNT
+        // return the trade amount when trading BNT
         if (isSourceBNT || isTargetBNT) {
             Token token = isSourceBNT ? targetToken : sourceToken;
             IPoolCollection poolCollection = _poolCollection(token);
@@ -333,8 +333,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
                 ).amount;
         }
 
-        // return the target amount by simulating double-hop trade from the source token to the target token via the
-        // BNT
+        // return the target amount by simulating double-hop trade from the source token to the target token via BNT
         if (bySourceAmount) {
             uint256 targetAmount = _poolCollection(sourceToken)
                 .tradeOutputAndFeeBySourceAmount(sourceToken, Token(address(_bnt)), amount)
@@ -347,7 +346,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         }
 
         // return the source amount by simulating a "reverse" double-hop trade from the source token to the target token
-        // via the BNT
+        // via BNT
         uint256 requireNetworkAmount = _poolCollection(targetToken)
             .tradeInputAndFeeByTargetAmount(Token(address(_bnt)), targetToken, amount)
             .amount;
@@ -372,7 +371,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
-     * @dev returns whether the specified token is the BNT
+     * @dev returns whether the specified token is BNT
      */
     function _isBNT(Token token) private view returns (bool) {
         return token.isEqual(_bnt);

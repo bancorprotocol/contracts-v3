@@ -400,7 +400,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns whether the specified token is the BNT
+     * @dev returns whether the specified token is BNT
      */
     function _isBNT(Token token) private view returns (bool) {
         return token.isEqual(_bnt);
