@@ -967,7 +967,7 @@ describe('BancorNetwork', () => {
 
                 const tradeAmount = toWei(1);
 
-                let preVBNTBalance = await bnt.balanceOf(deployer.address);
+                let prevBNTBalance = await bnt.balanceOf(deployer.address);
                 prevTokenBalance = await getBalance(token, deployer);
 
                 let transactionCost = BigNumber.from(0);
@@ -986,12 +986,12 @@ describe('BancorNetwork', () => {
                     transactionCost = await getTransactionCost(res);
                 }
 
-                expect(await bnt.balanceOf(deployer.address)).to.be.gte(preVBNTBalance);
+                expect(await bnt.balanceOf(deployer.address)).to.be.gte(prevBNTBalance);
                 expect(await getBalance(token, deployer)).to.equal(
                     prevTokenBalance.sub(tradeAmount.add(transactionCost))
                 );
 
-                preVBNTBalance = await bnt.balanceOf(deployer.address);
+                prevBNTBalance = await bnt.balanceOf(deployer.address);
                 prevTokenBalance = await getBalance(token, deployer);
 
                 transactionCost = BigNumber.from(0);
@@ -1011,7 +1011,7 @@ describe('BancorNetwork', () => {
                 }
 
                 expect(await getBalance(token, deployer)).to.be.gte(prevTokenBalance.sub(transactionCost));
-                expect(await bnt.balanceOf(deployer.address)).to.equal(preVBNTBalance.sub(tradeAmount));
+                expect(await bnt.balanceOf(deployer.address)).to.equal(prevBNTBalance.sub(tradeAmount));
             }
         });
     });
@@ -1112,7 +1112,7 @@ describe('BancorNetwork', () => {
                 const prevSenderTokenBalance = await getBalance(token, senderAddress);
                 const prevVaultTokenBalance = await getBalance(token, masterVault.address);
 
-                const preVBNTTotalSupply = await bnt.totalSupply();
+                const prevBNTTotalSupply = await bnt.totalSupply();
 
                 const prevGovTotalSupply = await vbnt.totalSupply();
                 const prevProviderVBNTBalance = await vbnt.balanceOf(providerAddress);
@@ -1132,7 +1132,7 @@ describe('BancorNetwork', () => {
 
                     expect(await getBalance(token, masterVault.address)).to.equal(prevVaultTokenBalance);
 
-                    expect(await bnt.totalSupply()).to.equal(preVBNTTotalSupply.sub(amount));
+                    expect(await bnt.totalSupply()).to.equal(prevBNTTotalSupply.sub(amount));
 
                     expect(await vbnt.totalSupply()).to.equal(prevGovTotalSupply.add(expectedPoolTokenAmount));
                     expect(await vbnt.balanceOf(providerAddress)).to.equal(
