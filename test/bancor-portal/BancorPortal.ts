@@ -54,6 +54,8 @@ describe('BancorPortal', () => {
 
     const AMOUNT = BigNumber.from(1000);
     const ZERO = BigNumber.from(0);
+    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BASE_TOKEN_FUNDING_RATE = 2;
 
     shouldHaveGap('BancorPortal');
 
@@ -598,7 +600,8 @@ describe('BancorPortal', () => {
                 tokenData: new TokenData(symbol),
                 balance: balance,
                 requestedLiquidity: balance.mul(1000),
-                fundingRate: { n: 1, d: 2 }
+                networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                baseTokenRate: BASE_TOKEN_FUNDING_RATE
             },
             deployer as any as SignerWithAddress,
             network,
