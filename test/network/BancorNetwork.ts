@@ -2521,7 +2521,7 @@ describe('BancorNetwork', () => {
                                     });
 
                                     if (!isSourceNativeToken) {
-                                        context.only('with an insufficient approval', () => {
+                                        context('with an insufficient approval', () => {
                                             it('should revert when attempting to trade', async () => {
                                                 const missingAmount = 10;
 
