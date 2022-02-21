@@ -2458,13 +2458,13 @@ describe('BancorNetwork', () => {
                                         : tradeByTargetAmountPermitted;
                                     const tradeFunc = permitted ? tradeBySourceAmountPermittedFunc : tradeDirectFunc;
 
-                                    it('should revert when attempting to trade using an invalid source pool', async () => {
+                                    it('should revert when attempting to trade using an invalid source token', async () => {
                                         await expect(
                                             tradeFunc(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
                                         ).to.be.revertedWith('InvalidAddress');
                                     });
 
-                                    it('should revert when attempting to trade using an invalid target pool', async () => {
+                                    it('should revert when attempting to trade using an invalid target potokenol', async () => {
                                         await expect(
                                             tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
                                         ).to.be.revertedWith('InvalidAddress');
