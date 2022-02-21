@@ -33,14 +33,14 @@
                     "dayTrader": "10000",
                     "tknProvider": "9000000",
                     "bntProvider": "0",
-                    "masterVault": "1000000",
+                    "omniVault": "1000000",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "10000000",
-                    "masterVault": "0"
+                    "omniVault": "0"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -70,14 +70,14 @@
                     "dayTrader": "10000",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2800000",
+                    "omniVault": "2800000",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "10000000",
-                    "masterVault": "0"
+                    "omniVault": "0"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -110,14 +110,14 @@
                     "dayTrader": "10000",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2800000",
+                    "omniVault": "2800000",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "10000000",
-                    "masterVault": "2000000"
+                    "omniVault": "2000000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -147,14 +147,14 @@
                     "dayTrader": "10000",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2800000",
+                    "omniVault": "2800000",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10000",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "2000000"
+                    "omniVault": "2000000"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -184,14 +184,14 @@
                     "dayTrader": "9000",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2801000",
+                    "omniVault": "2801000",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "10997.001499250374812594",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "1999002.998500749625187406"
+                    "omniVault": "1999002.998500749625187406"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -221,14 +221,14 @@
                     "dayTrader": "9997.99725375224325001",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2800002.00274624775674999",
+                    "omniVault": "2800002.00274624775674999",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "9997.001499250374812594",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "2000002.998500749625187406"
+                    "omniVault": "2000002.998500749625187406"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -258,14 +258,14 @@
                     "dayTrader": "7997.99725375224325001",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2802002.00274624775674999",
+                    "omniVault": "2802002.00274624775674999",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "11990.009486522965842981",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "1998009.990513477034157019"
+                    "omniVault": "1998009.990513477034157019"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -295,14 +295,14 @@
                     "dayTrader": "9994.984276028745629514",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2800005.015723971254370486",
+                    "omniVault": "2800005.015723971254370486",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "9990.009486522965842981",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "2000009.990513477034157019"
+                    "omniVault": "2000009.990513477034157019"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -332,14 +332,14 @@
                     "dayTrader": "4994.984276028745629514",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2805005.015723971254370486",
+                    "omniVault": "2805005.015723971254370486",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "14965.084236689690787753",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "1995034.915763310309212247"
+                    "omniVault": "1995034.915763310309212247"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",
@@ -369,14 +369,14 @@
                     "dayTrader": "9994.878246433175303481",
                     "tknProvider": "7200000",
                     "bntProvider": "0",
-                    "masterVault": "2800005.121753566824696519",
+                    "omniVault": "2800005.121753566824696519",
                     "epVault": "0"
                 },
                 "bntBalances": {
                     "dayTrader": "9965.084236689690787753",
                     "tknProvider": "0",
                     "bntProvider": "9900000",
-                    "masterVault": "2000034.915763310309212247"
+                    "omniVault": "2000034.915763310309212247"
                 },
                 "bntknBalances": {
                     "dayTrader": "0",

@@ -6,7 +6,7 @@ import Contracts, {
     ExternalRewardsVault,
     IERC20,
     OmniPool,
-    MasterVault,
+    OmniVault,
     NetworkSettings,
     PoolCollectionUpgrader,
     PoolToken,
@@ -165,7 +165,7 @@ export const createPoolCollection = async (
     network: string | BancorNetwork,
     bnt: string | IERC20,
     networkSettings: string | NetworkSettings,
-    masterVault: string | MasterVault,
+    omniVault: string | OmniVault,
     omniPool: string | OmniPool,
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
@@ -177,7 +177,7 @@ export const createPoolCollection = async (
         toAddress(network),
         toAddress(bnt),
         toAddress(networkSettings),
-        toAddress(masterVault),
+        toAddress(omniVault),
         toAddress(omniPool),
         toAddress(externalProtectionVault),
         toAddress(poolTokenFactory),
@@ -189,7 +189,7 @@ const createOmniPool = async (
     networkSettings: NetworkSettings,
     bntGovernance: TokenGovernance,
     vbntGovernance: TokenGovernance,
-    masterVault: MasterVault,
+    omniVault: OmniVault,
     omniPoolToken: PoolToken
 ) => {
     const omniPool = await createProxy(Contracts.TestOmniPool, {
@@ -199,7 +199,7 @@ const createOmniPool = async (
             bntGovernance.address,
             vbntGovernance.address,
             networkSettings.address,
-            masterVault.address,
+            omniVault.address,
             omniPoolToken.address
         ]
     });
@@ -212,7 +212,7 @@ const createOmniPool = async (
 
     await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, omniPool.address);
     await vbntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, omniPool.address);
-    await masterVault.grantRole(Roles.MasterVault.ROLE_BNT_MANAGER, omniPool.address);
+    await omniVault.grantRole(Roles.OmniVault.ROLE_BNT_MANAGER, omniPool.address);
 
     return omniPool;
 };
@@ -251,7 +251,7 @@ const createNetwork = async (
     bntGovernance: TokenGovernance,
     vbntGovernance: TokenGovernance,
     networkSettings: NetworkSettings,
-    masterVault: MasterVault,
+    omniVault: OmniVault,
     externalProtectionVault: ExternalProtectionVault,
     omniPoolToken: PoolToken
 ) => {
@@ -261,14 +261,14 @@ const createNetwork = async (
             bntGovernance.address,
             vbntGovernance.address,
             networkSettings.address,
-            masterVault.address,
+            omniVault.address,
             externalProtectionVault.address,
             omniPoolToken.address
         ]
     });
 
-    await masterVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
-    await masterVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
+    await omniVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+    await omniVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
 
     await externalProtectionVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
     await externalProtectionVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
@@ -279,7 +279,7 @@ const createNetwork = async (
 const createSystemFixture = async () => {
     const { bnt, bntGovernance, vbnt, vbntGovernance } = await createGovernedTokens();
 
-    const masterVault = await createProxy(Contracts.MasterVault, {
+    const omniVault = await createProxy(Contracts.OmniVault, {
         ctorArgs: [bntGovernance.address, vbntGovernance.address]
     });
 
@@ -300,7 +300,7 @@ const createSystemFixture = async () => {
         bntGovernance,
         vbntGovernance,
         networkSettings,
-        masterVault,
+        omniVault,
         externalProtectionVault,
         omniPoolToken
     );
@@ -310,7 +310,7 @@ const createSystemFixture = async () => {
         networkSettings,
         bntGovernance,
         vbntGovernance,
-        masterVault,
+        omniVault,
         omniPoolToken
     );
 
@@ -330,7 +330,7 @@ const createSystemFixture = async () => {
             bntGovernance.address,
             vbntGovernance.address,
             networkSettings.address,
-            masterVault.address,
+            omniVault.address,
             externalProtectionVault.address,
             externalRewardsVault.address,
             omniPool.address,
@@ -343,7 +343,7 @@ const createSystemFixture = async () => {
         network,
         bnt,
         networkSettings,
-        masterVault,
+        omniVault,
         omniPool,
         externalProtectionVault,
         poolTokenFactory,
@@ -359,7 +359,7 @@ const createSystemFixture = async () => {
         vbnt,
         vbntGovernance,
         omniPoolToken,
-        masterVault,
+        omniVault,
         externalProtectionVault,
         externalRewardsVault,
         omniPool,

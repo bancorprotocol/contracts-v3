@@ -8,7 +8,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const network = await DeployedContracts.BancorNetworkV1.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
+    const omniVault = await DeployedContracts.OmniVaultV1.deployed();
 
     const omniPool = await DeployedContracts.OmniPoolV1.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
@@ -23,7 +23,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             network.address,
             bnt.address,
             networkSettings.address,
-            masterVault.address,
+            omniVault.address,
             omniPool.address,
             externalProtectionVault.address,
             poolTokenFactory.address,
@@ -46,7 +46,7 @@ func.dependencies = [
     DeploymentTag.V2,
     ContractName.BancorNetworkV1,
     ContractName.NetworkSettingsV1,
-    ContractName.MasterVaultV1,
+    ContractName.OmniVaultV1,
     ContractName.OmniPoolV1,
     ContractName.ExternalProtectionVaultV1,
     ContractName.PoolTokenFactoryV1,

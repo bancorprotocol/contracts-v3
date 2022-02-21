@@ -12,14 +12,14 @@ import { Token } from "../../token/Token.sol";
 
 import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../../vaults/interfaces/IOmniVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
 // the BNT manager role is required to request the omni pool to mint BNT
 bytes32 constant ROLE_BNT_MANAGER = keccak256("ROLE_BNT_MANAGER");
 
-// the vault manager role is required to request the omni pool to burn BNT from the master vault
+// the vault manager role is required to request the omni pool to burn BNT from the omni vault
 bytes32 constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
 
 // the funding manager role is required to request or renounce funding from the omni pool

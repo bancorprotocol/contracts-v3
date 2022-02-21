@@ -6,7 +6,7 @@ import {
     ExternalProtectionVault,
     ExternalRewardsVault,
     OmniPool,
-    MasterVault,
+    OmniVault,
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
@@ -30,7 +30,7 @@ describe('network', () => {
     let bntGovernance: TokenGovernance;
     let vbntGovernance: TokenGovernance;
     let networkSettings: NetworkSettings;
-    let masterVault: MasterVault;
+    let omniVault: OmniVault;
     let externalProtectionVault: ExternalProtectionVault;
     let externalRewardsVault: ExternalRewardsVault;
     let omniPool: OmniPool;
@@ -52,7 +52,7 @@ describe('network', () => {
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-        masterVault = await DeployedContracts.MasterVaultV1.deployed();
+        omniVault = await DeployedContracts.OmniVaultV1.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
         omniPool = await DeployedContracts.OmniPoolV1.deployed();
@@ -93,8 +93,8 @@ describe('network', () => {
             isMainnet() ? [omniPool.address, liquidityProtection] : [omniPool.address]
         );
 
-        await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
-        await expectRoleMembers(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address, poolCollection.address]);
+        await expectRoleMembers(omniVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
+        await expectRoleMembers(omniVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address, poolCollection.address]);
 
         await expectRoleMembers(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
         await expectRoleMembers(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, [

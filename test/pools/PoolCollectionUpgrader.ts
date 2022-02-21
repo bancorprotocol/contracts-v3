@@ -1,7 +1,7 @@
 import Contracts, {
     ExternalProtectionVault,
     IERC20,
-    MasterVault,
+    OmniVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
@@ -62,7 +62,7 @@ describe('PoolCollectionUpgrader', () => {
         let network: TestBancorNetwork;
         let bnt: IERC20;
         let networkSettings: NetworkSettings;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let externalProtectionVault: ExternalProtectionVault;
         let omniPool: TestOmniPool;
         let poolCollection: TestPoolCollection;
@@ -76,7 +76,7 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 bnt,
                 networkSettings,
-                masterVault,
+                omniVault,
                 externalProtectionVault,
                 omniPool,
                 poolCollectionUpgrader,
@@ -122,7 +122,7 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 bnt,
                 networkSettings,
-                masterVault,
+                omniVault,
                 omniPool,
                 externalProtectionVault,
                 poolTokenFactory,
@@ -136,7 +136,7 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 bnt,
                 networkSettings,
-                masterVault,
+                omniVault,
                 omniPool,
                 externalProtectionVault,
                 poolTokenFactory,
@@ -158,7 +158,7 @@ describe('PoolCollectionUpgrader', () => {
                     network,
                     bnt,
                     networkSettings,
-                    masterVault,
+                    omniVault,
                     omniPool,
                     externalProtectionVault,
                     poolTokenFactory,

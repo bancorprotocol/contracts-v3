@@ -12,7 +12,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
-import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
@@ -30,7 +30,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IMasterVault initMasterVault,
+        IOmniVault initOmniVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initOmniPoolToken
     )
@@ -38,7 +38,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             initBNTGovernance,
             initVBNTGovernance,
             initNetworkSettings,
-            initMasterVault,
+            initOmniVault,
             initExternalProtectionVault,
             initOmniPoolToken
         )

@@ -1,6 +1,6 @@
 import Contracts, {
     BancorNetworkInfo,
-    MasterVault,
+    OmniVault,
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
@@ -64,7 +64,7 @@ describe('BancorNetworkInfo', () => {
         let omniPool: TestOmniPool;
         let omniPoolToken: IPoolToken;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let externalProtectionVault: ExternalProtectionVault;
         let externalRewardsVault: ExternalRewardsVault;
         let pendingWithdrawals: TestPendingWithdrawals;
@@ -81,7 +81,7 @@ describe('BancorNetworkInfo', () => {
                 omniPool,
                 omniPoolToken,
                 poolCollectionUpgrader,
-                masterVault,
+                omniVault,
                 externalProtectionVault,
                 externalRewardsVault,
                 pendingWithdrawals
@@ -95,7 +95,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     omniPool.address,
@@ -112,7 +112,7 @@ describe('BancorNetworkInfo', () => {
                     ZERO_ADDRESS,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     omniPool.address,
@@ -129,7 +129,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     omniPool.address,
@@ -146,7 +146,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     ZERO_ADDRESS,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     omniPool.address,
@@ -156,7 +156,7 @@ describe('BancorNetworkInfo', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid master vault contract', async () => {
+        it('should revert when attempting to create with an invalid omni vault contract', async () => {
             await expect(
                 Contracts.BancorNetworkInfo.deploy(
                     network.address,
@@ -180,7 +180,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     ZERO_ADDRESS,
                     externalRewardsVault.address,
                     omniPool.address,
@@ -197,7 +197,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS,
                     omniPool.address,
@@ -214,7 +214,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     ZERO_ADDRESS,
@@ -231,7 +231,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     omniPool.address,
@@ -248,7 +248,7 @@ describe('BancorNetworkInfo', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     externalProtectionVault.address,
                     externalRewardsVault.address,
                     omniPool.address,
@@ -275,7 +275,7 @@ describe('BancorNetworkInfo', () => {
             expect(await networkInfo.vbnt()).to.equal(vbnt.address);
             expect(await networkInfo.vbntGovernance()).to.equal(vbntGovernance.address);
             expect(await networkInfo.networkSettings()).to.equal(networkSettings.address);
-            expect(await networkInfo.masterVault()).to.equal(masterVault.address);
+            expect(await networkInfo.omniVault()).to.equal(omniVault.address);
             expect(await networkInfo.externalProtectionVault()).to.equal(externalProtectionVault.address);
             expect(await networkInfo.externalRewardsVault()).to.equal(externalRewardsVault.address);
             expect(await networkInfo.omniPool()).to.equal(omniPool.address);

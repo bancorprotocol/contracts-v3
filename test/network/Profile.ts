@@ -3,7 +3,7 @@ import Contracts, {
     ExternalRewardsVault,
     IERC20,
     IVault,
-    MasterVault,
+    OmniVault,
     NetworkSettings,
     PoolToken,
     TestAutoCompoundingStakingRewards,
@@ -399,7 +399,7 @@ describe('Profile @profile', () => {
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
         let omniPoolToken: PoolToken;
@@ -410,7 +410,7 @@ describe('Profile @profile', () => {
         };
 
         beforeEach(async () => {
-            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, omniPoolToken } =
+            ({ network, networkSettings, bnt, vbnt, omniVault, poolCollection, pendingWithdrawals, omniPoolToken } =
                 await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -524,7 +524,7 @@ describe('Profile @profile', () => {
                                         .div(BNT_FUNDING_RATE)
                                         .mul(10_000);
 
-                                    await transfer(deployer, token, masterVault, extraLiquidity);
+                                    await transfer(deployer, token, omniVault, extraLiquidity);
 
                                     await network.depositToPoolCollectionForT(
                                         poolCollection.address,

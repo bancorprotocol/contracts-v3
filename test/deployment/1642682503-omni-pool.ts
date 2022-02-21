@@ -1,7 +1,7 @@
 import {
     AccessControlEnumerable,
     OmniPool,
-    MasterVault,
+    OmniVault,
     PoolToken,
     ProxyAdmin,
     TransparentUpgradeableProxyImmutable
@@ -20,7 +20,7 @@ describeDeployment('1642682503-omni-pool', ContractName.OmniPoolV1, () => {
     let proxyAdmin: ProxyAdmin;
     let bntGovernance: TokenGovernance;
     let vbntGovernance: TokenGovernance;
-    let masterVault: MasterVault;
+    let omniVault: OmniVault;
     let networkProxy: TransparentUpgradeableProxyImmutable;
     let omniPool: OmniPool;
     let omniPoolToken: PoolToken;
@@ -34,7 +34,7 @@ describeDeployment('1642682503-omni-pool', ContractName.OmniPoolV1, () => {
         networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
-        masterVault = await DeployedContracts.MasterVaultV1.deployed();
+        omniVault = await DeployedContracts.OmniVaultV1.deployed();
         omniPoolToken = await DeployedContracts.OmniPoolTokenV1.deployed();
         omniPool = await DeployedContracts.OmniPoolV1.deployed();
     });
@@ -61,6 +61,6 @@ describeDeployment('1642682503-omni-pool', ContractName.OmniPoolV1, () => {
             Roles.TokenGovernance.ROLE_MINTER,
             isMainnet() ? [omniPool.address, liquidityProtection] : [omniPool.address]
         );
-        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER, [omniPool.address]);
+        await expectRoleMembers(omniVault, Roles.OmniVault.ROLE_BNT_MANAGER, [omniPool.address]);
     });
 });

@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
@@ -52,8 +52,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the master vault contract
-    IMasterVault private immutable _masterVault;
+    // the omni vault contract
+    IOmniVault private immutable _omniVault;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
@@ -84,7 +84,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IMasterVault initMasterVault,
+        IOmniVault initOmniVault,
         IExternalProtectionVault initExternalProtectionVault,
         IExternalRewardsVault initExternalRewardsVault,
         IOmniPool initOmniPool,
@@ -95,7 +95,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _validAddress(address(initBNTGovernance));
         _validAddress(address(initVBNTGovernance));
         _validAddress(address(initNetworkSettings));
-        _validAddress(address(initMasterVault));
+        _validAddress(address(initOmniVault));
         _validAddress(address(initExternalProtectionVault));
         _validAddress(address(initExternalRewardsVault));
         _validAddress(address(initOmniPool));
@@ -108,7 +108,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _vbntGovernance = initVBNTGovernance;
         _vbnt = initVBNTGovernance.token();
         _networkSettings = initNetworkSettings;
-        _masterVault = initMasterVault;
+        _omniVault = initOmniVault;
         _externalProtectionVault = initExternalProtectionVault;
         _externalRewardsVault = initExternalRewardsVault;
         _omniPool = initOmniPool;
@@ -212,8 +212,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function masterVault() external view returns (IMasterVault) {
-        return _masterVault;
+    function omniVault() external view returns (IOmniVault) {
+        return _omniVault;
     }
 
     /**

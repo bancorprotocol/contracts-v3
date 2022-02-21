@@ -13,7 +13,7 @@ export const Roles = {
         ROLE_NETWORK_FEE_MANAGER: id('ROLE_NETWORK_FEE_MANAGER')
     },
 
-    MasterVault: {
+    OmniVault: {
         ROLE_BNT_MANAGER: id('ROLE_BNT_MANAGER')
     },
 

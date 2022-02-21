@@ -18,7 +18,7 @@ import { MathEx } from "../utility/MathEx.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 
-import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
 
 // prettier-ignore
 import {
@@ -61,8 +61,8 @@ contract OmniPool is IOmniPool, Vault {
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the master vault contract
-    IMasterVault private immutable _masterVault;
+    // the omni vault contract
+    IOmniVault private immutable _omniVault;
 
     // the omni pool token
     IPoolToken internal immutable _poolToken;
@@ -127,18 +127,18 @@ contract OmniPool is IOmniPool, Vault {
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IMasterVault initMasterVault,
+        IOmniVault initOmniVault,
         IPoolToken initOmniPoolToken
     )
         Vault(initBNTGovernance, initVBNTGovernance)
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
-        validAddress(address(initMasterVault))
+        validAddress(address(initOmniVault))
         validAddress(address(initOmniPoolToken))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
-        _masterVault = initMasterVault;
+        _omniVault = initOmniVault;
         _poolToken = initOmniPoolToken;
     }
 
@@ -326,7 +326,7 @@ contract OmniPool is IOmniPool, Vault {
      * @inheritdoc IOmniPool
      */
     function burnFromVault(uint256 bntAmount) external onlyRoleMember(ROLE_VAULT_MANAGER) greaterThanZero(bntAmount) {
-        _masterVault.burn(Token(address(_bnt)), bntAmount);
+        _omniVault.burn(Token(address(_bnt)), bntAmount);
     }
 
     /**
@@ -444,7 +444,7 @@ contract OmniPool is IOmniPool, Vault {
         _poolToken.mint(address(this), poolTokenAmount);
 
         // mint BNT to the vault
-        _bntGovernance.mint(address(_masterVault), bntAmount);
+        _bntGovernance.mint(address(_omniVault), bntAmount);
 
         emit FundingRequested({
             contextId: contextId,
@@ -457,7 +457,7 @@ contract OmniPool is IOmniPool, Vault {
             contextId: contextId,
             poolTokenSupply: poolTokenTotalSupply,
             stakedBalance: newStakedBalance,
-            actualBalance: _bnt.balanceOf(address(_masterVault))
+            actualBalance: _bnt.balanceOf(address(_omniVault))
         });
     }
 
@@ -494,8 +494,8 @@ contract OmniPool is IOmniPool, Vault {
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // burn all BNT from the master vault
-        _masterVault.burn(Token(address(_bnt)), bntAmount);
+        // burn all BNT from the omni vault
+        _omniVault.burn(Token(address(_bnt)), bntAmount);
 
         emit FundingRenounced({
             contextId: contextId,
@@ -508,7 +508,7 @@ contract OmniPool is IOmniPool, Vault {
             contextId: contextId,
             poolTokenSupply: poolTokenTotalSupply,
             stakedBalance: newStakedBalance,
-            actualBalance: _bnt.balanceOf(address(_masterVault))
+            actualBalance: _bnt.balanceOf(address(_omniVault))
         });
     }
 

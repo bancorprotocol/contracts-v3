@@ -7,7 +7,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
-import { IMasterVault } from "./../../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "./../../vaults/interfaces/IOmniVault.sol";
 
 import { Token } from "../../token/Token.sol";
 

@@ -18,14 +18,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await grantRole({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.OmniVaultV1,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.OmniVaultV1,
         id: Roles.Vault.ROLE_ASSET_MANAGER,
         member: networkAddress,
         from: deployer

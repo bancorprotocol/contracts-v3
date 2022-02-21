@@ -6,7 +6,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/IBancorNetwork.sol";
 
-import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { OmniPool } from "../pools/OmniPool.sol";
@@ -17,7 +17,7 @@ contract TestOmniPool is OmniPool {
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IMasterVault initMasterVault,
+        IOmniVault initOmniVault,
         IPoolToken initOmniPoolToken
     )
         OmniPool(
@@ -25,7 +25,7 @@ contract TestOmniPool is OmniPool {
             initBNTGovernance,
             initVBNTGovernance,
             initNetworkSettings,
-            initMasterVault,
+            initOmniVault,
             initOmniPoolToken
         )
     {}

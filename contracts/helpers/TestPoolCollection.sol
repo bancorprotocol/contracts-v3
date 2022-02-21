@@ -6,7 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
-import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
@@ -30,7 +30,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         IBancorNetwork initNetwork,
         IERC20 initBNT,
         INetworkSettings initNetworkSettings,
-        IMasterVault initMasterVault,
+        IOmniVault initOmniVault,
         IOmniPool initOmniPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
@@ -40,7 +40,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
             initNetwork,
             initBNT,
             initNetworkSettings,
-            initMasterVault,
+            initOmniVault,
             initOmniPool,
             initExternalProtectionVault,
             initPoolTokenFactory,

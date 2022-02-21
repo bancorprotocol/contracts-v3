@@ -1,5 +1,5 @@
 import Contracts, {
-    MasterVault,
+    OmniVault,
     IERC20,
     NetworkSettings,
     PoolToken,
@@ -45,12 +45,12 @@ describe('OmniPool', () => {
         let networkSettings: NetworkSettings;
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let omniPool: TestOmniPool;
         let omniPoolToken: PoolToken;
 
         beforeEach(async () => {
-            ({ network, bnt, networkSettings, bntGovernance, vbntGovernance, masterVault, omniPool, omniPoolToken } =
+            ({ network, bnt, networkSettings, bntGovernance, vbntGovernance, omniVault, omniPool, omniPoolToken } =
                 await createSystem());
         });
 
@@ -61,7 +61,7 @@ describe('OmniPool', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     omniPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -74,7 +74,7 @@ describe('OmniPool', () => {
                     ZERO_ADDRESS,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     omniPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -87,7 +87,7 @@ describe('OmniPool', () => {
                     bntGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     omniPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -100,13 +100,13 @@ describe('OmniPool', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     ZERO_ADDRESS,
-                    masterVault.address,
+                    omniVault.address,
                     omniPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid master vault contract', async () => {
+        it('should revert when attempting to create with an invalid omni vault contract', async () => {
             await expect(
                 Contracts.OmniPool.deploy(
                     network.address,
@@ -126,7 +126,7 @@ describe('OmniPool', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    masterVault.address,
+                    omniVault.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
@@ -204,7 +204,7 @@ describe('OmniPool', () => {
     describe('burning BNT from the vault', () => {
         let bnt: IERC20;
         let omniPool: TestOmniPool;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let vaultManager: SignerWithAddress;
 
         const amount = toWei(12_345);
@@ -214,11 +214,11 @@ describe('OmniPool', () => {
         });
 
         beforeEach(async () => {
-            ({ bnt, omniPool, masterVault } = await createSystem());
+            ({ bnt, omniPool, omniVault } = await createSystem());
 
             await omniPool.grantRole(Roles.OmniPool.ROLE_VAULT_MANAGER, vaultManager.address);
 
-            await bnt.transfer(masterVault.address, amount);
+            await bnt.transfer(omniVault.address, amount);
         });
 
         it('should revert when attempting to burn from a non-vault manager', async () => {
@@ -231,23 +231,23 @@ describe('OmniPool', () => {
             await expect(omniPool.connect(vaultManager).burnFromVault(0)).to.be.revertedWith('ZeroValue');
         });
 
-        it('should revert when attempting to burn more than the balance of the master vault', async () => {
+        it('should revert when attempting to burn more than the balance of the omni vault', async () => {
             const tokenData = new TokenData(TokenSymbol.BNT);
             await expect(omniPool.connect(vaultManager).burnFromVault(amount.add(1))).to.be.revertedWith(
                 tokenData.errors().burnExceedsBalance
             );
         });
 
-        it('should burn from the master vault', async () => {
+        it('should burn from the omni vault', async () => {
             const amount = toWei(12_345);
 
             const prevTotalSupply = await bnt.totalSupply();
-            const prevVaultTokenBalance = await bnt.balanceOf(masterVault.address);
+            const prevVaultTokenBalance = await bnt.balanceOf(omniVault.address);
 
             await omniPool.connect(vaultManager).burnFromVault(amount);
 
             expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(amount));
-            expect(await bnt.balanceOf(masterVault.address)).to.equal(prevVaultTokenBalance.sub(amount));
+            expect(await bnt.balanceOf(omniVault.address)).to.equal(prevVaultTokenBalance.sub(amount));
         });
     });
 
@@ -257,12 +257,12 @@ describe('OmniPool', () => {
         let bnt: IERC20;
         let omniPool: TestOmniPool;
         let omniPoolToken: PoolToken;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, bnt, omniPool, omniPoolToken, masterVault, poolCollection } =
+            ({ networkSettings, network, bnt, omniPool, omniPoolToken, omniVault, poolCollection } =
                 await createSystem());
 
             await omniPool.grantRole(Roles.OmniPool.ROLE_FUNDING_MANAGER, fundingManager.address);
@@ -281,13 +281,13 @@ describe('OmniPool', () => {
 
             const prevPoolTokenTotalSupply = await omniPoolToken.totalSupply();
             const prevPoolPoolTokenBalance = await omniPoolToken.balanceOf(omniPool.address);
-            const prevVaultPoolTokenBalance = await omniPoolToken.balanceOf(masterVault.address);
+            const prevVaultPoolTokenBalance = await omniPoolToken.balanceOf(omniVault.address);
 
             expect(prevVaultPoolTokenBalance).to.equal(0);
 
             const prevTokenTotalSupply = await bnt.totalSupply();
             const prevPoolTokenBalance = await bnt.balanceOf(omniPool.address);
-            const prevVaultTokenBalance = await bnt.balanceOf(masterVault.address);
+            const prevVaultTokenBalance = await bnt.balanceOf(omniVault.address);
 
             let expectedPoolTokenAmount;
             if (prevPoolTokenTotalSupply.isZero()) {
@@ -312,11 +312,11 @@ describe('OmniPool', () => {
             expect(await omniPoolToken.balanceOf(omniPool.address)).to.equal(
                 prevPoolPoolTokenBalance.add(expectedPoolTokenAmount)
             );
-            expect(await omniPoolToken.balanceOf(masterVault.address)).to.equal(prevVaultPoolTokenBalance);
+            expect(await omniPoolToken.balanceOf(omniVault.address)).to.equal(prevVaultPoolTokenBalance);
 
             expect(await bnt.totalSupply()).to.equal(prevTokenTotalSupply.add(expectedAmount));
             expect(await bnt.balanceOf(omniPool.address)).to.equal(prevPoolTokenBalance);
-            expect(await bnt.balanceOf(masterVault.address)).to.equal(prevVaultTokenBalance.add(expectedAmount));
+            expect(await bnt.balanceOf(omniVault.address)).to.equal(prevVaultTokenBalance.add(expectedAmount));
         };
 
         it('should revert when attempting to request funding from a non-funding manager', async () => {
@@ -411,12 +411,12 @@ describe('OmniPool', () => {
         let bnt: IERC20;
         let omniPool: TestOmniPool;
         let omniPoolToken: PoolToken;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let poolCollection: TestPoolCollection;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ networkSettings, network, bnt, omniPool, omniPoolToken, masterVault, poolCollection } =
+            ({ networkSettings, network, bnt, omniPool, omniPoolToken, omniVault, poolCollection } =
                 await createSystem());
 
             await omniPool.grantRole(Roles.OmniPool.ROLE_FUNDING_MANAGER, fundingManager.address);
@@ -474,13 +474,13 @@ describe('OmniPool', () => {
 
                 const prevPoolTokenTotalSupply = await omniPoolToken.totalSupply();
                 const prevPoolPoolTokenBalance = await omniPoolToken.balanceOf(omniPool.address);
-                const prevVaultPoolTokenBalance = await omniPoolToken.balanceOf(masterVault.address);
+                const prevVaultPoolTokenBalance = await omniPoolToken.balanceOf(omniVault.address);
 
                 expect(prevVaultPoolTokenBalance).to.equal(0);
 
                 const prevTokenTotalSupply = await bnt.totalSupply();
                 const prevPoolTokenBalance = await bnt.balanceOf(omniPool.address);
-                const prevVaultTokenBalance = await bnt.balanceOf(masterVault.address);
+                const prevVaultTokenBalance = await bnt.balanceOf(omniVault.address);
 
                 const reduceFundingAmount = min(prevFunding, amount);
                 const expectedPoolTokenAmount = reduceFundingAmount
@@ -512,11 +512,11 @@ describe('OmniPool', () => {
                 expect(await omniPoolToken.balanceOf(omniPool.address)).to.equal(
                     prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
                 );
-                expect(await omniPoolToken.balanceOf(masterVault.address)).to.equal(prevVaultPoolTokenBalance);
+                expect(await omniPoolToken.balanceOf(omniVault.address)).to.equal(prevVaultPoolTokenBalance);
 
                 expect(await bnt.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
                 expect(await bnt.balanceOf(omniPool.address)).to.equal(prevPoolTokenBalance);
-                expect(await bnt.balanceOf(masterVault.address)).to.equal(prevVaultTokenBalance.sub(amount));
+                expect(await bnt.balanceOf(omniVault.address)).to.equal(prevVaultTokenBalance.sub(amount));
             };
 
             it('should allow renouncing funding', async () => {
@@ -526,9 +526,9 @@ describe('OmniPool', () => {
             });
 
             it('should allow renouncing more funding than the previously requested amount', async () => {
-                // ensure that there is enough tokens in the master vault
+                // ensure that there is enough tokens in the omni vault
                 const extra = toWei(1000);
-                await bnt.transfer(masterVault.address, extra);
+                await bnt.transfer(omniVault.address, extra);
 
                 await testRenounce(requestedAmount.add(extra));
             });

@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../../vaults/interfaces/IOmniVault.sol";
 import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
 import { IExternalRewardsVault } from "../../vaults/interfaces/IExternalRewardsVault.sol";
 
@@ -57,9 +57,9 @@ interface IBancorNetworkInfo is IUpgradeable {
     function networkSettings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the master vault contract
+     * @dev returns the omni vault contract
      */
-    function masterVault() external view returns (IMasterVault);
+    function omniVault() external view returns (IOmniVault);
 
     /**
      * @dev returns the address of the external protection vault
