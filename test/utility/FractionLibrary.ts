@@ -1,5 +1,5 @@
-import Contracts, { TestTypes } from '../../components/Contracts';
-import { MAX_UINT256, ZERO_FRACTION } from '../../utils/Constants';
+import Contracts, { TestFractionLibrary } from '../../components/Contracts';
+import { MAX_UINT256 } from '../../utils/Constants';
 import { toString, Fraction } from '../../utils/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -7,18 +7,11 @@ import { BigNumber } from 'ethers';
 
 const MAX_UINT112 = BigNumber.from(2).pow(112).sub(1);
 
-describe('Types', () => {
-    let types: TestTypes;
+describe('FractionLibrary', () => {
+    let fractionLibrary: TestFractionLibrary;
 
     before(async () => {
-        types = await Contracts.TestTypes.deploy();
-    });
-
-    describe('zeroFraction', () => {
-        it('should return the zero fraction', async () => {
-            const zeroFraction = await types.zeroFraction();
-            expect(zeroFraction).to.equal(ZERO_FRACTION);
-        });
+        fractionLibrary = await Contracts.TestFractionLibrary.deploy();
     });
 
     describe('isFractionValid', () => {
@@ -28,7 +21,7 @@ describe('Types', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is valid`, async () => {
-                expect(await types.isFractionValid(fraction)).to.be.true;
+                expect(await fractionLibrary.isFractionValid(fraction)).to.be.true;
             });
         }
 
@@ -38,7 +31,7 @@ describe('Types', () => {
             { n: 1000, d: 0 }
         ]) {
             it(`should return that ${fraction} is invalid`, async () => {
-                expect(await types.isFractionValid(fraction)).to.be.false;
+                expect(await fractionLibrary.isFractionValid(fraction)).to.be.false;
             });
         }
     });
@@ -50,7 +43,7 @@ describe('Types', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is positive`, async () => {
-                expect(await types.isFractionPositive(fraction)).to.be.true;
+                expect(await fractionLibrary.isFractionPositive(fraction)).to.be.true;
             });
         }
 
@@ -61,16 +54,9 @@ describe('Types', () => {
             { n: 1, d: 0 }
         ]) {
             it(`should return that ${toString(fraction)} is not positive`, async () => {
-                expect(await types.isFractionPositive(fraction)).to.be.false;
+                expect(await fractionLibrary.isFractionPositive(fraction)).to.be.false;
             });
         }
-    });
-
-    describe('zeroFraction112', () => {
-        it('should return the zero fraction112', async () => {
-            const zeroFraction112 = await types.zeroFraction112();
-            expect(zeroFraction112).to.equal(ZERO_FRACTION);
-        });
     });
 
     describe('isFraction112Valid', () => {
@@ -80,7 +66,7 @@ describe('Types', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction112)} is valid`, async () => {
-                expect(await types.isFraction112Valid(fraction112)).to.be.true;
+                expect(await fractionLibrary.isFraction112Valid(fraction112)).to.be.true;
             });
         }
 
@@ -90,7 +76,7 @@ describe('Types', () => {
             { n: 1000, d: 0 }
         ]) {
             it(`should return that ${fraction112} is invalid`, async () => {
-                expect(await types.isFraction112Valid(fraction112)).to.be.false;
+                expect(await fractionLibrary.isFraction112Valid(fraction112)).to.be.false;
             });
         }
     });
@@ -102,7 +88,7 @@ describe('Types', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction112)} is positive`, async () => {
-                expect(await types.isFraction112Positive(fraction112)).to.be.true;
+                expect(await fractionLibrary.isFraction112Positive(fraction112)).to.be.true;
             });
         }
 
@@ -113,7 +99,7 @@ describe('Types', () => {
             { n: 1, d: 0 }
         ]) {
             it(`should return that ${toString(fraction112)} is not positive`, async () => {
-                expect(await types.isFraction112Positive(fraction112)).to.be.false;
+                expect(await fractionLibrary.isFraction112Positive(fraction112)).to.be.false;
             });
         }
     });
@@ -121,7 +107,7 @@ describe('Types', () => {
     describe('toFraction112', () => {
         const toFraction112 = (fraction: Fraction<BigNumber>, maxRelativeError: Decimal) => {
             it(`fraction = ${toString(fraction)}`, async () => {
-                const newFraction = await types.toFraction112(fraction);
+                const newFraction = await fractionLibrary.toFraction112(fraction);
                 expect(newFraction.n).to.be.lte(MAX_UINT112);
                 expect(newFraction.d).to.be.lte(MAX_UINT112);
                 expect(newFraction).to.almostEqual(fraction, { maxRelativeError });
@@ -184,7 +170,7 @@ describe('Types', () => {
     describe('fromFraction112', () => {
         const fromFraction112 = (fraction: Fraction<BigNumber>) => {
             it(`fraction = ${toString(fraction)}`, async () => {
-                const newFraction = await types.fromFraction112(fraction);
+                const newFraction = await fractionLibrary.fromFraction112(fraction);
                 expect(newFraction).to.equal(fraction);
             });
         };

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.11;
 
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Fraction, Uint512, Sint256 } from "./Types.sol";
 import { PPM_RESOLUTION } from "./Constants.sol";
 
@@ -89,6 +90,14 @@ library MathEx {
         }
 
         return Fraction({ n: n, d: ONE });
+    }
+
+    /**
+     * @dev returns a fraction with reduced components
+     */
+    function reducedFraction(Fraction memory fraction, uint256 max) internal pure returns (Fraction memory) {
+        uint256 scale = Math.ceilDiv(Math.max(fraction.n, fraction.d), max);
+        return Fraction({ n: fraction.n / scale, d: fraction.d / scale });
     }
 
     /**
