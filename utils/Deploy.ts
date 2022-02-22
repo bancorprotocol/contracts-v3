@@ -1,13 +1,17 @@
 import {
     AutoCompoundingStakingRewards,
-    BancorV1Migration,
     BancorNetwork,
     BancorNetworkInfo,
+    BancorPortal,
+    BancorV1Migration,
     ExternalProtectionVault,
     ExternalRewardsVault,
+    MockUniswapV2Factory,
+    MockUniswapV2Pair,
+    MockUniswapV2Router02,
+    NetworkSettings,
     OmniPool,
     OmniVault,
-    NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
     PoolCollectionUpgrader,
@@ -56,9 +60,16 @@ enum NewContractName {
     BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
     BancorNetworkProxy = 'BancorNetworkProxy',
     BancorNetworkV1 = 'BancorNetworkV1',
+    BancorPortalV1 = 'BancorPortalV1',
     BancorV1MigrationV1 = 'BancorV1MigrationV1',
     ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
     ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
+    MasterPoolTokenV1 = 'MasterPoolTokenV1',
+    MasterPoolV1 = 'MasterPoolV1',
+    MasterVaultV1 = 'MasterVaultV1',
+    MockUniswapV2FactoryV1 = 'MockUniswapV2FactoryV1',
+    MockUniswapV2PairV1 = 'MockUniswapV2PairV1',
+    MockUniswapV2Router02V1 = 'MockUniswapV2Router02V1',
     NetworkSettingsV1 = 'NetworkSettingsV1',
     OmniPoolTokenV1 = 'OmniPoolTokenV1',
     OmniPoolV1 = 'OmniPoolV1',
@@ -70,7 +81,11 @@ enum NewContractName {
     ProxyAdmin = 'ProxyAdmin'
 }
 
-export const ContractName = { ...LegacyContractName, ...NewContractName } as const;
+export const ContractName = {
+    ...LegacyContractName,
+    ...NewContractName
+};
+
 export type ContractName = LegacyContractName | NewContractName;
 
 export enum DeploymentTag {
@@ -92,9 +107,14 @@ const DeployedNewContracts = {
     BancorNetworkInfoV1: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfoV1),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
     BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
+    BancorPortalV1: deployed<BancorPortal>(ContractName.BancorPortalV1),
     BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
     ExternalProtectionVaultV1: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVaultV1),
     ExternalRewardsVaultV1: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVaultV1),
+    MasterPoolTokenV1: deployed<PoolToken>(ContractName.MasterPoolTokenV1),
+    MockUniswapV2FactoryV1: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2FactoryV1),
+    MockUniswapV2PairV1: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2PairV1),
+    MockUniswapV2Router02V1: deployed<MockUniswapV2Router02>(ContractName.MockUniswapV2Router02V1),
     NetworkSettingsV1: deployed<NetworkSettings>(ContractName.NetworkSettingsV1),
     OmniPoolTokenV1: deployed<PoolToken>(ContractName.OmniPoolTokenV1),
     OmniPoolV1: deployed<OmniPool>(ContractName.OmniPoolV1),
@@ -106,7 +126,10 @@ const DeployedNewContracts = {
     ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
 };
 
-export const DeployedContracts = { ...DeployedLegacyContracts, ...DeployedNewContracts };
+export const DeployedContracts = {
+    ...DeployedLegacyContracts,
+    ...DeployedNewContracts
+};
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.HARDHAT;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;
