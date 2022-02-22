@@ -1051,6 +1051,29 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
+     * @dev calculates the target network token trading liquidity based on the smaller between the following:
+     * - pool funding limit (e.g., the total funding limit could have been reduced by the DAO)
+     * - network token liquidity required to match previously deposited based token liquidity
+     * - maximum available network token trading liquidity (current amount + available funding)
+     */
+    function _calcNewNetworkTradingLiquidity(
+        uint256 poolFundingLimit,
+        uint256 availableFunding,
+        uint256 tokenReserveAmount,
+        uint256 networkTokenTradingLiquidity,
+        Fraction memory effectiveFundingRate
+    ) private pure returns (uint256) {
+        return
+            Math.min(
+                Math.min(
+                    poolFundingLimit,
+                    MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
+                ),
+                networkTokenTradingLiquidity + availableFunding
+            );
+    }
+
+    /**
      * @dev adjusts the trading liquidity based on the base token vault balance and funding limits
      */
     function _updateTradingLiquidity(
@@ -1103,16 +1126,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        // calculate the target network token trading liquidity based on the smaller between the following:
-        // - pool funding limit (e.g., the total funding limit could have been reduced by the DAO)
-        // - network token liquidity required to match previously deposited based token liquidity
-        // - maximum available network token trading liquidity (current amount + available funding)
-        uint256 targetNetworkTokenTradingLiquidity = Math.min(
-            Math.min(
-                _networkSettings.poolFundingLimit(pool),
-                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
-            ),
-            liquidity.networkTokenTradingLiquidity + _masterPool.availableFunding(pool)
+        // calculate the target network token trading liquidity
+        uint256 targetNetworkTokenTradingLiquidity = _calcNewNetworkTradingLiquidity(
+            _networkSettings.poolFundingLimit(pool),
+            _masterPool.availableFunding(pool),
+            tokenReserveAmount,
+            liquidity.networkTokenTradingLiquidity,
+            effectiveFundingRate
         );
 
         // ensure that the target is above the minimum liquidity for trading
