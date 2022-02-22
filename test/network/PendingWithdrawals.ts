@@ -285,14 +285,14 @@ describe('PendingWithdrawals', () => {
                     it('should revert when attempting to withdraw an invalid amount of pool tokens', async () => {
                         await expect(
                             network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount.add(1))
-                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+                        ).to.be.revertedWith('ERC20: insufficient allowance');
                     });
 
                     it('should revert when attempting to withdraw an insufficient amount of pool tokens', async () => {
                         const providerBalance = await poolToken.balanceOf(providerAddress);
                         await expect(
                             network.connect(provider).initWithdrawal(poolToken.address, providerBalance.add(1))
-                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+                        ).to.be.revertedWith('ERC20: insufficient allowance');
                     });
 
                     it('should init a withdraw', async () => {
