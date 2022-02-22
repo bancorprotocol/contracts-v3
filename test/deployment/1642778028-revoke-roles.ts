@@ -18,6 +18,7 @@ describeDeployment('1642778028-revoke-roles', DeploymentTag.V3, () => {
             ContractName.AutoCompoundingStakingRewardsV1,
             ContractName.BancorNetworkInfoV1,
             ContractName.BancorNetworkV1,
+            ContractName.BancorPortalV1,
             ContractName.ExternalProtectionVaultV1,
             ContractName.ExternalRewardsVaultV1,
             ContractName.OmniPoolV1,
