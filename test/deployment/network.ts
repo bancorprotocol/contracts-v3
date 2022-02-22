@@ -112,7 +112,7 @@ describe('network', () => {
         await expectRoleMembers(networkSettings, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
         await expectRoleMembers(omniPool, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
-        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER, [
+        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER, [
             autoCompoundingStakingRewards.address
         ]);
         await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_MANAGER, [poolCollection.address]);

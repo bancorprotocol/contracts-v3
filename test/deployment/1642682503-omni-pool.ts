@@ -47,7 +47,7 @@ describeDeployment('1642682503-omni-pool', ContractName.OmniPoolV1, () => {
         expect(await omniPool.poolToken()).to.equal(omniPoolToken.address);
 
         await expectRoleMembers(omniPool, Roles.Upgradeable.ROLE_ADMIN, [deployer, networkProxy.address]);
-        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER);
+        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER);
         await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_MANAGER);
         await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_VAULT_MANAGER);
         await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_FUNDING_MANAGER);

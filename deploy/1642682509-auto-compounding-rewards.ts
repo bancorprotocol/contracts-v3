@@ -19,7 +19,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     await grantRole({
         name: ContractName.OmniPoolV1,
-        id: Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER,
+        id: Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER,
         member: autoCompoundingRewardsAddress,
         from: deployer
     });

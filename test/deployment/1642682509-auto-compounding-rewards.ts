@@ -29,7 +29,7 @@ describeDeployment('1642682509-auto-compounding-rewards', ContractName.AutoCompo
         expect(await autoCompoundingStakingRewards.version()).to.equal(1);
 
         await expectRoleMembers(autoCompoundingStakingRewards, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
-        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER, [
+        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER, [
             autoCompoundingStakingRewards.address
         ]);
         await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
