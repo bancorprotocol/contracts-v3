@@ -41,7 +41,7 @@ interface ReserveTokenAndPoolTokenBundle {
 describe('BancorPortal', () => {
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
-    let networkToken: IERC20;
+    let bnt: IERC20;
     let masterPoolToken: PoolToken;
     let networkSettings: NetworkSettings;
     let poolCollection: TestPoolCollection;
@@ -54,7 +54,7 @@ describe('BancorPortal', () => {
 
     const AMOUNT = BigNumber.from(1000);
     const ZERO = BigNumber.from(0);
-    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BNT_FUNDING_RATE = 1;
     const BASE_TOKEN_FUNDING_RATE = 2;
 
     shouldHaveGap('BancorPortal');
@@ -64,8 +64,7 @@ describe('BancorPortal', () => {
     });
 
     beforeEach(async () => {
-        ({ network, networkSettings, networkToken, poolCollection, networkInfo, masterPoolToken } =
-            await createSystem());
+        ({ network, networkSettings, bnt, poolCollection, networkInfo, masterPoolToken } = await createSystem());
         uniswapV2Pair = await Contracts.MockUniswapV2Pair.deploy('UniswapV2Pair', 'UniswapV2Pair', 100_000_000);
         uniswapV2Router02 = await Contracts.MockUniswapV2Router02.deploy(
             'UniswapV2Router02',
@@ -84,7 +83,7 @@ describe('BancorPortal', () => {
             ctorArgs: [
                 network.address,
                 networkSettings.address,
-                networkToken.address,
+                bnt.address,
                 uniswapV2Router02.address,
                 uniswapV2Factory.address,
                 uniswapV2Router02.address,
@@ -158,7 +157,7 @@ describe('BancorPortal', () => {
                 Contracts.BancorPortal.deploy(
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    networkToken.address,
+                    bnt.address,
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
@@ -172,7 +171,7 @@ describe('BancorPortal', () => {
                 Contracts.BancorPortal.deploy(
                     network.address,
                     ZERO_ADDRESS,
-                    networkToken.address,
+                    bnt.address,
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
@@ -181,7 +180,7 @@ describe('BancorPortal', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('reverts when initializing with an invalid networkToken contract', async () => {
+        it('reverts when initializing with an invalid bnt contract', async () => {
             await expect(
                 Contracts.BancorPortal.deploy(
                     network.address,
@@ -200,7 +199,7 @@ describe('BancorPortal', () => {
                 Contracts.BancorPortal.deploy(
                     network.address,
                     networkSettings.address,
-                    networkToken.address,
+                    bnt.address,
                     ZERO_ADDRESS,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
@@ -214,7 +213,7 @@ describe('BancorPortal', () => {
                 Contracts.BancorPortal.deploy(
                     network.address,
                     networkSettings.address,
-                    networkToken.address,
+                    bnt.address,
                     uniswapV2Router02.address,
                     ZERO_ADDRESS,
                     uniswapV2Router02.address,
@@ -228,7 +227,7 @@ describe('BancorPortal', () => {
                 Contracts.BancorPortal.deploy(
                     network.address,
                     networkSettings.address,
-                    networkToken.address,
+                    bnt.address,
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     ZERO_ADDRESS,
@@ -242,7 +241,7 @@ describe('BancorPortal', () => {
                 Contracts.BancorPortal.deploy(
                     network.address,
                     networkSettings.address,
-                    networkToken.address,
+                    bnt.address,
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
@@ -402,15 +401,15 @@ describe('BancorPortal', () => {
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
-            await uniswapV2Pair.setTokens(networkToken.address, unlistedToken.address);
-            await uniswapV2Factory.setTokens(networkToken.address, unlistedToken.address);
+            await uniswapV2Pair.setTokens(bnt.address, unlistedToken.address);
+            await uniswapV2Factory.setTokens(bnt.address, unlistedToken.address);
             const res = await testMigrationDeposit([
-                { reserveToken: networkToken, poolToken: masterPoolToken },
+                { reserveToken: bnt, poolToken: masterPoolToken },
                 { reserveToken: unlistedToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, networkToken.address, unlistedToken.address, AMOUNT, ZERO);
+                .withArgs(user.address, bnt.address, unlistedToken.address, AMOUNT, ZERO);
         });
 
         it('deposits when token1 is unlisted and token2 is bnt', async () => {
@@ -418,45 +417,45 @@ describe('BancorPortal', () => {
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
-            await uniswapV2Pair.setTokens(unlistedToken.address, networkToken.address);
-            await uniswapV2Factory.setTokens(unlistedToken.address, networkToken.address);
+            await uniswapV2Pair.setTokens(unlistedToken.address, bnt.address);
+            await uniswapV2Factory.setTokens(unlistedToken.address, bnt.address);
             const res = await testMigrationDeposit([
                 { reserveToken: unlistedToken },
-                { reserveToken: networkToken, poolToken: masterPoolToken }
+                { reserveToken: bnt, poolToken: masterPoolToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, unlistedToken.address, networkToken.address, ZERO, AMOUNT);
+                .withArgs(user.address, unlistedToken.address, bnt.address, ZERO, AMOUNT);
         });
 
         it('deposits when token1 is bnt and token2 is whitelisted', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
-            await uniswapV2Pair.setTokens(networkToken.address, whitelistedToken.address);
-            await uniswapV2Factory.setTokens(networkToken.address, whitelistedToken.address);
+            await uniswapV2Pair.setTokens(bnt.address, whitelistedToken.address);
+            await uniswapV2Factory.setTokens(bnt.address, whitelistedToken.address);
             const res = await testMigrationDeposit([
-                { reserveToken: networkToken, poolToken: masterPoolToken },
+                { reserveToken: bnt, poolToken: masterPoolToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, networkToken.address, whitelistedToken.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, bnt.address, whitelistedToken.address, AMOUNT, AMOUNT);
         });
 
         it('deposits when token1 is whitelisted and token2 is bnt', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             await networkSettings.setFundingLimit(whitelistedToken.address, FUNDING_LIMIT);
             await poolCollection.requestFundingT(CONTEXT_ID, whitelistedToken.address, AMOUNT);
-            await uniswapV2Pair.setTokens(whitelistedToken.address, networkToken.address);
-            await uniswapV2Factory.setTokens(whitelistedToken.address, networkToken.address);
+            await uniswapV2Pair.setTokens(whitelistedToken.address, bnt.address);
+            await uniswapV2Factory.setTokens(whitelistedToken.address, bnt.address);
             const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken, poolToken },
-                { reserveToken: networkToken, poolToken: masterPoolToken }
+                { reserveToken: bnt, poolToken: masterPoolToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken.address, networkToken.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, whitelistedToken.address, bnt.address, AMOUNT, AMOUNT);
         });
     });
 
@@ -600,7 +599,7 @@ describe('BancorPortal', () => {
                 tokenData: new TokenData(symbol),
                 balance: balance,
                 requestedLiquidity: balance.mul(1000),
-                networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                bntRate: BNT_FUNDING_RATE,
                 baseTokenRate: BASE_TOKEN_FUNDING_RATE
             },
             deployer as any as SignerWithAddress,
@@ -618,6 +617,6 @@ describe('BancorPortal', () => {
     };
 
     const isNetworkToken = (token: TokenWithAddress): boolean => {
-        return token.address === networkToken.address;
+        return token.address === bnt.address;
     };
 });
