@@ -1,4 +1,4 @@
-import Contracts, { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../components/Contracts';
+import Contracts, { IERC20, OmniVault, TestBancorNetwork, TestOmniPool } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -10,32 +10,32 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe('MasterVault', () => {
-    shouldHaveGap('MasterVault');
+describe('OmniVault', () => {
+    shouldHaveGap('OmniVault');
 
     describe('construction', () => {
         let network: TestBancorNetwork;
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
-        let masterVault: MasterVault;
-        let masterPool: TestMasterPool;
+        let omniVault: OmniVault;
+        let omniPool: TestOmniPool;
 
         beforeEach(async () => {
-            ({ network, bntGovernance, vbntGovernance, masterVault, masterPool } = await createSystem());
+            ({ network, bntGovernance, vbntGovernance, omniVault, omniPool } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(masterVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(omniVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
         it('should revert when initialized with an invalid BNT governance contract', async () => {
-            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS, vbntGovernance.address)).to.be.revertedWith(
+            await expect(Contracts.OmniVault.deploy(ZERO_ADDRESS, vbntGovernance.address)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
         it('should revert when initialized with an invalid BNT governance contract', async () => {
-            await expect(Contracts.MasterVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
+            await expect(Contracts.OmniVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
@@ -43,20 +43,20 @@ describe('MasterVault', () => {
         it('should be properly initialized', async () => {
             const [deployer] = await ethers.getSigners();
 
-            expect(await masterVault.version()).to.equal(1);
-            expect(await masterVault.isPayable()).to.be.true;
+            expect(await omniVault.version()).to.equal(1);
+            expect(await omniVault.isPayable()).to.be.true;
 
-            await expectRoles(masterVault, Roles.MasterVault);
+            await expectRoles(omniVault, Roles.OmniVault);
 
-            await expectRole(masterVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
+            await expectRole(omniVault, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address,
                 network.address
             ]);
-            await expectRole(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+            await expectRole(omniVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
                 network.address
             ]);
-            await expectRole(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
-                masterPool.address
+            await expectRole(omniVault, Roles.OmniVault.ROLE_BNT_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+                omniPool.address
             ]);
         });
     });
@@ -64,7 +64,7 @@ describe('MasterVault', () => {
     describe('asset management', () => {
         const amount = 1_000_000;
 
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let bnt: IERC20;
 
         let deployer: SignerWithAddress;
@@ -74,8 +74,8 @@ describe('MasterVault', () => {
 
         const testWithdrawFunds = () => {
             it('should allow withdrawals', async () => {
-                await expect(masterVault.connect(user).withdrawFunds(token.address, user.address, amount))
-                    .to.emit(masterVault, 'FundsWithdrawn')
+                await expect(omniVault.connect(user).withdrawFunds(token.address, user.address, amount))
+                    .to.emit(omniVault, 'FundsWithdrawn')
                     .withArgs(token.address, user.address, user.address, amount);
             });
         };
@@ -83,7 +83,7 @@ describe('MasterVault', () => {
         const testWithdrawFundsRestricted = () => {
             it('should revert', async () => {
                 await expect(
-                    masterVault.connect(user).withdrawFunds(token.address, user.address, amount)
+                    omniVault.connect(user).withdrawFunds(token.address, user.address, amount)
                 ).to.revertedWith('AccessDenied');
             });
         };
@@ -97,11 +97,11 @@ describe('MasterVault', () => {
 
             context(`withdrawing ${symbol}`, () => {
                 beforeEach(async () => {
-                    ({ masterVault, bnt } = await createSystem());
+                    ({ omniVault, bnt } = await createSystem());
 
                     token = tokenData.isBNT() ? bnt : await createToken(tokenData);
 
-                    await transfer(deployer, token, masterVault.address, amount);
+                    await transfer(deployer, token, omniVault.address, amount);
                 });
 
                 context('with no special permissions', () => {
@@ -110,7 +110,7 @@ describe('MasterVault', () => {
 
                 context('with admin role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
+                        await omniVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, user.address);
                     });
 
                     testWithdrawFundsRestricted();
@@ -118,7 +118,7 @@ describe('MasterVault', () => {
 
                 context('with asset manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, user.address);
+                        await omniVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, user.address);
                     });
 
                     testWithdrawFunds();
@@ -126,7 +126,7 @@ describe('MasterVault', () => {
 
                 context('with BNT manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(Roles.MasterVault.ROLE_BNT_MANAGER, user.address);
+                        await omniVault.grantRole(Roles.OmniVault.ROLE_BNT_MANAGER, user.address);
                     });
 
                     tokenData.isBNT() ? testWithdrawFunds() : testWithdrawFundsRestricted();

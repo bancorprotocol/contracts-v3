@@ -5,8 +5,8 @@ import {
     BancorNetworkInfo,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    MasterPool,
-    MasterVault,
+    OmniPool,
+    OmniVault,
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
@@ -45,24 +45,24 @@ const deployed = <F extends Contract>(name: ContractName) => ({
 });
 
 enum LegacyContractName {
-    VBNT = 'VBNT',
-    VBNTGovernance = 'VBNTGovernance',
     BNT = 'BNT',
-    BNTGovernance = 'BNTGovernance'
+    BNTGovernance = 'BNTGovernance',
+    VBNT = 'VBNT',
+    VBNTGovernance = 'VBNTGovernance'
 }
 
 enum NewContractName {
     AutoCompoundingStakingRewardsV1 = 'AutoCompoundingStakingRewardsV1',
     BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
+    BancorNetworkProxy = 'BancorNetworkProxy',
     BancorNetworkV1 = 'BancorNetworkV1',
     BancorV1MigrationV1 = 'BancorV1MigrationV1',
-    BancorNetworkProxy = 'BancorNetworkProxy',
     ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
     ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
-    MasterPoolV1 = 'MasterPoolV1',
-    MasterPoolTokenV1 = 'MasterPoolTokenV1',
-    MasterVaultV1 = 'MasterVaultV1',
     NetworkSettingsV1 = 'NetworkSettingsV1',
+    OmniPoolTokenV1 = 'OmniPoolTokenV1',
+    OmniPoolV1 = 'OmniPoolV1',
+    OmniVaultV1 = 'OmniVaultV1',
     PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
     PoolCollectionUpgraderV1 = 'PoolCollectionUpgraderV1',
@@ -79,26 +79,26 @@ export enum DeploymentTag {
 }
 
 const DeployedLegacyContracts = {
-    VBNT: deployed<VBNT>(ContractName.VBNT),
-    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance),
     BNT: deployed<BNT>(ContractName.BNT),
-    BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance)
+    BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance),
+    VBNT: deployed<VBNT>(ContractName.VBNT),
+    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance)
 };
 
 const DeployedNewContracts = {
     AutoCompoundingStakingRewardsV1: deployed<AutoCompoundingStakingRewards>(
         ContractName.AutoCompoundingStakingRewardsV1
     ),
-    BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
-    BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
     BancorNetworkInfoV1: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfoV1),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
+    BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
+    BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
     ExternalProtectionVaultV1: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVaultV1),
     ExternalRewardsVaultV1: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVaultV1),
-    MasterPoolV1: deployed<MasterPool>(ContractName.MasterPoolV1),
-    MasterPoolTokenV1: deployed<PoolToken>(ContractName.MasterPoolTokenV1),
-    MasterVaultV1: deployed<MasterVault>(ContractName.MasterVaultV1),
     NetworkSettingsV1: deployed<NetworkSettings>(ContractName.NetworkSettingsV1),
+    OmniPoolTokenV1: deployed<PoolToken>(ContractName.OmniPoolTokenV1),
+    OmniPoolV1: deployed<OmniPool>(ContractName.OmniPoolV1),
+    OmniVaultV1: deployed<OmniVault>(ContractName.OmniVaultV1),
     PendingWithdrawalsV1: deployed<PendingWithdrawals>(ContractName.PendingWithdrawalsV1),
     PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
     PoolCollectionUpgraderV1: deployed<PoolCollectionUpgrader>(ContractName.PoolCollectionUpgraderV1),

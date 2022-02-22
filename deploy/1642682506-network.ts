@@ -6,26 +6,26 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const masterPool = await DeployedContracts.MasterPoolV1.deployed();
+    const omniPool = await DeployedContracts.OmniPoolV1.deployed();
     const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
     const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
 
     const networkAddress = await initializeProxy({
         name: ContractName.BancorNetworkV1,
         proxyName: ContractName.BancorNetworkProxy,
-        args: [masterPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address],
+        args: [omniPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address],
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.OmniVaultV1,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.OmniVaultV1,
         id: Roles.Vault.ROLE_ASSET_MANAGER,
         member: networkAddress,
         from: deployer

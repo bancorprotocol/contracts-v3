@@ -13,12 +13,12 @@ export const Roles = {
         ROLE_NETWORK_FEE_MANAGER: id('ROLE_NETWORK_FEE_MANAGER')
     },
 
-    MasterVault: {
+    OmniVault: {
         ROLE_BNT_MANAGER: id('ROLE_BNT_MANAGER')
     },
 
-    MasterPool: {
-        ROLE_MASTER_POOL_TOKEN_MANAGER: id('ROLE_MASTER_POOL_TOKEN_MANAGER'),
+    OmniPool: {
+        ROLE_OMNI_POOL_TOKEN_MANAGER: id('ROLE_OMNI_POOL_TOKEN_MANAGER'),
         ROLE_BNT_MANAGER: id('ROLE_BNT_MANAGER'),
         ROLE_VAULT_MANAGER: id('ROLE_VAULT_MANAGER'),
         ROLE_FUNDING_MANAGER: id('ROLE_FUNDING_MANAGER')

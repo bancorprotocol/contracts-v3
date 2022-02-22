@@ -1,13 +1,13 @@
 import Contracts, {
     ExternalProtectionVault,
     IERC20,
-    MasterVault,
+    OmniVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
     TestERC20Token,
-    TestMasterPool,
+    TestOmniPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../components/Contracts';
@@ -62,9 +62,9 @@ describe('PoolCollectionUpgrader', () => {
         let network: TestBancorNetwork;
         let bnt: IERC20;
         let networkSettings: NetworkSettings;
-        let masterVault: MasterVault;
+        let omniVault: OmniVault;
         let externalProtectionVault: ExternalProtectionVault;
-        let masterPool: TestMasterPool;
+        let omniPool: TestOmniPool;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let poolTokenFactory: PoolTokenFactory;
@@ -76,9 +76,9 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 bnt,
                 networkSettings,
-                masterVault,
+                omniVault,
                 externalProtectionVault,
-                masterPool,
+                omniPool,
                 poolCollectionUpgrader,
                 poolCollection,
                 poolTokenFactory
@@ -122,8 +122,8 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 bnt,
                 networkSettings,
-                masterVault,
-                masterPool,
+                omniVault,
+                omniPool,
                 externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
@@ -136,8 +136,8 @@ describe('PoolCollectionUpgrader', () => {
                 network,
                 bnt,
                 networkSettings,
-                masterVault,
-                masterPool,
+                omniVault,
+                omniPool,
                 externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
@@ -158,8 +158,8 @@ describe('PoolCollectionUpgrader', () => {
                     network,
                     bnt,
                     networkSettings,
-                    masterVault,
-                    masterPool,
+                    omniVault,
+                    omniPool,
                     externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,

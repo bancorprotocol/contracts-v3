@@ -16,7 +16,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
+import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
@@ -60,11 +60,11 @@ contract AutoCompoundingStakingRewards is
     // the BNT contract
     IERC20 private immutable _bnt;
 
-    // the master pool contract
-    IMasterPool private immutable _masterPool;
+    // the omni pool contract
+    IOmniPool private immutable _omniPool;
 
-    // the master pool took contract
-    IPoolToken private immutable _masterPoolToken;
+    // the omni pool took contract
+    IPoolToken private immutable _omniPoolToken;
 
     // a mapping between pools and programs
     mapping(Token => ProgramData) private _programs;
@@ -114,18 +114,18 @@ contract AutoCompoundingStakingRewards is
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         IERC20 initBNT,
-        IMasterPool initMasterPool
+        IOmniPool initOmniPool
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initBNT))
-        validAddress(address(initMasterPool))
+        validAddress(address(initOmniPool))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
         _bnt = initBNT;
-        _masterPool = initMasterPool;
-        _masterPoolToken = initMasterPool.poolToken();
+        _omniPool = initOmniPool;
+        _omniPoolToken = initOmniPool.poolToken();
     }
 
     /**
@@ -218,10 +218,10 @@ contract AutoCompoundingStakingRewards is
 
         IPoolToken poolToken;
         if (_isBNT(pool)) {
-            if (rewardsVault != _masterPool) {
+            if (rewardsVault != _omniPool) {
                 revert InvalidParam();
             }
-            poolToken = _masterPoolToken;
+            poolToken = _omniPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
                 revert NotWhitelisted();
@@ -381,7 +381,7 @@ contract AutoCompoundingStakingRewards is
         uint256 tokenAmountToDistribute
     ) private view returns (uint256) {
         if (_isBNT(pool)) {
-            return _masterPool.poolTokenAmountToBurn(tokenAmountToDistribute);
+            return _omniPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         }
 
         return

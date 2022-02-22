@@ -7,12 +7,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
-    const masterPool = await DeployedContracts.MasterPoolV1.deployed();
+    const omniPool = await DeployedContracts.OmniPoolV1.deployed();
 
     await deployProxy({
         name: ContractName.PendingWithdrawalsV1,
         from: deployer,
-        args: [networkProxy.address, bnt.address, masterPool.address]
+        args: [networkProxy.address, bnt.address, omniPool.address]
     });
 
     return true;
@@ -23,7 +23,7 @@ func.dependencies = [
     DeploymentTag.V2,
     ContractName.ProxyAdmin,
     ContractName.BancorNetworkProxy,
-    ContractName.MasterPoolV1
+    ContractName.OmniPoolV1
 ];
 func.tags = [DeploymentTag.V3, ContractName.PendingWithdrawalsV1];
 

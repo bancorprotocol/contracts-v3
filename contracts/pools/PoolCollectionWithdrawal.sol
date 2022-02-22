@@ -19,10 +19,10 @@ error PoolCollectionWithdrawalInputInvalid();
  * `n` - withdrawal fee in PPM units
  * `x` - base token withdrawal amount
  * And returns the following output values:
- * `p` - BNT amount to add to the trading liquidity and to the master vault
+ * `p` - BNT amount to add to the trading liquidity and to the omni vault
  * `q` - BNT amount to add to the protocol equity
  * `r` - base token amount to add to the trading liquidity
- * `s` - base token amount to transfer from the master vault to the provider
+ * `s` - base token amount to transfer from the omni vault to the provider
  * `t` - BNT amount to mint directly for the provider
  * `u` - base token amount to transfer from the external protection vault to the provider
  * `v` - base token amount to keep in the pool as a withdrawal fee

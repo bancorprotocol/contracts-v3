@@ -5,13 +5,13 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
+import { IOmniVault } from "../../vaults/interfaces/IOmniVault.sol";
 import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
 import { IExternalRewardsVault } from "../../vaults/interfaces/IExternalRewardsVault.sol";
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
-import { IMasterPool } from "../../pools/interfaces/IMasterPool.sol";
+import { IOmniPool } from "../../pools/interfaces/IOmniPool.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -57,9 +57,9 @@ interface IBancorNetworkInfo is IUpgradeable {
     function networkSettings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the master vault contract
+     * @dev returns the omni vault contract
      */
-    function masterVault() external view returns (IMasterVault);
+    function omniVault() external view returns (IOmniVault);
 
     /**
      * @dev returns the address of the external protection vault
@@ -72,14 +72,14 @@ interface IBancorNetworkInfo is IUpgradeable {
     function externalRewardsVault() external view returns (IExternalRewardsVault);
 
     /**
-     * @dev returns the master pool contract
+     * @dev returns the omni pool contract
      */
-    function masterPool() external view returns (IMasterPool);
+    function omniPool() external view returns (IOmniPool);
 
     /**
-     * @dev returns the master pool token contract
+     * @dev returns the omni pool token contract
      */
-    function masterPoolToken() external view returns (IPoolToken);
+    function omniPoolToken() external view returns (IPoolToken);
 
     /**
      * @dev returns the pending withdrawals contract
