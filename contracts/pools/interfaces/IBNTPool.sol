@@ -26,7 +26,7 @@ bytes32 constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
 bytes32 constant ROLE_FUNDING_MANAGER = keccak256("ROLE_FUNDING_MANAGER");
 
 /**
- * @dev BNT Pool  interface
+ * @dev BNT Pool interface
  */
 interface IBNTPool is IVault {
     /**

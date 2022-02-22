@@ -40,7 +40,7 @@ import { IVault } from "../vaults/interfaces/IVault.sol";
 import { PoolToken } from "./PoolToken.sol";
 
 /**
- * @dev BNT Pool  contract
+ * @dev BNT Pool contract
  */
 contract BNTPool is IBNTPool, Vault {
     using TokenLibrary for Token;
@@ -237,7 +237,7 @@ contract BNTPool is IBNTPool, Vault {
      *
      * requirements:
      *
-     * - reserve token must be the BNT pool token
+     * - the token must be the BNT pool token
      * - the caller must have the ROLE_BNT_POOL_TOKEN_MANAGER role
      */
     function isAuthorizedWithdrawal(

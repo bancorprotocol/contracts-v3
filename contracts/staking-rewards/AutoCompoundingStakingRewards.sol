@@ -63,7 +63,7 @@ contract AutoCompoundingStakingRewards is
     // the BNT pool contract
     IBNTPool private immutable _bntPool;
 
-    // the BNT pool took contract
+    // the BNT pool token contract
     IPoolToken private immutable _bntPoolToken;
 
     // a mapping between pools and programs
