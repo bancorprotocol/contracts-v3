@@ -113,7 +113,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(token1.address, token2.address);
             await expect(
                 bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
-            ).to.be.revertedWith('ERC20: transfer amount exceeds allowance');
+            ).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
         it('reverts if the input amount is 0', async () => {
