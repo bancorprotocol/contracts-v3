@@ -146,7 +146,7 @@ describe('OmniPool', () => {
                 deployer.address,
                 network.address
             ]);
-            await expectRole(omniPool, Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
+            await expectRole(omniPool, Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(omniPool, Roles.OmniPool.ROLE_BNT_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(omniPool, Roles.OmniPool.ROLE_VAULT_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(omniPool, Roles.OmniPool.ROLE_FUNDING_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
@@ -1034,7 +1034,7 @@ describe('OmniPool', () => {
 
                 context('with omni pool token manager role', () => {
                     beforeEach(async () => {
-                        await omniPool.grantRole(Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER, provider.address);
+                        await omniPool.grantRole(Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER, provider.address);
                     });
 
                     if (isOmniPoolToken) {

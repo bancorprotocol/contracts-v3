@@ -52,8 +52,8 @@ contract OmniPool is IOmniPool, Vault {
         uint256 withdrawalFeeAmount;
     }
 
-    // the omni pool token manager role is required to access the omni pool token reserve
-    bytes32 private constant ROLE_OMNI_POOL_TOKEN_MANAGER = keccak256("ROLE_OMNI_POOL_TOKEN_MANAGER");
+    // the omni pool token manager role is required to access the BNT pool token reserve
+    bytes32 private constant ROLE_BNT_POOL_TOKEN_MANAGER = keccak256("ROLE_BNT_POOL_TOKEN_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -167,7 +167,7 @@ contract OmniPool is IOmniPool, Vault {
         _poolToken.acceptOwnership();
 
         // set up administrative roles
-        _setRoleAdmin(ROLE_OMNI_POOL_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_BNT_POOL_TOKEN_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_BNT_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_VAULT_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_FUNDING_MANAGER, ROLE_ADMIN);
@@ -208,7 +208,7 @@ contract OmniPool is IOmniPool, Vault {
      * @dev returns the omni pool token manager role
      */
     function roleOmniPoolTokenManager() external pure returns (bytes32) {
-        return ROLE_OMNI_POOL_TOKEN_MANAGER;
+        return ROLE_BNT_POOL_TOKEN_MANAGER;
     }
 
     /**
@@ -238,7 +238,7 @@ contract OmniPool is IOmniPool, Vault {
      * requirements:
      *
      * - reserve token must be the omni pool token
-     * - the caller must have the ROLE_OMNI_POOL_TOKEN_MANAGER role
+     * - the caller must have the ROLE_BNT_POOL_TOKEN_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,
@@ -246,7 +246,7 @@ contract OmniPool is IOmniPool, Vault {
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return token.isEqual(_poolToken) && hasRole(ROLE_OMNI_POOL_TOKEN_MANAGER, caller);
+        return token.isEqual(_poolToken) && hasRole(ROLE_BNT_POOL_TOKEN_MANAGER, caller);
     }
 
     /**

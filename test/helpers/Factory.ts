@@ -94,7 +94,7 @@ export const createStakingRewards = async (
         ctorArgs: [network.address, networkSettings.address, bnt.address, omniPool.address]
     });
 
-    await omniPool.grantRole(Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
+    await omniPool.grantRole(Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
 
     await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, autoCompoundingStakingRewards.address);
 

@@ -906,7 +906,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             switch (rewardsVault.address) {
                                 case omniPool.address:
                                     await omniPool.grantRole(
-                                        Roles.OmniPool.ROLE_OMNI_POOL_TOKEN_MANAGER,
+                                        Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER,
                                         deployer.address
                                     );
                                     break;
