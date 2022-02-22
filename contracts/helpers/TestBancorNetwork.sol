@@ -12,7 +12,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
-import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
@@ -30,17 +30,17 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IOmniVault initOmniVault,
+        IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
-        IPoolToken initOmniPoolToken
+        IPoolToken initBNTPoolToken
     )
         BancorNetwork(
             initBNTGovernance,
             initVBNTGovernance,
             initNetworkSettings,
-            initOmniVault,
+            initMasterVault,
             initExternalProtectionVault,
-            initOmniPoolToken
+            initBNTPoolToken
         )
     {}
 
@@ -63,14 +63,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
-    function depositToOmniPoolForT(
+    function depositToBNTPoolForT(
         bytes32 contextId,
         address provider,
         uint256 bntAmount,
         bool isMigrating,
         uint256 originalPoolTokenAmount
     ) external {
-        _omniPool.depositFor(contextId, provider, bntAmount, isMigrating, originalPoolTokenAmount);
+        _bntPool.depositFor(contextId, provider, bntAmount, isMigrating, originalPoolTokenAmount);
     }
 
     function depositToPoolCollectionForT(
@@ -83,12 +83,12 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
-    function withdrawFromOmniPoolT(
+    function withdrawFromBNTPoolT(
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
     ) external {
-        _omniPool.withdraw(contextId, provider, poolTokenAmount);
+        _bntPool.withdraw(contextId, provider, poolTokenAmount);
     }
 
     function withdrawFromPoolCollectionT(
@@ -106,7 +106,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 amount,
         bool isTraderFee
     ) external {
-        _omniPool.onFeesCollected(pool, amount, isTraderFee);
+        _bntPool.onFeesCollected(pool, amount, isTraderFee);
     }
 
     function onPoolCollectionFeesCollectedT(

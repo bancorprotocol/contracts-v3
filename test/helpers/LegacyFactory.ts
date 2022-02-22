@@ -1,4 +1,4 @@
-import { IERC20, TestBancorNetwork, OmniVault } from '../../components/Contracts';
+import { IERC20, TestBancorNetwork, MasterVault } from '../../components/Contracts';
 import LegacyContracts, { TokenGovernance } from '../../components/LegacyContracts';
 import { PPM_RESOLUTION } from '../../utils/Constants';
 import { DEFAULT_DECIMALS } from '../../utils/TokenData';
@@ -23,7 +23,7 @@ const Roles = {
 export const createLegacySystem = async (
     owner: SignerWithAddress,
     network: TestBancorNetwork,
-    vault: OmniVault,
+    vault: MasterVault,
     bnt: IERC20,
     bntGovernance: TokenGovernance,
     vbntGovernance: TokenGovernance,

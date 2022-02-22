@@ -5,13 +5,13 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { IOmniVault } from "../../vaults/interfaces/IOmniVault.sol";
+import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
 import { IExternalRewardsVault } from "../../vaults/interfaces/IExternalRewardsVault.sol";
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
-import { IOmniPool } from "../../pools/interfaces/IOmniPool.sol";
+import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -57,9 +57,9 @@ interface IBancorNetworkInfo is IUpgradeable {
     function networkSettings() external view returns (INetworkSettings);
 
     /**
-     * @dev returns the omni vault contract
+     * @dev returns the master vault contract
      */
-    function omniVault() external view returns (IOmniVault);
+    function masterVault() external view returns (IMasterVault);
 
     /**
      * @dev returns the address of the external protection vault
@@ -72,14 +72,14 @@ interface IBancorNetworkInfo is IUpgradeable {
     function externalRewardsVault() external view returns (IExternalRewardsVault);
 
     /**
-     * @dev returns the omni pool contract
+     * @dev returns the bnt pool contract
      */
-    function omniPool() external view returns (IOmniPool);
+    function bntPool() external view returns (IBNTPool);
 
     /**
-     * @dev returns the omni pool token contract
+     * @dev returns the bnt pool token contract
      */
-    function omniPoolToken() external view returns (IPoolToken);
+    function bntPoolToken() external view returns (IPoolToken);
 
     /**
      * @dev returns the pending withdrawals contract

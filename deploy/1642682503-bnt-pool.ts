@@ -10,20 +10,20 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const omniVault = await DeployedContracts.OmniVaultV1.deployed();
-    const omniPoolToken = await DeployedContracts.OmniPoolTokenV1.deployed();
+    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
+    const bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
 
-    const omniPoolAddress = await deployProxy(
+    const bntPoolAddress = await deployProxy(
         {
-            name: ContractName.OmniPoolV1,
+            name: ContractName.BNTPoolV1,
             from: deployer,
             args: [
                 networkProxy.address,
                 bntGovernance.address,
                 vbntGovernance.address,
                 networkSettings.address,
-                omniVault.address,
-                omniPoolToken.address
+                masterVault.address,
+                bntPoolToken.address
             ]
         },
         {
@@ -32,20 +32,20 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     );
 
     await execute({
-        name: ContractName.OmniPoolTokenV1,
+        name: ContractName.BNTPoolTokenV1,
         methodName: 'transferOwnership',
-        args: [omniPoolAddress],
+        args: [bntPoolAddress],
         from: deployer
     });
 
     await execute({
-        name: ContractName.OmniPoolV1,
+        name: ContractName.BNTPoolV1,
         methodName: 'initialize',
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.OmniPoolV1,
+        name: ContractName.BNTPoolV1,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkProxy.address,
         from: deployer
@@ -54,36 +54,36 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await grantRole({
         name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
-        member: omniPoolAddress,
+        member: bntPoolAddress,
         from: deployer
     });
 
     await grantRole({
         name: ContractName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
-        member: omniPoolAddress,
+        member: bntPoolAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.OmniVaultV1,
-        id: Roles.OmniVault.ROLE_BNT_MANAGER,
-        member: omniPoolAddress,
+        name: ContractName.MasterVaultV1,
+        id: Roles.MasterVault.ROLE_BNT_MANAGER,
+        member: bntPoolAddress,
         from: deployer
     });
 
     return true;
 };
 
-func.id = ContractName.OmniPoolV1;
+func.id = ContractName.BNTPoolV1;
 func.dependencies = [
     DeploymentTag.V2,
     ContractName.ProxyAdmin,
     ContractName.BancorNetworkProxy,
     ContractName.NetworkSettingsV1,
-    ContractName.OmniVaultV1,
-    ContractName.OmniPoolTokenV1
+    ContractName.MasterVaultV1,
+    ContractName.BNTPoolTokenV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.OmniPoolV1];
+func.tags = [DeploymentTag.V3, ContractName.BNTPoolV1];
 
 export default func;

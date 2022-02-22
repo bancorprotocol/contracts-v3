@@ -8,7 +8,7 @@ import { Time } from "../utility/Time.sol";
 import { AutoCompoundingStakingRewards } from "../staking-rewards/AutoCompoundingStakingRewards.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { TestTime } from "./TestTime.sol";
 
@@ -17,8 +17,8 @@ contract TestAutoCompoundingStakingRewards is AutoCompoundingStakingRewards, Tes
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         IERC20 initBNT,
-        IOmniPool initOmniPool
-    ) AutoCompoundingStakingRewards(initNetwork, initNetworkSettings, initBNT, initOmniPool) {}
+        IBNTPool initBNTPool
+    ) AutoCompoundingStakingRewards(initNetwork, initNetworkSettings, initBNT, initBNTPool) {}
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();

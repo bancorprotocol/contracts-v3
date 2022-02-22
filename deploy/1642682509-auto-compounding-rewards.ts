@@ -9,17 +9,17 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const network = await DeployedContracts.BancorNetworkV1.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
-    const omniPool = await DeployedContracts.OmniPoolV1.deployed();
+    const bntPool = await DeployedContracts.BNTPoolV1.deployed();
 
     const autoCompoundingRewardsAddress = await deployProxy({
         name: ContractName.AutoCompoundingStakingRewardsV1,
         from: deployer,
-        args: [network.address, networkSettings.address, bnt.address, omniPool.address]
+        args: [network.address, networkSettings.address, bnt.address, bntPool.address]
     });
 
     await grantRole({
-        name: ContractName.OmniPoolV1,
-        id: Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER,
+        name: ContractName.BNTPoolV1,
+        id: Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER,
         member: autoCompoundingRewardsAddress,
         from: deployer
     });
@@ -40,7 +40,7 @@ func.dependencies = [
     ContractName.ProxyAdmin,
     ContractName.BancorNetworkV1,
     ContractName.NetworkSettingsV1,
-    ContractName.OmniPoolV1,
+    ContractName.BNTPoolV1,
     ContractName.ExternalRewardsVaultV1
 ];
 func.tags = [DeploymentTag.V3, ContractName.AutoCompoundingStakingRewardsV1];

@@ -42,7 +42,7 @@ describe('BancorPortal', () => {
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
     let bnt: IERC20;
-    let omniPoolToken: PoolToken;
+    let bntPoolToken: PoolToken;
     let networkSettings: NetworkSettings;
     let poolCollection: TestPoolCollection;
     let bancorPortal: BancorPortal;
@@ -64,7 +64,7 @@ describe('BancorPortal', () => {
     });
 
     beforeEach(async () => {
-        ({ network, networkSettings, bnt, poolCollection, networkInfo, omniPoolToken } = await createSystem());
+        ({ network, networkSettings, bnt, poolCollection, networkInfo, bntPoolToken } = await createSystem());
         uniswapV2Pair = await Contracts.MockUniswapV2Pair.deploy('UniswapV2Pair', 'UniswapV2Pair', 100_000_000);
         uniswapV2Router02 = await Contracts.MockUniswapV2Router02.deploy(
             'UniswapV2Router02',
@@ -404,7 +404,7 @@ describe('BancorPortal', () => {
             await uniswapV2Pair.setTokens(bnt.address, unlistedToken.address);
             await uniswapV2Factory.setTokens(bnt.address, unlistedToken.address);
             const res = await testMigrationDeposit([
-                { reserveToken: bnt, poolToken: omniPoolToken },
+                { reserveToken: bnt, poolToken: bntPoolToken },
                 { reserveToken: unlistedToken }
             ]);
             expect(res)
@@ -421,7 +421,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(unlistedToken.address, bnt.address);
             const res = await testMigrationDeposit([
                 { reserveToken: unlistedToken },
-                { reserveToken: bnt, poolToken: omniPoolToken }
+                { reserveToken: bnt, poolToken: bntPoolToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
@@ -435,7 +435,7 @@ describe('BancorPortal', () => {
             await uniswapV2Pair.setTokens(bnt.address, whitelistedToken.address);
             await uniswapV2Factory.setTokens(bnt.address, whitelistedToken.address);
             const res = await testMigrationDeposit([
-                { reserveToken: bnt, poolToken: omniPoolToken },
+                { reserveToken: bnt, poolToken: bntPoolToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
             expect(res)
@@ -451,7 +451,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(whitelistedToken.address, bnt.address);
             const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken, poolToken },
-                { reserveToken: bnt, poolToken: omniPoolToken }
+                { reserveToken: bnt, poolToken: bntPoolToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')

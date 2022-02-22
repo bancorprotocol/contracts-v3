@@ -5,8 +5,8 @@ import {
     BancorNetworkInfo,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    OmniPool,
-    OmniVault,
+    BNTPool,
+    MasterVault,
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
@@ -30,10 +30,10 @@ describe('network', () => {
     let bntGovernance: TokenGovernance;
     let vbntGovernance: TokenGovernance;
     let networkSettings: NetworkSettings;
-    let omniVault: OmniVault;
+    let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let externalRewardsVault: ExternalRewardsVault;
-    let omniPool: OmniPool;
+    let bntPool: BNTPool;
     let pendingWithdrawals: PendingWithdrawals;
     let poolTokenFactory: PoolTokenFactory;
     let poolCollectionUpgrader: PoolCollectionUpgrader;
@@ -52,10 +52,10 @@ describe('network', () => {
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-        omniVault = await DeployedContracts.OmniVaultV1.deployed();
+        masterVault = await DeployedContracts.MasterVaultV1.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-        omniPool = await DeployedContracts.OmniPoolV1.deployed();
+        bntPool = await DeployedContracts.BNTPoolV1.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
         poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
         poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
@@ -76,7 +76,7 @@ describe('network', () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [omniPool.address, liquidityProtection, stakingRewards] : [omniPool.address]
+            isMainnet() ? [bntPool.address, liquidityProtection, stakingRewards] : [bntPool.address]
         );
 
         await expectRoleMembers(
@@ -90,11 +90,11 @@ describe('network', () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [omniPool.address, liquidityProtection] : [omniPool.address]
+            isMainnet() ? [bntPool.address, liquidityProtection] : [bntPool.address]
         );
 
-        await expectRoleMembers(omniVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
-        await expectRoleMembers(omniVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address, poolCollection.address]);
+        await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
+        await expectRoleMembers(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address, poolCollection.address]);
 
         await expectRoleMembers(externalProtectionVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
         await expectRoleMembers(externalProtectionVault, Roles.Vault.ROLE_ASSET_MANAGER, [
@@ -111,13 +111,13 @@ describe('network', () => {
 
         await expectRoleMembers(networkSettings, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
-        await expectRoleMembers(omniPool, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
-        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER, [
+        await expectRoleMembers(bntPool, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, [
             autoCompoundingStakingRewards.address
         ]);
-        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_BNT_MANAGER, [poolCollection.address]);
-        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
-        await expectRoleMembers(omniPool, Roles.OmniPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
 
         await expectRoleMembers(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 

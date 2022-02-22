@@ -11,14 +11,14 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IOmniVault } from "./interfaces/IOmniVault.sol";
+import { IMasterVault } from "./interfaces/IMasterVault.sol";
 import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
 import { Vault } from "./Vault.sol";
 
 /**
- * @dev Omni Vault contract
+ * @dev Master Vault contract
  */
-contract OmniVault is IOmniVault, Vault {
+contract MasterVault is IMasterVault, Vault {
     using SafeERC20 for IERC20;
     using TokenLibrary for Token;
 
@@ -39,7 +39,7 @@ contract OmniVault is IOmniVault, Vault {
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __OmniVault_init();
+        __MasterVault_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -47,16 +47,16 @@ contract OmniVault is IOmniVault, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __OmniVault_init() internal onlyInitializing {
+    function __MasterVault_init() internal onlyInitializing {
         __Vault_init();
 
-        __OmniVault_init_unchained();
+        __MasterVault_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __OmniVault_init_unchained() internal onlyInitializing {
+    function __MasterVault_init_unchained() internal onlyInitializing {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_BNT_MANAGER, ROLE_ADMIN);

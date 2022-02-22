@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { PendingWithdrawals } from "../network/PendingWithdrawals.sol";
-import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { Time } from "../utility/Time.sol";
 
@@ -15,8 +15,8 @@ contract TestPendingWithdrawals is PendingWithdrawals, TestTime {
     constructor(
         IBancorNetwork initNetwork,
         IERC20 initBNT,
-        IOmniPool initOmniPool
-    ) PendingWithdrawals(initNetwork, initBNT, initOmniPool) {}
+        IBNTPool initBNTPool
+    ) PendingWithdrawals(initNetwork, initBNT, initBNTPool) {}
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();

@@ -1,7 +1,7 @@
 import Contracts, {
     BancorV1Migration,
     IERC20,
-    OmniVault,
+    MasterVault,
     NetworkSettings,
     PendingWithdrawals,
     PoolToken,
@@ -37,11 +37,11 @@ describe('BancorV1Migration', () => {
     let network: TestBancorNetwork;
     let networkSettings: NetworkSettings;
     let bnt: IERC20;
-    let omniPoolToken: PoolToken;
+    let bntPoolToken: PoolToken;
     let basePoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
     let poolCollection: TestPoolCollection;
-    let omniVault: OmniVault;
+    let masterVault: MasterVault;
     let bancorV1Migration: BancorV1Migration;
     let converter: TestStandardPoolConverter;
     let poolToken: DSToken;
@@ -59,10 +59,10 @@ describe('BancorV1Migration', () => {
             network,
             networkSettings,
             bnt,
-            omniPoolToken,
+            bntPoolToken,
             pendingWithdrawals,
             poolCollection,
-            omniVault
+            masterVault
         } = await createSystem());
 
         bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address, bnt.address);
@@ -92,7 +92,7 @@ describe('BancorV1Migration', () => {
         ({ poolToken, converter } = await createLegacySystem(
             deployer,
             network,
-            omniVault,
+            masterVault,
             bnt,
             bntGovernance,
             vbntGovernance,
@@ -135,7 +135,7 @@ describe('BancorV1Migration', () => {
         const prevProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
         const prevConverterBNTBalance = await getBalance(bnt, converter.address);
         const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
-        const prevVaultBaseBalance = await getBalance(baseToken, omniVault.address);
+        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const prevPoolTokenSupply = await poolToken.totalSupply();
 
         const poolTokenAmount = portionOf(await getBalance(poolToken, provider.address));
@@ -146,7 +146,7 @@ describe('BancorV1Migration', () => {
         const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
         const currConverterBNTBalance = await getBalance(bnt, converter.address);
         const currConverterBaseBalance = await getBalance(baseToken, converter.address);
-        const currVaultBaseBalance = await getBalance(baseToken, omniVault.address);
+        const currVaultBaseBalance = await getBalance(baseToken, masterVault.address);
         const currPoolTokenSupply = await poolToken.totalSupply();
 
         const migratedBaseAmount = portionOf(baseAmount);
@@ -161,10 +161,10 @@ describe('BancorV1Migration', () => {
 
         const prevProviderBNTBalance = await getBalance(bnt, provider);
 
-        const omniPoolTokenAmount = await getBalance(omniPoolToken, provider.address);
-        await omniPoolToken.connect(provider).approve(network.address, omniPoolTokenAmount);
+        const bntPoolTokenAmount = await getBalance(bntPoolToken, provider.address);
+        await bntPoolToken.connect(provider).approve(network.address, bntPoolTokenAmount);
 
-        await network.connect(provider).initWithdrawal(omniPoolToken.address, omniPoolTokenAmount);
+        await network.connect(provider).initWithdrawal(bntPoolToken.address, bntPoolTokenAmount);
 
         const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
         await vbnt.connect(provider).approve(network.address, await getBalance(vbnt, provider.address));

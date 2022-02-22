@@ -8,9 +8,9 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const omniVault = await DeployedContracts.OmniVaultV1.deployed();
+    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
-    const omniPoolToken = await DeployedContracts.OmniPoolTokenV1.deployed();
+    const bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
 
     await deployProxy(
         {
@@ -21,9 +21,9 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
                 bntGovernance.address,
                 vbntGovernance.address,
                 networkSettings.address,
-                omniVault.address,
+                masterVault.address,
                 externalProtectionVault.address,
-                omniPoolToken.address
+                bntPoolToken.address
             ]
         },
         {
@@ -39,9 +39,9 @@ func.dependencies = [
     DeploymentTag.V2,
     ContractName.ProxyAdmin,
     ContractName.NetworkSettingsV1,
-    ContractName.OmniVaultV1,
+    ContractName.MasterVaultV1,
     ContractName.ExternalProtectionVaultV1,
-    ContractName.OmniPoolTokenV1
+    ContractName.BNTPoolTokenV1
 ];
 func.tags = [DeploymentTag.V3, ContractName.BancorNetworkProxy];
 

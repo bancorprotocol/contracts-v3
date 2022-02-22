@@ -6,10 +6,10 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
-import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
-import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -30,8 +30,8 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         IBancorNetwork initNetwork,
         IERC20 initBNT,
         INetworkSettings initNetworkSettings,
-        IOmniVault initOmniVault,
-        IOmniPool initOmniPool,
+        IMasterVault initMasterVault,
+        IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
@@ -40,8 +40,8 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
             initNetwork,
             initBNT,
             initNetworkSettings,
-            initOmniVault,
-            initOmniPool,
+            initMasterVault,
+            initBNTPool,
             initExternalProtectionVault,
             initPoolTokenFactory,
             initPoolCollectionUpgrader
@@ -83,7 +83,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         Token pool,
         uint256 bntAmount
     ) external {
-        _omniPool.requestFunding(contextId, pool, bntAmount);
+        _bntPool.requestFunding(contextId, pool, bntAmount);
     }
 
     function _blockNumber() internal view virtual override(BlockNumber, TestBlockNumber) returns (uint32) {

@@ -1,6 +1,6 @@
 import Contracts, {
     BancorNetworkInfo,
-    OmniVault,
+    MasterVault,
     ExternalProtectionVault,
     IERC20,
     NetworkSettings,
@@ -8,7 +8,7 @@ import Contracts, {
     PoolTokenFactory,
     TestBancorNetwork,
     TestFlashLoanRecipient,
-    TestOmniPool,
+    TestBNTPool,
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader,
@@ -77,7 +77,7 @@ describe('BancorNetwork', () => {
     const MIN_RETURN_AMOUNT = BigNumber.from(1);
     const MAX_SOURCE_AMOUNT = MAX_UINT256;
 
-    shouldHaveGap('BancorNetwork', '_omniPool');
+    shouldHaveGap('BancorNetwork', '_bntPool');
 
     before(async () => {
         [deployer, nonOwner] = await ethers.getSigners();
@@ -124,12 +124,12 @@ describe('BancorNetwork', () => {
         let bnt: IERC20;
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
-        let omniPool: TestOmniPool;
+        let bntPool: TestBNTPool;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let omniVault: OmniVault;
+        let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let omniPoolToken: PoolToken;
+        let bntPoolToken: PoolToken;
 
         beforeEach(async () => {
             ({
@@ -138,12 +138,12 @@ describe('BancorNetwork', () => {
                 bnt,
                 bntGovernance,
                 vbntGovernance,
-                omniPool,
+                bntPool,
                 poolCollectionUpgrader,
-                omniVault,
+                masterVault,
                 externalProtectionVault,
                 pendingWithdrawals,
-                omniPoolToken
+                bntPoolToken
             } = await createSystem());
         });
 
@@ -153,9 +153,9 @@ describe('BancorNetwork', () => {
                     ZERO_ADDRESS,
                     vbntGovernance.address,
                     networkSettings.address,
-                    omniVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
-                    omniPoolToken.address
+                    bntPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -166,9 +166,9 @@ describe('BancorNetwork', () => {
                     bntGovernance.address,
                     ZERO_ADDRESS,
                     networkSettings.address,
-                    omniVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
-                    omniPoolToken.address
+                    bntPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -179,14 +179,14 @@ describe('BancorNetwork', () => {
                     bntGovernance.address,
                     vbntGovernance.address,
                     ZERO_ADDRESS,
-                    omniVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
-                    omniPoolToken.address
+                    bntPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid omni vault contract', async () => {
+        it('should revert when attempting to create with an invalid master vault contract', async () => {
             await expect(
                 Contracts.BancorNetwork.deploy(
                     bntGovernance.address,
@@ -194,47 +194,47 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
-                    omniPoolToken.address
+                    bntPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid external protection vault contract', async () => {
-            const { bntGovernance, vbntGovernance, networkSettings, omniVault, omniPoolToken } = await createSystem();
+            const { bntGovernance, vbntGovernance, networkSettings, masterVault, bntPoolToken } = await createSystem();
 
             await expect(
                 Contracts.BancorNetwork.deploy(
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    omniVault.address,
+                    masterVault.address,
                     ZERO_ADDRESS,
-                    omniPoolToken.address
+                    bntPoolToken.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid omni pool token contract', async () => {
+        it('should revert when attempting to create with an invalid bnt pool token contract', async () => {
             await expect(
                 Contracts.BancorNetwork.deploy(
                     bntGovernance.address,
                     vbntGovernance.address,
                     networkSettings.address,
-                    omniVault.address,
+                    masterVault.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to initialize with an invalid omni pool contract', async () => {
+        it('should revert when attempting to initialize with an invalid bnt pool contract', async () => {
             const network = await Contracts.BancorNetwork.deploy(
                 bntGovernance.address,
                 vbntGovernance.address,
                 networkSettings.address,
-                omniVault.address,
+                masterVault.address,
                 externalProtectionVault.address,
-                omniPoolToken.address
+                bntPoolToken.address
             );
 
             await expect(
@@ -247,13 +247,13 @@ describe('BancorNetwork', () => {
                 bntGovernance.address,
                 vbntGovernance.address,
                 networkSettings.address,
-                omniVault.address,
+                masterVault.address,
                 externalProtectionVault.address,
-                omniPoolToken.address
+                bntPoolToken.address
             );
 
             await expect(
-                network.initialize(omniPool.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
+                network.initialize(bntPool.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
@@ -262,19 +262,19 @@ describe('BancorNetwork', () => {
                 bntGovernance.address,
                 vbntGovernance.address,
                 networkSettings.address,
-                omniVault.address,
+                masterVault.address,
                 externalProtectionVault.address,
-                omniPoolToken.address
+                bntPoolToken.address
             );
 
             await expect(
-                network.initialize(omniPool.address, pendingWithdrawals.address, ZERO_ADDRESS)
+                network.initialize(bntPool.address, pendingWithdrawals.address, ZERO_ADDRESS)
             ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
             await expect(
-                network.initialize(omniPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address)
+                network.initialize(bntPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address)
             ).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
@@ -368,11 +368,11 @@ describe('BancorNetwork', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let bnt: IERC20;
-        let omniPool: TestOmniPool;
+        let bntPool: TestBNTPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
-        let omniVault: OmniVault;
+        let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
 
         let poolType: number;
@@ -382,11 +382,11 @@ describe('BancorNetwork', () => {
                 network,
                 bnt,
                 networkSettings,
-                omniPool,
+                bntPool,
                 poolTokenFactory,
                 poolCollection,
                 poolCollectionUpgrader,
-                omniVault,
+                masterVault,
                 externalProtectionVault
             } = await createSystem());
 
@@ -394,10 +394,10 @@ describe('BancorNetwork', () => {
         });
 
         const verifyPoolCollectionRoles = async (poolCollection: TestPoolCollection, state: boolean) => {
-            expect(await omniPool.hasRole(Roles.OmniPool.ROLE_BNT_MANAGER, poolCollection.address)).to.equal(state);
-            expect(await omniPool.hasRole(Roles.OmniPool.ROLE_VAULT_MANAGER, poolCollection.address)).to.equal(state);
-            expect(await omniPool.hasRole(Roles.OmniPool.ROLE_FUNDING_MANAGER, poolCollection.address)).to.equal(state);
-            expect(await omniVault.hasRole(Roles.Vault.ROLE_ASSET_MANAGER, poolCollection.address)).to.equal(state);
+            expect(await bntPool.hasRole(Roles.BNTPool.ROLE_BNT_MANAGER, poolCollection.address)).to.equal(state);
+            expect(await bntPool.hasRole(Roles.BNTPool.ROLE_VAULT_MANAGER, poolCollection.address)).to.equal(state);
+            expect(await bntPool.hasRole(Roles.BNTPool.ROLE_FUNDING_MANAGER, poolCollection.address)).to.equal(state);
+            expect(await masterVault.hasRole(Roles.Vault.ROLE_ASSET_MANAGER, poolCollection.address)).to.equal(state);
             expect(
                 await externalProtectionVault.hasRole(Roles.Vault.ROLE_ASSET_MANAGER, poolCollection.address)
             ).to.equal(state);
@@ -446,8 +446,8 @@ describe('BancorNetwork', () => {
                         network,
                         bnt,
                         networkSettings,
-                        omniVault,
-                        omniPool,
+                        masterVault,
+                        bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader,
@@ -466,8 +466,8 @@ describe('BancorNetwork', () => {
                         network,
                         bnt,
                         networkSettings,
-                        omniVault,
-                        omniPool,
+                        masterVault,
+                        bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader,
@@ -503,8 +503,8 @@ describe('BancorNetwork', () => {
                     network,
                     bnt,
                     networkSettings,
-                    omniVault,
-                    omniPool,
+                    masterVault,
+                    bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
@@ -529,8 +529,8 @@ describe('BancorNetwork', () => {
                     network,
                     bnt,
                     networkSettings,
-                    omniVault,
-                    omniPool,
+                    masterVault,
+                    bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
@@ -550,8 +550,8 @@ describe('BancorNetwork', () => {
                         network,
                         bnt,
                         networkSettings,
-                        omniVault,
-                        omniPool,
+                        masterVault,
+                        bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader,
@@ -561,8 +561,8 @@ describe('BancorNetwork', () => {
                         network,
                         bnt,
                         networkSettings,
-                        omniVault,
-                        omniPool,
+                        masterVault,
+                        bntPool,
                         externalProtectionVault,
 
                         poolTokenFactory,
@@ -591,8 +591,8 @@ describe('BancorNetwork', () => {
                         network,
                         bnt,
                         networkSettings,
-                        omniVault,
-                        omniPool,
+                        masterVault,
+                        bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
                         poolCollectionUpgrader
@@ -675,8 +675,8 @@ describe('BancorNetwork', () => {
                     network,
                     bnt,
                     networkSettings,
-                    omniVault,
-                    omniPool,
+                    masterVault,
+                    bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,
@@ -702,8 +702,8 @@ describe('BancorNetwork', () => {
                     network,
                     bnt,
                     networkSettings,
-                    omniVault,
-                    omniPool,
+                    masterVault,
+                    bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader
@@ -828,8 +828,8 @@ describe('BancorNetwork', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
-        let omniPool: TestOmniPool;
-        let omniVault: OmniVault;
+        let bntPool: TestBNTPool;
+        let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
@@ -853,8 +853,8 @@ describe('BancorNetwork', () => {
                 networkInfo,
                 networkSettings,
                 bnt,
-                omniPool,
-                omniVault,
+                bntPool,
+                masterVault,
                 externalProtectionVault,
                 pendingWithdrawals,
                 poolCollection,
@@ -889,8 +889,8 @@ describe('BancorNetwork', () => {
                 network,
                 bnt,
                 networkSettings,
-                omniVault,
-                omniPool,
+                masterVault,
+                bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
@@ -1016,11 +1016,11 @@ describe('BancorNetwork', () => {
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
-        let omniPool: TestOmniPool;
+        let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
-        let omniVault: OmniVault;
+        let masterVault: MasterVault;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let omniPoolToken: PoolToken;
+        let bntPoolToken: PoolToken;
 
         let emergencyStopper: SignerWithAddress;
 
@@ -1034,11 +1034,11 @@ describe('BancorNetwork', () => {
                 networkSettings,
                 bnt,
                 vbnt,
-                omniPool,
+                bntPool,
                 poolCollection,
-                omniVault,
+                masterVault,
                 pendingWithdrawals,
-                omniPoolToken
+                bntPoolToken
             } = await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -1061,7 +1061,7 @@ describe('BancorNetwork', () => {
                 if (tokenData.isBNT()) {
                     token = bnt;
 
-                    poolToken = omniPoolToken;
+                    poolToken = bntPoolToken;
                 } else {
                     token = await createToken(tokenData);
 
@@ -1105,7 +1105,7 @@ describe('BancorNetwork', () => {
 
                 const prevProviderTokenBalance = await getBalance(token, providerAddress);
                 const prevSenderTokenBalance = await getBalance(token, senderAddress);
-                const prevVaultTokenBalance = await getBalance(token, omniVault.address);
+                const prevVaultTokenBalance = await getBalance(token, masterVault.address);
 
                 const prevBNTTotalSupply = await bnt.totalSupply();
 
@@ -1119,13 +1119,13 @@ describe('BancorNetwork', () => {
                 if (tokenData.isBNT()) {
                     expectedPoolTokenAmount = amount
                         .mul(await poolToken.totalSupply())
-                        .div(await omniPool.stakedBalance());
+                        .div(await bntPool.stakedBalance());
 
                     await deposit(amount);
 
                     expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
 
-                    expect(await getBalance(token, omniVault.address)).to.equal(prevVaultTokenBalance);
+                    expect(await getBalance(token, masterVault.address)).to.equal(prevVaultTokenBalance);
 
                     expect(await bnt.totalSupply()).to.equal(prevBNTTotalSupply.sub(amount));
 
@@ -1154,7 +1154,7 @@ describe('BancorNetwork', () => {
                         prevPoolTokenTotalSupply.add(expectedPoolTokenAmount)
                     );
 
-                    expect(await getBalance(token, omniVault.address)).to.equal(prevVaultTokenBalance.add(amount));
+                    expect(await getBalance(token, masterVault.address)).to.equal(prevVaultTokenBalance.add(amount));
 
                     expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply);
                     expect(await vbnt.balanceOf(providerAddress)).to.equal(prevProviderVBNTBalance);
@@ -1582,11 +1582,11 @@ describe('BancorNetwork', () => {
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
-        let omniPool: TestOmniPool;
-        let omniVault: OmniVault;
+        let bntPool: TestBNTPool;
+        let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let omniPoolToken: PoolToken;
+        let bntPoolToken: PoolToken;
 
         let emergencyStopper: SignerWithAddress;
 
@@ -1600,11 +1600,11 @@ describe('BancorNetwork', () => {
                 networkSettings,
                 bnt,
                 vbnt,
-                omniPool,
-                omniVault,
+                bntPool,
+                masterVault,
                 poolCollection,
                 pendingWithdrawals,
-                omniPoolToken
+                bntPoolToken
             } = await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -1648,7 +1648,7 @@ describe('BancorNetwork', () => {
             beforeEach(async () => {
                 if (tokenData.isBNT()) {
                     token = bnt;
-                    poolToken = omniPoolToken;
+                    poolToken = bntPoolToken;
 
                     const reserveToken = await createTestToken();
                     await createPool(reserveToken, network, networkSettings, poolCollection);
@@ -1699,14 +1699,14 @@ describe('BancorNetwork', () => {
                 const test = async (index: number) => {
                     const request = requests[index];
                     const prevPoolTokenTotalSupply = await poolToken.totalSupply();
-                    const prevPoolPoolTokenBalance = await poolToken.balanceOf(omniPool.address);
+                    const prevPoolPoolTokenBalance = await poolToken.balanceOf(bntPool.address);
                     const prevCollectionPoolTokenBalance = await poolToken.balanceOf(poolCollection.address);
                     const prevProviderPoolTokenBalance = await poolToken.balanceOf(provider.address);
 
                     const prevProviderTokenBalance = await getBalance(token, provider.address);
 
                     const prevVBNTTotalSupply = await vbnt.totalSupply();
-                    const prevPoolVBNTBalance = await vbnt.balanceOf(omniPool.address);
+                    const prevPoolVBNTBalance = await vbnt.balanceOf(bntPool.address);
                     const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
 
                     let transactionCost = BigNumber.from(0);
@@ -1715,7 +1715,7 @@ describe('BancorNetwork', () => {
                         await network.connect(provider).withdraw(request.id);
 
                         expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                        expect(await poolToken.balanceOf(omniPool.address)).to.equal(
+                        expect(await poolToken.balanceOf(bntPool.address)).to.equal(
                             prevPoolPoolTokenBalance.add(request.poolTokenAmount)
                         );
 
@@ -1734,7 +1734,7 @@ describe('BancorNetwork', () => {
                         expect(await poolToken.totalSupply()).to.equal(
                             prevPoolTokenTotalSupply.sub(request.poolTokenAmount)
                         );
-                        expect(await poolToken.balanceOf(omniPool.address)).to.equal(prevPoolPoolTokenBalance);
+                        expect(await poolToken.balanceOf(bntPool.address)).to.equal(prevPoolPoolTokenBalance);
 
                         expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply);
                         expect(await vbnt.balanceOf(provider.address)).to.equal(prevProviderVBNTBalance);
@@ -1743,7 +1743,7 @@ describe('BancorNetwork', () => {
                     expect(await poolToken.balanceOf(poolCollection.address)).to.equal(prevCollectionPoolTokenBalance);
                     expect(await poolToken.balanceOf(provider.address)).to.equal(prevProviderPoolTokenBalance);
 
-                    expect(await vbnt.balanceOf(omniPool.address)).to.equal(prevPoolVBNTBalance);
+                    expect(await vbnt.balanceOf(bntPool.address)).to.equal(prevPoolVBNTBalance);
 
                     // sanity test
                     expect(await getBalance(token, provider.address)).to.be.gte(
@@ -1803,7 +1803,7 @@ describe('BancorNetwork', () => {
                                         .div(BNT_FUNDING_RATE)
                                         .mul(10_000);
 
-                                    await transfer(deployer, token, omniVault, extraLiquidity);
+                                    await transfer(deployer, token, masterVault, extraLiquidity);
 
                                     await network.depositToPoolCollectionForT(
                                         poolCollection.address,
@@ -1861,9 +1861,9 @@ describe('BancorNetwork', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
-        let omniPool: TestOmniPool;
+        let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
-        let omniVault: OmniVault;
+        let masterVault: MasterVault;
 
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
@@ -1876,7 +1876,7 @@ describe('BancorNetwork', () => {
         });
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, bnt, omniPool, poolCollection, omniVault } =
+            ({ network, networkInfo, networkSettings, bnt, bntPool, poolCollection, masterVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -2103,16 +2103,16 @@ describe('BancorNetwork', () => {
             const beneficiary = beneficiaryAddress !== ZERO_ADDRESS ? beneficiaryAddress : traderAddress;
 
             const prevTraderSourceTokenAmount = await getBalance(sourceToken, traderAddress);
-            const prevVaultSourceTokenAmount = await getBalance(sourceToken, omniVault.address);
+            const prevVaultSourceTokenAmount = await getBalance(sourceToken, masterVault.address);
 
             const prevBeneficiaryTargetTokenAmount = await getBalance(targetToken, beneficiary);
-            const prevVaultTargetTokenAmount = await getBalance(targetToken, omniVault.address);
+            const prevVaultTargetTokenAmount = await getBalance(targetToken, masterVault.address);
 
             const prevTraderBNTAmount = await getBalance(bnt, traderAddress);
             const prevBeneficiaryBNTAmount = await getBalance(bnt, beneficiary);
-            const prevVaultBNTAmount = await getBalance(bnt, omniVault.address);
+            const prevVaultBNTAmount = await getBalance(bnt, masterVault.address);
 
-            const prevOmniPoolStakedBalance = await omniPool.stakedBalance();
+            const prevBNTPoolStakedBalance = await bntPool.stakedBalance();
 
             let hop1!: TradeAmountAndFeeStructOutput;
             let hop2!: TradeAmountAndFeeStructOutput;
@@ -2242,7 +2242,7 @@ describe('BancorNetwork', () => {
                 ]
             );
 
-            const omniPoolStakedBalance = await omniPool.stakedBalance();
+            const bntPoolStakedBalance = await bntPool.stakedBalance();
 
             if (isSourceBNT) {
                 await expect(res)
@@ -2275,8 +2275,8 @@ describe('BancorNetwork', () => {
                         traderAddress
                     );
 
-                expect(omniPoolStakedBalance).to.equal(
-                    prevOmniPoolStakedBalance.add(hop2.tradingFeeAmount.sub(hop2.networkFeeAmount))
+                expect(bntPoolStakedBalance).to.equal(
+                    prevBNTPoolStakedBalance.add(hop2.tradingFeeAmount.sub(hop2.networkFeeAmount))
                 );
             } else {
                 await expect(res)
@@ -2297,8 +2297,8 @@ describe('BancorNetwork', () => {
                         traderAddress
                     );
 
-                expect(omniPoolStakedBalance).to.equal(
-                    prevOmniPoolStakedBalance.add(hop1.tradingFeeAmount.sub(hop1.networkFeeAmount))
+                expect(bntPoolStakedBalance).to.equal(
+                    prevBNTPoolStakedBalance.add(hop1.tradingFeeAmount.sub(hop1.networkFeeAmount))
                 );
 
                 await expect(res)
@@ -2328,7 +2328,7 @@ describe('BancorNetwork', () => {
                     sourceAmount.add(isSourceNativeToken ? transactionCost : BigNumber.from(0))
                 )
             );
-            expect(await getBalance(sourceToken, omniVault.address)).to.equal(
+            expect(await getBalance(sourceToken, masterVault.address)).to.equal(
                 prevVaultSourceTokenAmount.add(sourceAmount)
             );
 
@@ -2340,7 +2340,7 @@ describe('BancorNetwork', () => {
                     )
                 )
             );
-            expect(await getBalance(targetToken, omniVault.address)).to.equal(
+            expect(await getBalance(targetToken, masterVault.address)).to.equal(
                 prevVaultTargetTokenAmount.sub(targetAmount)
             );
 
@@ -2348,7 +2348,7 @@ describe('BancorNetwork', () => {
             if (!isSourceBNT && !isTargetBNT) {
                 expect(await getBalance(bnt, traderAddress)).to.equal(prevTraderBNTAmount);
                 expect(await getBalance(bnt, beneficiary)).to.equal(prevBeneficiaryBNTAmount);
-                expect(await getBalance(bnt, omniVault.address)).to.equal(prevVaultBNTAmount);
+                expect(await getBalance(bnt, masterVault.address)).to.equal(prevVaultBNTAmount);
             }
         };
 
@@ -2755,7 +2755,7 @@ describe('BancorNetwork', () => {
         let networkSettings: NetworkSettings;
 
         let poolCollection: TestPoolCollection;
-        let omniVault: OmniVault;
+        let masterVault: MasterVault;
         let recipient: TestFlashLoanRecipient;
         let token: TokenWithAddress;
         let emergencyStopper: SignerWithAddress;
@@ -2768,7 +2768,7 @@ describe('BancorNetwork', () => {
         const LOAN_AMOUNT = toWei(123_456);
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, poolCollection, omniVault } = await createSystem());
+            ({ network, networkInfo, networkSettings, poolCollection, masterVault } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -2879,7 +2879,7 @@ describe('BancorNetwork', () => {
             });
 
             const test = async () => {
-                const prevVaultBalance = await getBalance(token, omniVault.address);
+                const prevVaultBalance = await getBalance(token, masterVault.address);
                 const prevBNTBalance = await getBalance(token, network.address);
 
                 const data = '0x1234';
@@ -2902,7 +2902,7 @@ describe('BancorNetwork', () => {
                 expect(callbackData.data).to.equal(data);
                 expect(callbackData.receivedAmount).to.equal(LOAN_AMOUNT);
 
-                expect(await getBalance(token, omniVault.address)).to.be.gte(prevVaultBalance.add(FEE_AMOUNT));
+                expect(await getBalance(token, masterVault.address)).to.be.gte(prevVaultBalance.add(FEE_AMOUNT));
                 expect(await getBalance(token, network.address)).to.equal(prevBNTBalance);
             };
 
@@ -2975,7 +2975,7 @@ describe('BancorNetwork', () => {
         let bnt: IERC20;
         let vbnt: IERC20;
         let poolCollection: TestPoolCollection;
-        let omniVault: OmniVault;
+        let masterVault: MasterVault;
 
         let emergencyStopper: SignerWithAddress;
 
@@ -2984,7 +2984,7 @@ describe('BancorNetwork', () => {
         });
 
         beforeEach(async () => {
-            ({ bntGovernance, vbntGovernance, network, networkSettings, bnt, vbnt, poolCollection, omniVault } =
+            ({ bntGovernance, vbntGovernance, network, networkSettings, bnt, vbnt, poolCollection, masterVault } =
                 await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -3109,7 +3109,15 @@ describe('BancorNetwork', () => {
                     liquidityProtection,
                     poolToken,
                     converter
-                } = await createLegacySystem(owner, network, omniVault, bnt, bntGovernance, vbntGovernance, baseToken));
+                } = await createLegacySystem(
+                    owner,
+                    network,
+                    masterVault,
+                    bnt,
+                    bntGovernance,
+                    vbntGovernance,
+                    baseToken
+                ));
 
                 await bntGovernance.mint(owner.address, totalSupply);
 
@@ -3192,8 +3200,8 @@ describe('BancorNetwork', () => {
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
-                        const prevVaultBaseBalance = await getBalance(baseToken, omniVault.address);
-                        const prevVaultBNTBalance = await getBalance(bnt, omniVault.address);
+                        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const prevVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
                         await liquidityProtection.setTime(now + duration.seconds(1));
 
@@ -3226,8 +3234,8 @@ describe('BancorNetwork', () => {
                         const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
                         expectInRange(systemBalance, prevSystemBalance.sub(protection.poolAmount));
 
-                        const vaultBaseBalance = await getBalance(baseToken, omniVault.address);
-                        const vaultBNTBalance = await getBalance(bnt, omniVault.address);
+                        const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const vaultBNTBalance = await getBalance(bnt, masterVault.address);
                         expectInRange(vaultBaseBalance, prevVaultBaseBalance.add(protection.reserveAmount));
                         expectInRange(vaultBNTBalance, prevVaultBNTBalance.add(protection.reserveAmount.div(2)));
 
@@ -3259,8 +3267,8 @@ describe('BancorNetwork', () => {
 
                         const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
 
-                        const prevVaultBaseBalance = await getBalance(baseToken, omniVault.address);
-                        const prevVaultBNTBalance = await getBalance(bnt, omniVault.address);
+                        const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const prevVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
                         await liquidityProtection.setTime(now + duration.seconds(1));
 
@@ -3272,8 +3280,8 @@ describe('BancorNetwork', () => {
                         const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
                         expect(systemBalance).to.equal(prevSystemBalance.sub(protection.poolAmount));
 
-                        const vaultBaseBalance = await getBalance(baseToken, omniVault.address);
-                        const vaultBNTBalance = await getBalance(bnt, omniVault.address);
+                        const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                        const vaultBNTBalance = await getBalance(bnt, masterVault.address);
                         expect(vaultBaseBalance).to.equal(prevVaultBaseBalance.add(protection.reserveAmount.div(2)));
                         expect(vaultBNTBalance).to.equal(prevVaultBNTBalance);
 
@@ -3355,8 +3363,8 @@ describe('BancorNetwork', () => {
                     const prevBalance = await getBalance(bnt, owner.address);
                     const prevGovBalance = await vbnt.balanceOf(owner.address);
 
-                    const prevVaultBaseBalance = await getBalance(baseToken, omniVault.address);
-                    const prevVaultBNTBalance = await getBalance(bnt, omniVault.address);
+                    const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                    const prevVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
                     await liquidityProtection.setTime(now + duration.seconds(1));
                     await liquidityProtection.migratePositions([protectionId]);
@@ -3381,8 +3389,8 @@ describe('BancorNetwork', () => {
                     const systemBalance = await liquidityProtectionSystemStore.systemBalance(poolToken.address);
                     expect(systemBalance).to.equal(prevSystemBalance.add(protection.poolAmount));
 
-                    const vaultBaseBalance = await getBalance(baseToken, omniVault.address);
-                    const vaultBNTBalance = await getBalance(bnt, omniVault.address);
+                    const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                    const vaultBNTBalance = await getBalance(bnt, masterVault.address);
                     expect(vaultBaseBalance).to.equal(prevVaultBaseBalance);
                     expect(vaultBNTBalance).to.equal(prevVaultBNTBalance);
 
@@ -3774,15 +3782,15 @@ describe('BancorNetwork Financial Verification', () => {
     let network: TestBancorNetwork;
     let bnt: IERC20;
     let networkSettings: NetworkSettings;
-    let omniPool: TestOmniPool;
+    let bntPool: TestBNTPool;
     let bntGovernance: TokenGovernance;
     let pendingWithdrawals: TestPendingWithdrawals;
     let poolCollection: TestPoolCollection;
-    let omniVault: OmniVault;
+    let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let baseToken: TestERC20Burnable;
     let basePoolToken: PoolToken;
-    let omniPoolToken: PoolToken;
+    let bntPoolToken: PoolToken;
     let vbnt: IERC20;
     let tknDecimals: number;
     let bntDecimals: number;
@@ -3827,8 +3835,8 @@ describe('BancorNetwork Financial Verification', () => {
     };
 
     const withdrawBNT = async (userId: string, amount: string) => {
-        const wei = await toWei(userId, amount, bnbntDecimals, omniPoolToken);
-        const { id } = await initWithdraw(users[userId], network, pendingWithdrawals, omniPoolToken, wei);
+        const wei = await toWei(userId, amount, bnbntDecimals, bntPoolToken);
+        const { id } = await initWithdraw(users[userId], network, pendingWithdrawals, bntPoolToken, wei);
         await network.connect(users[userId]).withdraw(id);
     };
 
@@ -3883,29 +3891,26 @@ describe('BancorNetwork Financial Verification', () => {
                 bntknDecimals
             );
             actual.bnbntBalances[userId] = integerToDecimal(
-                await omniPoolToken.balanceOf(users[userId].address),
+                await bntPoolToken.balanceOf(users[userId].address),
                 bnbntDecimals
             );
         }
 
-        actual.tknBalances.omniVault = integerToDecimal(await baseToken.balanceOf(omniVault.address), tknDecimals);
+        actual.tknBalances.masterVault = integerToDecimal(await baseToken.balanceOf(masterVault.address), tknDecimals);
         actual.tknBalances.epVault = integerToDecimal(
             await baseToken.balanceOf(externalProtectionVault.address),
             tknDecimals
         );
-        actual.bntBalances.omniVault = integerToDecimal(await bnt.balanceOf(omniVault.address), bntDecimals);
-        actual.bnbntBalances.omniPool = integerToDecimal(
-            await omniPoolToken.balanceOf(omniPool.address),
-            bnbntDecimals
-        );
+        actual.bntBalances.masterVault = integerToDecimal(await bnt.balanceOf(masterVault.address), bntDecimals);
+        actual.bnbntBalances.bntPool = integerToDecimal(await bntPoolToken.balanceOf(bntPool.address), bnbntDecimals);
 
         const poolData = await poolCollection.poolData(baseToken.address);
         actual.bntCurrentPoolFunding = integerToDecimal(
-            await omniPool.currentPoolFunding(baseToken.address),
+            await bntPool.currentPoolFunding(baseToken.address),
             bntDecimals
         );
         actual.tknStakedBalance = integerToDecimal(poolData.liquidity.stakedBalance, tknDecimals);
-        actual.bntStakedBalance = integerToDecimal(await omniPool.stakedBalance(), bntDecimals);
+        actual.bntStakedBalance = integerToDecimal(await bntPool.stakedBalance(), bntDecimals);
         actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
         actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.bntTradingLiquidity, bntDecimals);
 
@@ -3936,13 +3941,13 @@ describe('BancorNetwork Financial Verification', () => {
             network,
             bnt,
             networkSettings,
-            omniPool,
-            omniPoolToken,
+            bntPool,
+            bntPoolToken,
             bntGovernance,
             vbnt,
             pendingWithdrawals,
             poolCollection,
-            omniVault,
+            masterVault,
             externalProtectionVault
         } = await createSystem());
 
@@ -3972,7 +3977,7 @@ describe('BancorNetwork Financial Verification', () => {
             await baseToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await bnt.connect(users[id]).approve(network.address, MAX_UINT256);
             await basePoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await omniPoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
+            await bntPoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
             await baseToken.transfer(users[id].address, decimalToInteger(tknBalance, tknDecimals));
             await bnt.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }
