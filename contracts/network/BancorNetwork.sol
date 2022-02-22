@@ -435,7 +435,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function poolCollections() external view returns (IPoolCollection[] memory) {
         uint256 length = _poolCollections.length();
         IPoolCollection[] memory list = new IPoolCollection[](length);
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i = 0; i < length; i++) {
             list[i] = IPoolCollection(_poolCollections.at(i));
         }
         return list;
