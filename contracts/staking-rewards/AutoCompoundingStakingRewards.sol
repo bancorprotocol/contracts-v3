@@ -8,7 +8,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, AccessDenied } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
@@ -21,7 +21,7 @@ import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IVault } from "../vaults/interfaces/IVault.sol";
+import { IVault, ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
 
 // prettier-ignore
 import {
@@ -214,6 +214,10 @@ contract AutoCompoundingStakingRewards is
     ) external validAddress(address(address(pool))) validAddress(address(rewardsVault)) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();
+        }
+
+        if (!rewardsVault.hasRole(ROLE_ASSET_MANAGER, address(this))) {
+            revert AccessDenied();
         }
 
         IPoolToken poolToken;

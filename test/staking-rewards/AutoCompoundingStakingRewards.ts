@@ -11,6 +11,7 @@ import Contracts, {
     TestOmniPool,
     TestPoolCollection
 } from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { StakingRewardsDistributionType, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei, Addressable } from '../../utils/Types';
@@ -167,6 +168,9 @@ describe('AutoCompoundingStakingRewards', () => {
     });
 
     describe('management', () => {
+        let bntGovernance: TokenGovernance;
+        let vbntGovernance: TokenGovernance;
+
         const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
         const TOTAL_DURATION = duration.days(10);
         const TOTAL_REWARDS = toWei(10_000);
@@ -175,8 +179,17 @@ describe('AutoCompoundingStakingRewards', () => {
         const START_TIME = 1000;
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, bnt, omniPool, poolCollection, externalRewardsVault } =
-                await createSystem());
+            ({
+                network,
+                networkInfo,
+                networkSettings,
+                bnt,
+                bntGovernance,
+                vbntGovernance,
+                omniPool,
+                poolCollection,
+                externalRewardsVault
+            } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -285,6 +298,24 @@ describe('AutoCompoundingStakingRewards', () => {
                                 END_TIME
                             )
                         ).to.revertedWith('ProgramAlreadyExists');
+                    });
+
+                    it('should revert when the staking rewards contract does not have access to the external rewards vault', async () => {
+                        const newExternalRewardsVault = await Contracts.ExternalRewardsVault.deploy(
+                            bntGovernance.address,
+                            vbntGovernance.address
+                        );
+
+                        await expect(
+                            autoCompoundingStakingRewards.createProgram(
+                                token.address,
+                                newExternalRewardsVault.address,
+                                distributionType,
+                                distributionType,
+                                START_TIME,
+                                END_TIME
+                            )
+                        ).to.revertedWith('AccessDenied');
                     });
 
                     it('should revert when the total rewards are equal to 0', async () => {
