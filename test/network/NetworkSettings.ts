@@ -1,7 +1,7 @@
 import { NetworkSettings, TestERC20Token } from '../../components/Contracts';
 import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

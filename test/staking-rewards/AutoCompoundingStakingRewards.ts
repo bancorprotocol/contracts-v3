@@ -6,22 +6,22 @@ import Contracts, {
     NetworkSettings,
     PoolToken,
     TestAutoCompoundingStakingRewards,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestPoolCollection,
     TestStakingRewardsMath
 } from '../../components/Contracts';
 import { ExponentialDecay, StakingRewardsDistributionType, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, toWei } from '../../utils/Types';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
-    TokenWithAddress,
     createStakingRewards,
     createSystem,
     createTestToken,
     depositToPool,
-    setupFundedPool
+    setupFundedPool,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';

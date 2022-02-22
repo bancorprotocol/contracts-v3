@@ -6,8 +6,8 @@ import Contracts, {
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Burnable,
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
@@ -31,10 +31,8 @@ import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../uti
 import { permitContractSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
-    PoolSpec,
-    TokenWithAddress,
     createBurnableToken,
     createPool,
     createPoolCollection,
@@ -43,8 +41,10 @@ import {
     createToken,
     depositToPool,
     initWithdraw,
+    PoolSpec,
     setupFundedPool,
-    specToString
+    specToString,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -54,7 +54,7 @@ import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumber, BigNumberish, ContractTransaction, Signer, Wallet, utils } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, Signer, utils, Wallet } from 'ethers';
 import fs from 'fs';
 import { ethers } from 'hardhat';
 import { camelCase } from 'lodash';

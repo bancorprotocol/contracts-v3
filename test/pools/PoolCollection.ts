@@ -8,8 +8,8 @@ import Contracts, {
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Token,
     TestPoolCollection,
     TestPoolCollectionUpgrader
@@ -22,8 +22,8 @@ import {
     EMA_SPOT_RATE_WEIGHT,
     LIQUIDITY_GROWTH_FACTOR,
     MAX_UINT256,
-    PPM_RESOLUTION,
     PoolType,
+    PPM_RESOLUTION,
     RATE_MAX_DEVIATION_PPM,
     TradingStatusUpdateReason,
     ZERO_ADDRESS,
@@ -36,13 +36,13 @@ import { toPPM, toWei } from '../../utils/Types';
 import { latestBlockNumber } from '..//helpers/BlockNumber';
 import { getBalance, max, min, transfer } from '..//helpers/Utils';
 import {
-    TokenWithAddress,
     createPool,
     createPoolCollection,
     createSystem,
     createTestToken,
     createToken,
-    depositToPool
+    depositToPool,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

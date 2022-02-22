@@ -7,8 +7,8 @@ import Contracts, {
     NetworkSettings,
     PoolToken,
     TestAutoCompoundingStakingRewards,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Token,
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
@@ -27,8 +27,6 @@ import { permitContractSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import {
-    PoolSpec,
-    TokenWithAddress,
     createPool,
     createStakingRewards,
     createSystem,
@@ -36,13 +34,15 @@ import {
     createToken,
     depositToPool,
     initWithdraw,
+    PoolSpec,
     setupFundedPool,
-    specToString
+    specToString,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { duration, latest } from '../helpers/Time';
 import { createWallet, max, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish, ContractTransaction, Wallet, utils } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 import { camelCase } from 'lodash';

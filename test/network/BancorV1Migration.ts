@@ -12,7 +12,7 @@ import { DSToken, TestStandardPoolConverter, TokenGovernance } from '../../compo
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM } from '../../utils/Types';
-import { TokenWithAddress, createPool, createSystem, createToken } from '../helpers/Factory';
+import { createPool, createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { getBalance, getTransactionCost } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

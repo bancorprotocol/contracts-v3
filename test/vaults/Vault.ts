@@ -2,8 +2,8 @@ import Contracts, { IERC20, TestERC20Burnable, TestVault } from '../../component
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
-import { TokenWithAddress, createBurnableToken, createProxy, createSystem, createToken } from '../helpers/Factory';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { createBurnableToken, createProxy, createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { getBalance, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

@@ -1,6 +1,6 @@
 import Contracts, {
-    BNTPool,
     BancorNetworkInfo,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
@@ -8,8 +8,8 @@ import Contracts, {
     MasterVault,
     NetworkSettings,
     PoolToken,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestPendingWithdrawals,
     TestPoolCollection,
     TestPoolCollectionUpgrader
@@ -18,24 +18,24 @@ import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { Roles, expectRole } from '../helpers/AccessControl';
+import { expectRole, Roles } from '../helpers/AccessControl';
 import {
-    PoolSpec,
-    TokenWithAddress,
     createPool,
     createSystem,
     createTestToken,
     createToken,
     depositToPool,
     initWithdraw,
-    setupFundedPool
+    PoolSpec,
+    setupFundedPool,
+    TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
 import { createWallet } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, Wallet, utils } from 'ethers';
+import { BigNumber, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;

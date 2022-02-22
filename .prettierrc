@@ -22,5 +22,6 @@
     "trailingComma": "none",
     "arrowParens": "always",
     "bracketSpacing": true,
-    "importOrderSortSpecifiers": true
+    "importOrderSortSpecifiers": true,
+    "importOrderCaseInsensitive": true
 }

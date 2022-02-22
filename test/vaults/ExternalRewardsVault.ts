@@ -2,8 +2,8 @@ import Contracts, { ExternalRewardsVault, IERC20 } from '../../components/Contra
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
-import { TokenWithAddress, createSystem, createTestToken } from '../helpers/Factory';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { createSystem, createTestToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

@@ -5,14 +5,14 @@ import Contracts, {
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Token,
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

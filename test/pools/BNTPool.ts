@@ -3,8 +3,8 @@ import Contracts, {
     MasterVault,
     NetworkSettings,
     PoolToken,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Token,
     TestPoolCollection
 } from '../../components/Contracts';
@@ -12,8 +12,8 @@ import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
-import { TokenWithAddress, createPool, createSystem, createTestToken, createToken } from '../helpers/Factory';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { createPool, createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { min, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

@@ -2,8 +2,8 @@ import Contracts, { ExternalProtectionVault, IERC20, TestBancorNetwork } from '.
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
-import { TokenWithAddress, createSystem, createToken } from '../helpers/Factory';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

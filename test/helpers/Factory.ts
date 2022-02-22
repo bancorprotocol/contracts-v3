@@ -1,8 +1,8 @@
 import { Contract, ContractBuilder } from '../../components/ContractBuilder';
 import Contracts, {
-    BNTPool,
     BancorNetwork,
     BancorNetworkInfo,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
@@ -12,8 +12,8 @@ import Contracts, {
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
-    TestBNTPool,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Burnable,
     TestERC20Token,
     TestPendingWithdrawals,
@@ -27,7 +27,7 @@ import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenD
 import { Addressable, fromPPM, toWei } from '../../utils/Types';
 import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, BigNumberish, ContractFactory, Wallet, utils } from 'ethers';
+import { BaseContract, BigNumber, BigNumberish, ContractFactory, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const { formatBytes32String } = utils;

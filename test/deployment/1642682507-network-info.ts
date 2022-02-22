@@ -1,7 +1,7 @@
 import {
-    BNTPool,
     BancorNetwork,
     BancorNetworkInfo,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
     MasterVault,
@@ -13,7 +13,7 @@ import {
 } from '../../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts } from '../../utils/Deploy';
-import { Roles, expectRoleMembers } from '../helpers/AccessControl';
+import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
