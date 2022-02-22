@@ -4,10 +4,12 @@ pragma solidity 0.8.11;
 import { Fraction, Fraction112 } from "./Types.sol";
 import { MathEx } from "./MathEx.sol";
 
+// solhint-disable-next-line func-visibility
 function zeroFraction() pure returns (Fraction memory) {
     return Fraction({ n: 0, d: 1 });
 }
 
+// solhint-disable-next-line func-visibility
 function zeroFraction112() pure returns (Fraction112 memory) {
     return Fraction112({ n: 0, d: 1 });
 }
