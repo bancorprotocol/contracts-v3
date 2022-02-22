@@ -912,7 +912,7 @@ describe('MasterPool', () => {
 
                         await expect(
                             network.withdrawFromMasterPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+                        ).to.be.revertedWith('ERC20: insufficient allowance');
                     });
 
                     it('should allow withdrawing liquidity', async () => {
