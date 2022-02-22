@@ -2464,7 +2464,7 @@ describe('BancorNetwork', () => {
                                         ).to.be.revertedWith('InvalidAddress');
                                     });
 
-                                    it('should revert when attempting to trade using an invalid target potokenol', async () => {
+                                    it('should revert when attempting to trade using an invalid target token', async () => {
                                         await expect(
                                             tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
                                         ).to.be.revertedWith('InvalidAddress');
