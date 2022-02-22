@@ -1,33 +1,33 @@
-import { ContractBuilder, Contract } from '../../components/ContractBuilder';
+import { Contract, ContractBuilder } from '../../components/ContractBuilder';
 import Contracts, {
+    BNTPool,
     BancorNetwork,
     BancorNetworkInfo,
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
-    BNTPool,
     MasterVault,
     NetworkSettings,
     PoolCollectionUpgrader,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
+    TestBNTPool,
     TestBancorNetwork,
     TestERC20Burnable,
     TestERC20Token,
-    TestBNTPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
-import LegacyContracts, { TokenGovernance, BNT__factory, VBNT__factory } from '../../components/LegacyContracts';
+import LegacyContracts, { BNT__factory, TokenGovernance, VBNT__factory } from '../../components/LegacyContracts';
 import { isProfiling } from '../../components/Profiler';
 import { MAX_UINT256 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, toWei, Addressable } from '../../utils/Types';
+import { Addressable, fromPPM, toWei } from '../../utils/Types';
 import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils } from 'ethers';
+import { BaseContract, BigNumber, BigNumberish, ContractFactory, Wallet, utils } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const { formatBytes32String } = utils;

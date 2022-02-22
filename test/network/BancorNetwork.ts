@@ -1,22 +1,21 @@
 import Contracts, {
     BancorNetworkInfo,
-    MasterVault,
     ExternalProtectionVault,
     IERC20,
+    MasterVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
-    TestBancorNetwork,
-    TestFlashLoanRecipient,
     TestBNTPool,
+    TestBancorNetwork,
+    TestERC20Burnable,
+    TestFlashLoanRecipient,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolCollectionUpgrader,
-    TestERC20Burnable
+    TestPoolCollectionUpgrader
 } from '../../components/Contracts';
 import {
     DSToken,
-    TokenHolder,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
     LiquidityProtectionStore,
@@ -24,37 +23,38 @@ import {
     TestCheckpointStore,
     TestLiquidityProtection,
     TestStandardPoolConverter,
-    TokenGovernance
+    TokenGovernance,
+    TokenHolder
 } from '../../components/LegacyContracts';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
-import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
-import { toWei, toPPM, fromPPM } from '../../utils/Types';
-import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
+import { fromPPM, toPPM, toWei } from '../../utils/Types';
+import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
 import {
+    PoolSpec,
+    TokenWithAddress,
+    createBurnableToken,
     createPool,
     createPoolCollection,
     createSystem,
-    createToken,
-    createBurnableToken,
     createTestToken,
+    createToken,
     depositToPool,
     initWithdraw,
     setupFundedPool,
-    PoolSpec,
-    specToString,
-    TokenWithAddress
+    specToString
 } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { latest, duration } from '../helpers/Time';
+import { duration, latest } from '../helpers/Time';
 import { createWallet, getBalance, getTransactionCost, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumber, BigNumberish, ContractTransaction, Signer, utils, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, Signer, Wallet, utils } from 'ethers';
 import fs from 'fs';
 import { ethers } from 'hardhat';
 import { camelCase } from 'lodash';

@@ -3,7 +3,7 @@ import { RoleIds } from '../../utils/Roles';
 import { TokenSymbol } from '../../utils/TokenData';
 import { expect } from 'chai';
 import { utils } from 'ethers';
-import { camelCase, lowerCase, capitalize } from 'lodash';
+import { camelCase, capitalize, lowerCase } from 'lodash';
 
 const { id } = utils;
 

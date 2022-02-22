@@ -3,22 +3,22 @@ import Contracts, {
     IERC20,
     NetworkSettings,
     PoolToken,
-    TestBancorNetwork,
     TestBNTPool,
+    TestBancorNetwork,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
-import { ZERO_ADDRESS, DEFAULT_LOCK_DURATION } from '../../utils/Constants';
-import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
+import { DEFAULT_LOCK_DURATION, ZERO_ADDRESS } from '../../utils/Constants';
+import { DEFAULT_DECIMALS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createSystem, createTestToken, setupFundedPool, depositToPool, TokenWithAddress } from '../helpers/Factory';
+import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
+import { TokenWithAddress, createSystem, createTestToken, depositToPool, setupFundedPool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
 import { createWallet } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, utils, Wallet } from 'ethers';
+import { BigNumber, Wallet, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;

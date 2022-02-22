@@ -1,11 +1,11 @@
 import {
     AccessControlEnumerable,
     AutoCompoundingStakingRewards,
+    BNTPool,
     BancorNetwork,
     BancorNetworkInfo,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    BNTPool,
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
@@ -15,7 +15,7 @@ import {
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { DeployedContracts, DeploymentTag, isMainnet } from '../../utils/Deploy';
-import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { Roles, expectRoleMembers } from '../helpers/AccessControl';
 import { performTestDeployment } from '../helpers/Deploy';
 import { getNamedAccounts } from 'hardhat';
 

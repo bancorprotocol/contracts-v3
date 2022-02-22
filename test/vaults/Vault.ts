@@ -1,11 +1,11 @@
-import Contracts, { IERC20, TestVault, TestERC20Burnable } from '../../components/Contracts';
+import Contracts, { IERC20, TestERC20Burnable, TestVault } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createProxy, createSystem, createToken, createBurnableToken, TokenWithAddress } from '../helpers/Factory';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
+import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
+import { TokenWithAddress, createBurnableToken, createProxy, createSystem, createToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, getBalance } from '../helpers/Utils';
+import { getBalance, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';

@@ -1,4 +1,4 @@
-import { toDecimal, toString, isFraction, Fraction } from '../../utils/Types';
+import { Fraction, isFraction, toDecimal, toString } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';

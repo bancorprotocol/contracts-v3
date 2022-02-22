@@ -1,5 +1,4 @@
 import Contracts, {
-    TestStakingRewardsMath,
     BancorNetworkInfo,
     ExternalRewardsVault,
     IERC20,
@@ -7,24 +6,25 @@ import Contracts, {
     NetworkSettings,
     PoolToken,
     TestAutoCompoundingStakingRewards,
-    TestBancorNetwork,
     TestBNTPool,
-    TestPoolCollection
+    TestBancorNetwork,
+    TestPoolCollection,
+    TestStakingRewardsMath
 } from '../../components/Contracts';
-import { StakingRewardsDistributionType, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
+import { ExponentialDecay, StakingRewardsDistributionType, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei, Addressable } from '../../utils/Types';
-import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { Addressable, toWei } from '../../utils/Types';
+import { Roles, expectRole, expectRoles } from '../helpers/AccessControl';
 import {
+    TokenWithAddress,
     createStakingRewards,
     createSystem,
     createTestToken,
     depositToPool,
-    setupFundedPool,
-    TokenWithAddress
+    setupFundedPool
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { latest, duration } from '../helpers/Time';
+import { duration, latest } from '../helpers/Time';
 import { max, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

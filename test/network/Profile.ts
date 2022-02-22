@@ -7,42 +7,42 @@ import Contracts, {
     NetworkSettings,
     PoolToken,
     TestAutoCompoundingStakingRewards,
+    TestBNTPool,
     TestBancorNetwork,
     TestERC20Token,
     TestFlashLoanRecipient,
-    TestBNTPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
+    ExponentialDecay,
     MAX_UINT256,
     PPM_RESOLUTION,
-    ZERO_ADDRESS,
     StakingRewardsDistributionType,
-    ExponentialDecay
+    ZERO_ADDRESS
 } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
-import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { toWei, toPPM, fromPPM } from '../../utils/Types';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
+import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import {
+    PoolSpec,
+    TokenWithAddress,
     createPool,
     createStakingRewards,
     createSystem,
-    createToken,
     createTestToken,
+    createToken,
     depositToPool,
     initWithdraw,
     setupFundedPool,
-    PoolSpec,
-    specToString,
-    TokenWithAddress
+    specToString
 } from '../helpers/Factory';
-import { latest, duration } from '../helpers/Time';
-import { max, createWallet, transfer } from '../helpers/Utils';
+import { duration, latest } from '../helpers/Time';
+import { createWallet, max, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, Wallet, utils } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 import { camelCase } from 'lodash';

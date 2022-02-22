@@ -1,9 +1,9 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
-import { VBNT, TokenGovernance } from '../../components/LegacyContracts';
+import { TokenGovernance, VBNT } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { Roles, expectRoleMembers } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';

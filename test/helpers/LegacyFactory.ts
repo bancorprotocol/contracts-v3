@@ -1,4 +1,4 @@
-import { IERC20, TestBancorNetwork, MasterVault } from '../../components/Contracts';
+import { IERC20, MasterVault, TestBancorNetwork } from '../../components/Contracts';
 import LegacyContracts, { TokenGovernance } from '../../components/LegacyContracts';
 import { PPM_RESOLUTION } from '../../utils/Constants';
 import { DEFAULT_DECIMALS } from '../../utils/TokenData';

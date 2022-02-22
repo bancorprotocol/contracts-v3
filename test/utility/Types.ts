@@ -1,6 +1,6 @@
 import Contracts, { TestTypes } from '../../components/Contracts';
 import { MAX_UINT256, ZERO_FRACTION } from '../../utils/Constants';
-import { toString, Fraction } from '../../utils/Types';
+import { Fraction, toString } from '../../utils/Types';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';

@@ -1,7 +1,7 @@
 import { PendingWithdrawals, ProxyAdmin } from '../../components/Contracts';
 import { DEFAULT_LOCK_DURATION } from '../../utils/Constants';
 import { ContractName, DeployedContracts } from '../../utils/Deploy';
-import { expectRoleMembers, Roles } from '../helpers/AccessControl';
+import { Roles, expectRoleMembers } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
