@@ -142,7 +142,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     // the master vault contract
     IMasterVault private immutable _masterVault;
 
-    // the bnt pool contract
+    // the BNT pool contract
     IBNTPool internal immutable _bntPool;
 
     // the address of the external protection vault
@@ -940,7 +940,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             }
         }
 
-        // if the provider should receive some BNT - ask the bnt pool to mint BNT to the provider
+        // if the provider should receive some BNT - ask the BNT pool to mint BNT to the provider
         if (amounts.bntToMintForProvider > 0) {
             _bntPool.mint(address(provider), amounts.bntToMintForProvider);
         }
@@ -1143,7 +1143,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             );
         }
 
-        // update funding from the bnt pool
+        // update funding from the BNT pool
         if (targetBNTTradingLiquidity > liquidity.bntTradingLiquidity) {
             _bntPool.requestFunding(contextId, pool, targetBNTTradingLiquidity - liquidity.bntTradingLiquidity);
         } else if (targetBNTTradingLiquidity < liquidity.bntTradingLiquidity) {

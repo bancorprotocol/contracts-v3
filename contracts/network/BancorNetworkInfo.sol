@@ -61,10 +61,10 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     // the address of the external protection vault
     IExternalRewardsVault private immutable _externalRewardsVault;
 
-    // the bnt pool contract
+    // the BNT pool contract
     IBNTPool private immutable _bntPool;
 
-    // the bnt pool token
+    // the BNT pool token
     IPoolToken private immutable _bntPoolToken;
 
     // the pending withdrawals contract

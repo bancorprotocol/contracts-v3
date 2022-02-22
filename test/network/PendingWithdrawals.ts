@@ -58,7 +58,7 @@ describe('PendingWithdrawals', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid bnt pool contract', async () => {
+        it('should revert when attempting to create with an invalid BNT pool contract', async () => {
             await expect(
                 Contracts.PendingWithdrawals.deploy(network.address, bnt.address, ZERO_ADDRESS)
             ).to.be.revertedWith('InvalidAddress');

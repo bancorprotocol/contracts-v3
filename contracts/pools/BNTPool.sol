@@ -52,7 +52,7 @@ contract BNTPool is IBNTPool, Vault {
         uint256 withdrawalFeeAmount;
     }
 
-    // the bnt pool token manager role is required to access the BNT pool token reserve
+    // the BNT pool token manager role is required to access the BNT pool token reserve
     bytes32 private constant ROLE_BNT_POOL_TOKEN_MANAGER = keccak256("ROLE_BNT_POOL_TOKEN_MANAGER");
 
     // the network contract
@@ -64,7 +64,7 @@ contract BNTPool is IBNTPool, Vault {
     // the master vault contract
     IMasterVault private immutable _masterVault;
 
-    // the bnt pool token
+    // the BNT pool token
     IPoolToken internal immutable _poolToken;
 
     // the total staked BNT balance in the network
@@ -110,7 +110,7 @@ contract BNTPool is IBNTPool, Vault {
     event FundingRenounced(bytes32 indexed contextId, Token indexed pool, uint256 bntAmount, uint256 poolTokenAmount);
 
     /**
-     * @dev triggered when the total liquidity in the bnt pool is updated
+     * @dev triggered when the total liquidity in the BNT pool is updated
      */
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
@@ -205,7 +205,7 @@ contract BNTPool is IBNTPool, Vault {
     }
 
     /**
-     * @dev returns the bnt pool token manager role
+     * @dev returns the BNT pool token manager role
      */
     function roleBNTPoolTokenManager() external pure returns (bytes32) {
         return ROLE_BNT_POOL_TOKEN_MANAGER;
@@ -237,7 +237,7 @@ contract BNTPool is IBNTPool, Vault {
      *
      * requirements:
      *
-     * - reserve token must be the bnt pool token
+     * - reserve token must be the BNT pool token
      * - the caller must have the ROLE_BNT_POOL_TOKEN_MANAGER role
      */
     function isAuthorizedWithdrawal(

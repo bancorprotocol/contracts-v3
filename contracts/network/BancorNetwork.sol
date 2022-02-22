@@ -123,10 +123,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
 
-    // the bnt pool token
+    // the BNT pool token
     IPoolToken internal immutable _bntPoolToken;
 
-    // the bnt pool contract
+    // the BNT pool contract
     IBNTPool internal _bntPool;
 
     // the pending withdrawals contract
@@ -974,10 +974,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         IBNTPool cachedBNTPool = _bntPool;
 
-        // transfer the tokens from the caller to the bnt pool
+        // transfer the tokens from the caller to the BNT pool
         _bnt.transferFrom(caller, address(cachedBNTPool), bntAmount);
 
-        // process bnt pool deposit
+        // process BNT pool deposit
         cachedBNTPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
     }
 
@@ -1073,14 +1073,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         IBNTPool cachedBNTPool = _bntPool;
 
-        // approve the bnt pool to transfer pool tokens, which we have received from the completion of the
+        // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
         completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.poolTokenAmount);
 
-        // transfer VBNT from the caller to the bnt pool
+        // transfer VBNT from the caller to the BNT pool
         _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
-        // call withdraw on the bnt pool
+        // call withdraw on the BNT pool
         cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
     }
 
@@ -1228,7 +1228,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is BNT, notify the bnt pool on collected fees
+        // if the target token is BNT, notify the BNT pool on collected fees
         if (!isSourceBNT) {
             _bntPool.onFeesCollected(
                 pool,

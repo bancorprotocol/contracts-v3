@@ -40,7 +40,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     // the BNT contract
     IERC20 private immutable _bnt;
 
-    // the bnt pool contract
+    // the BNT pool contract
     IBNTPool private immutable _bntPool;
 
     // the lock duration

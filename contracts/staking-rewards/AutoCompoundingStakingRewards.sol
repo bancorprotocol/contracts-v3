@@ -60,10 +60,10 @@ contract AutoCompoundingStakingRewards is
     // the BNT contract
     IERC20 private immutable _bnt;
 
-    // the bnt pool contract
+    // the BNT pool contract
     IBNTPool private immutable _bntPool;
 
-    // the bnt pool took contract
+    // the BNT pool took contract
     IPoolToken private immutable _bntPoolToken;
 
     // a mapping between pools and programs

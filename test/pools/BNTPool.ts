@@ -119,7 +119,7 @@ describe('BNTPool', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid bnt pool token contract', async () => {
+        it('should revert when attempting to create with an invalid BNT pool token contract', async () => {
             await expect(
                 Contracts.BNTPool.deploy(
                     network.address,
@@ -611,7 +611,7 @@ describe('BNTPool', () => {
                     originalVBNTAmount: BigNumber
                 ) => {
                     // since this is only a unit test, we will simulate a proper transfer of BNT amount from the network
-                    // to the bnt pool
+                    // to the BNT pool
                     await bnt.connect(deployer).transfer(bntPool.address, amount);
 
                     const prevStakedBalance = await bntPool.stakedBalance();
@@ -782,7 +782,7 @@ describe('BNTPool', () => {
                         const prevProviderPoolTokenBalance = await bntPoolToken.balanceOf(provider.address);
 
                         // since this is only a unit test, we will simulate a proper transfer of BNT amount from the
-                        // network to the bnt pool
+                        // network to the BNT pool
                         const depositAmount = toWei(1_000_000);
                         await bnt.connect(deployer).transfer(bntPool.address, depositAmount);
 
@@ -1028,7 +1028,7 @@ describe('BNTPool', () => {
                     testWithdrawFundsRestricted();
                 });
 
-                context('with bnt pool token manager role', () => {
+                context('with BNT pool token manager role', () => {
                     beforeEach(async () => {
                         await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, provider.address);
                     });

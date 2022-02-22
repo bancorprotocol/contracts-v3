@@ -72,12 +72,12 @@ interface IBancorNetworkInfo is IUpgradeable {
     function externalRewardsVault() external view returns (IExternalRewardsVault);
 
     /**
-     * @dev returns the bnt pool contract
+     * @dev returns the BNT pool contract
      */
     function bntPool() external view returns (IBNTPool);
 
     /**
-     * @dev returns the bnt pool token contract
+     * @dev returns the BNT pool token contract
      */
     function bntPoolToken() external view returns (IPoolToken);
 

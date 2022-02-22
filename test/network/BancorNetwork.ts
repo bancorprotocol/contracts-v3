@@ -214,7 +214,7 @@ describe('BancorNetwork', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid bnt pool token contract', async () => {
+        it('should revert when attempting to create with an invalid BNT pool token contract', async () => {
             await expect(
                 Contracts.BancorNetwork.deploy(
                     bntGovernance.address,
@@ -227,7 +227,7 @@ describe('BancorNetwork', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to initialize with an invalid bnt pool contract', async () => {
+        it('should revert when attempting to initialize with an invalid BNT pool contract', async () => {
             const network = await Contracts.BancorNetwork.deploy(
                 bntGovernance.address,
                 vbntGovernance.address,

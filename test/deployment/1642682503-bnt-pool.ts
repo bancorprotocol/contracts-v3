@@ -39,7 +39,7 @@ describeDeployment('1642682503-bnt-pool', ContractName.BNTPoolV1, () => {
         bntPool = await DeployedContracts.BNTPoolV1.deployed();
     });
 
-    it('should deploy and configure the bnt pool contract', async () => {
+    it('should deploy and configure the BNT pool contract', async () => {
         expect(await proxyAdmin.getProxyAdmin(bntPool.address)).to.equal(proxyAdmin.address);
 
         expect(await bntPool.version()).to.equal(1);

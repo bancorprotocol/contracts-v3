@@ -135,7 +135,7 @@ describe('AutoCompoundingStakingRewards', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid bnt pool contract', async () => {
+        it('should revert when attempting to create with an invalid BNT pool contract', async () => {
             await expect(
                 Contracts.AutoCompoundingStakingRewards.deploy(
                     network.address,

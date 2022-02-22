@@ -21,7 +21,7 @@ describeDeployment('1642682500-bnt-pool-token', ContractName.BNTPoolTokenV1, () 
         bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
     });
 
-    it('should deploy and configure the bnt pool contract', async () => {
+    it('should deploy and configure the BNT pool contract', async () => {
         expect(await bntPoolToken.version()).to.equal(1);
 
         expect(await bntPoolToken.owner()).to.equal(deployer);
