@@ -13,8 +13,8 @@ contract TestVault is Vault {
 
     uint256[MAX_GAP - 1] private __gap;
 
-    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
-        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
+        Vault(initBNTGovernance, initVBNTGovernance)
     {}
 
     function initialize() external initializer {

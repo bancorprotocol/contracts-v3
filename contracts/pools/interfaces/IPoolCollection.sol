@@ -16,7 +16,7 @@ import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
 import { IPoolCollectionUpgrader } from "./IPoolCollectionUpgrader.sol";
 
 struct PoolLiquidity {
-    uint256 networkTokenTradingLiquidity; // the network token trading liquidity
+    uint256 bntTradingLiquidity; // the BNT trading liquidity
     uint256 baseTokenTradingLiquidity; // the base token trading liquidity
     uint256 stakedBalance; // the staked balance
 }
@@ -44,7 +44,7 @@ uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 struct TradeAmountAndFee {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
     uint256 tradingFeeAmount; // the trading fee amount
-    uint256 networkFeeAmount; // the network fee amount (always in units of network token)
+    uint256 networkFeeAmount; // the network fee amount (always in units of BNT)
 }
 
 /**
@@ -97,7 +97,7 @@ interface IPoolCollection is IVersioned {
     function poolToken(Token pool) external view returns (IPoolToken);
 
     /**
-     * @dev converts the specified pool token amount to the underlying network token amount
+     * @dev converts the specified pool token amount to the underlying base token amount
      */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256);
 

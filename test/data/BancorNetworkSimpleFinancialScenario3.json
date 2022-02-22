@@ -102,7 +102,7 @@
             "userId": "",
             "mined": false,
             "amount": {
-                "networkTokenRate": 1,
+                "bntRate": 1,
                 "baseTokenRate": 1
             },
             "expected": {

@@ -6,7 +6,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
-    const networkToken = await DeployedContracts.NetworkToken.deployed();
+    const bnt = await DeployedContracts.BNT.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const masterVault = await DeployedContracts.MasterVaultV1.deployed();
 
@@ -21,7 +21,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer,
         args: [
             network.address,
-            networkToken.address,
+            bnt.address,
             networkSettings.address,
             masterVault.address,
             masterPool.address,

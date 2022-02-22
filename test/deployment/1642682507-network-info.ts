@@ -11,7 +11,7 @@ import {
     PoolToken,
     ProxyAdmin
 } from '../../components/Contracts';
-import { GovToken, NetworkToken, TokenGovernance } from '../../components/LegacyContracts';
+import { VBNT, BNT, TokenGovernance } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
@@ -22,10 +22,10 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let network: BancorNetwork;
-    let networkToken: NetworkToken;
-    let govToken: GovToken;
-    let networkTokenGovernance: TokenGovernance;
-    let govTokenGovernance: TokenGovernance;
+    let bnt: BNT;
+    let vbnt: VBNT;
+    let bntGovernance: TokenGovernance;
+    let vbntGovernance: TokenGovernance;
     let networkSettings: NetworkSettings;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
@@ -44,10 +44,10 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         network = await DeployedContracts.BancorNetworkV1.deployed();
-        networkToken = await DeployedContracts.NetworkToken.deployed();
-        govToken = await DeployedContracts.GovToken.deployed();
-        networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
-        govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
+        bnt = await DeployedContracts.BNT.deployed();
+        vbnt = await DeployedContracts.VBNT.deployed();
+        bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+        vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
         masterVault = await DeployedContracts.MasterVaultV1.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
@@ -65,10 +65,10 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
         expect(await networkInfo.version()).to.equal(1);
 
         expect(await networkInfo.network()).to.equal(network.address);
-        expect(await networkInfo.networkToken()).to.equal(networkToken.address);
-        expect(await networkInfo.networkTokenGovernance()).to.equal(networkTokenGovernance.address);
-        expect(await networkInfo.govToken()).to.equal(govToken.address);
-        expect(await networkInfo.govTokenGovernance()).to.equal(govTokenGovernance.address);
+        expect(await networkInfo.bnt()).to.equal(bnt.address);
+        expect(await networkInfo.bntGovernance()).to.equal(bntGovernance.address);
+        expect(await networkInfo.vbnt()).to.equal(vbnt.address);
+        expect(await networkInfo.vbntGovernance()).to.equal(vbntGovernance.address);
         expect(await networkInfo.networkSettings()).to.equal(networkSettings.address);
         expect(await networkInfo.masterVault()).to.equal(masterVault.address);
         expect(await networkInfo.externalProtectionVault()).to.equal(externalProtectionVault.address);

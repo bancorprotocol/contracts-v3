@@ -21,8 +21,8 @@ contract ExternalProtectionVault is IExternalProtectionVault, Vault {
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
-        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
+        Vault(initBNTGovernance, initVBNTGovernance)
     {}
 
     /**

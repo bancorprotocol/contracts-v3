@@ -15,23 +15,23 @@ describe('ExternalProtectionVault', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let networkTokenGovernance: TokenGovernance;
-        let govTokenGovernance: TokenGovernance;
+        let bntGovernance: TokenGovernance;
+        let vbntGovernance: TokenGovernance;
         let externalProtectionVault: ExternalProtectionVault;
 
         beforeEach(async () => {
-            ({ network, networkTokenGovernance, govTokenGovernance, externalProtectionVault } = await createSystem());
+            ({ network, bntGovernance, vbntGovernance, externalProtectionVault } = await createSystem());
         });
 
-        it('should revert when attempting to create with an invalid network token governance contract', async () => {
+        it('should revert when attempting to create with an invalid BNT governance contract', async () => {
             await expect(
-                Contracts.ExternalProtectionVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)
+                Contracts.ExternalProtectionVault.deploy(ZERO_ADDRESS, vbntGovernance.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid gov token governance contract', async () => {
+        it('should revert when attempting to create with an invalid VBNT governance contract', async () => {
             await expect(
-                Contracts.ExternalProtectionVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)
+                Contracts.ExternalProtectionVault.deploy(bntGovernance.address, ZERO_ADDRESS)
             ).to.be.revertedWith('InvalidAddress');
         });
 
@@ -63,7 +63,7 @@ describe('ExternalProtectionVault', () => {
         const amount = 1_000_000;
 
         let externalProtectionVault: ExternalProtectionVault;
-        let networkToken: IERC20;
+        let bnt: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;
@@ -94,9 +94,9 @@ describe('ExternalProtectionVault', () => {
             const tokenData = new TokenData(symbol);
 
             beforeEach(async () => {
-                ({ externalProtectionVault, networkToken } = await createSystem());
+                ({ externalProtectionVault, bnt } = await createSystem());
 
-                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
+                token = tokenData.isBNT() ? bnt : await createToken(tokenData);
 
                 await transfer(deployer, token, externalProtectionVault.address, amount);
             });

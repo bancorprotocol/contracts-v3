@@ -16,14 +16,14 @@ describe('Vault', () => {
     let target: SignerWithAddress;
     let admin: SignerWithAddress;
 
-    let networkTokenGovernance: TokenGovernance;
-    let govTokenGovernance: TokenGovernance;
-    let networkToken: IERC20;
-    let govToken: IERC20;
+    let bntGovernance: TokenGovernance;
+    let vbntGovernance: TokenGovernance;
+    let bnt: IERC20;
+    let vbnt: IERC20;
 
     const createTestVault = async () =>
         createProxy(Contracts.TestVault, {
-            ctorArgs: [networkTokenGovernance.address, govTokenGovernance.address]
+            ctorArgs: [bntGovernance.address, vbntGovernance.address]
         });
 
     shouldHaveGap('TestVault', '_isAuthorizedWithdrawal');
@@ -33,7 +33,7 @@ describe('Vault', () => {
     });
 
     beforeEach(async () => {
-        ({ networkToken, govToken, networkTokenGovernance, govTokenGovernance } = await createSystem());
+        ({ bnt, vbnt, bntGovernance, vbntGovernance } = await createSystem());
     });
 
     describe('construction', () => {
@@ -43,14 +43,14 @@ describe('Vault', () => {
             testVault = await createTestVault();
         });
 
-        it('should revert when attempting to create with an invalid network token governance contract', async () => {
-            await expect(Contracts.TestVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)).to.be.revertedWith(
+        it('should revert when attempting to create with an invalid BNT governance contract', async () => {
+            await expect(Contracts.TestVault.deploy(ZERO_ADDRESS, vbntGovernance.address)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
-        it('should revert when attempting to create with an invalid governance token governance contract', async () => {
-            await expect(Contracts.TestVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
+        it('should revert when attempting to create with an invalid VBNT governance contract', async () => {
+            await expect(Contracts.TestVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
@@ -118,7 +118,7 @@ describe('Vault', () => {
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
+                token = tokenData.isBNT() ? bnt : await createToken(tokenData);
 
                 await transfer(deployer, token, testVault.address, amount + 1);
             });
@@ -196,11 +196,11 @@ describe('Vault', () => {
             beforeEach(async () => {
                 switch (tokenData.symbol()) {
                     case TokenSymbol.BNT:
-                        token = networkToken;
+                        token = bnt;
                         break;
 
-                    case TokenSymbol.vBNT:
-                        token = govToken;
+                    case TokenSymbol.VBNT:
+                        token = vbnt;
                         break;
 
                     default:
@@ -260,7 +260,7 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [TokenSymbol.BNT, TokenSymbol.vBNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.VBNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => testBurn(new TokenData(symbol)));
         }
     });
@@ -279,7 +279,7 @@ describe('Vault', () => {
             const amount = 1_000_000;
 
             beforeEach(async () => {
-                token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
+                token = tokenData.isBNT() ? bnt : await createToken(tokenData);
                 await transfer(deployer, token, testVault.address, amount);
             });
 

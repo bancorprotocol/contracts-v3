@@ -16,9 +16,9 @@ contract TestAutoCompoundingStakingRewards is AutoCompoundingStakingRewards, Tes
     constructor(
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
-        IERC20 initNetworkToken,
+        IERC20 initBNT,
         IMasterPool initMasterPool
-    ) AutoCompoundingStakingRewards(initNetwork, initNetworkSettings, initNetworkToken, initMasterPool) {}
+    ) AutoCompoundingStakingRewards(initNetwork, initNetworkSettings, initBNT, initMasterPool) {}
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();

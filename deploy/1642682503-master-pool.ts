@@ -7,8 +7,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     const networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
-    const networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
-    const govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
+    const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+    const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const masterVault = await DeployedContracts.MasterVaultV1.deployed();
     const masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
@@ -19,8 +19,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             from: deployer,
             args: [
                 networkProxy.address,
-                networkTokenGovernance.address,
-                govTokenGovernance.address,
+                bntGovernance.address,
+                vbntGovernance.address,
                 networkSettings.address,
                 masterVault.address,
                 masterPoolToken.address
@@ -52,14 +52,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await grantRole({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: masterPoolAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.GovTokenGovernance,
+        name: ContractName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: masterPoolAddress,
         from: deployer
@@ -67,7 +67,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     await grantRole({
         name: ContractName.MasterVaultV1,
-        id: Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER,
+        id: Roles.MasterVault.ROLE_BNT_MANAGER,
         member: masterPoolAddress,
         from: deployer
     });
