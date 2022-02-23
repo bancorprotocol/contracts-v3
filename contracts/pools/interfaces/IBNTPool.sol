@@ -84,7 +84,7 @@ interface IBNTPool is IVault {
     function burnFromVault(uint256 bntAmount) external;
 
     /**
-     * @dev deposits BNT liquidity on behalf of a specific provider
+     * @dev deposits BNT liquidity on behalf of a specific provider and returns the respective pool token amount
      *
      * requirements:
      *
@@ -97,11 +97,10 @@ interface IBNTPool is IVault {
         uint256 bntAmount,
         bool isMigrating,
         uint256 originalVBNTAmount
-    ) external;
+    ) external returns (uint256);
 
     /**
-     * @dev withdraws BNT liquidity on behalf of a specific provider and returns the withdrawn BNT amount and burned
-     * pool token amount
+     * @dev withdraws BNT liquidity on behalf of a specific provider and returns the withdrawn BNT amount
      *
      * requirements:
      *
@@ -112,7 +111,7 @@ interface IBNTPool is IVault {
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev requests BNT funding

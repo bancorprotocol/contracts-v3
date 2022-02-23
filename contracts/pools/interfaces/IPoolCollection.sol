@@ -128,7 +128,7 @@ interface IPoolCollection is IVersioned {
     function createPool(Token token) external;
 
     /**
-     * @dev deposits base token liquidity on behalf of a specific provider
+     * @dev deposits base token liquidity on behalf of a specific provider and returns the respective pool token amount
      *
      * requirements:
      *
@@ -140,10 +140,10 @@ interface IPoolCollection is IVersioned {
         address provider,
         Token pool,
         uint256 tokenAmount
-    ) external;
+    ) external returns (uint256);
 
     /**
-     * @dev handles some of the withdrawal-related actions and returns all of the withdrawal-related amounts
+     * @dev handles some of the withdrawal-related actions and returns the withdrawn base token amount
      *
      * requirements:
      *
@@ -155,7 +155,7 @@ interface IPoolCollection is IVersioned {
         address provider,
         Token pool,
         uint256 poolTokenAmount
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev performs a trade by providing the source amount and returns the target amount and the associated fee

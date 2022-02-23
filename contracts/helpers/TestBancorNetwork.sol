@@ -69,8 +69,8 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 bntAmount,
         bool isMigrating,
         uint256 originalPoolTokenAmount
-    ) external {
-        _bntPool.depositFor(contextId, provider, bntAmount, isMigrating, originalPoolTokenAmount);
+    ) external returns (uint256) {
+        return _bntPool.depositFor(contextId, provider, bntAmount, isMigrating, originalPoolTokenAmount);
     }
 
     function depositToPoolCollectionForT(
@@ -79,16 +79,16 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         address provider,
         Token pool,
         uint256 tokenAmount
-    ) external {
-        poolCollection.depositFor(contextId, provider, pool, tokenAmount);
+    ) external returns (uint256) {
+        return poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
     function withdrawFromBNTPoolT(
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
-    ) external {
-        _bntPool.withdraw(contextId, provider, poolTokenAmount);
+    ) external returns (uint256) {
+        return _bntPool.withdraw(contextId, provider, poolTokenAmount);
     }
 
     function withdrawFromPoolCollectionT(
@@ -97,8 +97,8 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         address provider,
         Token pool,
         uint256 poolTokenAmount
-    ) external {
-        poolCollection.withdraw(contextId, provider, pool, poolTokenAmount);
+    ) external returns (uint256) {
+        return poolCollection.withdraw(contextId, provider, pool, poolTokenAmount);
     }
 
     function onBNTFeesCollectedT(

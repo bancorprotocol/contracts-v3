@@ -536,8 +536,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         whenNotPaused
         nonReentrant
+        returns (uint256)
     {
-        _depositFor(provider, pool, tokenAmount, msg.sender);
+        return _depositFor(provider, pool, tokenAmount, msg.sender);
     }
 
     /**
@@ -550,8 +551,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         whenNotPaused
         nonReentrant
+        returns (uint256)
     {
-        _depositFor(msg.sender, pool, tokenAmount, msg.sender);
+        return _depositFor(msg.sender, pool, tokenAmount, msg.sender);
     }
 
     /**
@@ -572,8 +574,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         greaterThanZero(tokenAmount)
         whenNotPaused
         nonReentrant
+        returns (uint256)
     {
-        _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
+        return _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
     }
 
     /**
@@ -586,14 +589,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external validAddress(address(pool)) greaterThanZero(tokenAmount) whenNotPaused nonReentrant {
-        _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
+    ) external validAddress(address(pool)) greaterThanZero(tokenAmount) whenNotPaused nonReentrant returns (uint256) {
+        return _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdraw(uint256 id) external whenNotPaused nonReentrant {
+    function withdraw(uint256 id) external whenNotPaused nonReentrant returns (uint256) {
         address provider = msg.sender;
         bytes32 contextId = _withdrawContextId(id, provider);
 
@@ -601,10 +604,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
         if (completedRequest.poolToken == _bntPoolToken) {
-            _withdrawBNT(contextId, provider, completedRequest);
-        } else {
-            _withdrawBaseToken(contextId, provider, completedRequest);
+            return _withdrawBNT(contextId, provider, completedRequest);
         }
+
+        return _withdrawBaseToken(contextId, provider, completedRequest);
     }
 
     /**
@@ -947,14 +950,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token pool,
         uint256 tokenAmount,
         address caller
-    ) private {
+    ) private returns (uint256) {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, caller);
 
         if (_isBNT(pool)) {
-            _depositBNTFor(contextId, provider, tokenAmount, caller, false, 0);
-        } else {
-            _depositBaseTokenFor(contextId, provider, pool, tokenAmount, caller, tokenAmount);
+            return _depositBNTFor(contextId, provider, tokenAmount, caller, false, 0);
         }
+
+        return _depositBaseTokenFor(contextId, provider, pool, tokenAmount, caller, tokenAmount);
     }
 
     /**
@@ -971,14 +974,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address caller,
         bool isMigrating,
         uint256 originalAmount
-    ) private {
+    ) private returns (uint256) {
         IBNTPool cachedBNTPool = _bntPool;
 
         // transfer the tokens from the caller to the BNT pool
         _bnt.transferFrom(caller, address(cachedBNTPool), bntAmount);
 
         // process BNT pool deposit
-        cachedBNTPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
+        return cachedBNTPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
     }
 
     /**
@@ -995,7 +998,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 tokenAmount,
         address caller,
         uint256 availableAmount
-    ) private {
+    ) private returns (uint256) {
         // transfer the tokens from the sender to the vault
         _depositToMasterVault(pool, caller, availableAmount);
 
@@ -1032,6 +1035,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             signature.r,
             signature.s
         );
+        return poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
     /**
@@ -1048,19 +1052,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 tokenAmount,
         uint256 deadline,
         Signature memory signature
-    ) private {
+    ) private returns (uint256) {
         address caller = msg.sender;
 
         _permit(pool, tokenAmount, deadline, signature, caller);
 
-        _depositBaseTokenFor(
-            _depositContextId(provider, pool, tokenAmount, caller),
-            provider,
-            pool,
-            tokenAmount,
-            caller,
-            tokenAmount
-        );
+        return
+            _depositBaseTokenFor(
+                _depositContextId(provider, pool, tokenAmount, caller),
+                provider,
+                pool,
+                tokenAmount,
+                caller,
+                tokenAmount
+            );
     }
 
     /**
@@ -1070,7 +1075,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         CompletedWithdrawal memory completedRequest
-    ) private {
+    ) private returns (uint256) {
         IBNTPool cachedBNTPool = _bntPool;
 
         // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
@@ -1081,7 +1086,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the BNT pool
-        cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
+        return cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
     }
 
     /**
@@ -1091,7 +1096,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bytes32 contextId,
         address provider,
         CompletedWithdrawal memory completedRequest
-    ) private {
+    ) private returns (uint256) {
         Token pool = completedRequest.poolToken.reserveToken();
 
         // get the pool collection that manages this pool
@@ -1102,7 +1107,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        poolCollection.withdraw(contextId, provider, pool, completedRequest.poolTokenAmount);
+        return poolCollection.withdraw(contextId, provider, pool, completedRequest.poolTokenAmount);
     }
 
     /**
