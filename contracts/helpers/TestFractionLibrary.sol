@@ -8,27 +8,27 @@ contract TestFractionLibrary {
     using FractionLibrary for Fraction;
     using FractionLibrary for Fraction112;
 
-    function isFractionValid(Fraction memory fraction) external pure returns (bool) {
-        return fraction.isFractionValid();
+    function isValid(Fraction memory fraction) external pure returns (bool) {
+        return fraction.isValid();
     }
 
-    function isFractionPositive(Fraction memory fraction) external pure returns (bool) {
-        return fraction.isFractionPositive();
+    function isPositive(Fraction memory fraction) external pure returns (bool) {
+        return fraction.isPositive();
     }
 
-    function isFraction112Valid(Fraction112 memory fraction112) external pure returns (bool) {
-        return fraction112.isFraction112Valid();
+    function isValid(Fraction112 memory fraction) external pure returns (bool) {
+        return fraction.isValid();
     }
 
-    function isFraction112Positive(Fraction112 memory fraction112) external pure returns (bool) {
-        return fraction112.isFraction112Positive();
+    function isPositive(Fraction112 memory fraction) external pure returns (bool) {
+        return fraction.isPositive();
     }
 
     function toFraction112(Fraction memory fraction) external pure returns (Fraction112 memory) {
         return fraction.toFraction112();
     }
 
-    function fromFraction112(Fraction112 memory fraction112) external pure returns (Fraction memory) {
-        return fraction112.fromFraction112();
+    function fromFraction112(Fraction112 memory fraction) external pure returns (Fraction memory) {
+        return fraction.fromFraction112();
     }
 }

@@ -281,7 +281,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (!rate.isFractionPositive()) {
+        if (!rate.isPositive()) {
             revert InvalidRate();
         }
     }
@@ -899,7 +899,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             prevLiquidity.bntTradingLiquidity != 0 &&
             prevLiquidity.baseTokenTradingLiquidity != 0 &&
             averageRate.blockNumber != 0 &&
-            averageRate.rate.isFraction112Positive() &&
+            averageRate.rate.isPositive() &&
             !_isPoolRateStable(prevLiquidity, averageRate)
         ) {
             revert RateUnstable();
@@ -1047,7 +1047,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = fundingRate.isFractionPositive();
+        bool isFundingRateValid = fundingRate.isPositive();
 
         // if we aren't bootstrapping the pool, ensure that the BNT trading liquidity is above the minimum liquidity for
         // trading
@@ -1067,7 +1067,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = averageRate.blockNumber != 0 && averageRate.rate.isFraction112Positive();
+        bool isAverageRateValid = averageRate.blockNumber != 0 && averageRate.rate.isPositive();
         if (
             liquidity.bntTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&

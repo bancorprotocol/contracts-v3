@@ -19,31 +19,31 @@ function zeroFraction112() pure returns (Fraction112 memory) {
  */
 library FractionLibrary {
     /**
-     * @dev returns whether a fraction is valid
+     * @dev returns whether a standard fraction is valid
      */
-    function isFractionValid(Fraction memory fraction) internal pure returns (bool) {
+    function isValid(Fraction memory fraction) internal pure returns (bool) {
         return fraction.d != 0;
     }
 
     /**
-     * @dev returns whether a fraction is positive
+     * @dev returns whether a standard fraction is positive
      */
-    function isFractionPositive(Fraction memory fraction) internal pure returns (bool) {
-        return isFractionValid(fraction) && fraction.n != 0;
+    function isPositive(Fraction memory fraction) internal pure returns (bool) {
+        return isValid(fraction) && fraction.n != 0;
     }
 
     /**
-     * @dev returns whether a fraction112 is valid
+     * @dev returns whether a 112-bit fraction is valid
      */
-    function isFraction112Valid(Fraction112 memory fraction112) internal pure returns (bool) {
-        return fraction112.d != 0;
+    function isValid(Fraction112 memory fraction) internal pure returns (bool) {
+        return fraction.d != 0;
     }
 
     /**
-     * @dev returns whether a fraction112 is positive
+     * @dev returns whether a 112-bit fraction is positive
      */
-    function isFraction112Positive(Fraction112 memory fraction112) internal pure returns (bool) {
-        return isFraction112Valid(fraction112) && fraction112.n != 0;
+    function isPositive(Fraction112 memory fraction) internal pure returns (bool) {
+        return isValid(fraction) && fraction.n != 0;
     }
 
     /**
@@ -57,7 +57,7 @@ library FractionLibrary {
     /**
      * @dev expands a 112-bit fraction to a standard fraction
      */
-    function fromFraction112(Fraction112 memory fraction112) internal pure returns (Fraction memory) {
-        return Fraction({ n: fraction112.n, d: fraction112.d });
+    function fromFraction112(Fraction112 memory fraction) internal pure returns (Fraction memory) {
+        return Fraction({ n: fraction.n, d: fraction.d });
     }
 }

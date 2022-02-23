@@ -14,14 +14,14 @@ describe('FractionLibrary', () => {
         fractionLibrary = await Contracts.TestFractionLibrary.deploy();
     });
 
-    describe('isFractionValid', () => {
+    describe('isValid(Fraction)', () => {
         for (const fraction of [
             { n: 0, d: 1 },
             { n: 1, d: 2 },
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is valid`, async () => {
-                expect(await fractionLibrary.isFractionValid(fraction)).to.be.true;
+                expect(await fractionLibrary["isValid((uint256,uint256))"](fraction)).to.be.true;
             });
         }
 
@@ -31,19 +31,19 @@ describe('FractionLibrary', () => {
             { n: 1000, d: 0 }
         ]) {
             it(`should return that ${fraction} is invalid`, async () => {
-                expect(await fractionLibrary.isFractionValid(fraction)).to.be.false;
+                expect(await fractionLibrary["isValid((uint256,uint256))"](fraction)).to.be.false;
             });
         }
     });
 
-    describe('isFractionPositive', () => {
+    describe('isPositive(Fraction)', () => {
         for (const fraction of [
             { n: 1, d: 1 },
             { n: 1, d: 2 },
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is positive`, async () => {
-                expect(await fractionLibrary.isFractionPositive(fraction)).to.be.true;
+                expect(await fractionLibrary["isPositive((uint256,uint256))"](fraction)).to.be.true;
             });
         }
 
@@ -54,52 +54,52 @@ describe('FractionLibrary', () => {
             { n: 1, d: 0 }
         ]) {
             it(`should return that ${toString(fraction)} is not positive`, async () => {
-                expect(await fractionLibrary.isFractionPositive(fraction)).to.be.false;
+                expect(await fractionLibrary["isPositive((uint256,uint256))"](fraction)).to.be.false;
             });
         }
     });
 
-    describe('isFraction112Valid', () => {
-        for (const fraction112 of [
+    describe('isValid(Fraction112)', () => {
+        for (const fraction of [
             { n: 0, d: 1 },
             { n: 1, d: 2 },
             { n: 1000, d: 2000 }
         ]) {
-            it(`should return that ${toString(fraction112)} is valid`, async () => {
-                expect(await fractionLibrary.isFraction112Valid(fraction112)).to.be.true;
+            it(`should return that ${toString(fraction)} is valid`, async () => {
+                expect(await fractionLibrary["isValid((uint112,uint112))"](fraction)).to.be.true;
             });
         }
 
-        for (const fraction112 of [
+        for (const fraction of [
             { n: 0, d: 0 },
             { n: 1, d: 0 },
             { n: 1000, d: 0 }
         ]) {
-            it(`should return that ${fraction112} is invalid`, async () => {
-                expect(await fractionLibrary.isFraction112Valid(fraction112)).to.be.false;
+            it(`should return that ${fraction} is invalid`, async () => {
+                expect(await fractionLibrary["isValid((uint112,uint112))"](fraction)).to.be.false;
             });
         }
     });
 
-    describe('isFraction112Positive', () => {
-        for (const fraction112 of [
+    describe('isPositive(Fraction112)', () => {
+        for (const fraction of [
             { n: 1, d: 1 },
             { n: 1, d: 2 },
             { n: 1000, d: 2000 }
         ]) {
-            it(`should return that ${toString(fraction112)} is positive`, async () => {
-                expect(await fractionLibrary.isFraction112Positive(fraction112)).to.be.true;
+            it(`should return that ${toString(fraction)} is positive`, async () => {
+                expect(await fractionLibrary["isPositive((uint112,uint112))"](fraction)).to.be.true;
             });
         }
 
-        for (const fraction112 of [
+        for (const fraction of [
             { n: 0, d: 1 },
             { n: 0, d: 1000 },
             { n: 0, d: 0 },
             { n: 1, d: 0 }
         ]) {
-            it(`should return that ${toString(fraction112)} is not positive`, async () => {
-                expect(await fractionLibrary.isFraction112Positive(fraction112)).to.be.false;
+            it(`should return that ${toString(fraction)} is not positive`, async () => {
+                expect(await fractionLibrary["isPositive((uint112,uint112))"](fraction)).to.be.false;
             });
         }
     });
