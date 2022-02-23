@@ -3,7 +3,6 @@ pragma solidity 0.8.11;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
@@ -32,7 +31,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { Token } from "../token/Token.sol";
-import { TokenLibrary } from "../token/TokenLibrary.sol";
+import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
 
 import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -64,13 +63,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     error EthAmountMismatch();
     error InsufficientFlashLoanReturn();
     error InvalidTokens();
-    error PermitUnsupported();
-
-    struct Signature {
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-    }
 
     struct TradeParams {
         uint256 amount;
@@ -649,7 +641,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) external whenNotPaused nonReentrant {
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
 
-        _permit(sourceToken, sourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
+        sourceToken.permit(msg.sender, address(this), sourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _trade(
             sourceToken,
@@ -700,7 +692,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) external whenNotPaused nonReentrant {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
 
-        _permit(sourceToken, maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
+        sourceToken.permit(msg.sender, address(this), maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _trade(
             sourceToken,
@@ -810,7 +802,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         returns (uint256)
     {
-        _permit(Token(address(poolToken)), poolTokenAmount, deadline, Signature({ v: v, r: r, s: s }), msg.sender);
+        Token(address(poolToken)).permit(
+            msg.sender,
+            address(this),
+            poolTokenAmount,
+            deadline,
+            Signature({ v: v, r: r, s: s })
+        );
 
         return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
@@ -1006,35 +1004,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolCollection poolCollection = _poolCollection(pool);
 
         // process deposit to the base token pool (taking into account the ETH pool)
-        poolCollection.depositFor(contextId, provider, pool, tokenAmount);
-    }
-
-    /**
-     * @dev performs an EIP2612 permit
-     */
-    function _permit(
-        Token token,
-        uint256 tokenAmount,
-        uint256 deadline,
-        Signature memory signature,
-        address caller
-    ) private {
-        // neither BNT nor ETH support EIP2612 permit requests
-        if (_isBNT(token) || token.isNative()) {
-            revert PermitUnsupported();
-        }
-
-        // permit the amount the caller is trying to deposit. Please note, that if the base token doesn't support
-        // EIP2612 permit - either this call or the inner safeTransferFrom will revert
-        IERC20Permit(address(token)).permit(
-            caller,
-            address(this),
-            tokenAmount,
-            deadline,
-            signature.v,
-            signature.r,
-            signature.s
-        );
         return poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
@@ -1055,7 +1024,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         address caller = msg.sender;
 
-        _permit(pool, tokenAmount, deadline, signature, caller);
+        pool.permit(caller, address(this), tokenAmount, deadline, signature);
 
         return
             _depositBaseTokenFor(

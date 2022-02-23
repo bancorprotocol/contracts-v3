@@ -28,7 +28,7 @@ import {
 } from '../../components/LegacyContracts';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
-import { permitContractSignature } from '../../utils/Permit';
+import { permitSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -1408,7 +1408,7 @@ describe('BancorNetwork', () => {
 
                     it('should revert when attempting to deposit for an invalid provider', async () => {
                         const amount = BigNumber.from(1);
-                        const signature = await permitContractSignature(
+                        const signature = await permitSignature(
                             provider,
                             token.address,
                             network,
@@ -1458,7 +1458,7 @@ describe('BancorNetwork', () => {
                             const deposit = async (amount: BigNumberish, overrides: Overrides = {}) => {
                                 const { poolAddress = token.address } = overrides;
 
-                                const signature = await permitContractSignature(
+                                const signature = await permitSignature(
                                     sender,
                                     poolAddress,
                                     network,
@@ -2016,14 +2016,7 @@ describe('BancorNetwork', () => {
                 approvedAmount = amount
             } = overrides;
 
-            const signature = await permitContractSignature(
-                trader,
-                sourceTokenAddress,
-                network,
-                bnt,
-                approvedAmount,
-                deadline
-            );
+            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
             return network
                 .connect(trader)
@@ -2058,14 +2051,7 @@ describe('BancorNetwork', () => {
             );
             approvedAmount ||= maxSourceAmount;
 
-            const signature = await permitContractSignature(
-                trader,
-                sourceTokenAddress,
-                network,
-                bnt,
-                approvedAmount,
-                deadline
-            );
+            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
             return network
                 .connect(trader)
@@ -3539,7 +3525,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should initiate a permitted withdrawal request', async () => {
-            const signature = await permitContractSignature(
+            const signature = await permitSignature(
                 provider as Wallet,
                 poolToken.address,
                 network,
@@ -3590,7 +3576,7 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when attempting to initiate a permitted withdrawal request', async () => {
-                const signature = await permitContractSignature(
+                const signature = await permitSignature(
                     provider as Wallet,
                     poolToken.address,
                     network,

@@ -4,10 +4,17 @@ pragma solidity 0.8.11;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draft-IERC20Permit.sol";
 
 import { SafeERC20Ex } from "./SafeERC20Ex.sol";
 
 import { Token } from "./Token.sol";
+
+struct Signature {
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+}
 
 /**
  * @dev This library implements ERC20 and SafeERC20 utilities for ETH/ERC20 tokens, which can be either ERC20 tokens
@@ -16,6 +23,8 @@ import { Token } from "./Token.sol";
 library TokenLibrary {
     using SafeERC20 for IERC20;
     using SafeERC20Ex for IERC20;
+
+    error PermitUnsupported();
 
     // the address that represents the native token reserve
     address public constant NATIVE_TOKEN_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -118,6 +127,35 @@ library TokenLibrary {
         }
 
         toIERC20(token).ensureApprove(spender, amount);
+    }
+
+    /**
+     * @dev performs an EIP2612 permit
+     */
+    function permit(
+        Token token,
+        address owner,
+        address spender,
+        uint256 tokenAmount,
+        uint256 deadline,
+        Signature memory signature
+    ) internal {
+        // neither BNT nor ETH support EIP2612 permit requests
+        if (isNative(token)) {
+            revert PermitUnsupported();
+        }
+
+        // permit the amount the owner is trying to deposit. Please note, that if the base token doesn't support
+        // EIP2612 permit - either this call or the inner safeTransferFrom will revert
+        IERC20Permit(address(token)).permit(
+            owner,
+            spender,
+            tokenAmount,
+            deadline,
+            signature.v,
+            signature.r,
+            signature.s
+        );
     }
 
     /**
