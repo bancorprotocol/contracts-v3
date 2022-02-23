@@ -8,7 +8,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const networkToken = await DeployedContracts.NetworkToken.deployed();
+    const bnt = await DeployedContracts.BNT.deployed();
 
     if (isMainnet()) {
         await deployProxy({
@@ -17,7 +17,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             args: [
                 network.address,
                 networkSettings.address,
-                networkToken.address,
+                bnt.address,
                 uniswapV2Router02,
                 uniswapV2Factory,
                 sushiSwapRouter,
@@ -34,7 +34,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             args: [
                 network.address,
                 networkSettings.address,
-                networkToken.address,
+                bnt.address,
                 uniswapV2RouterMock.address,
                 uniswapV2FactoryMock.address,
                 uniswapV2RouterMock.address,
@@ -51,7 +51,7 @@ func.dependencies = [
     ContractName.ProxyAdmin,
     ContractName.BancorNetworkV1,
     ContractName.NetworkSettingsV1,
-    ContractName.NetworkToken,
+    ContractName.BNT,
     ContractName.MockUniswapV2FactoryV1,
     ContractName.MockUniswapV2Router02V1
 ];

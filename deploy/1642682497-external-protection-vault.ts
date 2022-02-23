@@ -5,13 +5,13 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
-    const govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
+    const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+    const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
 
     await deployProxy({
         name: ContractName.ExternalProtectionVaultV1,
         from: deployer,
-        args: [networkTokenGovernance.address, govTokenGovernance.address]
+        args: [bntGovernance.address, vbntGovernance.address]
     });
 
     return true;

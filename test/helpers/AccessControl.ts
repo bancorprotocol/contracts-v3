@@ -1,8 +1,9 @@
 import { AccessControlEnumerable, AccessControlEnumerableUpgradeable } from '../../components/Contracts';
 import { RoleIds } from '../../utils/Roles';
+import { TokenSymbol } from '../../utils/TokenData';
 import { expect } from 'chai';
 import { utils } from 'ethers';
-import { camelCase } from 'lodash';
+import { camelCase, lowerCase, capitalize } from 'lodash';
 
 const { id } = utils;
 
@@ -39,7 +40,10 @@ export const expectRoles = async (
     contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
     roles: Record<string, typeof RoleIds[number]>
 ) => {
-    const expectedRoles = Object.keys(roles).map((name) => ({ methodName: camelCase(name), id: id(name) }));
+    const expectedRoles = Object.keys(roles).map((name) => ({
+        methodName: camelCase(name).replace(capitalize(lowerCase(TokenSymbol.BNT)), TokenSymbol.BNT),
+        id: id(name)
+    }));
 
     for (const { methodName, id } of expectedRoles) {
         const method = (contract as any)[methodName] as () => Promise<any>;

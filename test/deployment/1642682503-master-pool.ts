@@ -18,8 +18,8 @@ describeDeployment('1642682503-master-pool', ContractName.MasterPoolV1, () => {
     let liquidityProtection: string;
     let stakingRewards: string;
     let proxyAdmin: ProxyAdmin;
-    let networkTokenGovernance: TokenGovernance;
-    let govTokenGovernance: TokenGovernance;
+    let bntGovernance: TokenGovernance;
+    let vbntGovernance: TokenGovernance;
     let masterVault: MasterVault;
     let networkProxy: TransparentUpgradeableProxyImmutable;
     let masterPool: MasterPool;
@@ -32,8 +32,8 @@ describeDeployment('1642682503-master-pool', ContractName.MasterPoolV1, () => {
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
-        networkTokenGovernance = await DeployedContracts.NetworkTokenGovernance.deployed();
-        govTokenGovernance = await DeployedContracts.GovTokenGovernance.deployed();
+        bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+        vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         masterVault = await DeployedContracts.MasterVaultV1.deployed();
         masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
         masterPool = await DeployedContracts.MasterPoolV1.deployed();
@@ -48,19 +48,19 @@ describeDeployment('1642682503-master-pool', ContractName.MasterPoolV1, () => {
 
         await expectRoleMembers(masterPool, Roles.Upgradeable.ROLE_ADMIN, [deployer, networkProxy.address]);
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER);
+        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_BNT_MANAGER);
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER);
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER);
         await expectRoleMembers(
-            networkTokenGovernance as any as AccessControlEnumerable,
+            bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address]
         );
         await expectRoleMembers(
-            govTokenGovernance as any as AccessControlEnumerable,
+            vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address]
         );
-        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, [masterPool.address]);
+        await expectRoleMembers(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER, [masterPool.address]);
     });
 });

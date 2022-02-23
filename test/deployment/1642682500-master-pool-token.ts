@@ -1,5 +1,5 @@
 import { PoolToken } from '../../components/Contracts';
-import { NetworkToken } from '../../components/LegacyContracts';
+import { BNT } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { describeDeployment } from '../helpers/Deploy';
@@ -8,7 +8,7 @@ import { getNamedAccounts } from 'hardhat';
 
 describeDeployment('1642682500-master-pool-token', ContractName.MasterPoolTokenV1, () => {
     let deployer: string;
-    let networkToken: NetworkToken;
+    let bnt: BNT;
     let masterPoolToken: PoolToken;
     const masterPoolTokenData = new TokenData(TokenSymbol.bnBNT);
 
@@ -17,7 +17,7 @@ describeDeployment('1642682500-master-pool-token', ContractName.MasterPoolTokenV
     });
 
     beforeEach(async () => {
-        networkToken = await DeployedContracts.NetworkToken.deployed();
+        bnt = await DeployedContracts.BNT.deployed();
         masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
     });
 
@@ -30,6 +30,6 @@ describeDeployment('1642682500-master-pool-token', ContractName.MasterPoolTokenV
         expect(await masterPoolToken.symbol()).to.equal(masterPoolTokenData.symbol());
         expect(await masterPoolToken.decimals()).to.equal(masterPoolTokenData.decimals());
         expect(await masterPoolToken.totalSupply()).to.equal(0);
-        expect(await masterPoolToken.reserveToken()).to.equal(networkToken.address);
+        expect(await masterPoolToken.reserveToken()).to.equal(bnt.address);
     });
 });

@@ -20,7 +20,7 @@ import {
     ProxyAdmin,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
-import { GovToken, NetworkToken, TokenGovernance } from '../components/LegacyContracts';
+import { VBNT, BNT, TokenGovernance } from '../components/LegacyContracts';
 import { DeploymentNetwork } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
@@ -49,10 +49,10 @@ const deployed = <F extends Contract>(name: ContractName) => ({
 });
 
 enum LegacyContractName {
-    GovToken = 'GovToken',
-    GovTokenGovernance = 'GovTokenGovernance',
-    NetworkToken = 'NetworkToken',
-    NetworkTokenGovernance = 'NetworkTokenGovernance'
+    VBNT = 'VBNT',
+    VBNTGovernance = 'VBNTGovernance',
+    BNT = 'BNT',
+    BNTGovernance = 'BNTGovernance'
 }
 
 enum NewContractName {
@@ -91,10 +91,10 @@ export enum DeploymentTag {
 }
 
 const DeployedLegacyContracts = {
-    GovToken: deployed<GovToken>(ContractName.GovToken),
-    GovTokenGovernance: deployed<TokenGovernance>(ContractName.GovTokenGovernance),
-    NetworkToken: deployed<NetworkToken>(ContractName.NetworkToken),
-    NetworkTokenGovernance: deployed<TokenGovernance>(ContractName.NetworkTokenGovernance)
+    VBNT: deployed<VBNT>(ContractName.VBNT),
+    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance),
+    BNT: deployed<BNT>(ContractName.BNT),
+    BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance)
 };
 
 const DeployedNewContracts = {

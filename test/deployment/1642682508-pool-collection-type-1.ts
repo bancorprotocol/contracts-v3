@@ -34,7 +34,7 @@ describeDeployment('1642682508-pool-collection-type-1', ContractName.PoolCollect
 
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
 
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_NETWORK_TOKEN_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_BNT_MANAGER, [poolCollection.address]);
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
         await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
         await expectRoleMembers(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, [network.address, poolCollection.address]);
