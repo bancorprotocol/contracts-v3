@@ -232,16 +232,14 @@ contract AutoCompoundingStakingRewards is
             if (rewardsVault != _bntPool) {
                 revert InvalidParam();
             }
+
             poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
                 revert NotWhitelisted();
             }
-            poolToken = _network.collectionByPool(pool).poolToken(pool);
-        }
 
-        if (totalRewards == 0) {
-            revert InvalidParam();
+            poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
         uint32 currTime = _time();

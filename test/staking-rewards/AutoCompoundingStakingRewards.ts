@@ -310,7 +310,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             autoCompoundingStakingRewards.createProgram(
                                 token.address,
                                 newExternalRewardsVault.address,
-                                distributionType,
+                                TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
                                 END_TIME
@@ -328,7 +328,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                 START_TIME,
                                 END_TIME
                             )
-                        ).to.revertedWith('InvalidParam');
+                        ).to.revertedWith('ZeroValue');
                     });
 
                     it('should revert when the pool is not whitelisted', async () => {
