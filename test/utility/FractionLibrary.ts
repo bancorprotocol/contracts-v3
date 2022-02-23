@@ -21,7 +21,7 @@ describe('FractionLibrary', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is valid`, async () => {
-                expect(await fractionLibrary["isValid((uint256,uint256))"](fraction)).to.be.true;
+                expect(await fractionLibrary['isValid((uint256,uint256))'](fraction)).to.be.true;
             });
         }
 
@@ -31,7 +31,7 @@ describe('FractionLibrary', () => {
             { n: 1000, d: 0 }
         ]) {
             it(`should return that ${fraction} is invalid`, async () => {
-                expect(await fractionLibrary["isValid((uint256,uint256))"](fraction)).to.be.false;
+                expect(await fractionLibrary['isValid((uint256,uint256))'](fraction)).to.be.false;
             });
         }
     });
@@ -43,7 +43,7 @@ describe('FractionLibrary', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is positive`, async () => {
-                expect(await fractionLibrary["isPositive((uint256,uint256))"](fraction)).to.be.true;
+                expect(await fractionLibrary['isPositive((uint256,uint256))'](fraction)).to.be.true;
             });
         }
 
@@ -54,7 +54,7 @@ describe('FractionLibrary', () => {
             { n: 1, d: 0 }
         ]) {
             it(`should return that ${toString(fraction)} is not positive`, async () => {
-                expect(await fractionLibrary["isPositive((uint256,uint256))"](fraction)).to.be.false;
+                expect(await fractionLibrary['isPositive((uint256,uint256))'](fraction)).to.be.false;
             });
         }
     });
@@ -66,7 +66,7 @@ describe('FractionLibrary', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is valid`, async () => {
-                expect(await fractionLibrary["isValid((uint112,uint112))"](fraction)).to.be.true;
+                expect(await fractionLibrary['isValid((uint112,uint112))'](fraction)).to.be.true;
             });
         }
 
@@ -76,7 +76,7 @@ describe('FractionLibrary', () => {
             { n: 1000, d: 0 }
         ]) {
             it(`should return that ${fraction} is invalid`, async () => {
-                expect(await fractionLibrary["isValid((uint112,uint112))"](fraction)).to.be.false;
+                expect(await fractionLibrary['isValid((uint112,uint112))'](fraction)).to.be.false;
             });
         }
     });
@@ -88,7 +88,7 @@ describe('FractionLibrary', () => {
             { n: 1000, d: 2000 }
         ]) {
             it(`should return that ${toString(fraction)} is positive`, async () => {
-                expect(await fractionLibrary["isPositive((uint112,uint112))"](fraction)).to.be.true;
+                expect(await fractionLibrary['isPositive((uint112,uint112))'](fraction)).to.be.true;
             });
         }
 
@@ -99,7 +99,7 @@ describe('FractionLibrary', () => {
             { n: 1, d: 0 }
         ]) {
             it(`should return that ${toString(fraction)} is not positive`, async () => {
-                expect(await fractionLibrary["isPositive((uint112,uint112))"](fraction)).to.be.false;
+                expect(await fractionLibrary['isPositive((uint112,uint112))'](fraction)).to.be.false;
             });
         }
     });
