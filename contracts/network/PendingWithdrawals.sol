@@ -17,7 +17,7 @@ import { MathEx } from "../utility/MathEx.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
-import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
@@ -40,8 +40,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     // the BNT contract
     IERC20 private immutable _bnt;
 
-    // the master pool contract
-    IMasterPool private immutable _masterPool;
+    // the BNT pool contract
+    IBNTPool private immutable _bntPool;
 
     // the lock duration
     uint32 private _lockDuration;
@@ -101,11 +101,11 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     constructor(
         IBancorNetwork initNetwork,
         IERC20 initBNT,
-        IMasterPool initMasterPool
-    ) validAddress(address(initNetwork)) validAddress(address(initBNT)) validAddress(address(initMasterPool)) {
+        IBNTPool initBNTPool
+    ) validAddress(address(initNetwork)) validAddress(address(initBNT)) validAddress(address(initBNTPool)) {
         _network = initNetwork;
         _bnt = initBNT;
-        _masterPool = initMasterPool;
+        _bntPool = initBNTPool;
     }
 
     /**
@@ -352,7 +352,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      */
     function _poolTokenUnderlying(Token pool, uint256 poolTokenAmount) private view returns (uint256) {
         if (pool.isEqual(_bnt)) {
-            return _masterPool.poolTokenToUnderlying(poolTokenAmount);
+            return _bntPool.poolTokenToUnderlying(poolTokenAmount);
         }
 
         return _network.collectionByPool(pool).poolTokenToUnderlying(pool, poolTokenAmount);

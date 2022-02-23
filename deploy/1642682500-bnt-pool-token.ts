@@ -26,13 +26,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const poolTokenAddress = event.args.poolToken;
 
     await save({
-        name: ContractName.MasterPoolTokenV1,
+        name: ContractName.BNTPoolTokenV1,
         contract: 'PoolToken',
         address: poolTokenAddress
     });
 
     await execute({
-        name: ContractName.MasterPoolTokenV1,
+        name: ContractName.BNTPoolTokenV1,
         methodName: 'acceptOwnership',
         from: deployer
     });
@@ -40,8 +40,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.MasterPoolTokenV1;
+func.id = ContractName.BNTPoolTokenV1;
 func.dependencies = [DeploymentTag.V2, ContractName.PoolTokenFactoryV1];
-func.tags = [DeploymentTag.V3, ContractName.MasterPoolTokenV1];
+func.tags = [DeploymentTag.V3, ContractName.BNTPoolTokenV1];
 
 export default func;

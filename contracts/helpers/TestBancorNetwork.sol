@@ -32,7 +32,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
-        IPoolToken initMasterPoolToken
+        IPoolToken initBNTPoolToken
     )
         BancorNetwork(
             initBNTGovernance,
@@ -40,7 +40,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             initNetworkSettings,
             initMasterVault,
             initExternalProtectionVault,
-            initMasterPoolToken
+            initBNTPoolToken
         )
     {}
 
@@ -63,14 +63,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
     }
 
-    function depositToMasterPoolForT(
+    function depositToBNTPoolForT(
         bytes32 contextId,
         address provider,
         uint256 bntAmount,
         bool isMigrating,
         uint256 originalPoolTokenAmount
     ) external {
-        _masterPool.depositFor(contextId, provider, bntAmount, isMigrating, originalPoolTokenAmount);
+        _bntPool.depositFor(contextId, provider, bntAmount, isMigrating, originalPoolTokenAmount);
     }
 
     function depositToPoolCollectionForT(
@@ -83,12 +83,12 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
-    function withdrawFromMasterPoolT(
+    function withdrawFromBNTPoolT(
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
     ) external {
-        _masterPool.withdraw(contextId, provider, poolTokenAmount);
+        _bntPool.withdraw(contextId, provider, poolTokenAmount);
     }
 
     function withdrawFromPoolCollectionT(
@@ -106,7 +106,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 amount,
         bool isTraderFee
     ) external {
-        _masterPool.onFeesCollected(pool, amount, isTraderFee);
+        _bntPool.onFeesCollected(pool, amount, isTraderFee);
     }
 
     function onPoolCollectionFeesCollectedT(

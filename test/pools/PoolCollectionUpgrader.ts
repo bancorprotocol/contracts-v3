@@ -7,7 +7,7 @@ import Contracts, {
     PoolTokenFactory,
     TestBancorNetwork,
     TestERC20Token,
-    TestMasterPool,
+    TestBNTPool,
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../components/Contracts';
@@ -64,7 +64,7 @@ describe('PoolCollectionUpgrader', () => {
         let networkSettings: NetworkSettings;
         let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
-        let masterPool: TestMasterPool;
+        let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
         let poolCollectionUpgrader: TestPoolCollectionUpgrader;
         let poolTokenFactory: PoolTokenFactory;
@@ -78,7 +78,7 @@ describe('PoolCollectionUpgrader', () => {
                 networkSettings,
                 masterVault,
                 externalProtectionVault,
-                masterPool,
+                bntPool,
                 poolCollectionUpgrader,
                 poolCollection,
                 poolTokenFactory
@@ -123,7 +123,7 @@ describe('PoolCollectionUpgrader', () => {
                 bnt,
                 networkSettings,
                 masterVault,
-                masterPool,
+                bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
@@ -137,7 +137,7 @@ describe('PoolCollectionUpgrader', () => {
                 bnt,
                 networkSettings,
                 masterVault,
-                masterPool,
+                bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
                 poolCollectionUpgrader,
@@ -159,7 +159,7 @@ describe('PoolCollectionUpgrader', () => {
                     bnt,
                     networkSettings,
                     masterVault,
-                    masterPool,
+                    bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
                     poolCollectionUpgrader,

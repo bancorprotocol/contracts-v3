@@ -37,7 +37,7 @@ describe('BancorV1Migration', () => {
     let network: TestBancorNetwork;
     let networkSettings: NetworkSettings;
     let bnt: IERC20;
-    let masterPoolToken: PoolToken;
+    let bntPoolToken: PoolToken;
     let basePoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
     let poolCollection: TestPoolCollection;
@@ -59,7 +59,7 @@ describe('BancorV1Migration', () => {
             network,
             networkSettings,
             bnt,
-            masterPoolToken,
+            bntPoolToken,
             pendingWithdrawals,
             poolCollection,
             masterVault
@@ -161,10 +161,10 @@ describe('BancorV1Migration', () => {
 
         const prevProviderBNTBalance = await getBalance(bnt, provider);
 
-        const masterPoolTokenAmount = await getBalance(masterPoolToken, provider.address);
-        await masterPoolToken.connect(provider).approve(network.address, masterPoolTokenAmount);
+        const bntPoolTokenAmount = await getBalance(bntPoolToken, provider.address);
+        await bntPoolToken.connect(provider).approve(network.address, bntPoolTokenAmount);
 
-        await network.connect(provider).initWithdrawal(masterPoolToken.address, masterPoolTokenAmount);
+        await network.connect(provider).initWithdrawal(bntPoolToken.address, bntPoolTokenAmount);
 
         const networkIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
         await vbnt.connect(provider).approve(network.address, await getBalance(vbnt, provider.address));
