@@ -1,6 +1,6 @@
 import { NetworkSettings, TestERC20Token } from '../../components/Contracts';
-import { ZERO_ADDRESS, PPM_RESOLUTION } from '../../utils/Constants';
-import { toWei, toPPM } from '../../utils/Types';
+import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';

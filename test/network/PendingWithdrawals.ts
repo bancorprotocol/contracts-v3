@@ -8,11 +8,11 @@ import Contracts, {
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
-import { ZERO_ADDRESS, DEFAULT_LOCK_DURATION } from '../../utils/Constants';
-import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
+import { DEFAULT_LOCK_DURATION, ZERO_ADDRESS } from '../../utils/Constants';
+import { DEFAULT_DECIMALS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createSystem, createTestToken, setupFundedPool, depositToPool, TokenWithAddress } from '../helpers/Factory';
+import { createSystem, createTestToken, depositToPool, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
 import { createWallet } from '../helpers/Utils';

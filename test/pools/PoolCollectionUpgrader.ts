@@ -6,8 +6,8 @@ import Contracts, {
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
-    TestERC20Token,
     TestBNTPool,
+    TestERC20Token,
     TestPoolCollection,
     TestPoolCollectionUpgrader
 } from '../../components/Contracts';

@@ -1,4 +1,4 @@
-import { isMainnetFork, isLive, deploymentExists } from '../../utils/Deploy';
+import { deploymentExists, isLive, isMainnetFork } from '../../utils/Deploy';
 import { deployments } from 'hardhat';
 import { Suite } from 'mocha';
 

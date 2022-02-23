@@ -1,21 +1,21 @@
 import Contracts, {
-    BancorPortal,
-    NetworkSettings,
-    TestBancorNetwork,
-    TestPoolCollection,
-    IERC20,
     BancorNetworkInfo,
-    MockUniswapV2Router02,
+    BancorPortal,
+    IERC20,
+    MockUniswapV2Factory,
     MockUniswapV2Pair,
+    MockUniswapV2Router02,
+    NetworkSettings,
     PoolToken,
-    MockUniswapV2Factory
+    TestBancorNetwork,
+    TestPoolCollection
 } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { createSystem, createToken, TokenWithAddress, createProxy, setupFundedPool } from '../helpers/Factory';
+import { createProxy, createSystem, createToken, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, getBalances, getTransactionCost } from '../helpers/Utils';
+import { getBalances, getTransactionCost, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction, utils } from 'ethers';

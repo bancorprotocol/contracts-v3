@@ -1,5 +1,5 @@
 import { AccessControlEnumerableUpgradeable } from '../../components/Contracts';
-import { ContractName, DeploymentTag, DeployedContracts } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';

@@ -1,9 +1,9 @@
 import {
     BancorNetwork,
     BancorNetworkInfo,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    BNTPool,
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
@@ -11,7 +11,7 @@ import {
     PoolToken,
     ProxyAdmin
 } from '../../components/Contracts';
-import { VBNT, BNT, TokenGovernance } from '../../components/LegacyContracts';
+import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';

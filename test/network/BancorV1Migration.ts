@@ -8,8 +8,8 @@ import Contracts, {
     TestBancorNetwork,
     TestPoolCollection
 } from '../../components/Contracts';
-import { DSToken, TokenGovernance, TestStandardPoolConverter } from '../../components/LegacyContracts';
-import { ZERO_ADDRESS, PPM_RESOLUTION, MAX_UINT256 } from '../../utils/Constants';
+import { DSToken, TestStandardPoolConverter, TokenGovernance } from '../../components/LegacyContracts';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM } from '../../utils/Types';
 import { createPool, createSystem, createToken, TokenWithAddress } from '../helpers/Factory';

@@ -1,8 +1,8 @@
-import Contracts, { TestERC20Token, PoolTokenFactory } from '../../components/Contracts';
+import Contracts, { PoolTokenFactory, TestERC20Token } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbol, DEFAULT_DECIMALS } from '../../utils/TokenData';
+import { DEFAULT_DECIMALS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createSystem, createPoolToken, createToken, createTestToken, TokenWithAddress } from '../helpers/Factory';
+import { createPoolToken, createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

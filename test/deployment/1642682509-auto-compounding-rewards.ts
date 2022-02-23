@@ -1,4 +1,4 @@
-import { AutoCompoundingStakingRewards, ExternalRewardsVault, BNTPool, ProxyAdmin } from '../../components/Contracts';
+import { AutoCompoundingStakingRewards, BNTPool, ExternalRewardsVault, ProxyAdmin } from '../../components/Contracts';
 import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';

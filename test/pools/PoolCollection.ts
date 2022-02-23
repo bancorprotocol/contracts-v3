@@ -1,46 +1,46 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import Contracts, {
-    IERC20,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
+    IERC20,
     MasterVault,
     NetworkSettings,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
-    TestERC20Token,
     TestBNTPool,
+    TestERC20Token,
     TestPoolCollection,
-    TestPoolCollectionUpgrader,
-    BNTPool
+    TestPoolCollectionUpgrader
 } from '../../components/Contracts';
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
-    MAX_UINT256,
-    PPM_RESOLUTION,
-    ZERO_ADDRESS,
-    ZERO_FRACTION,
-    ZERO_BYTES32,
-    TradingStatusUpdateReason,
+    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
+    DEFAULT_TRADING_FEE_PPM,
     EMA_AVERAGE_RATE_WEIGHT,
     EMA_SPOT_RATE_WEIGHT,
     LIQUIDITY_GROWTH_FACTOR,
-    BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
-    DEFAULT_TRADING_FEE_PPM,
+    MAX_UINT256,
+    PoolType,
+    PPM_RESOLUTION,
     RATE_MAX_DEVIATION_PPM,
-    PoolType
+    TradingStatusUpdateReason,
+    ZERO_ADDRESS,
+    ZERO_BYTES32,
+    ZERO_FRACTION
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei, toPPM } from '../../utils/Types';
+import { toPPM, toWei } from '../../utils/Types';
 import { latestBlockNumber } from '..//helpers/BlockNumber';
-import { min, max, transfer, getBalance } from '..//helpers/Utils';
+import { getBalance, max, min, transfer } from '..//helpers/Utils';
 import {
     createPool,
     createPoolCollection,
     createSystem,
-    createToken,
     createTestToken,
+    createToken,
     depositToPool,
     TokenWithAddress
 } from '../helpers/Factory';
