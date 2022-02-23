@@ -7,13 +7,13 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
-import { IOmniVault } from "./../../vaults/interfaces/IOmniVault.sol";
+import { IMasterVault } from "./../../vaults/interfaces/IMasterVault.sol";
 
 import { Token } from "../../token/Token.sol";
 
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { IOmniPool } from "../../pools/interfaces/IOmniPool.sol";
+import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";

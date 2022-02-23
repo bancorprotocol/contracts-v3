@@ -16,7 +16,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IOmniPool } from "../pools/interfaces/IOmniPool.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
@@ -60,11 +60,11 @@ contract AutoCompoundingStakingRewards is
     // the BNT contract
     IERC20 private immutable _bnt;
 
-    // the omni pool contract
-    IOmniPool private immutable _omniPool;
+    // the BNT pool contract
+    IBNTPool private immutable _bntPool;
 
-    // the omni pool took contract
-    IPoolToken private immutable _omniPoolToken;
+    // the BNT pool token contract
+    IPoolToken private immutable _bntPoolToken;
 
     // a mapping between pools and programs
     mapping(Token => ProgramData) private _programs;
@@ -114,18 +114,18 @@ contract AutoCompoundingStakingRewards is
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         IERC20 initBNT,
-        IOmniPool initOmniPool
+        IBNTPool initBNTPool
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initBNT))
-        validAddress(address(initOmniPool))
+        validAddress(address(initBNTPool))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
         _bnt = initBNT;
-        _omniPool = initOmniPool;
-        _omniPoolToken = initOmniPool.poolToken();
+        _bntPool = initBNTPool;
+        _bntPoolToken = initBNTPool.poolToken();
     }
 
     /**
@@ -222,10 +222,10 @@ contract AutoCompoundingStakingRewards is
 
         IPoolToken poolToken;
         if (_isBNT(pool)) {
-            if (rewardsVault != _omniPool) {
+            if (rewardsVault != _bntPool) {
                 revert InvalidParam();
             }
-            poolToken = _omniPoolToken;
+            poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
                 revert NotWhitelisted();
@@ -385,7 +385,7 @@ contract AutoCompoundingStakingRewards is
         uint256 tokenAmountToDistribute
     ) private view returns (uint256) {
         if (_isBNT(pool)) {
-            return _omniPool.poolTokenAmountToBurn(tokenAmountToDistribute);
+            return _bntPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         }
 
         return

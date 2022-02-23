@@ -8,9 +8,9 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const network = await DeployedContracts.BancorNetworkV1.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const omniVault = await DeployedContracts.OmniVaultV1.deployed();
+    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
 
-    const omniPool = await DeployedContracts.OmniPoolV1.deployed();
+    const bntPool = await DeployedContracts.BNTPoolV1.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
     const poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
     const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
@@ -23,8 +23,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             network.address,
             bnt.address,
             networkSettings.address,
-            omniVault.address,
-            omniPool.address,
+            masterVault.address,
+            bntPool.address,
             externalProtectionVault.address,
             poolTokenFactory.address,
             poolCollectionUpgrader.address
@@ -46,8 +46,8 @@ func.dependencies = [
     DeploymentTag.V2,
     ContractName.BancorNetworkV1,
     ContractName.NetworkSettingsV1,
-    ContractName.OmniVaultV1,
-    ContractName.OmniPoolV1,
+    ContractName.MasterVaultV1,
+    ContractName.BNTPoolV1,
     ContractName.ExternalProtectionVaultV1,
     ContractName.PoolTokenFactoryV1,
     ContractName.PendingWithdrawalsV1,

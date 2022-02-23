@@ -28,7 +28,7 @@ import {
     NotEmpty } from "../utility/Utils.sol";
 
 import { ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
-import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { Token } from "../token/Token.sol";
@@ -39,11 +39,11 @@ import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgr
 
 // prettier-ignore
 import {
-    IOmniPool,
+    IBNTPool,
     ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
-} from "../pools/interfaces/IOmniPool.sol";
+} from "../pools/interfaces/IBNTPool.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
@@ -117,17 +117,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the omni vault contract
-    IOmniVault private immutable _omniVault;
+    // the master vault contract
+    IMasterVault private immutable _masterVault;
 
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
 
-    // the omni pool token
-    IPoolToken internal immutable _omniPoolToken;
+    // the BNT pool token
+    IPoolToken internal immutable _bntPoolToken;
 
-    // the omni pool contract
-    IOmniPool internal _omniPool;
+    // the BNT pool contract
+    IBNTPool internal _bntPool;
 
     // the pending withdrawals contract
     IPendingWithdrawals internal _pendingWithdrawals;
@@ -222,16 +222,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IOmniVault initOmniVault,
+        IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
-        IPoolToken initOmniPoolToken
+        IPoolToken initBNTPoolToken
     )
         validAddress(address(initBNTGovernance))
         validAddress(address(initVBNTGovernance))
         validAddress(address(initNetworkSettings))
-        validAddress(address(initOmniVault))
+        validAddress(address(initMasterVault))
         validAddress(address(initExternalProtectionVault))
-        validAddress(address(initOmniPoolToken))
+        validAddress(address(initBNTPoolToken))
     {
         _bntGovernance = initBNTGovernance;
         _bnt = initBNTGovernance.token();
@@ -239,26 +239,26 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _vbnt = initVBNTGovernance.token();
 
         _networkSettings = initNetworkSettings;
-        _omniVault = initOmniVault;
+        _masterVault = initMasterVault;
         _externalProtectionVault = initExternalProtectionVault;
-        _omniPoolToken = initOmniPoolToken;
+        _bntPoolToken = initBNTPoolToken;
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
     function initialize(
-        IOmniPool initOmniPool,
+        IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
         external
-        validAddress(address(initOmniPool))
+        validAddress(address(initBNTPool))
         validAddress(address(initPendingWithdrawals))
         validAddress(address(initPoolCollectionUpgrader))
         initializer
     {
-        __BancorNetwork_init(initOmniPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init(initBNTPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     // solhint-disable func-name-mixedcase
@@ -267,25 +267,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev initializes the contract and its parents
      */
     function __BancorNetwork_init(
-        IOmniPool initOmniPool,
+        IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) internal onlyInitializing {
         __Upgradeable_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initOmniPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init_unchained(initBNTPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
     function __BancorNetwork_init_unchained(
-        IOmniPool initOmniPool,
+        IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) internal onlyInitializing {
-        _omniPool = initOmniPool;
+        _bntPool = initBNTPool;
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 
@@ -600,7 +600,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
-        if (completedRequest.poolToken == _omniPoolToken) {
+        if (completedRequest.poolToken == _bntPoolToken) {
             _withdrawBNT(contextId, provider, completedRequest);
         } else {
             _withdrawBaseToken(contextId, provider, completedRequest);
@@ -734,8 +734,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // save the current balance
         uint256 prevBalance = token.balanceOf(address(this));
 
-        // transfer the amount from the omni vault to the recipient
-        _omniVault.withdrawFunds(token, payable(address(recipient)), amount);
+        // transfer the amount from the master vault to the recipient
+        _masterVault.withdrawFunds(token, payable(address(recipient)), amount);
 
         // invoke the recipient's callback
         recipient.onFlashLoan(msg.sender, token.toIERC20(), amount, feeAmount, data);
@@ -748,16 +748,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // transfer the amount and the fee back to the vault
         if (token.isNative()) {
-            payable(address(_omniVault)).sendValue(returnedAmount);
+            payable(address(_masterVault)).sendValue(returnedAmount);
         } else {
-            token.safeTransfer(payable(address(_omniVault)), returnedAmount);
+            token.safeTransfer(payable(address(_masterVault)), returnedAmount);
         }
 
         // notify the pool of accrued fees
         if (_isBNT(token)) {
-            IOmniPool cachedOmniPool = _omniPool;
+            IBNTPool cachedBNTPool = _bntPool;
 
-            cachedOmniPool.onFeesCollected(token, feeAmount, false);
+            cachedBNTPool.onFeesCollected(token, feeAmount, false);
         } else {
             // get the pool and verify that it exists
             IPoolCollection poolCollection = _poolCollection(token);
@@ -853,7 +853,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _pendingNetworkFeeAmount = 0;
 
-        _omniVault.withdrawFunds(Token(address(_bnt)), payable(address(msg.sender)), pendingNetworkFeeAmount);
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(address(msg.sender)), pendingNetworkFeeAmount);
     }
 
     /**
@@ -972,13 +972,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isMigrating,
         uint256 originalAmount
     ) private {
-        IOmniPool cachedOmniPool = _omniPool;
+        IBNTPool cachedBNTPool = _bntPool;
 
-        // transfer the tokens from the caller to the omni pool
-        _bnt.transferFrom(caller, address(cachedOmniPool), bntAmount);
+        // transfer the tokens from the caller to the BNT pool
+        _bnt.transferFrom(caller, address(cachedBNTPool), bntAmount);
 
-        // process omni pool deposit
-        cachedOmniPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
+        // process BNT pool deposit
+        cachedBNTPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
     }
 
     /**
@@ -997,7 +997,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 availableAmount
     ) private {
         // transfer the tokens from the sender to the vault
-        _depositToOmniVault(pool, caller, availableAmount);
+        _depositToMasterVault(pool, caller, availableAmount);
 
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
@@ -1071,17 +1071,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         CompletedWithdrawal memory completedRequest
     ) private {
-        IOmniPool cachedOmniPool = _omniPool;
+        IBNTPool cachedBNTPool = _bntPool;
 
-        // approve the omni pool to transfer pool tokens, which we have received from the completion of the
+        // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedOmniPool), completedRequest.poolTokenAmount);
+        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.poolTokenAmount);
 
-        // transfer VBNT from the caller to the omni pool
-        _vbnt.transferFrom(provider, address(cachedOmniPool), completedRequest.poolTokenAmount);
+        // transfer VBNT from the caller to the BNT pool
+        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
-        // call withdraw on the omni pool
-        cachedOmniPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
+        // call withdraw on the BNT pool
+        cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
     }
 
     /**
@@ -1180,10 +1180,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the tokens from the trader to the vault
-        _depositToOmniVault(sourceToken, trader, params.bySourceAmount ? params.amount : tradeResult.amount);
+        _depositToMasterVault(sourceToken, trader, params.bySourceAmount ? params.amount : tradeResult.amount);
 
         // transfer the target tokens/ETH to the beneficiary
-        _omniVault.withdrawFunds(
+        _masterVault.withdrawFunds(
             targetToken,
             payable(beneficiary),
             params.bySourceAmount ? tradeResult.amount : params.amount
@@ -1228,9 +1228,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is BNT, notify the omni pool on collected fees
+        // if the target token is BNT, notify the BNT pool on collected fees
         if (!isSourceBNT) {
-            _omniPool.onFeesCollected(
+            _bntPool.onFeesCollected(
                 pool,
                 tradeAmountsAndFee.tradingFeeAmount - tradeAmountsAndFee.networkFeeAmount,
                 true
@@ -1331,9 +1331,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev deposits tokens to the omni vault and verifies that msg.value corresponds to its type
+     * @dev deposits tokens to the master vault and verifies that msg.value corresponds to its type
      */
-    function _depositToOmniVault(
+    function _depositToMasterVault(
         Token token,
         address caller,
         uint256 amount
@@ -1345,7 +1345,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
-            payable(address(_omniVault)).sendValue(amount);
+            payable(address(_masterVault)).sendValue(amount);
 
             // refund the caller for the remaining ETH
             if (msg.value > amount) {
@@ -1356,7 +1356,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 revert EthAmountMismatch();
             }
 
-            token.safeTransferFrom(caller, address(_omniVault), amount);
+            token.safeTransferFrom(caller, address(_masterVault), amount);
         }
     }
 
@@ -1402,16 +1402,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address poolCollectionAddress = address(poolCollection);
 
         if (set) {
-            _omniPool.grantRole(ROLE_BNT_MANAGER, poolCollectionAddress);
-            _omniPool.grantRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
-            _omniPool.grantRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
-            _omniVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
+            _bntPool.grantRole(ROLE_BNT_MANAGER, poolCollectionAddress);
+            _bntPool.grantRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
+            _bntPool.grantRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
+            _masterVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
             _externalProtectionVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
         } else {
-            _omniPool.revokeRole(ROLE_BNT_MANAGER, poolCollectionAddress);
-            _omniPool.revokeRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
-            _omniPool.revokeRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
-            _omniVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
+            _bntPool.revokeRole(ROLE_BNT_MANAGER, poolCollectionAddress);
+            _bntPool.revokeRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
+            _bntPool.revokeRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
+            _masterVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
             _externalProtectionVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
         }
     }

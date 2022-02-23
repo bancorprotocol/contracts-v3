@@ -4,7 +4,7 @@ pragma solidity 0.8.11;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { IOmniPool } from "../../pools/interfaces/IOmniPool.sol";
+import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../../token/Token.sol";
 

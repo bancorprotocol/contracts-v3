@@ -1,21 +1,21 @@
 import Contracts, {
-    BancorPortal,
-    NetworkSettings,
-    TestBancorNetwork,
-    TestPoolCollection,
-    IERC20,
     BancorNetworkInfo,
-    MockUniswapV2Router02,
+    BancorPortal,
+    IERC20,
+    MockUniswapV2Factory,
     MockUniswapV2Pair,
+    MockUniswapV2Router02,
+    NetworkSettings,
     PoolToken,
-    MockUniswapV2Factory
+    TestBancorNetwork,
+    TestPoolCollection
 } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { createSystem, createToken, TokenWithAddress, createProxy, setupFundedPool } from '../helpers/Factory';
+import { createProxy, createSystem, createToken, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer, getBalances, getTransactionCost } from '../helpers/Utils';
+import { getBalances, getTransactionCost, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction, utils } from 'ethers';
@@ -42,7 +42,7 @@ describe('BancorPortal', () => {
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
     let bnt: IERC20;
-    let omniPoolToken: PoolToken;
+    let bntPoolToken: PoolToken;
     let networkSettings: NetworkSettings;
     let poolCollection: TestPoolCollection;
     let bancorPortal: BancorPortal;
@@ -64,7 +64,7 @@ describe('BancorPortal', () => {
     });
 
     beforeEach(async () => {
-        ({ network, networkSettings, bnt, poolCollection, networkInfo, omniPoolToken } = await createSystem());
+        ({ network, networkSettings, bnt, poolCollection, networkInfo, bntPoolToken } = await createSystem());
         uniswapV2Pair = await Contracts.MockUniswapV2Pair.deploy('UniswapV2Pair', 'UniswapV2Pair', 100_000_000);
         uniswapV2Router02 = await Contracts.MockUniswapV2Router02.deploy(
             'UniswapV2Router02',
@@ -113,7 +113,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(token1.address, token2.address);
             await expect(
                 bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
-            ).to.be.revertedWith('ERC20: transfer amount exceeds allowance');
+            ).to.be.revertedWith('ERC20: insufficient allowance');
         });
 
         it('reverts if the input amount is 0', async () => {
@@ -404,7 +404,7 @@ describe('BancorPortal', () => {
             await uniswapV2Pair.setTokens(bnt.address, unlistedToken.address);
             await uniswapV2Factory.setTokens(bnt.address, unlistedToken.address);
             const res = await testMigrationDeposit([
-                { reserveToken: bnt, poolToken: omniPoolToken },
+                { reserveToken: bnt, poolToken: bntPoolToken },
                 { reserveToken: unlistedToken }
             ]);
             expect(res)
@@ -421,7 +421,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(unlistedToken.address, bnt.address);
             const res = await testMigrationDeposit([
                 { reserveToken: unlistedToken },
-                { reserveToken: bnt, poolToken: omniPoolToken }
+                { reserveToken: bnt, poolToken: bntPoolToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
@@ -435,7 +435,7 @@ describe('BancorPortal', () => {
             await uniswapV2Pair.setTokens(bnt.address, whitelistedToken.address);
             await uniswapV2Factory.setTokens(bnt.address, whitelistedToken.address);
             const res = await testMigrationDeposit([
-                { reserveToken: bnt, poolToken: omniPoolToken },
+                { reserveToken: bnt, poolToken: bntPoolToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
             expect(res)
@@ -451,7 +451,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(whitelistedToken.address, bnt.address);
             const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken, poolToken },
-                { reserveToken: bnt, poolToken: omniPoolToken }
+                { reserveToken: bnt, poolToken: bntPoolToken }
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')

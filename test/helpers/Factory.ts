@@ -1,33 +1,33 @@
-import { ContractBuilder, Contract } from '../../components/ContractBuilder';
+import { Contract, ContractBuilder } from '../../components/ContractBuilder';
 import Contracts, {
     BancorNetwork,
     BancorNetworkInfo,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
-    OmniPool,
-    OmniVault,
+    MasterVault,
     NetworkSettings,
     PoolCollectionUpgrader,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Burnable,
     TestERC20Token,
-    TestOmniPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
-import LegacyContracts, { TokenGovernance, BNT__factory, VBNT__factory } from '../../components/LegacyContracts';
+import LegacyContracts, { BNT__factory, TokenGovernance, VBNT__factory } from '../../components/LegacyContracts';
 import { isProfiling } from '../../components/Profiler';
 import { MAX_UINT256 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, toWei, Addressable } from '../../utils/Types';
+import { Addressable, fromPPM, toWei } from '../../utils/Types';
 import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, ContractFactory, BigNumberish, Wallet, utils } from 'ethers';
+import { BaseContract, BigNumber, BigNumberish, ContractFactory, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const { formatBytes32String } = utils;
@@ -87,14 +87,14 @@ export const createStakingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bnt: IERC20,
-    omniPool: TestOmniPool | OmniPool,
+    bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
     const autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-        ctorArgs: [network.address, networkSettings.address, bnt.address, omniPool.address]
+        ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address]
     });
 
-    await omniPool.grantRole(Roles.OmniPool.ROLE_BNT_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
+    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
 
     await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, autoCompoundingStakingRewards.address);
 
@@ -165,8 +165,8 @@ export const createPoolCollection = async (
     network: string | BancorNetwork,
     bnt: string | IERC20,
     networkSettings: string | NetworkSettings,
-    omniVault: string | OmniVault,
-    omniPool: string | OmniPool,
+    masterVault: string | MasterVault,
+    bntPool: string | BNTPool,
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolCollectionUpgrader: string | PoolCollectionUpgrader,
@@ -177,44 +177,44 @@ export const createPoolCollection = async (
         toAddress(network),
         toAddress(bnt),
         toAddress(networkSettings),
-        toAddress(omniVault),
-        toAddress(omniPool),
+        toAddress(masterVault),
+        toAddress(bntPool),
         toAddress(externalProtectionVault),
         toAddress(poolTokenFactory),
         toAddress(poolCollectionUpgrader)
     );
 
-const createOmniPool = async (
+const createBNTPool = async (
     network: TestBancorNetwork,
     networkSettings: NetworkSettings,
     bntGovernance: TokenGovernance,
     vbntGovernance: TokenGovernance,
-    omniVault: OmniVault,
-    omniPoolToken: PoolToken
+    masterVault: MasterVault,
+    bntPoolToken: PoolToken
 ) => {
-    const omniPool = await createProxy(Contracts.TestOmniPool, {
+    const bntPool = await createProxy(Contracts.TestBNTPool, {
         skipInitialization: true,
         ctorArgs: [
             network.address,
             bntGovernance.address,
             vbntGovernance.address,
             networkSettings.address,
-            omniVault.address,
-            omniPoolToken.address
+            masterVault.address,
+            bntPoolToken.address
         ]
     });
 
-    await omniPoolToken.transferOwnership(omniPool.address);
+    await bntPoolToken.transferOwnership(bntPool.address);
 
-    await omniPool.initialize();
+    await bntPool.initialize();
 
-    await omniPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+    await bntPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
 
-    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, omniPool.address);
-    await vbntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, omniPool.address);
-    await omniVault.grantRole(Roles.OmniVault.ROLE_BNT_MANAGER, omniPool.address);
+    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, bntPool.address);
+    await vbntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, bntPool.address);
+    await masterVault.grantRole(Roles.MasterVault.ROLE_BNT_MANAGER, bntPool.address);
 
-    return omniPool;
+    return bntPool;
 };
 
 export const createPoolToken = async (poolTokenFactory: PoolTokenFactory, reserveToken: string | BaseContract) => {
@@ -251,9 +251,9 @@ const createNetwork = async (
     bntGovernance: TokenGovernance,
     vbntGovernance: TokenGovernance,
     networkSettings: NetworkSettings,
-    omniVault: OmniVault,
+    masterVault: MasterVault,
     externalProtectionVault: ExternalProtectionVault,
-    omniPoolToken: PoolToken
+    bntPoolToken: PoolToken
 ) => {
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
@@ -261,14 +261,14 @@ const createNetwork = async (
             bntGovernance.address,
             vbntGovernance.address,
             networkSettings.address,
-            omniVault.address,
+            masterVault.address,
             externalProtectionVault.address,
-            omniPoolToken.address
+            bntPoolToken.address
         ]
     });
 
-    await omniVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
-    await omniVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
+    await masterVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+    await masterVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
 
     await externalProtectionVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
     await externalProtectionVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
@@ -279,7 +279,7 @@ const createNetwork = async (
 const createSystemFixture = async () => {
     const { bnt, bntGovernance, vbnt, vbntGovernance } = await createGovernedTokens();
 
-    const omniVault = await createProxy(Contracts.OmniVault, {
+    const masterVault = await createProxy(Contracts.MasterVault, {
         ctorArgs: [bntGovernance.address, vbntGovernance.address]
     });
 
@@ -292,7 +292,7 @@ const createSystemFixture = async () => {
     });
 
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
-    const omniPoolToken = await createPoolToken(poolTokenFactory, bnt);
+    const bntPoolToken = await createPoolToken(poolTokenFactory, bnt);
 
     const networkSettings = await createProxy(Contracts.NetworkSettings);
 
@@ -300,29 +300,29 @@ const createSystemFixture = async () => {
         bntGovernance,
         vbntGovernance,
         networkSettings,
-        omniVault,
+        masterVault,
         externalProtectionVault,
-        omniPoolToken
+        bntPoolToken
     );
 
-    const omniPool = await createOmniPool(
+    const bntPool = await createBNTPool(
         network,
         networkSettings,
         bntGovernance,
         vbntGovernance,
-        omniVault,
-        omniPoolToken
+        masterVault,
+        bntPoolToken
     );
 
     const pendingWithdrawals = await createProxy(Contracts.TestPendingWithdrawals, {
-        ctorArgs: [network.address, bnt.address, omniPool.address]
+        ctorArgs: [network.address, bnt.address, bntPool.address]
     });
 
     const poolCollectionUpgrader = await createProxy(Contracts.TestPoolCollectionUpgrader, {
         ctorArgs: [network.address]
     });
 
-    await network.initialize(omniPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
+    await network.initialize(bntPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
 
     const networkInfo = await createProxy(Contracts.BancorNetworkInfo, {
         ctorArgs: [
@@ -330,10 +330,10 @@ const createSystemFixture = async () => {
             bntGovernance.address,
             vbntGovernance.address,
             networkSettings.address,
-            omniVault.address,
+            masterVault.address,
             externalProtectionVault.address,
             externalRewardsVault.address,
-            omniPool.address,
+            bntPool.address,
             pendingWithdrawals.address,
             poolCollectionUpgrader.address
         ]
@@ -343,8 +343,8 @@ const createSystemFixture = async () => {
         network,
         bnt,
         networkSettings,
-        omniVault,
-        omniPool,
+        masterVault,
+        bntPool,
         externalProtectionVault,
         poolTokenFactory,
         poolCollectionUpgrader
@@ -358,11 +358,11 @@ const createSystemFixture = async () => {
         bntGovernance,
         vbnt,
         vbntGovernance,
-        omniPoolToken,
-        omniVault,
+        bntPoolToken,
+        masterVault,
         externalProtectionVault,
         externalRewardsVault,
-        omniPool,
+        bntPool,
         pendingWithdrawals,
         poolTokenFactory,
         poolCollection,
@@ -412,7 +412,7 @@ const setupPool = async (
     enableTrading: boolean
 ) => {
     if (spec.tokenData.isBNT()) {
-        const poolToken = await Contracts.PoolToken.attach(await networkInfo.omniPoolToken());
+        const poolToken = await Contracts.PoolToken.attach(await networkInfo.bntPoolToken());
         const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.BNT;
         const bnt = await factory.attach(await networkInfo.bnt());
 

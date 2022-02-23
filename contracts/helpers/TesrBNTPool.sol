@@ -6,27 +6,27 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/IBancorNetwork.sol";
 
-import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { OmniPool } from "../pools/OmniPool.sol";
+import { BNTPool } from "../pools/BNTPool.sol";
 
-contract TestOmniPool is OmniPool {
+contract TestBNTPool is BNTPool {
     constructor(
         IBancorNetwork initNetwork,
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IOmniVault initOmniVault,
-        IPoolToken initOmniPoolToken
+        IMasterVault initMasterVault,
+        IPoolToken initBNTPoolToken
     )
-        OmniPool(
+        BNTPool(
             initNetwork,
             initBNTGovernance,
             initVBNTGovernance,
             initNetworkSettings,
-            initOmniVault,
-            initOmniPoolToken
+            initMasterVault,
+            initBNTPoolToken
         )
     {}
 

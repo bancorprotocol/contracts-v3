@@ -18,15 +18,15 @@ import { MathEx } from "../utility/MathEx.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 
-import { IOmniVault } from "../vaults/interfaces/IOmniVault.sol";
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 
 // prettier-ignore
 import {
-    IOmniPool,
+    IBNTPool,
     ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
-} from "./interfaces/IOmniPool.sol";
+} from "./interfaces/IBNTPool.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
@@ -40,9 +40,9 @@ import { IVault } from "../vaults/interfaces/IVault.sol";
 import { PoolToken } from "./PoolToken.sol";
 
 /**
- * @dev Omni Pool contract
+ * @dev BNT Pool contract
  */
-contract OmniPool is IOmniPool, Vault {
+contract BNTPool is IBNTPool, Vault {
     using TokenLibrary for Token;
 
     error FundingLimitExceeded();
@@ -52,7 +52,7 @@ contract OmniPool is IOmniPool, Vault {
         uint256 withdrawalFeeAmount;
     }
 
-    // the omni pool token manager role is required to access the BNT pool token reserve
+    // the BNT pool token manager role is required to access the BNT pool token reserve
     bytes32 private constant ROLE_BNT_POOL_TOKEN_MANAGER = keccak256("ROLE_BNT_POOL_TOKEN_MANAGER");
 
     // the network contract
@@ -61,10 +61,10 @@ contract OmniPool is IOmniPool, Vault {
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the omni vault contract
-    IOmniVault private immutable _omniVault;
+    // the master vault contract
+    IMasterVault private immutable _masterVault;
 
-    // the omni pool token
+    // the BNT pool token
     IPoolToken internal immutable _poolToken;
 
     // the total staked BNT balance in the network
@@ -110,7 +110,7 @@ contract OmniPool is IOmniPool, Vault {
     event FundingRenounced(bytes32 indexed contextId, Token indexed pool, uint256 bntAmount, uint256 poolTokenAmount);
 
     /**
-     * @dev triggered when the total liquidity in the omni pool is updated
+     * @dev triggered when the total liquidity in the BNT pool is updated
      */
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
@@ -127,26 +127,26 @@ contract OmniPool is IOmniPool, Vault {
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
-        IOmniVault initOmniVault,
-        IPoolToken initOmniPoolToken
+        IMasterVault initMasterVault,
+        IPoolToken initBNTPoolToken
     )
         Vault(initBNTGovernance, initVBNTGovernance)
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
-        validAddress(address(initOmniVault))
-        validAddress(address(initOmniPoolToken))
+        validAddress(address(initMasterVault))
+        validAddress(address(initBNTPoolToken))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
-        _omniVault = initOmniVault;
-        _poolToken = initOmniPoolToken;
+        _masterVault = initMasterVault;
+        _poolToken = initBNTPoolToken;
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __OmniPool_init();
+        __BNTPool_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -154,16 +154,16 @@ contract OmniPool is IOmniPool, Vault {
     /**
      * @dev initializes the contract and its parents
      */
-    function __OmniPool_init() internal onlyInitializing {
+    function __BNTPool_init() internal onlyInitializing {
         __Vault_init();
 
-        __OmniPool_init_unchained();
+        __BNTPool_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __OmniPool_init_unchained() internal onlyInitializing {
+    function __BNTPool_init_unchained() internal onlyInitializing {
         _poolToken.acceptOwnership();
 
         // set up administrative roles
@@ -205,9 +205,9 @@ contract OmniPool is IOmniPool, Vault {
     }
 
     /**
-     * @dev returns the omni pool token manager role
+     * @dev returns the BNT pool token manager role
      */
-    function roleOmniPoolTokenManager() external pure returns (bytes32) {
+    function roleBNTPoolTokenManager() external pure returns (bytes32) {
         return ROLE_BNT_POOL_TOKEN_MANAGER;
     }
 
@@ -237,7 +237,7 @@ contract OmniPool is IOmniPool, Vault {
      *
      * requirements:
      *
-     * - reserve token must be the omni pool token
+     * - the token must be the BNT pool token
      * - the caller must have the ROLE_BNT_POOL_TOKEN_MANAGER role
      */
     function isAuthorizedWithdrawal(
@@ -250,49 +250,49 @@ contract OmniPool is IOmniPool, Vault {
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function poolToken() external view returns (IPoolToken) {
         return _poolToken;
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function stakedBalance() external view returns (uint256) {
         return _stakedBalance;
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function currentPoolFunding(Token pool) external view returns (uint256) {
         return _currentPoolFunding[pool];
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function availableFunding(Token pool) external view returns (uint256) {
         return MathEx.subMax0(_networkSettings.poolFundingLimit(pool), _currentPoolFunding[pool]);
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function poolTokenToUnderlying(uint256 poolTokenAmount) external view returns (uint256) {
         return _poolTokenToUnderlying(poolTokenAmount);
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function underlyingToPoolToken(uint256 bntAmount) external view returns (uint256) {
         return _underlyingToPoolToken(bntAmount);
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function poolTokenAmountToBurn(uint256 bntAmountToDistribute) external view returns (uint256) {
         if (bntAmountToDistribute == 0) {
@@ -311,7 +311,7 @@ contract OmniPool is IOmniPool, Vault {
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function mint(address recipient, uint256 bntAmount)
         external
@@ -323,14 +323,14 @@ contract OmniPool is IOmniPool, Vault {
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function burnFromVault(uint256 bntAmount) external onlyRoleMember(ROLE_VAULT_MANAGER) greaterThanZero(bntAmount) {
-        _omniVault.burn(Token(address(_bnt)), bntAmount);
+        _masterVault.burn(Token(address(_bnt)), bntAmount);
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function depositFor(
         bytes32 contextId,
@@ -373,7 +373,7 @@ contract OmniPool is IOmniPool, Vault {
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function withdraw(
         bytes32 contextId,
@@ -402,7 +402,7 @@ contract OmniPool is IOmniPool, Vault {
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function requestFunding(
         bytes32 contextId,
@@ -444,7 +444,7 @@ contract OmniPool is IOmniPool, Vault {
         _poolToken.mint(address(this), poolTokenAmount);
 
         // mint BNT to the vault
-        _bntGovernance.mint(address(_omniVault), bntAmount);
+        _bntGovernance.mint(address(_masterVault), bntAmount);
 
         emit FundingRequested({
             contextId: contextId,
@@ -457,12 +457,12 @@ contract OmniPool is IOmniPool, Vault {
             contextId: contextId,
             poolTokenSupply: poolTokenTotalSupply,
             stakedBalance: newStakedBalance,
-            actualBalance: _bnt.balanceOf(address(_omniVault))
+            actualBalance: _bnt.balanceOf(address(_masterVault))
         });
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function renounceFunding(
         bytes32 contextId,
@@ -494,8 +494,8 @@ contract OmniPool is IOmniPool, Vault {
         // burn pool tokens from the protocol
         _poolToken.burn(poolTokenAmount);
 
-        // burn all BNT from the omni vault
-        _omniVault.burn(Token(address(_bnt)), bntAmount);
+        // burn all BNT from the master vault
+        _masterVault.burn(Token(address(_bnt)), bntAmount);
 
         emit FundingRenounced({
             contextId: contextId,
@@ -508,12 +508,12 @@ contract OmniPool is IOmniPool, Vault {
             contextId: contextId,
             poolTokenSupply: poolTokenTotalSupply,
             stakedBalance: newStakedBalance,
-            actualBalance: _bnt.balanceOf(address(_omniVault))
+            actualBalance: _bnt.balanceOf(address(_masterVault))
         });
     }
 
     /**
-     * @inheritdoc IOmniPool
+     * @inheritdoc IBNTPool
      */
     function onFeesCollected(
         Token pool,

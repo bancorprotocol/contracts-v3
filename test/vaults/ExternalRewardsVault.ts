@@ -1,4 +1,4 @@
-import Contracts, { IERC20, ExternalRewardsVault } from '../../components/Contracts';
+import Contracts, { ExternalRewardsVault, IERC20 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';

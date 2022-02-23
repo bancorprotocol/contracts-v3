@@ -1,5 +1,5 @@
 import { AccessControlEnumerableUpgradeable } from '../../components/Contracts';
-import { ContractName, DeploymentTag, DeployedContracts } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
@@ -19,10 +19,10 @@ describeDeployment('1642778028-revoke-roles', DeploymentTag.V3, () => {
             ContractName.BancorNetworkInfoV1,
             ContractName.BancorNetworkV1,
             ContractName.BancorPortalV1,
+            ContractName.BNTPoolV1,
             ContractName.ExternalProtectionVaultV1,
             ContractName.ExternalRewardsVaultV1,
-            ContractName.OmniPoolV1,
-            ContractName.OmniVaultV1,
+            ContractName.MasterVaultV1,
             ContractName.NetworkSettingsV1,
             ContractName.PendingWithdrawalsV1,
             ContractName.PoolCollectionUpgraderV1,
