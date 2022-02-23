@@ -75,15 +75,11 @@ export const permitContractSignature = async (
     sender: Wallet,
     tokenAddress: string,
     contract: BaseContract,
-    networkToken: IERC20,
+    bnt: IERC20,
     amount: BigNumberish,
     deadline: BigNumberish
 ) => {
-    if (
-        tokenAddress === NATIVE_TOKEN_ADDRESS ||
-        tokenAddress === ZERO_ADDRESS ||
-        tokenAddress === networkToken.address
-    ) {
+    if (tokenAddress === NATIVE_TOKEN_ADDRESS || tokenAddress === ZERO_ADDRESS || tokenAddress === bnt.address) {
         return {
             v: 0,
             r: formatBytes32String(''),

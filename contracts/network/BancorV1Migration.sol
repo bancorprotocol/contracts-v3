@@ -35,18 +35,18 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     // the network contract
     BancorNetwork private immutable _network;
 
-    // the address of the network token
-    IERC20 private immutable _networkToken;
+    // the address of the BNT token
+    IERC20 private immutable _bnt;
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(BancorNetwork initNetwork, IERC20 initNetworkToken)
+    constructor(BancorNetwork initNetwork, IERC20 initBNT)
         validAddress(address(initNetwork))
-        validAddress(address(initNetworkToken))
+        validAddress(address(initBNT))
     {
         _network = initNetwork;
-        _networkToken = initNetworkToken;
+        _bnt = initBNT;
     }
 
     /**
@@ -75,11 +75,11 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
 
         Token[] memory reserveTokens = converter.reserveTokens();
 
-        // ensure to migrate network token liquidity last, in order to reduce some cases when migration wouldn't have
+        // ensure to migrate BNT liquidity last, in order to reduce some cases when migration wouldn't have
         // been possible
         Token[] memory orderedReserveTokens = new Token[](2);
-        orderedReserveTokens[0] = reserveTokens[1].toERC20() == _networkToken ? reserveTokens[0] : reserveTokens[1];
-        orderedReserveTokens[1] = Token(address(_networkToken));
+        orderedReserveTokens[0] = reserveTokens[1].toERC20() == _bnt ? reserveTokens[0] : reserveTokens[1];
+        orderedReserveTokens[1] = Token(address(_bnt));
 
         uint256[] memory minReturnAmounts = new uint256[](2);
         minReturnAmounts[0] = 1;

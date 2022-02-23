@@ -55,7 +55,7 @@ describe('Profile @profile', () => {
     let deployer: SignerWithAddress;
     let stakingRewardsProvider: SignerWithAddress;
 
-    const NETWORK_TOKEN_FUNDING_RATE = 1;
+    const BNT_FUNDING_RATE = 1;
     const BASE_TOKEN_FUNDING_RATE = 2;
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
@@ -75,12 +75,12 @@ describe('Profile @profile', () => {
     describe('deposit', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: IERC20;
+        let bnt: IERC20;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
 
         beforeEach(async () => {
-            ({ network, networkSettings, networkToken, poolCollection, pendingWithdrawals } = await createSystem());
+            ({ network, networkSettings, bnt, poolCollection, pendingWithdrawals } = await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -90,12 +90,12 @@ describe('Profile @profile', () => {
             let token: TokenWithAddress;
 
             const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                .div(NETWORK_TOKEN_FUNDING_RATE)
+                .div(BNT_FUNDING_RATE)
                 .mul(2);
 
             beforeEach(async () => {
-                if (tokenData.isNetworkToken()) {
-                    token = networkToken;
+                if (tokenData.isBNT()) {
+                    token = bnt;
                 } else {
                     token = await createToken(tokenData);
 
@@ -114,11 +114,7 @@ describe('Profile @profile', () => {
                         await network.deposit(token.address, INITIAL_LIQUIDITY);
                     }
 
-                    await poolCollection.enableTrading(
-                        token.address,
-                        NETWORK_TOKEN_FUNDING_RATE,
-                        BASE_TOKEN_FUNDING_RATE
-                    );
+                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
                 }
 
                 await setTime(await latest());
@@ -213,7 +209,7 @@ describe('Profile @profile', () => {
                                             });
                                         }
 
-                                        if (tokenData.isNetworkToken()) {
+                                        if (tokenData.isBNT()) {
                                             context('with requested funding', () => {
                                                 beforeEach(async () => {
                                                     const reserveToken = await createTestToken();
@@ -306,7 +302,7 @@ describe('Profile @profile', () => {
                                     sender,
                                     poolAddress,
                                     network,
-                                    networkToken,
+                                    bnt,
                                     amount,
                                     DEADLINE
                                 );
@@ -344,7 +340,7 @@ describe('Profile @profile', () => {
                                     profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
                                 context(`${amount} tokens`, () => {
-                                    if (tokenData.isNetworkToken() || tokenData.isNative()) {
+                                    if (tokenData.isBNT() || tokenData.isNative()) {
                                         return;
                                     }
 
@@ -353,7 +349,7 @@ describe('Profile @profile', () => {
                                         await reserveToken.transfer(senderAddress, amount);
                                     });
 
-                                    context('when there is no available network token funding', () => {
+                                    context('when there is no available BNT funding', () => {
                                         beforeEach(async () => {
                                             await networkSettings.setFundingLimit(token.address, 0);
                                         });
@@ -365,7 +361,7 @@ describe('Profile @profile', () => {
                                         });
                                     });
 
-                                    context('when there is enough available network token funding', () => {
+                                    context('when there is enough available BNT funding', () => {
                                         beforeEach(async () => {
                                             await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                                         });
@@ -401,8 +397,8 @@ describe('Profile @profile', () => {
     describe('withdraw', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let networkToken: IERC20;
-        let govToken: IERC20;
+        let bnt: IERC20;
+        let vbnt: IERC20;
         let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
@@ -414,16 +410,8 @@ describe('Profile @profile', () => {
         };
 
         beforeEach(async () => {
-            ({
-                network,
-                networkSettings,
-                networkToken,
-                govToken,
-                masterVault,
-                poolCollection,
-                pendingWithdrawals,
-                masterPoolToken
-            } = await createSystem());
+            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, masterPoolToken } =
+                await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -451,8 +439,8 @@ describe('Profile @profile', () => {
             });
 
             beforeEach(async () => {
-                if (tokenData.isNetworkToken()) {
-                    token = networkToken;
+                if (tokenData.isBNT()) {
+                    token = bnt;
                     poolToken = masterPoolToken;
 
                     const reserveToken = await createTestToken();
@@ -491,12 +479,8 @@ describe('Profile @profile', () => {
                     });
                 }
 
-                if (!tokenData.isNetworkToken()) {
-                    await poolCollection.enableTrading(
-                        token.address,
-                        NETWORK_TOKEN_FUNDING_RATE,
-                        BASE_TOKEN_FUNDING_RATE
-                    );
+                if (!tokenData.isBNT()) {
+                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
                 }
             });
 
@@ -519,15 +503,15 @@ describe('Profile @profile', () => {
 
                 context('with approvals', () => {
                     beforeEach(async () => {
-                        if (tokenData.isNetworkToken()) {
-                            await govToken.connect(provider).approve(
+                        if (tokenData.isBNT()) {
+                            await vbnt.connect(provider).approve(
                                 network.address,
                                 requests.reduce((res, r) => res.add(r.poolTokenAmount), BigNumber.from(0))
                             );
                         }
                     });
 
-                    if (tokenData.isNetworkToken()) {
+                    if (tokenData.isBNT()) {
                         it('should complete multiple withdrawals', async () => {
                             await testMultipleWithdrawals();
                         });
@@ -537,7 +521,7 @@ describe('Profile @profile', () => {
                             () => {
                                 beforeEach(async () => {
                                     const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                                        .div(NETWORK_TOKEN_FUNDING_RATE)
+                                        .div(BNT_FUNDING_RATE)
                                         .mul(10_000);
 
                                     await transfer(deployer, token, masterVault, extraLiquidity);
@@ -585,7 +569,7 @@ describe('Profile @profile', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let networkToken: IERC20;
+        let bnt: IERC20;
         let poolCollection: TestPoolCollection;
 
         let sourceToken: TokenWithAddress;
@@ -594,7 +578,7 @@ describe('Profile @profile', () => {
         let trader: Wallet;
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, networkToken, poolCollection } = await createSystem());
+            ({ network, networkInfo, networkSettings, bnt, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -624,7 +608,7 @@ describe('Profile @profile', () => {
                 await networkSettings.setNetworkFeePPM(networkFeePPM);
             }
 
-            // increase the network token liquidity by the growth factor a few times
+            // increase BNT liquidity by the growth factor a few times
             for (let i = 0; i < 5; i++) {
                 await depositToPool(deployer, sourceToken, 1, network);
             }
@@ -733,7 +717,7 @@ describe('Profile @profile', () => {
                 trader,
                 sourceTokenAddress,
                 network,
-                networkToken,
+                bnt,
                 approvedAmount,
                 deadline
             );
@@ -775,7 +759,7 @@ describe('Profile @profile', () => {
                 trader,
                 sourceTokenAddress,
                 network,
-                networkToken,
+                bnt,
                 approvedAmount,
                 deadline
             );
@@ -805,8 +789,8 @@ describe('Profile @profile', () => {
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
             const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
-            const isSourceNetworkToken = sourceToken.address === networkToken.address;
-            const isTargetNetworkToken = targetToken.address === networkToken.address;
+            const isSourceBNT = sourceToken.address === bnt.address;
+            const isTargetBNT = targetToken.address === bnt.address;
 
             const bySourceAmount = [tradeBySourceAmount, tradeBySourceAmountPermitted].includes(tradeFunc as any);
             const permitted = [tradeBySourceAmountPermitted, tradeByTargetAmountPermitted].includes(tradeFunc as any);
@@ -818,7 +802,7 @@ describe('Profile @profile', () => {
                 limit = MIN_RETURN_AMOUNT;
             } else {
                 let sourceTradeAmounts: TradeAmountAndFeeStructOutput;
-                if (isSourceNetworkToken || isTargetNetworkToken) {
+                if (isSourceBNT || isTargetBNT) {
                     sourceTradeAmounts = await network.callStatic.tradeByTargetPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
@@ -831,7 +815,7 @@ describe('Profile @profile', () => {
                     const targetTradeOutput = await network.callStatic.tradeByTargetPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
-                        networkToken.address,
+                        bnt.address,
                         targetToken.address,
                         amount,
                         MAX_SOURCE_AMOUNT
@@ -841,7 +825,7 @@ describe('Profile @profile', () => {
                         poolCollection.address,
                         CONTEXT_ID,
                         sourceToken.address,
-                        networkToken.address,
+                        bnt.address,
                         targetTradeOutput.amount,
                         MAX_SOURCE_AMOUNT
                     );
@@ -920,9 +904,9 @@ describe('Profile @profile', () => {
 
         const testPermittedTrades = (source: PoolSpec, target: PoolSpec, networkFeePPM: number, amount: BigNumber) => {
             const isSourceNativeToken = source.tokenData.isNative();
-            const isSourceNetworkToken = source.tokenData.isNetworkToken();
+            const isSourceBNT = source.tokenData.isBNT();
 
-            if (isSourceNativeToken || isSourceNetworkToken) {
+            if (isSourceNativeToken || isSourceBNT) {
                 return;
             }
 
@@ -971,14 +955,14 @@ describe('Profile @profile', () => {
                     tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    bntRate: BNT_FUNDING_RATE,
                     baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 {
                     tokenData: targetTokenData,
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
-                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    bntRate: BNT_FUNDING_RATE,
                     baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 toPPM(20),
@@ -990,28 +974,28 @@ describe('Profile @profile', () => {
                     for (const amount of [toWei(100)]) {
                         for (const tradingFeePercent of [0, 5]) {
                             for (const networkFeePercent of [0, 20]) {
-                                // if either the source or the target token is the network token - only test fee in one of
-                                // the directions
-                                if (sourceTokenData.isNetworkToken() || targetTokenData.isNetworkToken()) {
+                                // if either the source or the target token is BNT - only test fee in one of the
+                                // directions
+                                if (sourceTokenData.isBNT() || targetTokenData.isBNT()) {
                                     testTrades(
                                         {
                                             tokenData: new TokenData(sourceSymbol),
                                             balance: sourceBalance,
                                             requestedLiquidity: sourceBalance.mul(1000),
-                                            tradingFeePPM: sourceTokenData.isNetworkToken()
+                                            tradingFeePPM: sourceTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                            bntRate: BNT_FUNDING_RATE,
                                             baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                         },
                                         {
                                             tokenData: new TokenData(targetSymbol),
                                             balance: targetBalance,
                                             requestedLiquidity: targetBalance.mul(1000),
-                                            tradingFeePPM: targetTokenData.isNetworkToken()
+                                            tradingFeePPM: targetTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                            bntRate: BNT_FUNDING_RATE,
                                             baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                         },
                                         toPPM(networkFeePercent),
@@ -1025,7 +1009,7 @@ describe('Profile @profile', () => {
                                                 balance: sourceBalance,
                                                 requestedLiquidity: sourceBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent),
-                                                networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                                bntRate: BNT_FUNDING_RATE,
                                                 baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                             },
                                             {
@@ -1033,7 +1017,7 @@ describe('Profile @profile', () => {
                                                 balance: targetBalance,
                                                 requestedLiquidity: targetBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent2),
-                                                networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                                                bntRate: BNT_FUNDING_RATE,
                                                 baseTokenRate: BASE_TOKEN_FUNDING_RATE
                                             },
                                             toPPM(networkFeePercent),
@@ -1077,7 +1061,7 @@ describe('Profile @profile', () => {
                         tokenData,
                         balance: BALANCE,
                         requestedLiquidity: BALANCE.mul(1000),
-                        networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                        bntRate: BNT_FUNDING_RATE,
                         baseTokenRate: BASE_TOKEN_FUNDING_RATE
                     },
                     deployer,
@@ -1126,7 +1110,7 @@ describe('Profile @profile', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let networkToken: IERC20;
+        let bnt: IERC20;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
 
@@ -1136,8 +1120,7 @@ describe('Profile @profile', () => {
         const BALANCE = toWei(1_000_000);
 
         beforeEach(async () => {
-            ({ network, networkToken, networkInfo, networkSettings, poolCollection, pendingWithdrawals } =
-                await createSystem());
+            ({ network, bnt, networkInfo, networkSettings, poolCollection, pendingWithdrawals } = await createSystem());
 
             provider = await createWallet();
 
@@ -1150,7 +1133,7 @@ describe('Profile @profile', () => {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
                     requestedLiquidity: BALANCE.mul(1000),
-                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    bntRate: BNT_FUNDING_RATE,
                     baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 provider as any as SignerWithAddress,
@@ -1177,7 +1160,7 @@ describe('Profile @profile', () => {
                 provider as Wallet,
                 poolToken.address,
                 network,
-                networkToken,
+                bnt,
                 poolTokenAmount,
                 MAX_UINT256
             );
@@ -1215,7 +1198,7 @@ describe('Profile @profile', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let masterPool: TestMasterPool;
-        let networkToken: IERC20;
+        let bnt: IERC20;
         let poolCollection: TestPoolCollection;
         let externalRewardsVault: ExternalRewardsVault;
 
@@ -1231,8 +1214,8 @@ describe('Profile @profile', () => {
                 {
                     tokenData,
                     balance: providerStake,
-                    requestedLiquidity: tokenData.isNetworkToken() ? max(providerStake, totalRewards).mul(1000) : 0,
-                    networkTokenRate: NETWORK_TOKEN_FUNDING_RATE,
+                    requestedLiquidity: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
+                    bntRate: BNT_FUNDING_RATE,
                     baseTokenRate: BASE_TOKEN_FUNDING_RATE
                 },
                 deployer,
@@ -1242,8 +1225,8 @@ describe('Profile @profile', () => {
                 poolCollection
             );
 
-            // if we're rewarding the network token - no additional funding is needed
-            if (!tokenData.isNetworkToken()) {
+            // if we're rewarding BNT - no additional funding is needed
+            if (!tokenData.isBNT()) {
                 // deposit pool tokens as staking rewards
                 await depositToPool(stakingRewardsProvider, token, totalRewards, network);
 
@@ -1268,26 +1251,19 @@ describe('Profile @profile', () => {
             let rewardsVault: IVault;
 
             beforeEach(async () => {
-                ({
-                    network,
-                    networkInfo,
-                    networkSettings,
-                    networkToken,
-                    masterPool,
-                    poolCollection,
-                    externalRewardsVault
-                } = await createSystem());
+                ({ network, networkInfo, networkSettings, bnt, masterPool, poolCollection, externalRewardsVault } =
+                    await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                 ({ token } = await prepareSimplePool(tokenData, providerStake, totalRewards));
 
-                rewardsVault = tokenData.isNetworkToken() ? masterPool : externalRewardsVault;
+                rewardsVault = tokenData.isBNT() ? masterPool : externalRewardsVault;
 
                 autoCompoundingStakingRewards = await createStakingRewards(
                     network,
                     networkSettings,
-                    networkToken,
+                    bnt,
                     masterPool,
                     externalRewardsVault
                 );

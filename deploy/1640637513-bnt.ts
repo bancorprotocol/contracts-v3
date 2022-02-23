@@ -10,71 +10,71 @@ const INITIAL_SUPPLY = toWei(1_000_000_000);
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, foundationMultisig } = await getNamedAccounts();
 
-    const networkTokenData = new TokenData(TokenSymbol.BNT);
-    const networkToken = await deploy({
-        name: ContractName.NetworkToken,
+    const bntData = new TokenData(TokenSymbol.BNT);
+    const bnt = await deploy({
+        name: ContractName.BNT,
         contract: 'SmartToken',
-        args: [networkTokenData.name(), networkTokenData.symbol(), networkTokenData.decimals()],
+        args: [bntData.name(), bntData.symbol(), bntData.decimals()],
         from: deployer
     });
 
-    const networkTokenGovernance = await deploy({
-        name: ContractName.NetworkTokenGovernance,
+    const bntGovernance = await deploy({
+        name: ContractName.BNTGovernance,
         contract: 'TokenGovernance',
-        args: [networkToken],
+        args: [bnt],
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_SUPERVISOR,
         member: foundationMultisig,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_GOVERNOR,
         member: deployer,
         from: deployer
     });
 
     await revokeRole({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_SUPERVISOR,
         member: deployer,
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkToken,
+        name: ContractName.BNT,
         methodName: 'transferOwnership',
-        args: [networkTokenGovernance],
+        args: [bntGovernance],
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         methodName: 'acceptTokenOwnership',
         from: foundationMultisig
     });
 
     await grantRole({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: deployer,
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         methodName: 'mint',
         args: [deployer, INITIAL_SUPPLY],
         from: deployer
     });
 
     await revokeRole({
-        name: ContractName.NetworkTokenGovernance,
+        name: ContractName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: deployer,
         from: deployer
@@ -83,8 +83,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.NetworkToken;
+func.id = ContractName.BNT;
 func.skip = async () => isMainnet();
-func.tags = [DeploymentTag.V2, ContractName.NetworkToken, ContractName.NetworkTokenGovernance];
+func.tags = [DeploymentTag.V2, ContractName.BNT, ContractName.BNTGovernance];
 
 export default func;

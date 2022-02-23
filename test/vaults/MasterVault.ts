@@ -15,27 +15,27 @@ describe('MasterVault', () => {
 
     describe('construction', () => {
         let network: TestBancorNetwork;
-        let networkTokenGovernance: TokenGovernance;
-        let govTokenGovernance: TokenGovernance;
+        let bntGovernance: TokenGovernance;
+        let vbntGovernance: TokenGovernance;
         let masterVault: MasterVault;
         let masterPool: TestMasterPool;
 
         beforeEach(async () => {
-            ({ network, networkTokenGovernance, govTokenGovernance, masterVault, masterPool } = await createSystem());
+            ({ network, bntGovernance, vbntGovernance, masterVault, masterPool } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
             await expect(masterVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
-        it('should revert when initialized with an invalid network token governance contract', async () => {
-            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS, govTokenGovernance.address)).to.be.revertedWith(
+        it('should revert when initialized with an invalid BNT governance contract', async () => {
+            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS, vbntGovernance.address)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
-        it('should revert when initialized with an invalid network token governance contract', async () => {
-            await expect(Contracts.MasterVault.deploy(networkTokenGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
+        it('should revert when initialized with an invalid BNT governance contract', async () => {
+            await expect(Contracts.MasterVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
@@ -55,7 +55,7 @@ describe('MasterVault', () => {
             await expectRole(masterVault, Roles.Vault.ROLE_ASSET_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
                 network.address
             ]);
-            await expectRole(masterVault, Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
+            await expectRole(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
                 masterPool.address
             ]);
         });
@@ -65,7 +65,7 @@ describe('MasterVault', () => {
         const amount = 1_000_000;
 
         let masterVault: MasterVault;
-        let networkToken: IERC20;
+        let bnt: IERC20;
 
         let deployer: SignerWithAddress;
         let user: SignerWithAddress;
@@ -97,9 +97,9 @@ describe('MasterVault', () => {
 
             context(`withdrawing ${symbol}`, () => {
                 beforeEach(async () => {
-                    ({ masterVault, networkToken } = await createSystem());
+                    ({ masterVault, bnt } = await createSystem());
 
-                    token = tokenData.isNetworkToken() ? networkToken : await createToken(tokenData);
+                    token = tokenData.isBNT() ? bnt : await createToken(tokenData);
 
                     await transfer(deployer, token, masterVault.address, amount);
                 });
@@ -124,12 +124,12 @@ describe('MasterVault', () => {
                     testWithdrawFunds();
                 });
 
-                context('with network token manager role', () => {
+                context('with BNT manager role', () => {
                     beforeEach(async () => {
-                        await masterVault.grantRole(Roles.MasterVault.ROLE_NETWORK_TOKEN_MANAGER, user.address);
+                        await masterVault.grantRole(Roles.MasterVault.ROLE_BNT_MANAGER, user.address);
                     });
 
-                    tokenData.isNetworkToken() ? testWithdrawFunds() : testWithdrawFundsRestricted();
+                    tokenData.isBNT() ? testWithdrawFunds() : testWithdrawFundsRestricted();
                 });
             });
         }

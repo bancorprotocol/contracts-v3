@@ -37,8 +37,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     // the network contract
     IBancorNetwork private immutable _network;
 
-    // the network token contract
-    IERC20 private immutable _networkToken;
+    // the BNT contract
+    IERC20 private immutable _bnt;
 
     // the master pool contract
     IMasterPool private immutable _masterPool;
@@ -100,11 +100,11 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      */
     constructor(
         IBancorNetwork initNetwork,
-        IERC20 initNetworkToken,
+        IERC20 initBNT,
         IMasterPool initMasterPool
-    ) validAddress(address(initNetwork)) validAddress(address(initNetworkToken)) validAddress(address(initMasterPool)) {
+    ) validAddress(address(initNetwork)) validAddress(address(initBNT)) validAddress(address(initMasterPool)) {
         _network = initNetwork;
-        _networkToken = initNetworkToken;
+        _bnt = initBNT;
         _masterPool = initMasterPool;
     }
 
@@ -351,7 +351,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @dev returns the pool token value in tokens
      */
     function _poolTokenUnderlying(Token pool, uint256 poolTokenAmount) private view returns (uint256) {
-        if (pool.isEqual(_networkToken)) {
+        if (pool.isEqual(_bnt)) {
             return _masterPool.poolTokenToUnderlying(poolTokenAmount);
         }
 

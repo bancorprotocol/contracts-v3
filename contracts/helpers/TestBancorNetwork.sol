@@ -27,16 +27,16 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     using SafeERC20 for IERC20;
 
     constructor(
-        ITokenGovernance initNetworkTokenGovernance,
-        ITokenGovernance initGovTokenGovernance,
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initMasterPoolToken
     )
         BancorNetwork(
-            initNetworkTokenGovernance,
-            initGovTokenGovernance,
+            initBNTGovernance,
+            initVBNTGovernance,
             initNetworkSettings,
             initMasterVault,
             initExternalProtectionVault,
@@ -66,11 +66,11 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function depositToMasterPoolForT(
         bytes32 contextId,
         address provider,
-        uint256 networkTokenAmount,
+        uint256 bntAmount,
         bool isMigrating,
         uint256 originalPoolTokenAmount
     ) external {
-        _masterPool.depositFor(contextId, provider, networkTokenAmount, isMigrating, originalPoolTokenAmount);
+        _masterPool.depositFor(contextId, provider, bntAmount, isMigrating, originalPoolTokenAmount);
     }
 
     function depositToPoolCollectionForT(
@@ -101,7 +101,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.withdraw(contextId, provider, pool, poolTokenAmount);
     }
 
-    function onNetworkTokenFeesCollectedT(
+    function onBNTFeesCollectedT(
         Token pool,
         uint256 amount,
         bool isTraderFee

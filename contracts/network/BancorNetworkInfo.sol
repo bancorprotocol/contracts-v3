@@ -37,17 +37,17 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     // the address of the network
     IBancorNetwork private immutable _network;
 
-    // the address of the network token
-    IERC20 private immutable _networkToken;
+    // the address of the BNT token
+    IERC20 private immutable _bnt;
 
-    // the address of the network token governance
-    ITokenGovernance private immutable _networkTokenGovernance;
+    // the address of the BNT token governance
+    ITokenGovernance private immutable _bntGovernance;
 
-    // the address of the governance token
-    IERC20 private immutable _govToken;
+    // the address of the VBNT token
+    IERC20 private immutable _vbnt;
 
-    // the address of the governance token governance
-    ITokenGovernance private immutable _govTokenGovernance;
+    // the address of the VBNT token governance
+    ITokenGovernance private immutable _vbntGovernance;
 
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
@@ -81,8 +81,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      */
     constructor(
         IBancorNetwork initNetwork,
-        ITokenGovernance initNetworkTokenGovernance,
-        ITokenGovernance initGovTokenGovernance,
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
@@ -92,8 +92,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) {
         _validAddress(address(initNetwork));
-        _validAddress(address(initNetworkTokenGovernance));
-        _validAddress(address(initGovTokenGovernance));
+        _validAddress(address(initBNTGovernance));
+        _validAddress(address(initVBNTGovernance));
         _validAddress(address(initNetworkSettings));
         _validAddress(address(initMasterVault));
         _validAddress(address(initExternalProtectionVault));
@@ -103,10 +103,10 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _validAddress(address(initPoolCollectionUpgrader));
 
         _network = initNetwork;
-        _networkTokenGovernance = initNetworkTokenGovernance;
-        _networkToken = initNetworkTokenGovernance.token();
-        _govTokenGovernance = initGovTokenGovernance;
-        _govToken = initGovTokenGovernance.token();
+        _bntGovernance = initBNTGovernance;
+        _bnt = initBNTGovernance.token();
+        _vbntGovernance = initVBNTGovernance;
+        _vbnt = initVBNTGovernance.token();
         _networkSettings = initNetworkSettings;
         _masterVault = initMasterVault;
         _externalProtectionVault = initExternalProtectionVault;
@@ -177,29 +177,29 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function networkToken() external view returns (IERC20) {
-        return _networkToken;
+    function bnt() external view returns (IERC20) {
+        return _bnt;
     }
 
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function networkTokenGovernance() external view returns (ITokenGovernance) {
-        return _networkTokenGovernance;
+    function bntGovernance() external view returns (ITokenGovernance) {
+        return _bntGovernance;
     }
 
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function govToken() external view returns (IERC20) {
-        return _govToken;
+    function vbnt() external view returns (IERC20) {
+        return _vbnt;
     }
 
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function govTokenGovernance() external view returns (ITokenGovernance) {
-        return _govTokenGovernance;
+    function vbntGovernance() external view returns (ITokenGovernance) {
+        return _vbntGovernance;
     }
 
     /**
@@ -292,7 +292,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
         return
-            _isNetworkToken(pool)
+            _isBNT(pool)
                 ? _masterPool.poolTokenToUnderlying(poolTokenAmount)
                 : _poolCollection(pool).poolTokenToUnderlying(pool, poolTokenAmount);
     }
@@ -302,7 +302,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      */
     function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
         return
-            _isNetworkToken(pool)
+            _isBNT(pool)
                 ? _masterPool.underlyingToPoolToken(tokenAmount)
                 : _poolCollection(pool).underlyingToPoolToken(pool, tokenAmount);
     }
@@ -317,12 +317,12 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         uint256 amount,
         bool bySourceAmount
     ) private view returns (uint256) {
-        bool isSourceNetworkToken = _isNetworkToken(sourceToken);
-        bool isTargetNetworkToken = _isNetworkToken(targetToken);
+        bool isSourceBNT = _isBNT(sourceToken);
+        bool isTargetBNT = _isBNT(targetToken);
 
-        // return the trade amount when trading the network token
-        if (isSourceNetworkToken || isTargetNetworkToken) {
-            Token token = isSourceNetworkToken ? targetToken : sourceToken;
+        // return the trade amount when trading BNT
+        if (isSourceBNT || isTargetBNT) {
+            Token token = isSourceBNT ? targetToken : sourceToken;
             IPoolCollection poolCollection = _poolCollection(token);
 
             return
@@ -333,28 +333,27 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
                 ).amount;
         }
 
-        // return the target amount by simulating double-hop trade from the source token to the target token via the
-        // network token
+        // return the target amount by simulating double-hop trade from the source token to the target token via BNT
         if (bySourceAmount) {
             uint256 targetAmount = _poolCollection(sourceToken)
-                .tradeOutputAndFeeBySourceAmount(sourceToken, Token(address(_networkToken)), amount)
+                .tradeOutputAndFeeBySourceAmount(sourceToken, Token(address(_bnt)), amount)
                 .amount;
 
             return
                 _poolCollection(targetToken)
-                    .tradeOutputAndFeeBySourceAmount(Token(address(_networkToken)), targetToken, targetAmount)
+                    .tradeOutputAndFeeBySourceAmount(Token(address(_bnt)), targetToken, targetAmount)
                     .amount;
         }
 
         // return the source amount by simulating a "reverse" double-hop trade from the source token to the target token
-        // via the network token
+        // via BNT
         uint256 requireNetworkAmount = _poolCollection(targetToken)
-            .tradeInputAndFeeByTargetAmount(Token(address(_networkToken)), targetToken, amount)
+            .tradeInputAndFeeByTargetAmount(Token(address(_bnt)), targetToken, amount)
             .amount;
 
         return
             _poolCollection(sourceToken)
-                .tradeInputAndFeeByTargetAmount(sourceToken, Token(address(_networkToken)), requireNetworkAmount)
+                .tradeInputAndFeeByTargetAmount(sourceToken, Token(address(_bnt)), requireNetworkAmount)
                 .amount;
     }
 
@@ -372,9 +371,9 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
-     * @dev returns whether the specified token is the network token
+     * @dev returns whether the specified token is BNT
      */
-    function _isNetworkToken(Token token) private view returns (bool) {
-        return token.isEqual(_networkToken);
+    function _isBNT(Token token) private view returns (bool) {
+        return token.isEqual(_bnt);
     }
 }

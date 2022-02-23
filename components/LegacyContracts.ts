@@ -36,28 +36,25 @@ import {
 import {
     DSToken,
     DSToken__factory,
-    DSToken as GovToken,
-    DSToken__factory as GovToken__factory,
-    SmartToken as NetworkToken,
-    SmartToken__factory as NetworkToken__factory,
+    DSToken as VBNT,
+    DSToken__factory as VBNT__factory,
+    SmartToken as BNT,
+    SmartToken__factory as BNT__factory,
     TokenGovernance,
     TokenGovernance__factory
 } from '@bancor/token-governance';
 import { Signer } from 'ethers';
 
 export {
-    NetworkToken,
-    NetworkToken__factory,
-    GovToken,
-    GovToken__factory,
-    ConverterFactory,
+    BNT__factory,
+    BNT,
     ContractRegistry,
+    ConverterFactory,
     ConverterRegistry,
     ConverterRegistryData,
     DSToken,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
-    TokenHolder,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
     LiquidityProtectionStore,
@@ -66,7 +63,10 @@ export {
     TestLiquidityProtection,
     TestStandardPoolConverter,
     TestStandardPoolConverterFactory,
-    TokenGovernance
+    TokenGovernance,
+    TokenHolder,
+    VBNT__factory,
+    VBNT
 };
 
 /* eslint-enable camelcase */
@@ -75,8 +75,8 @@ const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
     TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
-    NetworkToken: deployOrAttach('NetworkToken', NetworkToken__factory, signer),
-    GovToken: deployOrAttach('GovToken', GovToken__factory, signer),
+    BNT: deployOrAttach('BNT', BNT__factory, signer),
+    VBNT: deployOrAttach('VBNT', VBNT__factory, signer),
 
     ConverterFactory: deployOrAttach('ConverterFactory', ConverterFactory__factory, signer),
     ContractRegistry: deployOrAttach('ContractRegistry', ContractRegistry__factory, signer),

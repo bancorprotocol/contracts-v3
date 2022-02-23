@@ -22,8 +22,8 @@ contract MasterVault is IMasterVault, Vault {
     using SafeERC20 for IERC20;
     using TokenLibrary for Token;
 
-    // the network token manager role is only required to access the network token reserve
-    bytes32 private constant ROLE_NETWORK_TOKEN_MANAGER = keccak256("ROLE_NETWORK_TOKEN_MANAGER");
+    // the BNT manager role is only required to access the BNT reserve
+    bytes32 private constant ROLE_BNT_MANAGER = keccak256("ROLE_BNT_MANAGER");
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -31,8 +31,8 @@ contract MasterVault is IMasterVault, Vault {
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(ITokenGovernance initNetworkTokenGovernance, ITokenGovernance initGovTokenGovernance)
-        Vault(initNetworkTokenGovernance, initGovTokenGovernance)
+    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
+        Vault(initBNTGovernance, initVBNTGovernance)
     {}
 
     /**
@@ -59,7 +59,7 @@ contract MasterVault is IMasterVault, Vault {
     function __MasterVault_init_unchained() internal onlyInitializing {
         // set up administrative roles
         _setRoleAdmin(ROLE_ASSET_MANAGER, ROLE_ADMIN);
-        _setRoleAdmin(ROLE_NETWORK_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_BNT_MANAGER, ROLE_ADMIN);
     }
 
     // solhint-enable func-name-mixedcase
@@ -79,10 +79,10 @@ contract MasterVault is IMasterVault, Vault {
     }
 
     /**
-     * @dev returns the network token manager role
+     * @dev returns the BNT manager role
      */
-    function roleNetworkTokenManager() external pure returns (bytes32) {
-        return ROLE_NETWORK_TOKEN_MANAGER;
+    function roleBNTManager() external pure returns (bytes32) {
+        return ROLE_BNT_MANAGER;
     }
 
     /**
@@ -90,7 +90,7 @@ contract MasterVault is IMasterVault, Vault {
      *
      * requirements:
      *
-     * - network token: the caller must have the ROLE_NETWORK_TOKEN_MANAGER or ROLE_ASSET_MANAGER role
+     * - BNT: the caller must have the ROLE_BNT_MANAGER or ROLE_ASSET_MANAGER role
      * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER role
      */
     function isAuthorizedWithdrawal(
@@ -99,8 +99,6 @@ contract MasterVault is IMasterVault, Vault {
         address, /* target */
         uint256 /* amount */
     ) internal view override returns (bool) {
-        return
-            (token.isEqual(_networkToken) && hasRole(ROLE_NETWORK_TOKEN_MANAGER, caller)) ||
-            hasRole(ROLE_ASSET_MANAGER, caller);
+        return (token.isEqual(_bnt) && hasRole(ROLE_BNT_MANAGER, caller)) || hasRole(ROLE_ASSET_MANAGER, caller);
     }
 }

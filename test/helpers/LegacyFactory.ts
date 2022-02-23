@@ -24,9 +24,9 @@ export const createLegacySystem = async (
     owner: SignerWithAddress,
     network: TestBancorNetwork,
     vault: MasterVault,
-    networkToken: IERC20,
-    networkTokenGovernance: TokenGovernance,
-    govTokenGovernance: TokenGovernance,
+    bnt: IERC20,
+    bntGovernance: TokenGovernance,
+    vbntGovernance: TokenGovernance,
     baseToken: TokenWithAddress
 ) => {
     const contractRegistry = await LegacyContracts.ContractRegistry.deploy();
@@ -51,7 +51,7 @@ export const createLegacySystem = async (
     const liquidityProtectionSystemStore = await LegacyContracts.LiquidityProtectionSystemStore.deploy();
     const liquidityProtectionWallet = await LegacyContracts.TokenHolder.deploy();
     const liquidityProtectionSettings = await LegacyContracts.LiquidityProtectionSettings.deploy(
-        networkToken.address,
+        bnt.address,
         contractRegistry.address
     );
     const liquidityProtection = await LegacyContracts.TestLiquidityProtection.deploy(
@@ -62,8 +62,8 @@ export const createLegacySystem = async (
         liquidityProtectionStats.address,
         liquidityProtectionSystemStore.address,
         liquidityProtectionWallet.address,
-        networkTokenGovernance.address,
-        govTokenGovernance.address,
+        bntGovernance.address,
+        vbntGovernance.address,
         checkpointStore.address
     );
 
@@ -82,7 +82,7 @@ export const createLegacySystem = async (
         'PT',
         DEFAULT_DECIMALS,
         PPM_RESOLUTION,
-        [baseToken.address, networkToken.address],
+        [baseToken.address, bnt.address],
         [PPM_RESOLUTION / 2, PPM_RESOLUTION / 2]
     );
 

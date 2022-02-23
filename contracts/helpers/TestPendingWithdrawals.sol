@@ -14,9 +14,9 @@ import { TestTime } from "./TestTime.sol";
 contract TestPendingWithdrawals is PendingWithdrawals, TestTime {
     constructor(
         IBancorNetwork initNetwork,
-        IERC20 initNetworkToken,
+        IERC20 initBNT,
         IMasterPool initMasterPool
-    ) PendingWithdrawals(initNetwork, initNetworkToken, initMasterPool) {}
+    ) PendingWithdrawals(initNetwork, initBNT, initMasterPool) {}
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();

@@ -8,13 +8,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const networkToken = await DeployedContracts.NetworkToken.deployed();
+    const bnt = await DeployedContracts.BNT.deployed();
     const masterPool = await DeployedContracts.MasterPoolV1.deployed();
 
     const autoCompoundingRewardsAddress = await deployProxy({
         name: ContractName.AutoCompoundingStakingRewardsV1,
         from: deployer,
-        args: [network.address, networkSettings.address, networkToken.address, masterPool.address]
+        args: [network.address, networkSettings.address, bnt.address, masterPool.address]
     });
 
     await grantRole({

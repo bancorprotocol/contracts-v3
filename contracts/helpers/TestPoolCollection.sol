@@ -28,7 +28,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
     constructor(
         uint16 initVersion,
         IBancorNetwork initNetwork,
-        IERC20 initNetworkToken,
+        IERC20 initBNT,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IMasterPool initMasterPool,
@@ -38,7 +38,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
     )
         PoolCollection(
             initNetwork,
-            initNetworkToken,
+            initBNT,
             initNetworkSettings,
             initMasterVault,
             initMasterPool,
@@ -81,9 +81,9 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
     function requestFundingT(
         bytes32 contextId,
         Token pool,
-        uint256 networkTokenAmount
+        uint256 bntAmount
     ) external {
-        _masterPool.requestFunding(contextId, pool, networkTokenAmount);
+        _masterPool.requestFunding(contextId, pool, bntAmount);
     }
 
     function _blockNumber() internal view virtual override(BlockNumber, TestBlockNumber) returns (uint32) {
