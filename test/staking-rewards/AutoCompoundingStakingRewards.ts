@@ -316,6 +316,22 @@ describe('AutoCompoundingStakingRewards', () => {
                                 END_TIME
                             )
                         ).to.revertedWith('AccessDenied');
+
+                        await bntPool.revokeRole(
+                            Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER,
+                            autoCompoundingStakingRewards.address
+                        );
+
+                        await expect(
+                            autoCompoundingStakingRewards.createProgram(
+                                bnt.address,
+                                bntPool.address,
+                                TOTAL_REWARDS,
+                                distributionType,
+                                START_TIME,
+                                END_TIME
+                            )
+                        ).to.revertedWith('AccessDenied');
                     });
 
                     it('should revert when the total rewards are equal to 0', async () => {

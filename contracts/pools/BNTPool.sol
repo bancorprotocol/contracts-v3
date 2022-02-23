@@ -23,6 +23,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 // prettier-ignore
 import {
     IBNTPool,
+    ROLE_BNT_POOL_TOKEN_MANAGER,
     ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
@@ -51,9 +52,6 @@ contract BNTPool is IBNTPool, Vault {
         uint256 bntAmount;
         uint256 withdrawalFeeAmount;
     }
-
-    // the BNT pool token manager role is required to access the BNT pool token reserve
-    bytes32 private constant ROLE_BNT_POOL_TOKEN_MANAGER = keccak256("ROLE_BNT_POOL_TOKEN_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;

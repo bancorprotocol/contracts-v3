@@ -16,7 +16,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
+import { IBNTPool, ROLE_BNT_POOL_TOKEN_MANAGER } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
@@ -223,20 +223,24 @@ contract AutoCompoundingStakingRewards is
             revert ProgramAlreadyExists();
         }
 
-        if (!rewardsVault.hasRole(ROLE_ASSET_MANAGER, address(this))) {
-            revert AccessDenied();
-        }
-
         IPoolToken poolToken;
         if (_isBNT(pool)) {
             if (rewardsVault != _bntPool) {
                 revert InvalidParam();
             }
 
+            if (!rewardsVault.hasRole(ROLE_BNT_POOL_TOKEN_MANAGER, address(this))) {
+                revert AccessDenied();
+            }
+
             poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
                 revert NotWhitelisted();
+            }
+
+            if (!rewardsVault.hasRole(ROLE_ASSET_MANAGER, address(this))) {
+                revert AccessDenied();
             }
 
             poolToken = _network.collectionByPool(pool).poolToken(pool);
