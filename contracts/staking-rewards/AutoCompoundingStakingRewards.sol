@@ -83,8 +83,8 @@ contract AutoCompoundingStakingRewards is
         uint8 indexed distributionType,
         IVault rewardsVault,
         uint256 totalRewards,
-        uint256 startTime,
-        uint256 endTime
+        uint32 startTime,
+        uint32 endTime
     );
 
     /**
@@ -211,7 +211,14 @@ contract AutoCompoundingStakingRewards is
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    ) external validAddress(address(address(pool))) validAddress(address(rewardsVault)) onlyAdmin nonReentrant {
+    )
+        external
+        validAddress(address(pool))
+        validAddress(address(rewardsVault))
+        greaterThanZero(totalRewards)
+        onlyAdmin
+        nonReentrant
+    {
         if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();
         }
