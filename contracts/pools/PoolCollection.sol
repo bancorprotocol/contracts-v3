@@ -14,22 +14,11 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 
-// prettier-ignore
-import {
-    Fraction,
-    Fraction112,
-    Sint256,
-    zeroFraction,
-    zeroFraction112,
-    isFractionPositive,
-    isFraction112Positive,
-    toFraction112,
-    fromFraction112
-} from "../utility/Types.sol";
-
+import { Fraction, Fraction112, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
+import { FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
@@ -87,6 +76,8 @@ struct WithdrawalAmounts {
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber, Utils {
     using TokenLibrary for Token;
+    using FractionLibrary for Fraction;
+    using FractionLibrary for Fraction112;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     error AlreadyEnabled();
@@ -290,7 +281,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (!isFractionPositive(rate)) {
+        if (!rate.isPositive()) {
             revert InvalidRate();
         }
     }
@@ -516,7 +507,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             revert InsufficientLiquidity();
         }
 
-        data.averageRate = AverageRate({ blockNumber: _blockNumber(), rate: toFraction112(fundingRate) });
+        data.averageRate = AverageRate({ blockNumber: _blockNumber(), rate: fundingRate.toFraction112() });
 
         data.tradingEnabled = true;
 
@@ -926,7 +917,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             prevLiquidity.bntTradingLiquidity != 0 &&
             prevLiquidity.baseTokenTradingLiquidity != 0 &&
             averageRate.blockNumber != 0 &&
-            isFraction112Positive(averageRate.rate) &&
+            averageRate.rate.isPositive() &&
             !_isPoolRateStable(prevLiquidity, averageRate)
         ) {
             revert RateUnstable();
@@ -1074,7 +1065,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = isFractionPositive(fundingRate);
+        bool isFundingRateValid = fundingRate.isPositive();
 
         // if we aren't bootstrapping the pool, ensure that the BNT trading liquidity is above the minimum liquidity for
         // trading
@@ -1094,7 +1085,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = averageRate.blockNumber != 0 && isFraction112Positive(averageRate.rate);
+        bool isAverageRateValid = averageRate.blockNumber != 0 && averageRate.rate.isPositive();
         if (
             liquidity.bntTradingLiquidity != 0 &&
             liquidity.baseTokenTradingLiquidity != 0 &&
@@ -1109,7 +1100,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         if (isFundingRateValid) {
             effectiveFundingRate = fundingRate;
         } else if (isAverageRateValid) {
-            effectiveFundingRate = fromFraction112(averageRate.rate);
+            effectiveFundingRate = averageRate.rate.fromFraction112();
         } else {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
@@ -1504,7 +1495,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        return MathEx.isInRange(fromFraction112(averageRate), spotRate, RATE_MAX_DEVIATION_PPM);
+        return MathEx.isInRange(averageRate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM);
     }
 
     /**
@@ -1530,13 +1521,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         returns (Fraction112 memory)
     {
         return
-            toFraction112(
-                MathEx.weightedAverage(
-                    fromFraction112(averageRate),
-                    spotRate,
-                    EMA_AVERAGE_RATE_WEIGHT,
-                    EMA_SPOT_RATE_WEIGHT
-                )
-            );
+            MathEx
+                .weightedAverage(averageRate.fromFraction112(), spotRate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
+                .toFraction112();
     }
 }
