@@ -38,7 +38,7 @@ import {
     TestStakingRewardsMath__factory,
     TestTokenGovernance__factory,
     TestTokenLibrary__factory,
-    TestTypes__factory,
+    TestFractionLibrary__factory,
     TestUpgradeable__factory,
     TestVault__factory,
     TransparentUpgradeableProxyImmutable__factory
@@ -105,7 +105,7 @@ const getContracts = (signer?: Signer) => ({
     TestStakingRewardsMath: deployOrAttach('TestStakingRewardsMath', TestStakingRewardsMath__factory, signer),
     TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TestTokenLibrary: deployOrAttach('TestTokenLibrary', TestTokenLibrary__factory, signer),
-    TestTypes: deployOrAttach('TestTypes', TestTypes__factory, signer),
+    TestFractionLibrary: deployOrAttach('TestFractionLibrary', TestFractionLibrary__factory, signer),
     TestUpgradeable: deployOrAttach('TestUpgradeable', TestUpgradeable__factory, signer),
     TestVault: deployOrAttach('TestVault', TestVault__factory, signer),
     TransparentUpgradeableProxyImmutable: deployOrAttach(
