@@ -54,7 +54,7 @@ const TOKEN_DATA = {
         name: 'Test Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
-            exceedsAllowance: 'ERC20: insufficient allowance',
+            exceedsAllowance: 'ERC20: transfer amount exceeds allowance',
             exceedsBalance: 'ERC20: transfer amount exceeds balance',
             burnExceedsBalance: 'ERC20: burn amount exceeds balance'
         }
@@ -63,7 +63,7 @@ const TOKEN_DATA = {
         name: 'Test Token 1',
         decimals: DEFAULT_DECIMALS,
         errors: {
-            exceedsAllowance: 'ERC20: insufficient allowance',
+            exceedsAllowance: 'ERC20: transfer amount exceeds allowance',
             exceedsBalance: 'ERC20: transfer amount exceeds balance',
             burnExceedsBalance: 'ERC20: burn amount exceeds balance'
         }
@@ -72,7 +72,7 @@ const TOKEN_DATA = {
         name: 'Test Token 2',
         decimals: DEFAULT_DECIMALS,
         errors: {
-            exceedsAllowance: 'ERC20: insufficient allowance',
+            exceedsAllowance: 'ERC20: transfer amount exceeds allowance',
             exceedsBalance: 'ERC20: transfer amount exceeds balance',
             burnExceedsBalance: 'ERC20: burn amount exceeds balance'
         }

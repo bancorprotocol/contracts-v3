@@ -1,5 +1,6 @@
 import Contracts, { TestERC20Burnable } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, ContractTransaction } from 'ethers';
@@ -52,7 +53,7 @@ describe('ERC20Burnable', () => {
             const initialBalance = await burnable.balanceOf(owner.address);
 
             await expect(burnable.connect(owner).burn(initialBalance.add(1))).to.be.revertedWith(
-                'ERC20: burn amount exceeds balance'
+                new TokenData(TokenSymbol.TKN).errors().burnExceedsBalance
             );
         });
     });
