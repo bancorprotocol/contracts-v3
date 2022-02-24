@@ -1,4 +1,4 @@
-import Contracts, { TestSafeERC20Ex, TestERC20Token } from '../../components/Contracts';
+import Contracts, { TestERC20Token, TestSafeERC20Ex } from '../../components/Contracts';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';

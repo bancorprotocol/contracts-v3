@@ -1,4 +1,4 @@
-import Contracts, { IERC20, ExternalProtectionVault, TestBancorNetwork } from '../../components/Contracts';
+import Contracts, { ExternalProtectionVault, IERC20, TestBancorNetwork } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';

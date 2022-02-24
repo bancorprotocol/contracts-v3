@@ -1,7 +1,7 @@
 import Contracts, { PoolToken, TestERC20Token } from '../../components/Contracts';
-import { ZERO_ADDRESS, MAX_UINT256 } from '../../utils/Constants';
+import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
 import { domainSeparator, permitSignature } from '../../utils/Permit';
-import { latest, duration } from '../helpers/Time';
+import { duration, latest } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, Wallet } from 'ethers';

@@ -1,5 +1,5 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
-import { VBNT, TokenGovernance } from '../../components/LegacyContracts';
+import { TokenGovernance, VBNT } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';

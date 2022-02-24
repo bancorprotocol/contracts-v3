@@ -1,4 +1,4 @@
-import Contracts, { IERC20, MasterVault, TestBancorNetwork, TestMasterPool } from '../../components/Contracts';
+import Contracts, { IERC20, MasterVault, TestBancorNetwork, TestBNTPool } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -18,10 +18,10 @@ describe('MasterVault', () => {
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
         let masterVault: MasterVault;
-        let masterPool: TestMasterPool;
+        let bntPool: TestBNTPool;
 
         beforeEach(async () => {
-            ({ network, bntGovernance, vbntGovernance, masterVault, masterPool } = await createSystem());
+            ({ network, bntGovernance, vbntGovernance, masterVault, bntPool } = await createSystem());
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -56,7 +56,7 @@ describe('MasterVault', () => {
                 network.address
             ]);
             await expectRole(masterVault, Roles.MasterVault.ROLE_BNT_MANAGER, Roles.Upgradeable.ROLE_ADMIN, [
-                masterPool.address
+                bntPool.address
             ]);
         });
     });

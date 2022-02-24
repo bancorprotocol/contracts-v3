@@ -4,9 +4,9 @@ import {
     BancorNetworkInfo,
     BancorPortal,
     BancorV1Migration,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    MasterPool,
     MasterVault,
     MockUniswapV2Factory,
     MockUniswapV2Pair,
@@ -49,10 +49,10 @@ const deployed = <F extends Contract>(name: ContractName) => ({
 });
 
 enum LegacyContractName {
-    VBNT = 'VBNT',
-    VBNTGovernance = 'VBNTGovernance',
     BNT = 'BNT',
-    BNTGovernance = 'BNTGovernance'
+    BNTGovernance = 'BNTGovernance',
+    VBNT = 'VBNT',
+    VBNTGovernance = 'VBNTGovernance'
 }
 
 enum NewContractName {
@@ -62,10 +62,10 @@ enum NewContractName {
     BancorNetworkV1 = 'BancorNetworkV1',
     BancorPortalV1 = 'BancorPortalV1',
     BancorV1MigrationV1 = 'BancorV1MigrationV1',
+    BNTPoolTokenV1 = 'BNTPoolTokenV1',
+    BNTPoolV1 = 'BNTPoolV1',
     ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
     ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
-    MasterPoolTokenV1 = 'MasterPoolTokenV1',
-    MasterPoolV1 = 'MasterPoolV1',
     MasterVaultV1 = 'MasterVaultV1',
     MockUniswapV2FactoryV1 = 'MockUniswapV2FactoryV1',
     MockUniswapV2PairV1 = 'MockUniswapV2PairV1',
@@ -91,10 +91,10 @@ export enum DeploymentTag {
 }
 
 const DeployedLegacyContracts = {
-    VBNT: deployed<VBNT>(ContractName.VBNT),
-    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance),
     BNT: deployed<BNT>(ContractName.BNT),
-    BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance)
+    BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance),
+    VBNT: deployed<VBNT>(ContractName.VBNT),
+    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance)
 };
 
 const DeployedNewContracts = {
@@ -106,10 +106,10 @@ const DeployedNewContracts = {
     BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
     BancorPortalV1: deployed<BancorPortal>(ContractName.BancorPortalV1),
     BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
+    BNTPoolTokenV1: deployed<PoolToken>(ContractName.BNTPoolTokenV1),
+    BNTPoolV1: deployed<BNTPool>(ContractName.BNTPoolV1),
     ExternalProtectionVaultV1: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVaultV1),
     ExternalRewardsVaultV1: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVaultV1),
-    MasterPoolTokenV1: deployed<PoolToken>(ContractName.MasterPoolTokenV1),
-    MasterPoolV1: deployed<MasterPool>(ContractName.MasterPoolV1),
     MasterVaultV1: deployed<MasterVault>(ContractName.MasterVaultV1),
     MockUniswapV2FactoryV1: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2FactoryV1),
     MockUniswapV2PairV1: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2PairV1),

@@ -39,11 +39,11 @@ import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgr
 
 // prettier-ignore
 import {
-    IMasterPool,
+    IBNTPool,
     ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
-} from "../pools/interfaces/IMasterPool.sol";
+} from "../pools/interfaces/IBNTPool.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
@@ -123,11 +123,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the address of the external protection vault
     IExternalProtectionVault private immutable _externalProtectionVault;
 
-    // the master pool token
-    IPoolToken internal immutable _masterPoolToken;
+    // the BNT pool token
+    IPoolToken internal immutable _bntPoolToken;
 
-    // the master pool contract
-    IMasterPool internal _masterPool;
+    // the BNT pool contract
+    IBNTPool internal _bntPool;
 
     // the pending withdrawals contract
     IPendingWithdrawals internal _pendingWithdrawals;
@@ -224,14 +224,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
-        IPoolToken initMasterPoolToken
+        IPoolToken initBNTPoolToken
     )
         validAddress(address(initBNTGovernance))
         validAddress(address(initVBNTGovernance))
         validAddress(address(initNetworkSettings))
         validAddress(address(initMasterVault))
         validAddress(address(initExternalProtectionVault))
-        validAddress(address(initMasterPoolToken))
+        validAddress(address(initBNTPoolToken))
     {
         _bntGovernance = initBNTGovernance;
         _bnt = initBNTGovernance.token();
@@ -241,24 +241,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _networkSettings = initNetworkSettings;
         _masterVault = initMasterVault;
         _externalProtectionVault = initExternalProtectionVault;
-        _masterPoolToken = initMasterPoolToken;
+        _bntPoolToken = initBNTPoolToken;
     }
 
     /**
      * @dev fully initializes the contract and its parents
      */
     function initialize(
-        IMasterPool initMasterPool,
+        IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     )
         external
-        validAddress(address(initMasterPool))
+        validAddress(address(initBNTPool))
         validAddress(address(initPendingWithdrawals))
         validAddress(address(initPoolCollectionUpgrader))
         initializer
     {
-        __BancorNetwork_init(initMasterPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init(initBNTPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     // solhint-disable func-name-mixedcase
@@ -267,25 +267,25 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev initializes the contract and its parents
      */
     function __BancorNetwork_init(
-        IMasterPool initMasterPool,
+        IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) internal onlyInitializing {
         __Upgradeable_init();
         __ReentrancyGuard_init();
 
-        __BancorNetwork_init_unchained(initMasterPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init_unchained(initBNTPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
 
     /**
      * @dev performs contract-specific initialization
      */
     function __BancorNetwork_init_unchained(
-        IMasterPool initMasterPool,
+        IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
     ) internal onlyInitializing {
-        _masterPool = initMasterPool;
+        _bntPool = initBNTPool;
         _pendingWithdrawals = initPendingWithdrawals;
         _poolCollectionUpgrader = initPoolCollectionUpgrader;
 
@@ -600,7 +600,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // complete the withdrawal and claim the locked pool tokens
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
-        if (completedRequest.poolToken == _masterPoolToken) {
+        if (completedRequest.poolToken == _bntPoolToken) {
             _withdrawBNT(contextId, provider, completedRequest);
         } else {
             _withdrawBaseToken(contextId, provider, completedRequest);
@@ -755,9 +755,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // notify the pool of accrued fees
         if (_isBNT(token)) {
-            IMasterPool cachedMasterPool = _masterPool;
+            IBNTPool cachedBNTPool = _bntPool;
 
-            cachedMasterPool.onFeesCollected(token, feeAmount, false);
+            cachedBNTPool.onFeesCollected(token, feeAmount, false);
         } else {
             // get the pool and verify that it exists
             IPoolCollection poolCollection = _poolCollection(token);
@@ -972,13 +972,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isMigrating,
         uint256 originalAmount
     ) private {
-        IMasterPool cachedMasterPool = _masterPool;
+        IBNTPool cachedBNTPool = _bntPool;
 
-        // transfer the tokens from the caller to the master pool
-        _bnt.transferFrom(caller, address(cachedMasterPool), bntAmount);
+        // transfer the tokens from the caller to the BNT pool
+        _bnt.transferFrom(caller, address(cachedBNTPool), bntAmount);
 
-        // process master pool deposit
-        cachedMasterPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
+        // process BNT pool deposit
+        cachedBNTPool.depositFor(contextId, provider, bntAmount, isMigrating, originalAmount);
     }
 
     /**
@@ -1071,17 +1071,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address provider,
         CompletedWithdrawal memory completedRequest
     ) private {
-        IMasterPool cachedMasterPool = _masterPool;
+        IBNTPool cachedBNTPool = _bntPool;
 
-        // approve the master pool to transfer pool tokens, which we have received from the completion of the
+        // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedMasterPool), completedRequest.poolTokenAmount);
+        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.poolTokenAmount);
 
-        // transfer VBNT from the caller to the master pool
-        _vbnt.transferFrom(provider, address(cachedMasterPool), completedRequest.poolTokenAmount);
+        // transfer VBNT from the caller to the BNT pool
+        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
-        // call withdraw on the master pool
-        cachedMasterPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
+        // call withdraw on the BNT pool
+        cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
     }
 
     /**
@@ -1228,9 +1228,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is BNT, notify the master pool on collected fees
+        // if the target token is BNT, notify the BNT pool on collected fees
         if (!isSourceBNT) {
-            _masterPool.onFeesCollected(
+            _bntPool.onFeesCollected(
                 pool,
                 tradeAmountsAndFee.tradingFeeAmount - tradeAmountsAndFee.networkFeeAmount,
                 true
@@ -1402,15 +1402,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address poolCollectionAddress = address(poolCollection);
 
         if (set) {
-            _masterPool.grantRole(ROLE_BNT_MANAGER, poolCollectionAddress);
-            _masterPool.grantRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
-            _masterPool.grantRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
+            _bntPool.grantRole(ROLE_BNT_MANAGER, poolCollectionAddress);
+            _bntPool.grantRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
+            _bntPool.grantRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
             _masterVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
             _externalProtectionVault.grantRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
         } else {
-            _masterPool.revokeRole(ROLE_BNT_MANAGER, poolCollectionAddress);
-            _masterPool.revokeRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
-            _masterPool.revokeRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
+            _bntPool.revokeRole(ROLE_BNT_MANAGER, poolCollectionAddress);
+            _bntPool.revokeRole(ROLE_VAULT_MANAGER, poolCollectionAddress);
+            _bntPool.revokeRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
             _masterVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
             _externalProtectionVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
         }

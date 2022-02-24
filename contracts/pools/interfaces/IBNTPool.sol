@@ -16,21 +16,21 @@ import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
-// the BNT manager role is required to request the master pool to mint BNT
+// the BNT manager role is required to request the BNT pool to mint BNT
 bytes32 constant ROLE_BNT_MANAGER = keccak256("ROLE_BNT_MANAGER");
 
-// the vault manager role is required to request the master pool to burn BNT from the master vault
+// the vault manager role is required to request the BNT pool to burn BNT from the master vault
 bytes32 constant ROLE_VAULT_MANAGER = keccak256("ROLE_VAULT_MANAGER");
 
-// the funding manager role is required to request or renounce funding from the master pool
+// the funding manager role is required to request or renounce funding from the BNT pool
 bytes32 constant ROLE_FUNDING_MANAGER = keccak256("ROLE_FUNDING_MANAGER");
 
 /**
- * @dev Master Pool interface
+ * @dev BNT Pool interface
  */
-interface IMasterPool is IVault {
+interface IBNTPool is IVault {
     /**
-     * @dev returns the master pool token contract
+     * @dev returns the BNT pool token contract
      */
     function poolToken() external view returns (IPoolToken);
 

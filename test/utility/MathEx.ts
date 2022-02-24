@@ -1,6 +1,6 @@
 import Contracts, { TestMathEx } from '../../components/Contracts';
 import { Exponentiation } from '../../utils/Constants';
-import { Fraction, toUint512, fromUint512, toString, toPPM } from '../../utils/Types';
+import { Fraction, fromUint512, toPPM, toString, toUint512 } from '../../utils/Types';
 import { max } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { expect } from 'chai';

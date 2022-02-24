@@ -1,6 +1,6 @@
 import Contracts, { TestTokenLibrary } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { createToken } from '../helpers/Factory';
 import { getBalance } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';

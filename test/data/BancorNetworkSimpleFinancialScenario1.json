@@ -51,7 +51,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "0"
+                    "bntPool": "0"
                 },
                 "bntCurrentPoolFunding": "0",
                 "tknStakedBalance": "1000000",
@@ -88,7 +88,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "0"
+                    "bntPool": "0"
                 },
                 "bntCurrentPoolFunding": "0",
                 "tknStakedBalance": "10000000",
@@ -128,7 +128,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "0",
-                    "masterPool": "2000000"
+                    "bntPool": "2000000"
                 },
                 "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "10000000",
@@ -165,7 +165,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "1000000",
-                    "masterPool": "1000000"
+                    "bntPool": "1000000"
                 },
                 "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "10000000",
@@ -202,7 +202,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "1000000",
-                    "masterPool": "1000000"
+                    "bntPool": "1000000"
                 },
                 "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "5000000",
@@ -239,7 +239,7 @@
                     "dayTrader": "0",
                     "tknProvider": "0",
                     "bntProvider": "500000",
-                    "masterPool": "1500000"
+                    "bntPool": "1500000"
                 },
                 "bntCurrentPoolFunding": "2000000",
                 "tknStakedBalance": "5000000",

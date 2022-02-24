@@ -3,9 +3,9 @@ import {
     AutoCompoundingStakingRewards,
     BancorNetwork,
     BancorNetworkInfo,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    MasterPool,
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
@@ -33,7 +33,7 @@ describe('network', () => {
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let externalRewardsVault: ExternalRewardsVault;
-    let masterPool: MasterPool;
+    let bntPool: BNTPool;
     let pendingWithdrawals: PendingWithdrawals;
     let poolTokenFactory: PoolTokenFactory;
     let poolCollectionUpgrader: PoolCollectionUpgrader;
@@ -55,7 +55,7 @@ describe('network', () => {
         masterVault = await DeployedContracts.MasterVaultV1.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-        masterPool = await DeployedContracts.MasterPoolV1.deployed();
+        bntPool = await DeployedContracts.BNTPoolV1.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
         poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
         poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
@@ -76,7 +76,7 @@ describe('network', () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [masterPool.address, liquidityProtection, stakingRewards] : [masterPool.address]
+            isMainnet() ? [bntPool.address, liquidityProtection, stakingRewards] : [bntPool.address]
         );
 
         await expectRoleMembers(
@@ -90,7 +90,7 @@ describe('network', () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [masterPool.address, liquidityProtection] : [masterPool.address]
+            isMainnet() ? [bntPool.address, liquidityProtection] : [bntPool.address]
         );
 
         await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
@@ -111,13 +111,13 @@ describe('network', () => {
 
         await expectRoleMembers(networkSettings, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
-        await expectRoleMembers(masterPool, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER, [
+        await expectRoleMembers(bntPool, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, [
             autoCompoundingStakingRewards.address
         ]);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_BNT_MANAGER, [poolCollection.address]);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
-        await expectRoleMembers(masterPool, Roles.MasterPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
 
         await expectRoleMembers(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 

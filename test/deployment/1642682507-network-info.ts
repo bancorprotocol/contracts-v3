@@ -1,9 +1,9 @@
 import {
     BancorNetwork,
     BancorNetworkInfo,
+    BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    MasterPool,
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
@@ -11,7 +11,7 @@ import {
     PoolToken,
     ProxyAdmin
 } from '../../components/Contracts';
-import { VBNT, BNT, TokenGovernance } from '../../components/LegacyContracts';
+import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
 import { ContractName, DeployedContracts } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
@@ -30,8 +30,8 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let externalRewardsVault: ExternalRewardsVault;
-    let masterPool: MasterPool;
-    let masterPoolToken: PoolToken;
+    let bntPool: BNTPool;
+    let bntPoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
     let poolCollectionUpgrader: PoolCollectionUpgrader;
 
@@ -52,8 +52,8 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
         masterVault = await DeployedContracts.MasterVaultV1.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-        masterPool = await DeployedContracts.MasterPoolV1.deployed();
-        masterPoolToken = await DeployedContracts.MasterPoolTokenV1.deployed();
+        bntPool = await DeployedContracts.BNTPoolV1.deployed();
+        bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
         poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
@@ -73,8 +73,8 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
         expect(await networkInfo.masterVault()).to.equal(masterVault.address);
         expect(await networkInfo.externalProtectionVault()).to.equal(externalProtectionVault.address);
         expect(await networkInfo.externalRewardsVault()).to.equal(externalRewardsVault.address);
-        expect(await networkInfo.masterPool()).to.equal(masterPool.address);
-        expect(await networkInfo.masterPoolToken()).to.equal(masterPoolToken.address);
+        expect(await networkInfo.bntPool()).to.equal(bntPool.address);
+        expect(await networkInfo.bntPoolToken()).to.equal(bntPoolToken.address);
         expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
         expect(await networkInfo.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
 

@@ -8,39 +8,39 @@ import Contracts, {
     PoolToken,
     TestAutoCompoundingStakingRewards,
     TestBancorNetwork,
+    TestBNTPool,
     TestERC20Token,
     TestFlashLoanRecipient,
-    TestMasterPool,
     TestPendingWithdrawals,
     TestPoolCollection
 } from '../../components/Contracts';
 import { Profiler } from '../../components/Profiler';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
+    ExponentialDecay,
     MAX_UINT256,
     PPM_RESOLUTION,
-    ZERO_ADDRESS,
     StakingRewardsDistributionType,
-    ExponentialDecay
+    ZERO_ADDRESS
 } from '../../utils/Constants';
 import { permitContractSignature } from '../../utils/Permit';
-import { TokenData, TokenSymbol, NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { toWei, toPPM, fromPPM } from '../../utils/Types';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
+import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import {
     createPool,
     createStakingRewards,
     createSystem,
-    createToken,
     createTestToken,
+    createToken,
     depositToPool,
     initWithdraw,
-    setupFundedPool,
     PoolSpec,
+    setupFundedPool,
     specToString,
     TokenWithAddress
 } from '../helpers/Factory';
-import { latest, duration } from '../helpers/Time';
-import { max, createWallet, transfer } from '../helpers/Utils';
+import { duration, latest } from '../helpers/Time';
+import { createWallet, max, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
@@ -402,7 +402,7 @@ describe('Profile @profile', () => {
         let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
-        let masterPoolToken: PoolToken;
+        let bntPoolToken: PoolToken;
 
         const setTime = async (time: number) => {
             await network.setTime(time);
@@ -410,7 +410,7 @@ describe('Profile @profile', () => {
         };
 
         beforeEach(async () => {
-            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, masterPoolToken } =
+            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, bntPoolToken } =
                 await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -441,7 +441,7 @@ describe('Profile @profile', () => {
             beforeEach(async () => {
                 if (tokenData.isBNT()) {
                     token = bnt;
-                    poolToken = masterPoolToken;
+                    poolToken = bntPoolToken;
 
                     const reserveToken = await createTestToken();
                     await createPool(reserveToken, network, networkSettings, poolCollection);
@@ -1197,7 +1197,7 @@ describe('Profile @profile', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let masterPool: TestMasterPool;
+        let bntPool: TestBNTPool;
         let bnt: IERC20;
         let poolCollection: TestPoolCollection;
         let externalRewardsVault: ExternalRewardsVault;
@@ -1251,20 +1251,20 @@ describe('Profile @profile', () => {
             let rewardsVault: IVault;
 
             beforeEach(async () => {
-                ({ network, networkInfo, networkSettings, bnt, masterPool, poolCollection, externalRewardsVault } =
+                ({ network, networkInfo, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } =
                     await createSystem());
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                 ({ token } = await prepareSimplePool(tokenData, providerStake, totalRewards));
 
-                rewardsVault = tokenData.isBNT() ? masterPool : externalRewardsVault;
+                rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
 
                 autoCompoundingStakingRewards = await createStakingRewards(
                     network,
                     networkSettings,
                     bnt,
-                    masterPool,
+                    bntPool,
                     externalRewardsVault
                 );
             });

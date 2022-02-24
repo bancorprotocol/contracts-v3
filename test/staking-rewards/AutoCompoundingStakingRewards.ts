@@ -1,5 +1,4 @@
 import Contracts, {
-    TestStakingRewardsMath,
     BancorNetworkInfo,
     ExternalRewardsVault,
     IERC20,
@@ -8,12 +7,13 @@ import Contracts, {
     PoolToken,
     TestAutoCompoundingStakingRewards,
     TestBancorNetwork,
-    TestMasterPool,
-    TestPoolCollection
+    TestBNTPool,
+    TestPoolCollection,
+    TestStakingRewardsMath
 } from '../../components/Contracts';
-import { StakingRewardsDistributionType, ZERO_ADDRESS, ExponentialDecay } from '../../utils/Constants';
+import { ExponentialDecay, StakingRewardsDistributionType, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei, Addressable } from '../../utils/Types';
+import { Addressable, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
     createStakingRewards,
@@ -24,7 +24,7 @@ import {
     TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { latest, duration } from '../helpers/Time';
+import { duration, latest } from '../helpers/Time';
 import { max, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -42,8 +42,8 @@ describe('AutoCompoundingStakingRewards', () => {
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
     let networkSettings: NetworkSettings;
-    let masterPool: TestMasterPool;
-    let masterPoolToken: PoolToken;
+    let bntPool: TestBNTPool;
+    let bntPoolToken: PoolToken;
     let bnt: IERC20;
     let poolCollection: TestPoolCollection;
     let externalRewardsVault: ExternalRewardsVault;
@@ -91,14 +91,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
     describe('construction', () => {
         beforeEach(async () => {
-            ({ network, networkSettings, bnt, masterPool, poolCollection, externalRewardsVault } =
-                await createSystem());
+            ({ network, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } = await createSystem());
 
             autoCompoundingStakingRewards = await createStakingRewards(
                 network,
                 networkSettings,
                 bnt,
-                masterPool,
+                bntPool,
                 externalRewardsVault
             );
         });
@@ -109,7 +108,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     ZERO_ADDRESS,
                     networkSettings.address,
                     bnt.address,
-                    masterPool.address
+                    bntPool.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -120,7 +119,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     network.address,
                     ZERO_ADDRESS,
                     bnt.address,
-                    masterPool.address
+                    bntPool.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -131,12 +130,12 @@ describe('AutoCompoundingStakingRewards', () => {
                     network.address,
                     networkSettings.address,
                     ZERO_ADDRESS,
-                    masterPool.address
+                    bntPool.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid master pool contract', async () => {
+        it('should revert when attempting to create with an invalid BNT pool contract', async () => {
             await expect(
                 Contracts.AutoCompoundingStakingRewards.deploy(
                     network.address,
@@ -176,7 +175,7 @@ describe('AutoCompoundingStakingRewards', () => {
         const START_TIME = 1000;
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, bnt, masterPool, poolCollection, externalRewardsVault } =
+            ({ network, networkInfo, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } =
                 await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -191,7 +190,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     network,
                     networkSettings,
                     bnt,
-                    masterPool,
+                    bntPool,
                     externalRewardsVault
                 );
             });
@@ -767,9 +766,7 @@ describe('AutoCompoundingStakingRewards', () => {
                             for (const currToken of [token, token1, token2]) {
                                 await autoCompoundingStakingRewards.createProgram(
                                     currToken.address,
-                                    currToken.address === bnt.address
-                                        ? masterPool.address
-                                        : externalRewardsVault.address,
+                                    currToken.address === bnt.address ? bntPool.address : externalRewardsVault.address,
                                     TOTAL_REWARDS,
                                     distributionType,
                                     START_TIME,
@@ -802,7 +799,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     beforeEach(async () => {
                         ({ token, poolToken } = await prepareSimplePool(tokenData, INITIAL_USER_STAKE, TOTAL_REWARDS));
 
-                        rewardsVault = tokenData.isBNT() ? masterPool : externalRewardsVault;
+                        rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
                     });
 
                     describe('creation', () => {
@@ -813,7 +810,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                 const totalSupply = await (poolToken as PoolToken).totalSupply();
                                 const vaultBalance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
                                 const stakedBalance = tokenData.isBNT()
-                                    ? await masterPool.stakedBalance()
+                                    ? await bntPool.stakedBalance()
                                     : (await poolCollection.poolLiquidity(token.address)).stakedBalance;
 
                                 // let `x` denote the granted rewards in token units (BNT or TKN, depending on the request).
@@ -907,9 +904,9 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         it('should revert when there are insufficient funds', async () => {
                             switch (rewardsVault.address) {
-                                case masterPool.address:
-                                    await masterPool.grantRole(
-                                        Roles.MasterPool.ROLE_MASTER_POOL_TOKEN_MANAGER,
+                                case bntPool.address:
+                                    await bntPool.grantRole(
+                                        Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER,
                                         deployer.address
                                     );
                                     break;
@@ -972,8 +969,8 @@ describe('AutoCompoundingStakingRewards', () => {
                     networkInfo,
                     networkSettings,
                     bnt,
-                    masterPool,
-                    masterPoolToken,
+                    bntPool,
+                    bntPoolToken,
                     poolCollection,
                     externalRewardsVault
                 } = await createSystem());
@@ -984,13 +981,13 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 ({ token, poolToken } = await prepareSimplePool(tokenData, providerStake, totalRewards));
 
-                rewardsVault = tokenData.isBNT() ? masterPool : externalRewardsVault;
+                rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
 
                 autoCompoundingStakingRewards = await createStakingRewards(
                     network,
                     networkSettings,
                     bnt,
-                    masterPool,
+                    bntPool,
                     externalRewardsVault
                 );
             });
@@ -999,7 +996,7 @@ describe('AutoCompoundingStakingRewards', () => {
                 const userPoolTokenBalance = await poolToken.balanceOf(user.address);
 
                 if (tokenData.isBNT()) {
-                    return masterPool.poolTokenToUnderlying(userPoolTokenBalance);
+                    return bntPool.poolTokenToUnderlying(userPoolTokenBalance);
                 }
 
                 return poolCollection.poolTokenToUnderlying(token.address, userPoolTokenBalance);
@@ -1048,8 +1045,8 @@ describe('AutoCompoundingStakingRewards', () => {
                 let poolToken: PoolToken;
                 let stakedBalance: BigNumber;
                 if (tokenData.isBNT()) {
-                    poolToken = masterPoolToken;
-                    stakedBalance = await masterPool.stakedBalance();
+                    poolToken = bntPoolToken;
+                    stakedBalance = await bntPool.stakedBalance();
                 } else {
                     poolToken = await Contracts.PoolToken.attach(await poolCollection.poolToken(token.address));
                     ({ stakedBalance } = await poolCollection.poolLiquidity(token.address));

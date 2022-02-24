@@ -12,7 +12,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const masterVault = await DeployedContracts.MasterVaultV1.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
     const externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-    const masterPool = await DeployedContracts.MasterPoolV1.deployed();
+    const bntPool = await DeployedContracts.BNTPoolV1.deployed();
     const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
     const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
 
@@ -27,7 +27,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             masterVault.address,
             externalProtectionVault.address,
             externalRewardsVault.address,
-            masterPool.address,
+            bntPool.address,
             pendingWithdrawals.address,
             poolCollectionUpgrader.address
         ]
@@ -45,7 +45,7 @@ func.dependencies = [
     ContractName.MasterVaultV1,
     ContractName.ExternalProtectionVaultV1,
     ContractName.ExternalRewardsVaultV1,
-    ContractName.MasterPoolV1,
+    ContractName.BNTPoolV1,
     ContractName.PendingWithdrawalsV1,
     ContractName.PoolCollectionUpgraderV1
 ];

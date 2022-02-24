@@ -9,7 +9,7 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
-import { IMasterPool } from "../pools/interfaces/IMasterPool.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
@@ -31,7 +31,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         IERC20 initBNT,
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
-        IMasterPool initMasterPool,
+        IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
         IPoolCollectionUpgrader initPoolCollectionUpgrader
@@ -41,7 +41,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
             initBNT,
             initNetworkSettings,
             initMasterVault,
-            initMasterPool,
+            initBNTPool,
             initExternalProtectionVault,
             initPoolTokenFactory,
             initPoolCollectionUpgrader
@@ -83,7 +83,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         Token pool,
         uint256 bntAmount
     ) external {
-        _masterPool.requestFunding(contextId, pool, bntAmount);
+        _bntPool.requestFunding(contextId, pool, bntAmount);
     }
 
     function _blockNumber() internal view virtual override(BlockNumber, TestBlockNumber) returns (uint32) {
