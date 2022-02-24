@@ -175,13 +175,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @inheritdoc IPendingWithdrawals
      */
     function withdrawalRequestIds(address provider) external view returns (uint256[] memory) {
-        EnumerableSetUpgradeable.UintSet storage providerRequests = _withdrawalRequestIdsByProvider[provider];
-        uint256 length = providerRequests.length();
-        uint256[] memory list = new uint256[](length);
-        for (uint256 i = 0; i < length; i++) {
-            list[i] = providerRequests.at(i);
-        }
-        return list;
+        return _withdrawalRequestIdsByProvider[provider].values();
     }
 
     /**
