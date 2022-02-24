@@ -1113,6 +1113,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return true;
         }
 
+        if (!isFractionPositive(fundingRate)) {
+            return false;
+        }
+
         // calculate the target BNT trading liquidity
         (uint256 targetBNTTradingLiquidity, TargetBNTTradingLiquidityAction action) = _calcTargetBNTTradingLiquidity(
             _networkSettings.poolFundingLimit(pool),
