@@ -67,6 +67,12 @@ struct WithdrawalAmounts {
     uint256 newBNTTradingLiquidity; // new BNT trading liquidity
 }
 
+enum PoolRateState {
+    Uninitialized,
+    Unstable,
+    Stable
+}
+
 /**
  * @dev Pool Collection contract
  *
@@ -389,7 +395,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return false;
         }
 
-        return _isPoolRateStable(data.liquidity, data.averageRate);
+        return _poolRateState(data.liquidity, data.averageRate) == PoolRateState.Stable;
     }
 
     /**
@@ -596,15 +602,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         // mint pool tokens to the provider
         data.poolToken.mint(provider, poolTokenAmount);
 
-        // adjust the trading liquidity based on the base token vault balance and funding limits
-        _updateTradingLiquidity(
-            contextId,
-            pool,
-            data,
-            data.liquidity,
-            zeroFraction(),
-            _networkSettings.minLiquidityForTrading()
-        );
+        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
+        // ensure that the BNT trading liquidity is above the minimum liquidity for trading
+        if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+        } else {
+            // adjust the trading liquidity based on the base token vault balance and funding limits
+            _updateTradingLiquidity(
+                contextId,
+                pool,
+                data,
+                data.liquidity,
+                data.averageRate.rate.fromFraction112(),
+                minLiquidityForTrading
+            );
+        }
 
         emit TokenDeposited({
             contextId: contextId,
@@ -895,13 +907,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         PoolLiquidity memory prevLiquidity = liquidity;
         AverageRate memory averageRate = data.averageRate;
 
-        if (
-            prevLiquidity.bntTradingLiquidity != 0 &&
-            prevLiquidity.baseTokenTradingLiquidity != 0 &&
-            averageRate.blockNumber != 0 &&
-            averageRate.rate.isPositive() &&
-            !_isPoolRateStable(prevLiquidity, averageRate)
-        ) {
+        if (_poolRateState(prevLiquidity, averageRate) == PoolRateState.Unstable) {
             revert RateUnstable();
         }
 
@@ -1047,16 +1053,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = fundingRate.isPositive();
-
-        // if we aren't bootstrapping the pool, ensure that the BNT trading liquidity is above the minimum liquidity for
-        // trading
-        if (liquidity.bntTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
-            return;
-        }
-
         // ensure that the base token reserve isn't empty
         uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
         if (tokenReserveAmount == 0) {
@@ -1065,25 +1061,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        // try to check whether the pool is stable (when both reserves and the average rate are available)
-        AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = averageRate.blockNumber != 0 && averageRate.rate.isPositive();
-        if (
-            liquidity.bntTradingLiquidity != 0 &&
-            liquidity.baseTokenTradingLiquidity != 0 &&
-            isAverageRateValid &&
-            !_isPoolRateStable(liquidity, averageRate)
-        ) {
+        if (_poolRateState(liquidity, data.averageRate) == PoolRateState.Unstable) {
             return;
         }
 
-        // figure out the effective funding rate
-        Fraction memory effectiveFundingRate;
-        if (isFundingRateValid) {
-            effectiveFundingRate = fundingRate;
-        } else if (isAverageRateValid) {
-            effectiveFundingRate = averageRate.rate.fromFraction112();
-        } else {
+        if (!fundingRate.isPositive()) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
@@ -1096,7 +1078,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 targetBNTTradingLiquidity = Math.min(
             Math.min(
                 _networkSettings.poolFundingLimit(pool),
-                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
+                MathEx.mulDivF(tokenReserveAmount, fundingRate.n, fundingRate.d)
             ),
             liquidity.bntTradingLiquidity + _bntPool.availableFunding(pool)
         );
@@ -1143,11 +1125,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // calculate the base token trading liquidity based on the new BNT trading liquidity and the effective
         // funding rate (please note that the effective funding rate is always the rate between BNT and the base token)
-        uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
-            targetBNTTradingLiquidity,
-            effectiveFundingRate.d,
-            effectiveFundingRate.n
-        );
+        uint256 baseTokenTradingLiquidity = MathEx.mulDivF(targetBNTTradingLiquidity, fundingRate.d, fundingRate.n);
 
         // update the liquidity data of the pool
         PoolLiquidity memory newLiquidity = PoolLiquidity({
@@ -1460,12 +1438,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns whether a pool's rate is stable
+     * @dev returns the state of a pool's rate
      */
-    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
+    function _poolRateState(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
         private
         view
-        returns (bool)
+        returns (PoolRateState)
     {
         Fraction memory spotRate = Fraction({
             n: liquidity.bntTradingLiquidity,
@@ -1473,11 +1451,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         });
 
         Fraction112 memory averageRate = averageRateInfo.rate;
+
+        if (!spotRate.isPositive() || !averageRate.isPositive()) {
+            return PoolRateState.Uninitialized;
+        }
+
         if (averageRateInfo.blockNumber != _blockNumber()) {
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        return MathEx.isInRange(averageRate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM);
+        if (MathEx.isInRange(averageRate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM)) {
+            return PoolRateState.Stable;
+        }
+
+        return PoolRateState.Unstable;
     }
 
     /**
