@@ -52,7 +52,7 @@ describe('MathEx', () => {
             if (f.n / f.d < EXP_INPUT_TOO_HIGH) {
                 const actual = await mathContract.exp(f);
                 const expected = new Decimal(f.n).div(f.d).exp();
-                await expect(actual).to.be.almostEqual(
+                await expect(actual).to.almostEqual(
                     { n: expected, d: 1 },
                     {
                         maxRelativeError,
@@ -62,6 +62,16 @@ describe('MathEx', () => {
             } else {
                 await expect(mathContract.exp(f)).to.revertedWith('Overflow');
             }
+        });
+    };
+
+    const testReducedFraction = (fraction: Fraction<BigNumber>, max: BigNumber, maxRelativeError: Decimal) => {
+        it(`reducedFraction(${toString(fraction)}, ${max})`, async () => {
+            const expected = toDecimal(fraction);
+            const actual = await mathContract.reducedFraction(fraction, max);
+            expect(actual.n).to.lte(max);
+            expect(actual.d).to.lte(max);
+            expect(actual).to.almostEqual({ n: expected, d: 1 }, { maxRelativeError });
         });
     };
 
@@ -192,6 +202,29 @@ describe('MathEx', () => {
             }
         }
 
+        for (const max of [MAX_UINT128]) {
+            for (let n = 0; n < 10; n++) {
+                for (let d = 0; d < 10; d++) {
+                    testReducedFraction({ n: max.sub(n), d: max.sub(d) }, max, new Decimal('0'));
+                    testReducedFraction(
+                        { n: max.sub(n), d: max.add(d) },
+                        max,
+                        new Decimal('0.000000000000000000000000000000000000003')
+                    );
+                    testReducedFraction(
+                        { n: max.add(n), d: max.sub(d) },
+                        max,
+                        new Decimal('0.000000000000000000000000000000000000003')
+                    );
+                    testReducedFraction(
+                        { n: max.add(n), d: max.add(d) },
+                        max,
+                        new Decimal('0.000000000000000000000000000000000000003')
+                    );
+                }
+            }
+        }
+
         for (const n of [MAX_UINT64, MAX_UINT96]) {
             for (const d of [MAX_UINT64, MAX_UINT96]) {
                 const fraction1 = { n, d };
@@ -252,6 +285,67 @@ describe('MathEx', () => {
         for (let n = 0; n < 100; n++) {
             for (let d = 1; d < 100; d++) {
                 testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
+            }
+        }
+
+        for (const max of [MAX_UINT96, MAX_UINT112, MAX_UINT128]) {
+            for (let n = 0; n < 10; n++) {
+                for (let d = 0; d < 10; d++) {
+                    testReducedFraction({ n: max.sub(n), d: max.sub(d) }, max, new Decimal('0'));
+                    testReducedFraction(
+                        { n: max.sub(n), d: max.add(d) },
+                        max,
+                        new Decimal('0.00000000000000000000000000002')
+                    );
+                    testReducedFraction(
+                        { n: max.add(n), d: max.sub(d) },
+                        max,
+                        new Decimal('0.00000000000000000000000000002')
+                    );
+                    testReducedFraction(
+                        { n: max.add(n), d: max.add(d) },
+                        max,
+                        new Decimal('0.00000000000000000000000000002')
+                    );
+                }
+            }
+        }
+
+        for (const max of [MAX_UINT112]) {
+            for (let i = BigNumber.from(1); i.lte(max); i = i.mul(10)) {
+                for (let j = BigNumber.from(1); j.lte(max); j = j.mul(10)) {
+                    const n = MAX_UINT256.div(max).mul(i).add(1);
+                    const d = MAX_UINT256.div(max).mul(j).add(1);
+                    testReducedFraction({ n, d }, max, new Decimal('0.04'));
+                }
+            }
+        }
+
+        for (const max of [MAX_UINT96, MAX_UINT112, MAX_UINT128]) {
+            for (let i = 96; i <= 256; i += 16) {
+                for (let j = i - 64; j <= i + 64; j += 16) {
+                    const iMax = BigNumber.from(2).pow(i).sub(1);
+                    const jMax = BigNumber.from(2).pow(j).sub(1);
+                    for (const n of [
+                        iMax.div(3),
+                        iMax.div(2),
+                        iMax.mul(2).div(3),
+                        iMax.mul(3).div(4),
+                        iMax.sub(1),
+                        iMax,
+                        iMax.add(1),
+                        iMax.mul(4).div(3),
+                        iMax.mul(3).div(2),
+                        iMax.mul(2),
+                        iMax.mul(3)
+                    ]) {
+                        for (const d of [jMax.sub(1), jMax, jMax.add(1)]) {
+                            if (n.lte(MAX_UINT256) && d.lte(MAX_UINT256)) {
+                                testReducedFraction({ n, d }, max, new Decimal('0.0000000005'));
+                            }
+                        }
+                    }
+                }
             }
         }
 

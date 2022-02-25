@@ -9,6 +9,10 @@ contract TestMathEx {
         return MathEx.exp(f);
     }
 
+    function reducedFraction(Fraction memory fraction, uint256 max) external pure returns (Fraction memory) {
+        return MathEx.reducedFraction(fraction, max);
+    }
+
     function weightedAverage(
         Fraction memory fraction1,
         Fraction memory fraction2,

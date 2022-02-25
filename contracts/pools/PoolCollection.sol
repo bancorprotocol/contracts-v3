@@ -14,22 +14,11 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 
-// prettier-ignore
-import {
-    Fraction,
-    Fraction112,
-    Sint256,
-    zeroFraction,
-    zeroFraction112,
-    isFractionPositive,
-    isFraction112Positive,
-    toFraction112,
-    fromFraction112
-} from "../utility/Types.sol";
-
+import { Fraction, Fraction112, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
+import { FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
@@ -99,6 +88,8 @@ enum PoolRateState {
  */
 contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber, Utils {
     using TokenLibrary for Token;
+    using FractionLibrary for Fraction;
+    using FractionLibrary for Fraction112;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     error AlreadyEnabled();
@@ -302,7 +293,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     function _validRate(Fraction memory rate) internal pure {
-        if (!isFractionPositive(rate)) {
+        if (!rate.isPositive()) {
             revert InvalidRate();
         }
     }
@@ -530,7 +521,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             revert InsufficientLiquidity();
         }
 
-        data.averageRate = AverageRate({ blockNumber: _blockNumber(), rate: toFraction112(fundingRate) });
+        data.averageRate = AverageRate({ blockNumber: _blockNumber(), rate: fundingRate.toFraction112() });
 
         data.tradingEnabled = true;
 
@@ -628,7 +619,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 pool,
                 data,
                 data.liquidity,
-                fromFraction112(data.averageRate.rate),
+                data.averageRate.rate.fromFraction112(),
                 minLiquidityForTrading
             )
         ) {
@@ -1113,7 +1104,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return true;
         }
 
-        if (!isFractionPositive(fundingRate)) {
+        if (!fundingRate.isPositive()) {
             return false;
         }
 
@@ -1469,7 +1460,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         Fraction112 memory averageRate = averageRateInfo.rate;
 
-        if (!isFractionPositive(spotRate) || !isFraction112Positive(averageRate)) {
+        if (!spotRate.isPositive() || !averageRate.isPositive()) {
             return PoolRateState.Uninitialized;
         }
 
@@ -1477,7 +1468,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        if (MathEx.isInRange(fromFraction112(averageRate), spotRate, RATE_MAX_DEVIATION_PPM)) {
+        if (MathEx.isInRange(averageRate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM)) {
             return PoolRateState.Stable;
         }
 
@@ -1507,13 +1498,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         returns (Fraction112 memory)
     {
         return
-            toFraction112(
-                MathEx.weightedAverage(
-                    fromFraction112(averageRate),
-                    spotRate,
-                    EMA_AVERAGE_RATE_WEIGHT,
-                    EMA_SPOT_RATE_WEIGHT
-                )
-            );
+            MathEx
+                .weightedAverage(averageRate.fromFraction112(), spotRate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
+                .toFraction112();
     }
 }
