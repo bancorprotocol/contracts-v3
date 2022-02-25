@@ -232,9 +232,8 @@ describe('BNTPool', () => {
         });
 
         it('should revert when attempting to burn more than the balance of the master vault', async () => {
-            const tokenData = new TokenData(TokenSymbol.BNT);
             await expect(bntPool.connect(vaultManager).burnFromVault(amount.add(1))).to.be.revertedWith(
-                tokenData.errors().burnExceedsBalance
+                new TokenData(TokenSymbol.BNT).errors().burnExceedsBalance
             );
         });
 
@@ -690,7 +689,7 @@ describe('BNTPool', () => {
 
                     await expect(
                         network.depositToBNTPoolForT(CONTEXT_ID, provider.address, maxAmount.add(1), false, 0)
-                    ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+                    ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsBalance);
                 });
 
                 it('should allow depositing liquidity', async () => {
@@ -868,7 +867,7 @@ describe('BNTPool', () => {
 
                         await expect(
                             network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+                        ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsBalance);
                     });
 
                     it('should revert when attempting to deposit without sending VBNT', async () => {
@@ -888,7 +887,7 @@ describe('BNTPool', () => {
 
                         await expect(
                             network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith('ERC20: insufficient allowance');
+                        ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsAllowance);
                     });
 
                     it('should allow withdrawing liquidity', async () => {

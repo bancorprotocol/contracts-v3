@@ -2837,7 +2837,7 @@ describe('BancorNetwork', () => {
             it('should revert when attempting to request a flash-loan of more than the pool has', async () => {
                 await expect(
                     network.flashLoan(token.address, BALANCE.add(1), recipient.address, ZERO_BYTES)
-                ).to.be.revertedWith('ERC20: transfer amount exceeds balance');
+                ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsBalance);
             });
 
             context('when paused', () => {
