@@ -460,13 +460,13 @@ describe('BancorPortal', () => {
     });
 
     // it is assumed SushiSwap is identical to Uniswap and therefore already tested
-    // this block is intended to verify the existance of a SushiSwap external function, and its I/O signature
+    // this block is intended to verify the existence of a SushiSwap external function, and its I/O signature
     describe('SushiSwap', () => {
         beforeEach(async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
         });
 
-        it('emits a SushiSwap event post succesful SushiSwap migration', async () => {
+        it('emits a SushiSwap event post successful SushiSwap migration', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
             await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
