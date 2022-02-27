@@ -116,7 +116,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     mapping(Token => uint256) private _unclaimedRewards;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 11] private __gap;
+    uint256[MAX_GAP - 9] private __gap;
 
     /**
      * @dev triggered when a program is created
