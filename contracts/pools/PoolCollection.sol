@@ -591,21 +591,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         // mint pool tokens to the provider
         data.poolToken.mint(provider, poolTokenAmount);
 
-        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
-        // ensure that the BNT trading liquidity is above the minimum liquidity for trading
-        if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading || !data.averageRate.rate.isPositive()) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-        } else {
-            // adjust the trading liquidity based on the base token vault balance and funding limits
-            _updateTradingLiquidity(
-                contextId,
-                pool,
-                data,
-                data.liquidity,
-                data.averageRate.rate.fromFraction112(),
-                minLiquidityForTrading
-            );
-        }
+        // adjust the trading liquidity based on the base token vault balance and funding limits
+        _updateTradingLiquidity(
+            contextId,
+            pool,
+            data,
+            data.liquidity,
+            data.averageRate.rate.fromFraction112(),
+            _networkSettings.minLiquidityForTrading()
+        );
 
         emit TokenDeposited({
             contextId: contextId,
@@ -1042,6 +1036,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
+        bool isFundingRateValid = fundingRate.isPositive();
+
+        // ensure that the BNT trading liquidity is above the minimum liquidity for trading
+        if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+
+            return;
+        }
+
         // ensure that the base token reserve isn't empty
         uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
         if (tokenReserveAmount == 0) {
@@ -1051,6 +1054,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         }
 
         if (_poolRateState(liquidity, data.averageRate) == PoolRateState.Unstable) {
+            return;
+        }
+
+        if (!isFundingRateValid) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+
             return;
         }
 
