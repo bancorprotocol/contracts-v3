@@ -1038,8 +1038,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     ) private {
         bool isFundingRateValid = fundingRate.isPositive();
 
-        // ensure that the BNT trading liquidity is above the minimum liquidity for trading
-        if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
+        // if we aren't bootstrapping the pool, ensure that the BNT trading liquidity is above the minimum liquidity for
+        // trading
+        if (liquidity.bntTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
