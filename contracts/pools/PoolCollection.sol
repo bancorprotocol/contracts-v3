@@ -604,7 +604,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
         // ensure that the BNT trading liquidity is above the minimum liquidity for trading
-        if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading) {
+        if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading || !data.averageRate.rate.isPositive()) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
         } else {
             // adjust the trading liquidity based on the base token vault balance and funding limits
@@ -1062,12 +1062,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         }
 
         if (_poolRateState(liquidity, data.averageRate) == PoolRateState.Unstable) {
-            return;
-        }
-
-        if (!fundingRate.isPositive()) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
             return;
         }
 
