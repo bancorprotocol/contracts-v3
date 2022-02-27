@@ -492,9 +492,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             revert AlreadyEnabled();
         }
 
-        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
-
         // adjust the trading liquidity based on the base token vault balance and funding limits
+        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
         _updateTradingLiquidity(bytes32(0), pool, data, data.liquidity, fundingRate, minLiquidityForTrading);
 
         // verify that the BNT trading liquidity is equal or greater than the minimum liquidity for trading
@@ -597,7 +596,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             pool,
             data,
             data.liquidity,
-            data.averageRate.rate.fromFraction112(),
+            zeroFraction(),
             _networkSettings.minLiquidityForTrading()
         );
 
@@ -1058,7 +1057,13 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        if (!isFundingRateValid) {
+        // figure out the effective funding rate
+        Fraction memory effectiveFundingRate;
+        if (isFundingRateValid) {
+            effectiveFundingRate = fundingRate;
+        } else if (data.averageRate.rate.isValid()) {
+            effectiveFundingRate = data.averageRate.rate.fromFraction112();
+        } else {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
@@ -1071,7 +1076,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 targetBNTTradingLiquidity = Math.min(
             Math.min(
                 _networkSettings.poolFundingLimit(pool),
-                MathEx.mulDivF(tokenReserveAmount, fundingRate.n, fundingRate.d)
+                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
             ),
             liquidity.bntTradingLiquidity + _bntPool.availableFunding(pool)
         );
@@ -1118,7 +1123,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // calculate the base token trading liquidity based on the new BNT trading liquidity and the effective
         // funding rate (please note that the effective funding rate is always the rate between BNT and the base token)
-        uint256 baseTokenTradingLiquidity = MathEx.mulDivF(targetBNTTradingLiquidity, fundingRate.d, fundingRate.n);
+        uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
+            targetBNTTradingLiquidity,
+            effectiveFundingRate.d,
+            effectiveFundingRate.n
+        );
 
         // update the liquidity data of the pool
         PoolLiquidity memory newLiquidity = PoolLiquidity({
