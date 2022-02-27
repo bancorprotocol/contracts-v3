@@ -1,4 +1,4 @@
-import { NamedAccounts, ExternalContracts } from './deployments/data';
+import { ExternalContracts, NamedAccounts } from './deployments/data';
 import './test/Setup';
 import { DeploymentNetwork } from './utils/Constants';
 import '@nomiclabs/hardhat-ethers';
@@ -67,7 +67,7 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        [DeploymentNetwork.HARDHAT]: isForking
+        [DeploymentNetwork.Hardhat]: isForking
             ? /* eslint-disable indent */
               {
                   forking: {
@@ -87,13 +87,13 @@ const config: HardhatUserConfig = {
                   live: false
               },
         /* eslint-enable indent */
-        [DeploymentNetwork.LOCALHOST]: {
+        [DeploymentNetwork.Localhost]: {
             chainId: 31337,
             url: 'http://127.0.0.1:8545',
             saveDeployments: false,
             live: false
         },
-        [DeploymentNetwork.MAINNET]: {
+        [DeploymentNetwork.Mainnet]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
             saveDeployments: true,
