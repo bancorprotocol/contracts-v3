@@ -140,7 +140,6 @@ library TokenLibrary {
         uint256 deadline,
         Signature memory signature
     ) internal {
-        // neither BNT nor ETH support EIP2612 permit requests
         if (isNative(token)) {
             revert PermitUnsupported();
         }
