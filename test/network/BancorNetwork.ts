@@ -1541,7 +1541,9 @@ describe('BancorNetwork', () => {
                                 context(`${amount} tokens`, () => {
                                     if (tokenData.isBNT() || tokenData.isNative()) {
                                         it('should revert when attempting to deposit', async () => {
-                                            await expect(deposit(amount)).to.be.revertedWith('PermitUnsupported');
+                                            await expect(deposit(amount)).to.be.revertedWith(
+                                                tokenData.isNative() ? 'PermitUnsupported' : ''
+                                            );
                                         });
 
                                         return;
@@ -2627,7 +2629,9 @@ describe('BancorNetwork', () => {
 
                             if (isSourceNativeToken || isSourceBNT) {
                                 it('should revert when attempting a permitted trade', async () => {
-                                    await expect(tradeFunc(amount)).to.be.revertedWith('PermitUnsupported');
+                                    await expect(tradeFunc(amount)).to.be.revertedWith(
+                                        isSourceNativeToken ? 'PermitUnsupported' : ''
+                                    );
                                 });
                             } else {
                                 it('should complete a permitted trade', async () => {
