@@ -389,18 +389,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function isPoolRateStable(Token pool) external view returns (bool) {
-        Pool memory data = _poolData[pool];
-        if (!_validPool(data)) {
-            return false;
-        }
-
-        return _poolRateState(data.liquidity, data.averageRate) == PoolRateState.Stable;
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
     function poolData(Token pool) external view returns (Pool memory) {
         return _poolData[pool];
     }
@@ -1435,7 +1423,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
      * @dev returns the state of a pool's rate
      */
     function _poolRateState(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
-        private
+        internal
         view
         returns (PoolRateState)
     {
