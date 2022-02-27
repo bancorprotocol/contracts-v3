@@ -492,8 +492,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             revert AlreadyEnabled();
         }
 
-        // adjust the trading liquidity based on the base token vault balance and funding limits
         uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
+
+        // adjust the trading liquidity based on the base token vault balance and funding limits
         _updateTradingLiquidity(bytes32(0), pool, data, data.liquidity, fundingRate, minLiquidityForTrading);
 
         // verify that the BNT trading liquidity is equal or greater than the minimum liquidity for trading
