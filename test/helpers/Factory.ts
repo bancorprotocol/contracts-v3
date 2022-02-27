@@ -83,22 +83,46 @@ export const createProxy = async <F extends ContractFactory>(
 
 const getDeployer = async () => (await ethers.getSigners())[0];
 
-export const createStakingRewards = async (
+export const createAutoCompoundingStakingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bnt: IERC20,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+    const stakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
         ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address]
     });
 
-    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
+    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, stakingRewards.address);
 
-    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, autoCompoundingStakingRewards.address);
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
 
-    return autoCompoundingStakingRewards;
+    return stakingRewards;
+};
+
+export const createStandardStakingRewards = async (
+    network: TestBancorNetwork | BancorNetwork,
+    networkSettings: NetworkSettings,
+    bntGovernance: TokenGovernance,
+    bntPool: TestBNTPool | BNTPool,
+    externalRewardsVault: ExternalRewardsVault
+) => {
+    const stakingRewards = await createProxy(Contracts.TestStandardStakingRewards, {
+        ctorArgs: [
+            network.address,
+            networkSettings.address,
+            bntGovernance.address,
+            bntPool.address,
+            externalRewardsVault.address
+        ]
+    });
+
+    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, stakingRewards.address);
+
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
+
+    return stakingRewards;
 };
 
 const createGovernedToken = async (

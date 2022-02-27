@@ -27,8 +27,8 @@ import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import {
+    createAutoCompoundingStakingRewards,
     createPool,
-    createStakingRewards,
     createSystem,
     createTestToken,
     createToken,
@@ -1246,7 +1246,7 @@ describe('Profile @profile', () => {
 
                 rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
 
-                autoCompoundingStakingRewards = await createStakingRewards(
+                autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
                     network,
                     networkSettings,
                     bnt,
