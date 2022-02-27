@@ -1053,7 +1053,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        if (_poolRateState(liquidity, data.averageRate) == PoolRateState.Unstable) {
+        AverageRate memory averageRate = data.averageRate;
+        if (_poolRateState(liquidity, averageRate) == PoolRateState.Unstable) {
             return;
         }
 
@@ -1061,8 +1062,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory effectiveFundingRate;
         if (isFundingRateValid) {
             effectiveFundingRate = fundingRate;
-        } else if (data.averageRate.rate.isValid()) {
-            effectiveFundingRate = data.averageRate.rate.fromFraction112();
+        } else if (averageRate.rate.isValid()) {
+            effectiveFundingRate = averageRate.rate.fromFraction112();
         } else {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
