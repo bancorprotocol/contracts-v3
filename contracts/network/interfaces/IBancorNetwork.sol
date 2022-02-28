@@ -83,30 +83,30 @@ interface IBancorNetwork is IUpgradeable {
     function upgradePools(Token[] calldata pools) external;
 
     /**
-     * @dev deposits liquidity for the specified provider
+     * @dev deposits liquidity for the specified provider and returns the respective pool token amount
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the liquidity tokens on its behalf
+     * - the caller must have approved the network to transfer the tokens on its behalf (ETH is handled separately)
      */
     function depositFor(
         address provider,
         Token pool,
         uint256 tokenAmount
-    ) external payable;
+    ) external payable returns (uint256);
 
     /**
-     * @dev deposits liquidity for the current provider
+     * @dev deposits liquidity for the current provider and returns the respective pool token amount
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the liquidity tokens on its behalf
+     * - the caller must have approved the network to transfer the tokens on its behalf (ETH is handled separately)
      */
-    function deposit(Token pool, uint256 tokenAmount) external payable;
+    function deposit(Token pool, uint256 tokenAmount) external payable returns (uint256);
 
     /**
      * @dev deposits liquidity for the specified provider by providing an EIP712 typed signature for an EIP2612 permit
-     * request
+     * request and returns the respective pool token amount
      *
      * requirements:
      *
@@ -120,11 +120,11 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    ) external returns (uint256);
 
     /**
-     * @dev deposits liquidity by providing an EIP712 typed signature for an EIP2612 permit
-     * request
+     * @dev deposits liquidity by providing an EIP712 typed signature for an EIP2612 permit request and returns the
+     * respective pool token amount
      *
      * requirements:
      *
@@ -137,10 +137,10 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    ) external returns (uint256);
 
     /**
-     * @dev withdraws liquidity
+     * @dev withdraws liquidity and returns the withdrawn amount
      *
      * requirements:
      *
@@ -149,7 +149,7 @@ interface IBancorNetwork is IUpgradeable {
      * - the provider must have approved the network to transfer VBNT amount on its behalf, when withdrawing BNT
      * liquidity
      */
-    function withdraw(uint256 id) external;
+    function withdraw(uint256 id) external returns (uint256);
 
     /**
      * @dev performs a trade by providing the input source amount

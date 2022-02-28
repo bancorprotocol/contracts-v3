@@ -23,6 +23,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 // prettier-ignore
 import {
     IBNTPool,
+    ROLE_BNT_POOL_TOKEN_MANAGER,
     ROLE_BNT_MANAGER,
     ROLE_VAULT_MANAGER,
     ROLE_FUNDING_MANAGER
@@ -51,9 +52,6 @@ contract BNTPool is IBNTPool, Vault {
         uint256 bntAmount;
         uint256 withdrawalFeeAmount;
     }
-
-    // the BNT pool token manager role is required to access the BNT pool token reserve
-    bytes32 private constant ROLE_BNT_POOL_TOKEN_MANAGER = keccak256("ROLE_BNT_POOL_TOKEN_MANAGER");
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -338,7 +336,7 @@ contract BNTPool is IBNTPool, Vault {
         uint256 bntAmount,
         bool isMigrating,
         uint256 originalVBNTAmount
-    ) external only(address(_network)) validAddress(provider) greaterThanZero(bntAmount) {
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(bntAmount) returns (uint256) {
         // calculate the pool token amount to transfer
         uint256 poolTokenAmount = _underlyingToPoolToken(bntAmount);
 
@@ -370,6 +368,8 @@ contract BNTPool is IBNTPool, Vault {
             poolTokenAmount: poolTokenAmount,
             vbntAmount: vbntAmount
         });
+
+        return poolTokenAmount;
     }
 
     /**
@@ -379,7 +379,7 @@ contract BNTPool is IBNTPool, Vault {
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
-    ) external only(address(_network)) greaterThanZero(poolTokenAmount) validAddress(provider) {
+    ) external only(address(_network)) greaterThanZero(poolTokenAmount) validAddress(provider) returns (uint256) {
         WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
@@ -399,6 +399,8 @@ contract BNTPool is IBNTPool, Vault {
             vbntAmount: poolTokenAmount,
             withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
+
+        return amounts.bntAmount;
     }
 
     /**
