@@ -596,14 +596,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         data.poolToken.mint(provider, poolTokenAmount);
 
         // adjust the trading liquidity based on the base token vault balance and funding limits
-        _updateTradingLiquidity(
-            contextId,
-            pool,
-            data,
-            data.liquidity,
-            zeroFraction(),
-            _networkSettings.minLiquidityForTrading()
-        );
+        _updateTradingLiquidity(contextId, pool, data, data.liquidity, _networkSettings.minLiquidityForTrading());
 
         emit TokenDeposited({
             contextId: contextId,
@@ -1037,7 +1030,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 poolFundingLimit,
         uint256 availableFunding,
         PoolLiquidity memory liquidity,
-        Fraction memory effectiveFundingRate,
+        Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private pure returns (TradingLiquidityAction memory) {
         // calculate the target BNT trading liquidity based on the smaller between the following:
@@ -1045,10 +1038,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         // - BNT liquidity required to match previously deposited based token liquidity
         // - maximum available BNT trading liquidity (current amount + available funding)
         uint256 targetBNTTradingLiquidity = Math.min(
-            Math.min(
-                poolFundingLimit,
-                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
-            ),
+            Math.min(poolFundingLimit, MathEx.mulDivF(tokenReserveAmount, fundingRate.n, fundingRate.d)),
             liquidity.bntTradingLiquidity + availableFunding
         );
 
@@ -1094,19 +1084,36 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token pool,
         Pool storage data,
         PoolLiquidity memory liquidity,
-        Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
-        bool isFundingRateValid = fundingRate.isPositive();
-
-        // if we aren't bootstrapping the pool, ensure that the BNT trading liquidity is above the minimum liquidity for
-        // trading
-        if (liquidity.bntTradingLiquidity < minLiquidityForTrading && !isFundingRateValid) {
+        // ensure that the BNT trading liquidity is above the minimum liquidity for trading
+        if (liquidity.bntTradingLiquidity < minLiquidityForTrading) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
 
+        _updateTradingLiquidity(
+            contextId,
+            pool,
+            data,
+            liquidity,
+            data.averageRate.rate.fromFraction112(),
+            minLiquidityForTrading
+        );
+    }
+
+    /**
+     * @dev adjusts the trading liquidity based on the base token vault balance and funding limits
+     */
+    function _updateTradingLiquidity(
+        bytes32 contextId,
+        Token pool,
+        Pool storage data,
+        PoolLiquidity memory liquidity,
+        Fraction memory fundingRate,
+        uint256 minLiquidityForTrading
+    ) private {
         // ensure that the base token reserve isn't empty
         uint256 tokenReserveAmount = pool.balanceOf(address(_masterVault));
         if (tokenReserveAmount == 0) {
@@ -1115,18 +1122,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        AverageRate memory averageRate = data.averageRate;
-        if (_poolRateState(liquidity, averageRate) == PoolRateState.Unstable) {
+        if (_poolRateState(liquidity, data.averageRate) == PoolRateState.Unstable) {
             return;
         }
 
-        // figure out the effective funding rate
-        Fraction memory effectiveFundingRate;
-        if (isFundingRateValid) {
-            effectiveFundingRate = fundingRate;
-        } else if (averageRate.rate.isPositive()) {
-            effectiveFundingRate = averageRate.rate.fromFraction112();
-        } else {
+        if (!fundingRate.isPositive()) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
@@ -1137,7 +1137,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             _networkSettings.poolFundingLimit(pool),
             _bntPool.availableFunding(pool),
             liquidity,
-            effectiveFundingRate,
+            fundingRate,
             minLiquidityForTrading
         );
 
@@ -1160,11 +1160,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // calculate the base token trading liquidity based on the new BNT trading liquidity and the effective
         // funding rate (please note that the effective funding rate is always the rate between BNT and the base token)
-        uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
-            action.newAmount,
-            effectiveFundingRate.d,
-            effectiveFundingRate.n
-        );
+        uint256 baseTokenTradingLiquidity = MathEx.mulDivF(action.newAmount, fundingRate.d, fundingRate.n);
 
         // update the liquidity data of the pool
         PoolLiquidity memory newLiquidity = PoolLiquidity({
