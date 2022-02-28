@@ -1,6 +1,7 @@
 import Contracts, { PoolToken, TestERC20Token } from '../../components/Contracts';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
 import { domainSeparator, permitCustomSignature } from '../../utils/Permit';
+import { createTestToken } from '../helpers/Factory';
 import { duration, latest } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -24,7 +25,7 @@ describe('PoolToken', () => {
     });
 
     beforeEach(async () => {
-        reserveToken = await Contracts.TestERC20Token.deploy('ERC', 'ERC', 1_000_000);
+        reserveToken = await createTestToken();
     });
 
     describe('construction', () => {
