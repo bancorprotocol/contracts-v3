@@ -67,6 +67,12 @@ struct WithdrawalAmounts {
     uint256 newBNTTradingLiquidity; // new BNT trading liquidity
 }
 
+enum PoolRateState {
+    Uninitialized,
+    Unstable,
+    Stable
+}
+
 /**
  * @dev Pool Collection contract
  *
@@ -378,18 +384,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
      */
     function isPoolValid(Token pool) external view returns (bool) {
         return _validPool(_poolData[pool]);
-    }
-
-    /**
-     * @inheritdoc IPoolCollection
-     */
-    function isPoolRateStable(Token pool) external view returns (bool) {
-        Pool memory data = _poolData[pool];
-        if (!_validPool(data)) {
-            return false;
-        }
-
-        return _isPoolRateStable(data.liquidity, data.averageRate);
     }
 
     /**
@@ -895,13 +889,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         PoolLiquidity memory prevLiquidity = liquidity;
         AverageRate memory averageRate = data.averageRate;
 
-        if (
-            prevLiquidity.bntTradingLiquidity != 0 &&
-            prevLiquidity.baseTokenTradingLiquidity != 0 &&
-            averageRate.blockNumber != 0 &&
-            averageRate.rate.isPositive() &&
-            !_isPoolRateStable(prevLiquidity, averageRate)
-        ) {
+        if (_poolRateState(prevLiquidity, averageRate) == PoolRateState.Unstable) {
             revert RateUnstable();
         }
 
@@ -1065,15 +1053,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        // try to check whether the pool is stable (when both reserves and the average rate are available)
         AverageRate memory averageRate = data.averageRate;
-        bool isAverageRateValid = averageRate.blockNumber != 0 && averageRate.rate.isPositive();
-        if (
-            liquidity.bntTradingLiquidity != 0 &&
-            liquidity.baseTokenTradingLiquidity != 0 &&
-            isAverageRateValid &&
-            !_isPoolRateStable(liquidity, averageRate)
-        ) {
+        if (_poolRateState(liquidity, averageRate) == PoolRateState.Unstable) {
             return;
         }
 
@@ -1081,7 +1062,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory effectiveFundingRate;
         if (isFundingRateValid) {
             effectiveFundingRate = fundingRate;
-        } else if (isAverageRateValid) {
+        } else if (averageRate.rate.isPositive()) {
             effectiveFundingRate = averageRate.rate.fromFraction112();
         } else {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
@@ -1460,12 +1441,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev returns whether a pool's rate is stable
+     * @dev returns the state of a pool's rate
      */
-    function _isPoolRateStable(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
-        private
+    function _poolRateState(PoolLiquidity memory liquidity, AverageRate memory averageRateInfo)
+        internal
         view
-        returns (bool)
+        returns (PoolRateState)
     {
         Fraction memory spotRate = Fraction({
             n: liquidity.bntTradingLiquidity,
@@ -1473,11 +1454,20 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         });
 
         Fraction112 memory averageRate = averageRateInfo.rate;
+
+        if (!spotRate.isPositive() || !averageRate.isPositive()) {
+            return PoolRateState.Uninitialized;
+        }
+
         if (averageRateInfo.blockNumber != _blockNumber()) {
             averageRate = _calcAverageRate(averageRate, spotRate);
         }
 
-        return MathEx.isInRange(averageRate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM);
+        if (MathEx.isInRange(averageRate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM)) {
+            return PoolRateState.Stable;
+        }
+
+        return PoolRateState.Unstable;
     }
 
     /**
