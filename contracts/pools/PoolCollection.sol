@@ -69,7 +69,7 @@ struct WithdrawalAmounts {
 
 struct TradingLiquidityAction {
     bool update;
-    uint256 targetBNTTradingLiquidity;
+    uint256 newAmount;
 }
 
 enum PoolRateState {
@@ -1054,7 +1054,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // ensure that the target is above the minimum liquidity for trading
         if (targetBNTTradingLiquidity < minLiquidityForTrading) {
-            return TradingLiquidityAction({ update: true, targetBNTTradingLiquidity: 0 });
+            return TradingLiquidityAction({ update: true, newAmount: 0 });
         }
 
         // calculate the new BNT trading liquidity and cap it by the growth factor
@@ -1065,7 +1065,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
             // ensure that we're not allocating more than the previously established limits
             if (newTargetBNTTradingLiquidity > targetBNTTradingLiquidity) {
-                return TradingLiquidityAction({ update: false, targetBNTTradingLiquidity: 0 });
+                return TradingLiquidityAction({ update: false, newAmount: 0 });
             }
 
             targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
@@ -1083,7 +1083,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             );
         }
 
-        return TradingLiquidityAction({ update: true, targetBNTTradingLiquidity: targetBNTTradingLiquidity });
+        return TradingLiquidityAction({ update: true, newAmount: targetBNTTradingLiquidity });
     }
 
     /**
@@ -1145,30 +1145,30 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        if (action.targetBNTTradingLiquidity == 0) {
+        if (action.newAmount == 0) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
 
         // update funding from the BNT pool
-        if (action.targetBNTTradingLiquidity > liquidity.bntTradingLiquidity) {
-            _bntPool.requestFunding(contextId, pool, action.targetBNTTradingLiquidity - liquidity.bntTradingLiquidity);
-        } else if (action.targetBNTTradingLiquidity < liquidity.bntTradingLiquidity) {
-            _bntPool.renounceFunding(contextId, pool, liquidity.bntTradingLiquidity - action.targetBNTTradingLiquidity);
+        if (action.newAmount > liquidity.bntTradingLiquidity) {
+            _bntPool.requestFunding(contextId, pool, action.newAmount - liquidity.bntTradingLiquidity);
+        } else if (action.newAmount < liquidity.bntTradingLiquidity) {
+            _bntPool.renounceFunding(contextId, pool, liquidity.bntTradingLiquidity - action.newAmount);
         }
 
         // calculate the base token trading liquidity based on the new BNT trading liquidity and the effective
         // funding rate (please note that the effective funding rate is always the rate between BNT and the base token)
         uint256 baseTokenTradingLiquidity = MathEx.mulDivF(
-            action.targetBNTTradingLiquidity,
+            action.newAmount,
             effectiveFundingRate.d,
             effectiveFundingRate.n
         );
 
         // update the liquidity data of the pool
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: action.targetBNTTradingLiquidity,
+            bntTradingLiquidity: action.newAmount,
             baseTokenTradingLiquidity: baseTokenTradingLiquidity,
             stakedBalance: liquidity.stakedBalance
         });
