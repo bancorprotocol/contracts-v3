@@ -19,7 +19,6 @@ import 'solidity-coverage';
 interface EnvOptions {
     CI?: boolean;
     PROFILE?: boolean;
-    BAIL?: boolean;
     ETHEREUM_PROVIDER_URL: string;
     ETHERSCAN_API_KEY?: string;
     FORKING?: boolean;
@@ -28,7 +27,6 @@ interface EnvOptions {
 const {
     CI: isCI,
     PROFILE: isProfiling,
-    BAIL,
     ETHEREUM_PROVIDER_URL = '',
     ETHERSCAN_API_KEY,
     FORKING: isForking
@@ -58,7 +56,7 @@ const mochaOptions = (): MochaOptions => {
     return {
         timeout,
         color: true,
-        bail: BAIL,
+        bail: true,
         grep,
         invert,
         reporter

@@ -13,7 +13,7 @@ import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
-import { PoolCollection, Pool, PoolLiquidity, WithdrawalAmounts } from "../pools/PoolCollection.sol";
+import { PoolCollection, Pool, PoolLiquidity, WithdrawalAmounts, PoolRateState } from "../pools/PoolCollection.sol";
 import { AverageRate } from "../pools/interfaces/IPoolCollection.sol";
 
 import { BlockNumber } from "../utility/BlockNumber.sol";
@@ -84,6 +84,11 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         uint256 bntAmount
     ) external {
         _bntPool.requestFunding(contextId, pool, bntAmount);
+    }
+
+    function isPoolRateStable(Token pool) external view returns (bool) {
+        Pool memory data = _poolData[pool];
+        return _poolRateState(data.liquidity, data.averageRate) == PoolRateState.Stable;
     }
 
     function _blockNumber() internal view virtual override(BlockNumber, TestBlockNumber) returns (uint32) {
