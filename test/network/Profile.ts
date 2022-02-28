@@ -23,7 +23,7 @@ import {
     StakingRewardsDistributionType,
     ZERO_ADDRESS
 } from '../../utils/Constants';
-import { permitContractSignature } from '../../utils/Permit';
+import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import {
@@ -298,7 +298,7 @@ describe('Profile @profile', () => {
                             const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
                                 const { poolAddress = token.address } = overrides;
 
-                                const signature = await permitContractSignature(
+                                const signature = await permitSignature(
                                     sender,
                                     poolAddress,
                                     network,
@@ -713,14 +713,7 @@ describe('Profile @profile', () => {
                 approvedAmount = amount
             } = overrides;
 
-            const signature = await permitContractSignature(
-                trader,
-                sourceTokenAddress,
-                network,
-                bnt,
-                approvedAmount,
-                deadline
-            );
+            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
             return network
                 .connect(trader)
@@ -755,14 +748,7 @@ describe('Profile @profile', () => {
             );
             approvedAmount ||= maxSourceAmount;
 
-            const signature = await permitContractSignature(
-                trader,
-                sourceTokenAddress,
-                network,
-                bnt,
-                approvedAmount,
-                deadline
-            );
+            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
             return network
                 .connect(trader)
@@ -1156,7 +1142,7 @@ describe('Profile @profile', () => {
         });
 
         it('should initiate a permitted withdrawal request', async () => {
-            const signature = await permitContractSignature(
+            const signature = await permitSignature(
                 provider as Wallet,
                 poolToken.address,
                 network,

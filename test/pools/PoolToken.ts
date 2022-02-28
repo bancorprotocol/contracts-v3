@@ -1,6 +1,6 @@
 import Contracts, { PoolToken, TestERC20Token } from '../../components/Contracts';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
-import { domainSeparator, permitSignature } from '../../utils/Permit';
+import { domainSeparator, permitCustomSignature } from '../../utils/Permit';
 import { duration, latest } from '../helpers/Time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -83,7 +83,7 @@ describe('PoolToken', () => {
 
         it('should permit', async () => {
             const amount = BigNumber.from(1000);
-            const { v, r, s } = await permitSignature(
+            const { v, r, s } = await permitCustomSignature(
                 wallet,
                 NAME,
                 poolToken.address,
@@ -101,7 +101,7 @@ describe('PoolToken', () => {
 
         it('should reject a reused signature', async () => {
             const amount = BigNumber.from(100);
-            const { v, r, s } = await permitSignature(
+            const { v, r, s } = await permitCustomSignature(
                 wallet,
                 NAME,
                 poolToken.address,
@@ -121,7 +121,7 @@ describe('PoolToken', () => {
         it('should reject an invalid signature', async () => {
             const amount = BigNumber.from(222);
             const otherWallet = Wallet.createRandom();
-            const { v, r, s } = await permitSignature(
+            const { v, r, s } = await permitCustomSignature(
                 otherWallet,
                 NAME,
                 poolToken.address,
@@ -139,7 +139,7 @@ describe('PoolToken', () => {
         it('should reject an expired permit', async () => {
             const amount = BigNumber.from(500);
             const deadline = (await latest()) - duration.weeks(1);
-            const { v, r, s } = await permitSignature(
+            const { v, r, s } = await permitCustomSignature(
                 wallet,
                 NAME,
                 poolToken.address,

@@ -2,7 +2,7 @@
 pragma solidity 0.8.11;
 
 /**
- * @dev Burnable ERC20 interface
+ * @dev burnable ERC20 interface
  */
 interface IERC20Burnable {
     /**

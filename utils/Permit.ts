@@ -1,9 +1,10 @@
 import Contracts, { IERC20 } from '../components/Contracts';
 import { MAX_UINT256, ZERO_ADDRESS } from './Constants';
 import { NATIVE_TOKEN_ADDRESS } from './TokenData';
-import { TypedDataUtils, SignTypedDataVersion, signTypedData } from '@metamask/eth-sig-util';
+import { Addressable } from './Types';
+import { signTypedData, SignTypedDataVersion, TypedDataUtils } from '@metamask/eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
-import { BigNumber, BigNumberish, Wallet, BaseContract, utils } from 'ethers';
+import { BigNumber, BigNumberish, utils, Wallet } from 'ethers';
 
 const { formatBytes32String } = utils;
 
@@ -53,7 +54,7 @@ export const permitData = (
     message: { owner, spender, value: amount.toString(), nonce: nonce.toString(), deadline: deadline.toString() }
 });
 
-export const permitSignature = async (
+export const permitCustomSignature = async (
     wallet: Wallet,
     name: string,
     verifyingContract: string,
@@ -71,15 +72,19 @@ export const permitSignature = async (
     return fromRpcSig(signature);
 };
 
-export const permitContractSignature = async (
-    sender: Wallet,
+export const permitSignature = async (
+    owner: Wallet,
     tokenAddress: string,
-    contract: BaseContract,
-    bnt: IERC20,
+    spender: Addressable,
+    bnt: undefined | IERC20,
     amount: BigNumberish,
     deadline: BigNumberish
 ) => {
-    if (tokenAddress === NATIVE_TOKEN_ADDRESS || tokenAddress === ZERO_ADDRESS || tokenAddress === bnt.address) {
+    if (
+        tokenAddress === NATIVE_TOKEN_ADDRESS ||
+        tokenAddress === ZERO_ADDRESS ||
+        (bnt && tokenAddress === bnt.address)
+    ) {
         return {
             v: 0,
             r: formatBytes32String(''),
@@ -88,15 +93,15 @@ export const permitContractSignature = async (
     }
 
     const reserveToken = await Contracts.TestERC20Token.attach(tokenAddress);
-    const senderAddress = await sender.getAddress();
+    const ownerAddress = await owner.getAddress();
 
-    const nonce = await reserveToken.nonces(senderAddress);
+    const nonce = await reserveToken.nonces(ownerAddress);
 
-    return permitSignature(
-        sender,
+    return permitCustomSignature(
+        owner,
         await reserveToken.name(),
         reserveToken.address,
-        contract.address,
+        spender.address,
         BigNumber.from(amount),
         nonce.toNumber(),
         BigNumber.from(deadline)

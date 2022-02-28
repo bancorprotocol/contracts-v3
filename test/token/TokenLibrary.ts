@@ -1,8 +1,9 @@
 import Contracts, { TestTokenLibrary } from '../../components/Contracts';
-import { ZERO_ADDRESS } from '../../utils/Constants';
+import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
+import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { createToken } from '../helpers/Factory';
-import { getBalance } from '../helpers/Utils';
+import { createWallet, getBalance, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -15,7 +16,6 @@ describe('TokenLibrary', () => {
     let deployer: SignerWithAddress;
     let recipient: SignerWithAddress;
     let spender: SignerWithAddress;
-    let sender: string;
 
     before(async () => {
         [deployer, recipient, spender] = await ethers.getSigners();
@@ -23,7 +23,6 @@ describe('TokenLibrary', () => {
 
     beforeEach(async () => {
         tokenLibrary = await Contracts.TestTokenLibrary.deploy();
-        sender = tokenLibrary.address;
     });
 
     for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
@@ -33,15 +32,6 @@ describe('TokenLibrary', () => {
         context(`${symbol} reserve token`, () => {
             beforeEach(async () => {
                 token = await createToken(tokenData, TOTAL_SUPPLY);
-
-                if (tokenData.isNative()) {
-                    await deployer.sendTransaction({
-                        to: tokenLibrary.address,
-                        value: TOTAL_SUPPLY / 2
-                    });
-                } else {
-                    await token.transfer(sender, TOTAL_SUPPLY / 2);
-                }
             });
 
             it('should properly check if the reserve token is a native token', async () => {
@@ -66,54 +56,119 @@ describe('TokenLibrary', () => {
             });
 
             it('should properly get the right balance', async () => {
-                expect(await tokenLibrary.balanceOf(token.address, sender)).to.equal(await getBalance(token, sender));
+                expect(await tokenLibrary.balanceOf(token.address, deployer.address)).to.equal(
+                    await getBalance(token, deployer)
+                );
             });
 
             for (const amount of [0, 10_000]) {
+                beforeEach(async () => {
+                    await transfer(deployer, token, tokenLibrary.address, amount);
+                });
+
                 it('should properly transfer the reserve token', async () => {
-                    const prevSenderBalance = await getBalance(token, sender);
+                    const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                     const prevRecipientBalance = await getBalance(token, recipient);
 
                     await tokenLibrary.safeTransfer(token.address, recipient.address, amount);
 
-                    expect(await getBalance(token, sender)).to.equal(prevSenderBalance.sub(amount));
+                    expect(await getBalance(token, tokenLibrary.address)).to.equal(prevLibraryBalance.sub(amount));
                     expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance.add(amount));
                 });
             }
 
             if (tokenData.isNative()) {
                 it('should ignore the request to transfer the reserve token on behalf of a different account', async () => {
-                    const prevSenderBalance = await getBalance(token, sender);
+                    const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                     const prevRecipientBalance = await getBalance(token, recipient);
 
                     const amount = 100_000;
-                    await tokenLibrary.ensureApprove(token.address, sender, amount);
-                    await tokenLibrary.safeTransferFrom(token.address, sender, recipient.address, amount);
+                    await tokenLibrary.ensureApprove(token.address, tokenLibrary.address, amount);
+                    await tokenLibrary.safeTransferFrom(token.address, tokenLibrary.address, recipient.address, amount);
 
-                    expect(await getBalance(token, sender)).to.equal(prevSenderBalance);
+                    expect(await getBalance(token, tokenLibrary.address)).to.equal(prevLibraryBalance);
                     expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance);
+                });
+
+                it('should revert when attempting to set the allowance via permit', async () => {
+                    const allowance = 1_000_000;
+
+                    const signer = await createWallet();
+                    const signature = await permitSignature(
+                        signer,
+                        token.address,
+                        spender,
+                        undefined,
+                        allowance,
+                        MAX_UINT256
+                    );
+
+                    await expect(
+                        tokenLibrary.permit(
+                            token.address,
+                            signer.address,
+                            spender.address,
+                            allowance,
+                            MAX_UINT256,
+                            signature
+                        )
+                    ).to.be.revertedWith('PermitUnsupported');
                 });
             } else {
                 for (const amount of [0, 10_000]) {
+                    beforeEach(async () => {
+                        await transfer(deployer, token, tokenLibrary.address, amount);
+                    });
+
                     it('should properly transfer the reserve token on behalf of a different account', async () => {
-                        const prevSenderBalance = await getBalance(token, sender);
+                        const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                         const prevRecipientBalance = await getBalance(token, recipient);
 
-                        await tokenLibrary.ensureApprove(token.address, sender, amount);
-                        await tokenLibrary.safeTransferFrom(token.address, sender, recipient.address, amount);
+                        await tokenLibrary.ensureApprove(token.address, tokenLibrary.address, amount);
+                        await tokenLibrary.safeTransferFrom(
+                            token.address,
+                            tokenLibrary.address,
+                            recipient.address,
+                            amount
+                        );
 
-                        expect(await getBalance(token, sender)).to.equal(prevSenderBalance.sub(amount));
+                        expect(await getBalance(token, tokenLibrary.address)).to.equal(prevLibraryBalance.sub(amount));
                         expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance.add(amount));
                     });
-
-                    it('should setting the allowance', async () => {
-                        const allowance = 1_000_000;
-
-                        await tokenLibrary.ensureApprove(token.address, spender.address, allowance);
-
-                        expect(await token.allowance(sender, spender.address)).to.equal(allowance);
-                    });
                 }
+
+                it('should allow setting the allowance', async () => {
+                    const allowance = 1_000_000;
+
+                    await tokenLibrary.ensureApprove(token.address, spender.address, allowance);
+
+                    expect(await token.allowance(tokenLibrary.address, spender.address)).to.equal(allowance);
+                });
+
+                it('should allow setting the allowance via permit', async () => {
+                    const allowance = 1_000_000;
+
+                    const signer = await createWallet();
+                    const signature = await permitSignature(
+                        signer,
+                        token.address,
+                        spender,
+                        undefined,
+                        allowance,
+                        MAX_UINT256
+                    );
+
+                    await tokenLibrary.permit(
+                        token.address,
+                        signer.address,
+                        spender.address,
+                        allowance,
+                        MAX_UINT256,
+                        signature
+                    );
+
+                    expect(await token.allowance(signer.address, spender.address)).to.equal(allowance);
+                });
             }
 
             it('should compare', async () => {

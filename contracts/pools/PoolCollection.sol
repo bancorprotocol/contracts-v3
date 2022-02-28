@@ -573,7 +573,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         address provider,
         Token pool,
         uint256 tokenAmount
-    ) external only(address(_network)) validAddress(provider) greaterThanZero(tokenAmount) nonReentrant {
+    )
+        external
+        only(address(_network))
+        validAddress(provider)
+        greaterThanZero(tokenAmount)
+        nonReentrant
+        returns (uint256)
+    {
         Pool storage data = _poolStorage(pool);
 
         // calculate the pool token amount to mint
@@ -620,6 +627,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             prevLiquidity,
             data.liquidity
         );
+
+        return poolTokenAmount;
     }
 
     /**
@@ -630,12 +639,21 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         address provider,
         Token pool,
         uint256 poolTokenAmount
-    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) nonReentrant {
+    )
+        external
+        only(address(_network))
+        validAddress(provider)
+        greaterThanZero(poolTokenAmount)
+        nonReentrant
+        returns (uint256)
+    {
         // obtain the withdrawal amounts
         WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
         // execute the actual withdrawal
         _executeWithdrawal(contextId, provider, pool, poolTokenAmount, amounts);
+
+        return amounts.baseTokensToTransferFromMasterVault;
     }
 
     /**
