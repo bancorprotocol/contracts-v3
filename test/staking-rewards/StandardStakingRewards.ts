@@ -204,6 +204,8 @@ describe('StandardStakingRewards', () => {
     describe('management', () => {
         let standardStakingRewards: TestStandardStakingRewards;
 
+        const TOTAL_REWARDS = toWei(1000);
+
         beforeEach(async () => {
             ({
                 network,
@@ -228,8 +230,6 @@ describe('StandardStakingRewards', () => {
         });
 
         describe('creation', () => {
-            const TOTAL_REWARDS = 1000;
-
             describe('basic tests', () => {
                 let pool: TokenWithAddress;
                 let rewardsToken: TokenWithAddress;
@@ -254,7 +254,7 @@ describe('StandardStakingRewards', () => {
                     ).to.be.revertedWith('AccessDenied');
                 });
 
-                it('should revert attempting to create a program with for an invalid pool', async () => {
+                it('should revert when attempting to create a program with for an invalid pool', async () => {
                     await expect(
                         standardStakingRewards.createProgram(
                             ZERO_ADDRESS,
@@ -278,7 +278,7 @@ describe('StandardStakingRewards', () => {
                     ).to.be.revertedWith('NotWhitelisted');
                 });
 
-                it('should revert attempting to create a program with an invalid reward token', async () => {
+                it('should revert when attempting to create a program with an invalid reward token', async () => {
                     await expect(
                         standardStakingRewards.createProgram(
                             pool.address,
@@ -290,13 +290,13 @@ describe('StandardStakingRewards', () => {
                     ).to.be.revertedWith('InvalidAddress');
                 });
 
-                it('should revert attempting to create a program with an invalid total rewards amount', async () => {
+                it('should revert when attempting to create a program with an invalid total rewards amount', async () => {
                     await expect(
                         standardStakingRewards.createProgram(pool.address, bnt.address, 0, now, now + duration.days(1))
                     ).to.be.revertedWith('ZeroValue');
                 });
 
-                it('should revert attempting to create a program with an invalid duration', async () => {
+                it('should revert when attempting to create a program with an invalid duration', async () => {
                     await expect(
                         standardStakingRewards.createProgram(
                             pool.address,
@@ -403,7 +403,7 @@ describe('StandardStakingRewards', () => {
                             standardStakingRewards.createProgram(
                                 pool.address,
                                 rewardsToken.address,
-                                TOTAL_REWARDS + 1,
+                                TOTAL_REWARDS.add(1),
                                 startTime,
                                 endTime
                             )
@@ -524,7 +524,159 @@ describe('StandardStakingRewards', () => {
         });
 
         describe('termination', () => {
-            // TODO:
+            let pool: TokenWithAddress;
+            let rewardsToken: TokenWithAddress;
+
+            beforeEach(async () => {
+                rewardsToken = await createTestToken();
+
+                ({ token: pool } = await prepareSimplePool(
+                    new TokenData(TokenSymbol.TKN),
+                    new TokenData(TokenSymbol.TKN),
+                    rewardsToken,
+                    INITIAL_BALANCE,
+                    TOTAL_REWARDS
+                ));
+            });
+
+            it('should revert when a non-admin is attempting to terminate a program', async () => {
+                await expect(standardStakingRewards.connect(user).terminateProgram(1)).to.be.revertedWith(
+                    'AccessDenied'
+                );
+            });
+
+            it('should revert when attempting to terminate a non-existing program', async () => {
+                await expect(standardStakingRewards.terminateProgram(1)).to.be.revertedWith('ProgramDoesNotExist');
+            });
+
+            context('with an active program', () => {
+                let startTime: number;
+                let endTime: number;
+                let rewardRate: BigNumber;
+
+                let id: BigNumber;
+
+                beforeEach(async () => {
+                    startTime = now;
+                    endTime = now + duration.weeks(12);
+                    rewardRate = TOTAL_REWARDS.div(endTime - startTime);
+
+                    id = await standardStakingRewards.nextProgramId();
+
+                    await standardStakingRewards.createProgram(
+                        pool.address,
+                        rewardsToken.address,
+                        TOTAL_REWARDS,
+                        startTime,
+                        endTime
+                    );
+                });
+
+                it('should allow to terminate the program', async () => {
+                    const prevUnclaimedRewards = await standardStakingRewards.unclaimedRewards(rewardsToken.address);
+
+                    expect(await standardStakingRewards.isProgramActive(id)).to.be.true;
+                    expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
+
+                    const res = await standardStakingRewards.terminateProgram(id);
+
+                    const remainingRewards = rewardRate.mul(endTime - now);
+                    await expect(res)
+                        .to.emit(standardStakingRewards, 'ProgramTerminated')
+                        .withArgs(pool.address, id, endTime, remainingRewards);
+
+                    expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
+                    expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
+
+                    expect(await standardStakingRewards.unclaimedRewards(rewardsToken.address)).to.equal(
+                        prevUnclaimedRewards.sub(remainingRewards)
+                    );
+                });
+
+                context('after the active program has ended', () => {
+                    beforeEach(async () => {
+                        await setTime(standardStakingRewards, endTime + 1);
+                    });
+
+                    it('should revert when attempting to terminate', async () => {
+                        await expect(standardStakingRewards.terminateProgram(id)).to.be.revertedWith('ProgramInactive');
+                    });
+                });
+
+                context('when the active program was terminated', () => {
+                    beforeEach(async () => {
+                        await standardStakingRewards.terminateProgram(id);
+                    });
+
+                    it('should revert when attempting to terminate', async () => {
+                        await expect(standardStakingRewards.terminateProgram(id)).to.be.revertedWith('ProgramInactive');
+                    });
+                });
+            });
+
+            it('should revert when attempting to terminate an inactive program', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(
+                        ZERO_ADDRESS,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('InvalidAddress');
+
+                const token2 = await createTestToken();
+
+                await expect(
+                    standardStakingRewards.createProgram(
+                        token2.address,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('NotWhitelisted');
+            });
+
+            it('should revert attempting to create a program with an invalid reward token', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(
+                        pool.address,
+                        ZERO_ADDRESS,
+                        TOTAL_REWARDS,
+                        now,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('InvalidAddress');
+            });
+
+            it('should revert attempting to create a program with an invalid total rewards amount', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(pool.address, bnt.address, 0, now, now + duration.days(1))
+                ).to.be.revertedWith('ZeroValue');
+            });
+
+            it('should revert attempting to create a program with an invalid duration', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(
+                        pool.address,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now - 1,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('InvalidParam');
+
+                await expect(
+                    standardStakingRewards.createProgram(
+                        pool.address,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now + duration.days(1),
+                        now
+                    )
+                ).to.be.revertedWith('InvalidParam');
+            });
         });
     });
 });
