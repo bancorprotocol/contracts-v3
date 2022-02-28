@@ -718,10 +718,14 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev verifies that a program exists and active
+     * @dev verifies that a program exists, active, and enabled
      */
     function _verifyProgramActive(ProgramData memory p) private view {
         _verifyProgramExists(p);
+
+        if (!p.isEnabled) {
+            revert ProgramDisabled();
+        }
 
         if (!_isProgramActive(p)) {
             revert ProgramInactive();
