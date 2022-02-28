@@ -1025,7 +1025,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
-     * @dev calculates the target BNT trading liquidity
+     * @dev returns the target BNT trading liquidity, and whether or not it needs to be updated
      */
     function _calcTargetBNTTradingLiquidity(
         uint256 tokenReserveAmount,
