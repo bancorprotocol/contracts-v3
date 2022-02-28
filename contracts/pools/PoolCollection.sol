@@ -1062,7 +1062,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Fraction memory effectiveFundingRate;
         if (isFundingRateValid) {
             effectiveFundingRate = fundingRate;
-        } else if (averageRate.rate.isValid()) {
+        } else if (averageRate.rate.isPositive()) {
             effectiveFundingRate = averageRate.rate.fromFraction112();
         } else {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
