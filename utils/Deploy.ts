@@ -18,6 +18,7 @@ import {
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
+    StandardStakingRewards,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
@@ -75,7 +76,8 @@ enum NewContractName {
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
     PoolCollectionUpgraderV1 = 'PoolCollectionUpgraderV1',
     PoolTokenFactoryV1 = 'PoolTokenFactoryV1',
-    ProxyAdmin = 'ProxyAdmin'
+    ProxyAdmin = 'ProxyAdmin',
+    StandardStakingRewardsV1 = 'StandardStakingRewardsV1'
 }
 
 export const ContractName = {
@@ -119,7 +121,8 @@ const DeployedNewContracts = {
     PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
     PoolCollectionUpgraderV1: deployed<PoolCollectionUpgrader>(ContractName.PoolCollectionUpgraderV1),
     PoolTokenFactoryV1: deployed<PoolTokenFactory>(ContractName.PoolTokenFactoryV1),
-    ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
+    ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin),
+    StandardStakingRewardsV1: deployed<StandardStakingRewards>(ContractName.StandardStakingRewardsV1)
 };
 
 export const DeployedContracts = {
