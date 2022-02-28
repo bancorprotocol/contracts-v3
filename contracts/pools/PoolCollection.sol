@@ -1065,33 +1065,28 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return TradingLiquidityAction({ update: true, newAmount: 0 });
         }
 
-        // calculate the new BNT trading liquidity and cap it by the growth factor
-        if (liquidity.bntTradingLiquidity == 0) {
-            // if the current BNT trading liquidity is 0, set it to the minimum liquidity for trading (with an
-            // additional buffer so that initial trades will be less likely to trigger disabling of trading)
-            uint256 newTargetBNTTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
-
-            // ensure that we're not allocating more than the previously established limits
-            if (newTargetBNTTradingLiquidity > targetBNTTradingLiquidity) {
-                return TradingLiquidityAction({ update: false, newAmount: 0 });
-            }
-
-            targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
-        } else if (targetBNTTradingLiquidity >= liquidity.bntTradingLiquidity) {
-            // if the target is above the current trading liquidity, limit it by factoring the current value up
-            targetBNTTradingLiquidity = Math.min(
-                targetBNTTradingLiquidity,
-                liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
-            );
-        } else {
-            // if the target is below the current trading liquidity, limit it by factoring the current value down
-            targetBNTTradingLiquidity = Math.max(
-                targetBNTTradingLiquidity,
-                liquidity.bntTradingLiquidity / LIQUIDITY_GROWTH_FACTOR
-            );
+        // if there is BNT trading liquidity, then limit it by a factor of the current value
+        if (liquidity.bntTradingLiquidity > 0) {
+            return
+                TradingLiquidityAction({
+                    update: true,
+                    newAmount: Math.min(
+                        Math.max(targetBNTTradingLiquidity, liquidity.bntTradingLiquidity / LIQUIDITY_GROWTH_FACTOR),
+                        liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
+                    )
+                });
         }
 
-        return TradingLiquidityAction({ update: true, newAmount: targetBNTTradingLiquidity });
+        // if therre is no BNT trading liquidity, then set it to the minimum liquidity for trading (with an
+        // additional buffer so that initial trades will be less likely to trigger disabling of trading)
+        uint256 newTargetBNTTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+
+        // ensure that we're not allocating more than the previously established limits
+        if (newTargetBNTTradingLiquidity <= targetBNTTradingLiquidity) {
+            return TradingLiquidityAction({ update: true, newAmount: newTargetBNTTradingLiquidity });
+        }
+
+        return TradingLiquidityAction({ update: false, newAmount: 0 });
     }
 
     /**
