@@ -73,6 +73,12 @@ enum PoolRateState {
     Stable
 }
 
+enum CalcTargetBNTTradingLiquidityAction {
+    Continue,
+    ResetAndReturn,
+    ReturnWithoutReset
+}
+
 /**
  * @dev Pool Collection contract
  *
@@ -1025,6 +1031,62 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     }
 
     /**
+     * @dev calculates the target BNT trading liquidity
+     */
+    function _calcTargetBNTTradingLiquidity(
+        uint256 tokenReserveAmount,
+        uint256 poolFundingLimit,
+        uint256 availableFunding,
+        PoolLiquidity memory liquidity,
+        Fraction memory effectiveFundingRate,
+        uint256 minLiquidityForTrading
+    ) private pure returns (uint256, CalcTargetBNTTradingLiquidityAction) {
+        // calculate the target BNT trading liquidity based on the smaller between the following:
+        // - pool funding limit (e.g., the total funding limit could have been reduced by the DAO)
+        // - BNT liquidity required to match previously deposited based token liquidity
+        // - maximum available BNT trading liquidity (current amount + available funding)
+        uint256 targetBNTTradingLiquidity = Math.min(
+            Math.min(
+                poolFundingLimit,
+                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
+            ),
+            liquidity.bntTradingLiquidity + availableFunding
+        );
+
+        // ensure that the target is above the minimum liquidity for trading
+        if (targetBNTTradingLiquidity < minLiquidityForTrading) {
+            return (targetBNTTradingLiquidity, CalcTargetBNTTradingLiquidityAction.ResetAndReturn);
+        }
+
+        // calculate the new BNT trading liquidity and cap it by the growth factor
+        if (liquidity.bntTradingLiquidity == 0) {
+            // if the current BNT trading liquidity is 0, set it to the minimum liquidity for trading (with an
+            // additional buffer so that initial trades will be less likely to trigger disabling of trading)
+            uint256 newTargetBNTTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+
+            // ensure that we're not allocating more than the previously established limits
+            if (newTargetBNTTradingLiquidity > targetBNTTradingLiquidity) {
+                return (targetBNTTradingLiquidity, CalcTargetBNTTradingLiquidityAction.ReturnWithoutReset);
+            }
+
+            targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
+        } else if (targetBNTTradingLiquidity >= liquidity.bntTradingLiquidity) {
+            // if the target is above the current trading liquidity, limit it by factoring the current value up
+            targetBNTTradingLiquidity = Math.min(
+                targetBNTTradingLiquidity,
+                liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
+            );
+        } else {
+            // if the target is below the current trading liquidity, limit it by factoring the current value down
+            targetBNTTradingLiquidity = Math.max(
+                targetBNTTradingLiquidity,
+                liquidity.bntTradingLiquidity / LIQUIDITY_GROWTH_FACTOR
+            );
+        }
+        return (targetBNTTradingLiquidity, CalcTargetBNTTradingLiquidityAction.Continue);
+    }
+
+    /**
      * @dev adjusts the trading liquidity based on the base token vault balance and funding limits
      */
     function _updateTradingLiquidity(
@@ -1070,49 +1132,26 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        // calculate the target BNT trading liquidity based on the smaller between the following:
-        // - pool funding limit (e.g., the total funding limit could have been reduced by the DAO)
-        // - BNT liquidity required to match previously deposited based token liquidity
-        // - maximum available BNT trading liquidity (current amount + available funding)
-        uint256 targetBNTTradingLiquidity = Math.min(
-            Math.min(
+        (
+            uint256 targetBNTTradingLiquidity,
+            CalcTargetBNTTradingLiquidityAction action
+        ) = _calcTargetBNTTradingLiquidity(
+                tokenReserveAmount,
                 _networkSettings.poolFundingLimit(pool),
-                MathEx.mulDivF(tokenReserveAmount, effectiveFundingRate.n, effectiveFundingRate.d)
-            ),
-            liquidity.bntTradingLiquidity + _bntPool.availableFunding(pool)
-        );
+                _bntPool.availableFunding(pool),
+                liquidity,
+                effectiveFundingRate,
+                minLiquidityForTrading
+            );
 
-        // ensure that the target is above the minimum liquidity for trading
-        if (targetBNTTradingLiquidity < minLiquidityForTrading) {
+        if (action == CalcTargetBNTTradingLiquidityAction.ResetAndReturn) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
 
             return;
         }
 
-        // calculate the new BNT trading liquidity and cap it by the growth factor
-        if (liquidity.bntTradingLiquidity == 0) {
-            // if the current BNT trading liquidity is 0, set it to the minimum liquidity for trading (with an
-            // additional buffer so that initial trades will be less likely to trigger disabling of trading)
-            uint256 newTargetBNTTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
-
-            // ensure that we're not allocating more than the previously established limits
-            if (newTargetBNTTradingLiquidity > targetBNTTradingLiquidity) {
-                return;
-            }
-
-            targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
-        } else if (targetBNTTradingLiquidity >= liquidity.bntTradingLiquidity) {
-            // if the target is above the current trading liquidity, limit it by factoring the current value up
-            targetBNTTradingLiquidity = Math.min(
-                targetBNTTradingLiquidity,
-                liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
-            );
-        } else {
-            // if the target is below the current trading liquidity, limit it by factoring the current value down
-            targetBNTTradingLiquidity = Math.max(
-                targetBNTTradingLiquidity,
-                liquidity.bntTradingLiquidity / LIQUIDITY_GROWTH_FACTOR
-            );
+        if (action == CalcTargetBNTTradingLiquidityAction.ReturnWithoutReset) {
+            return;
         }
 
         // update funding from the BNT pool
