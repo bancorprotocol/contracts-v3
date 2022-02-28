@@ -360,7 +360,8 @@ describe('StandardStakingRewards', () => {
                     expect((await standardStakingRewards.programsIds()).map((id) => id.toNumber())).not.to.include(
                         id.toNumber()
                     );
-                    expect(await standardStakingRewards.activeProgramIdByPool(pool.address)).not.to.equal(id);
+                    expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
+                    expect(await standardStakingRewards.isProgramEnabled(id)).to.be.false;
 
                     const res = await standardStakingRewards.createProgram(
                         pool.address,
@@ -377,7 +378,8 @@ describe('StandardStakingRewards', () => {
                     expect((await standardStakingRewards.programsIds()).map((id) => id.toNumber())).to.include(
                         id.toNumber()
                     );
-                    expect(await standardStakingRewards.activeProgramIdByPool(pool.address)).to.equal(id);
+                    expect(await standardStakingRewards.isProgramActive(id)).to.be.true;
+                    expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
                     expect(await standardStakingRewards.unclaimedRewards(rewardsToken.address)).to.equal(
                         prevUnclaimedRewards.add(totalRewards)
                     );

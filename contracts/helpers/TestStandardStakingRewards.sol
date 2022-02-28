@@ -41,10 +41,6 @@ contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
         return _nextProgramId;
     }
 
-    function activeProgramIdByPool(Token pool) external view returns (uint256) {
-        return _activeProgramIdByPool[pool];
-    }
-
     function unclaimedRewards(Token rewardsToken) external view returns (uint256) {
         return _unclaimedRewards[rewardsToken];
     }
