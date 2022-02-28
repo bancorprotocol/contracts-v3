@@ -14,6 +14,8 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
+import { Token } from "../token/Token.sol";
+
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
 import { TestTime } from "./TestTime.sol";
@@ -34,6 +36,18 @@ contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
             initExternalRewardsVault
         )
     {}
+
+    function nextProgramId() external view returns (uint256) {
+        return _nextProgramId;
+    }
+
+    function activeProgramIdByPool(Token pool) external view returns (uint256) {
+        return _activeProgramIdByPool[pool];
+    }
+
+    function unclaimedRewards(Token rewardsToken) external view returns (uint256) {
+        return _unclaimedRewards[rewardsToken];
+    }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();

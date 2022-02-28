@@ -89,7 +89,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     IExternalRewardsVault private immutable _externalRewardsVault;
 
     // the ID of the next created program
-    uint256 private _nextProgramId;
+    uint256 internal _nextProgramId;
 
     // a mapping between providers and the program IDs of the program they are participating in
     mapping(address => EnumerableSetUpgradeable.UintSet) private _programIdsByProvider;
@@ -98,7 +98,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     mapping(uint256 => ProgramData) private _programs;
 
     // a mapping between pools and their currently active programs
-    mapping(Token => uint256) private _activeProgramIdByPool;
+    mapping(Token => uint256) internal _activeProgramIdByPool;
 
     // a mapping between programs and their respective rewards data
     mapping(uint256 => Rewards) private _programRewards;
@@ -113,7 +113,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     mapping(uint256 => mapping(address => uint256)) private _providerStakes;
 
     // a mapping between reward tokens and total unclaimed rewards
-    mapping(Token => uint256) private _unclaimedRewards;
+    mapping(Token => uint256) internal _unclaimedRewards;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 9] private __gap;
@@ -297,14 +297,21 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
-    ) external validAddress(address(pool)) validAddress(address(rewardsToken)) onlyAdmin nonReentrant {
+    )
+        external
+        validAddress(address(pool))
+        validAddress(address(rewardsToken))
+        greaterThanZero(totalRewards)
+        onlyAdmin
+        nonReentrant
+    {
         uint32 currTime = _time();
         if (!(currTime <= startTime && startTime < endTime)) {
             revert InvalidParam();
         }
 
         // ensure that no active program exists for the specific pool
-        if (_activeProgramIdByPool[pool] != 0) {
+        if (_isProgramActive(_programs[_activeProgramIdByPool[pool]])) {
             revert ProgramAlreadyExists();
         }
 
@@ -318,12 +325,14 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 revert NotWhitelisted();
             }
 
-            // ensure that the rewards were already deposited to the rewards vault
+            poolToken = _network.collectionByPool(pool).poolToken(pool);
+        }
+
+        // ensure that the rewards were already deposited to the rewards vault
+        if (!_isBNT(rewardsToken)) {
             if (rewardsToken.balanceOf(address(_externalRewardsVault)) - unclaimedRewards < totalRewards) {
                 revert InsufficientFunds();
             }
-
-            poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
         uint256 id = _nextProgramId++;
