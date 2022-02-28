@@ -284,6 +284,13 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
+    function isProgramEnabled(uint256 id) external view returns (bool) {
+        return _isProgramEnabled(_programs[id]);
+    }
+
+    /**
+     * @inheritdoc IStandardStakingRewards
+     */
     function createProgram(
         Token pool,
         Token rewardsToken,
