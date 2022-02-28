@@ -290,7 +290,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
-    ) external validAddress(address(address(pool))) validAddress(address(rewardsToken)) onlyAdmin nonReentrant {
+    ) external validAddress(address(pool)) validAddress(address(rewardsToken)) onlyAdmin nonReentrant {
         uint32 currTime = _time();
         if (!(currTime <= startTime && startTime < endTime)) {
             revert InvalidParam();
