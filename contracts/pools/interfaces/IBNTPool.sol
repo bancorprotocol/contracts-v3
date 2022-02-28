@@ -16,6 +16,9 @@ import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 
+// the BNT pool token manager role is required to access the BNT pool tokens
+bytes32 constant ROLE_BNT_POOL_TOKEN_MANAGER = keccak256("ROLE_BNT_POOL_TOKEN_MANAGER");
+
 // the BNT manager role is required to request the BNT pool to mint BNT
 bytes32 constant ROLE_BNT_MANAGER = keccak256("ROLE_BNT_MANAGER");
 
@@ -84,7 +87,7 @@ interface IBNTPool is IVault {
     function burnFromVault(uint256 bntAmount) external;
 
     /**
-     * @dev deposits BNT liquidity on behalf of a specific provider
+     * @dev deposits BNT liquidity on behalf of a specific provider and returns the respective pool token amount
      *
      * requirements:
      *
@@ -97,11 +100,10 @@ interface IBNTPool is IVault {
         uint256 bntAmount,
         bool isMigrating,
         uint256 originalVBNTAmount
-    ) external;
+    ) external returns (uint256);
 
     /**
-     * @dev withdraws BNT liquidity on behalf of a specific provider and returns the withdrawn BNT amount and burned
-     * pool token amount
+     * @dev withdraws BNT liquidity on behalf of a specific provider and returns the withdrawn BNT amount
      *
      * requirements:
      *
@@ -112,7 +114,7 @@ interface IBNTPool is IVault {
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev requests BNT funding

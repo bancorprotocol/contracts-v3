@@ -28,7 +28,7 @@ import {
 } from '../../components/LegacyContracts';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
-import { permitContractSignature } from '../../utils/Permit';
+import { permitSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -1408,7 +1408,7 @@ describe('BancorNetwork', () => {
 
                     it('should revert when attempting to deposit for an invalid provider', async () => {
                         const amount = BigNumber.from(1);
-                        const signature = await permitContractSignature(
+                        const signature = await permitSignature(
                             provider,
                             token.address,
                             network,
@@ -1458,7 +1458,7 @@ describe('BancorNetwork', () => {
                             const deposit = async (amount: BigNumberish, overrides: Overrides = {}) => {
                                 const { poolAddress = token.address } = overrides;
 
-                                const signature = await permitContractSignature(
+                                const signature = await permitSignature(
                                     sender,
                                     poolAddress,
                                     network,
@@ -1541,7 +1541,9 @@ describe('BancorNetwork', () => {
                                 context(`${amount} tokens`, () => {
                                     if (tokenData.isBNT() || tokenData.isNative()) {
                                         it('should revert when attempting to deposit', async () => {
-                                            await expect(deposit(amount)).to.be.revertedWith('PermitUnsupported');
+                                            await expect(deposit(amount)).to.be.revertedWith(
+                                                tokenData.isNative() ? 'PermitUnsupported' : ''
+                                            );
                                         });
 
                                         return;
@@ -2016,14 +2018,7 @@ describe('BancorNetwork', () => {
                 approvedAmount = amount
             } = overrides;
 
-            const signature = await permitContractSignature(
-                trader,
-                sourceTokenAddress,
-                network,
-                bnt,
-                approvedAmount,
-                deadline
-            );
+            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
             return network
                 .connect(trader)
@@ -2058,14 +2053,7 @@ describe('BancorNetwork', () => {
             );
             approvedAmount ||= maxSourceAmount;
 
-            const signature = await permitContractSignature(
-                trader,
-                sourceTokenAddress,
-                network,
-                bnt,
-                approvedAmount,
-                deadline
-            );
+            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
             return network
                 .connect(trader)
@@ -2641,7 +2629,9 @@ describe('BancorNetwork', () => {
 
                             if (isSourceNativeToken || isSourceBNT) {
                                 it('should revert when attempting a permitted trade', async () => {
-                                    await expect(tradeFunc(amount)).to.be.revertedWith('PermitUnsupported');
+                                    await expect(tradeFunc(amount)).to.be.revertedWith(
+                                        isSourceNativeToken ? 'PermitUnsupported' : ''
+                                    );
                                 });
                             } else {
                                 it('should complete a permitted trade', async () => {
@@ -3539,7 +3529,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should initiate a permitted withdrawal request', async () => {
-            const signature = await permitContractSignature(
+            const signature = await permitSignature(
                 provider as Wallet,
                 poolToken.address,
                 network,
@@ -3590,7 +3580,7 @@ describe('BancorNetwork', () => {
             });
 
             it('should revert when attempting to initiate a permitted withdrawal request', async () => {
-                const signature = await permitContractSignature(
+                const signature = await permitSignature(
                     provider as Wallet,
                     poolToken.address,
                     network,

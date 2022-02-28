@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
- * @dev Extends the SafeERC20 library with additional operations
+ * @dev extends the SafeERC20 library with additional operations
  */
 library SafeERC20Ex {
     using SafeERC20 for IERC20;

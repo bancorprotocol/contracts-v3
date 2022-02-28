@@ -8,7 +8,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils } from "../utility/Utils.sol";
+import { Utils, AccessDenied } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
@@ -16,12 +16,12 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
+import { IBNTPool, ROLE_BNT_POOL_TOKEN_MANAGER } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IVault } from "../vaults/interfaces/IVault.sol";
+import { IVault, ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
 
 // prettier-ignore
 import {
@@ -83,8 +83,8 @@ contract AutoCompoundingStakingRewards is
         uint8 indexed distributionType,
         IVault rewardsVault,
         uint256 totalRewards,
-        uint256 startTime,
-        uint256 endTime
+        uint32 startTime,
+        uint32 endTime
     );
 
     /**
@@ -211,7 +211,14 @@ contract AutoCompoundingStakingRewards is
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    ) external validAddress(address(address(pool))) validAddress(address(rewardsVault)) onlyAdmin nonReentrant {
+    )
+        external
+        validAddress(address(pool))
+        validAddress(address(rewardsVault))
+        greaterThanZero(totalRewards)
+        onlyAdmin
+        nonReentrant
+    {
         if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();
         }
@@ -221,16 +228,22 @@ contract AutoCompoundingStakingRewards is
             if (rewardsVault != _bntPool) {
                 revert InvalidParam();
             }
+
+            if (!rewardsVault.hasRole(ROLE_BNT_POOL_TOKEN_MANAGER, address(this))) {
+                revert AccessDenied();
+            }
+
             poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
                 revert NotWhitelisted();
             }
-            poolToken = _network.collectionByPool(pool).poolToken(pool);
-        }
 
-        if (totalRewards == 0) {
-            revert InvalidParam();
+            if (!rewardsVault.hasRole(ROLE_ASSET_MANAGER, address(this))) {
+                revert AccessDenied();
+            }
+
+            poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
         uint32 currTime = _time();

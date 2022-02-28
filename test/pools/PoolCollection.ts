@@ -1071,6 +1071,16 @@ describe('PoolCollection', () => {
                             .div(prevLiquidity.stakedBalance);
                     }
 
+                    const poolTokenAmount = await network.callStatic.depositToPoolCollectionForT(
+                        poolCollection.address,
+                        CONTEXT_ID,
+                        provider.address,
+                        token.address,
+                        tokenAmount
+                    );
+
+                    expect(poolTokenAmount).to.equal(expectedPoolTokenAmount);
+
                     const res = await network.depositToPoolCollectionForT(
                         poolCollection.address,
                         CONTEXT_ID,
@@ -1516,6 +1526,16 @@ describe('PoolCollection', () => {
                     expect(expectedWithdrawalFee).to.almostEqual(withdrawalAmounts.baseTokensWithdrawalFee, {
                         maxAbsoluteError: new Decimal(1)
                     });
+
+                    const withdrawnAmount = await network.callStatic.withdrawFromPoolCollectionT(
+                        poolCollection.address,
+                        CONTEXT_ID,
+                        provider.address,
+                        token.address,
+                        poolTokenAmount
+                    );
+
+                    expect(withdrawnAmount).to.equal(withdrawalAmounts.baseTokensToTransferFromMasterVault);
 
                     const res = await network.withdrawFromPoolCollectionT(
                         poolCollection.address,

@@ -6,7 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Burnable } from "./interfaces/IERC20Burnable.sol";
 
 /**
- * @dev This is an adapted clone of the OZ's ERC20Burnable extension which is unfortunately required so that it can be
+ * @dev this is an adapted clone of the OZ's ERC20Burnable extension which is unfortunately required so that it can be
  * explicitly specified in interfaces via our new IERC20Burnable interface.
  *
  * We have also removed the explicit use of Context and updated the code to our style.
