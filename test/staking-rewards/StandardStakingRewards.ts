@@ -572,7 +572,7 @@ describe('StandardStakingRewards', () => {
                     );
                 });
 
-                it('should allow to terminate the program', async () => {
+                it('should allow terminating the program', async () => {
                     const prevUnclaimedRewards = await standardStakingRewards.unclaimedRewards(rewardsToken.address);
 
                     expect(await standardStakingRewards.isProgramActive(id)).to.be.true;
@@ -610,6 +610,185 @@ describe('StandardStakingRewards', () => {
 
                     it('should revert when attempting to terminate', async () => {
                         await expect(standardStakingRewards.terminateProgram(id)).to.be.revertedWith('ProgramInactive');
+                    });
+                });
+            });
+
+            it('should revert when attempting to terminate an inactive program', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(
+                        ZERO_ADDRESS,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('InvalidAddress');
+
+                const token2 = await createTestToken();
+
+                await expect(
+                    standardStakingRewards.createProgram(
+                        token2.address,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('NotWhitelisted');
+            });
+
+            it('should revert attempting to create a program with an invalid reward token', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(
+                        pool.address,
+                        ZERO_ADDRESS,
+                        TOTAL_REWARDS,
+                        now,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('InvalidAddress');
+            });
+
+            it('should revert attempting to create a program with an invalid total rewards amount', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(pool.address, bnt.address, 0, now, now + duration.days(1))
+                ).to.be.revertedWith('ZeroValue');
+            });
+
+            it('should revert attempting to create a program with an invalid duration', async () => {
+                await expect(
+                    standardStakingRewards.createProgram(
+                        pool.address,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now - 1,
+                        now + duration.days(1)
+                    )
+                ).to.be.revertedWith('InvalidParam');
+
+                await expect(
+                    standardStakingRewards.createProgram(
+                        pool.address,
+                        bnt.address,
+                        TOTAL_REWARDS,
+                        now + duration.days(1),
+                        now
+                    )
+                ).to.be.revertedWith('InvalidParam');
+            });
+        });
+
+        describe('enabling/disabling', () => {
+            let pool: TokenWithAddress;
+            let rewardsToken: TokenWithAddress;
+
+            beforeEach(async () => {
+                rewardsToken = await createTestToken();
+
+                ({ token: pool } = await prepareSimplePool(
+                    new TokenData(TokenSymbol.TKN),
+                    new TokenData(TokenSymbol.TKN),
+                    rewardsToken,
+                    INITIAL_BALANCE,
+                    TOTAL_REWARDS
+                ));
+            });
+
+            it('should revert when a non-admin is attempting to enable/disable a program', async () => {
+                for (const status of [true, false]) {
+                    await expect(standardStakingRewards.connect(user).enableProgram(1, status)).to.be.revertedWith(
+                        'AccessDenied'
+                    );
+                }
+            });
+
+            it('should revert when attempting to enable/disable a non-existing program', async () => {
+                for (const status of [true, false]) {
+                    await expect(standardStakingRewards.enableProgram(1, status)).to.be.revertedWith(
+                        'ProgramDoesNotExist'
+                    );
+                }
+            });
+
+            context('with an active program', () => {
+                let startTime: number;
+                let endTime: number;
+                let rewardRate: BigNumber;
+
+                let id: BigNumber;
+
+                beforeEach(async () => {
+                    startTime = now;
+                    endTime = now + duration.weeks(12);
+                    rewardRate = TOTAL_REWARDS.div(endTime - startTime);
+
+                    id = await standardStakingRewards.nextProgramId();
+
+                    await standardStakingRewards.createProgram(
+                        pool.address,
+                        rewardsToken.address,
+                        TOTAL_REWARDS,
+                        startTime,
+                        endTime
+                    );
+                });
+
+                const testDisableEnable = async () => {
+                    expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
+
+                    const res = await standardStakingRewards.enableProgram(id, false);
+
+                    const remainingRewards = rewardRate.mul(endTime - now);
+                    await expect(res)
+                        .to.emit(standardStakingRewards, 'ProgramEnabled')
+                        .withArgs(pool.address, id, false, remainingRewards);
+
+                    const res2 = await standardStakingRewards.enableProgram(id, true);
+
+                    await expect(res2)
+                        .to.emit(standardStakingRewards, 'ProgramEnabled')
+                        .withArgs(pool.address, id, true, remainingRewards);
+
+                    expect(await standardStakingRewards.isProgramActive(id)).to.be.true;
+                };
+
+                it('should allow enabling/disabling the program', async () => {
+                    await testDisableEnable();
+                });
+
+                it('should ignore setting to the same status', async () => {
+                    const res = await standardStakingRewards.enableProgram(id, true);
+
+                    await expect(res).not.to.emit(standardStakingRewards, 'ProgramEnabled');
+
+                    await standardStakingRewards.enableProgram(id, false);
+
+                    const res2 = await standardStakingRewards.enableProgram(id, false);
+                    await expect(res2).not.to.emit(standardStakingRewards, 'ProgramEnabled');
+                });
+
+                context('after the active program has ended', () => {
+                    beforeEach(async () => {
+                        await setTime(standardStakingRewards, endTime + 1);
+                    });
+
+                    it('should revert when attempting to enable/disable', async () => {
+                        it('should allow enabling/disabling the program', async () => {
+                            await testDisableEnable();
+                        });
+                    });
+                });
+
+                context('when the active program was terminated', () => {
+                    beforeEach(async () => {
+                        await standardStakingRewards.terminateProgram(id);
+                    });
+
+                    it('should revert when attempting to enable/disable', async () => {
+                        it('should allow enabling/disabling the program', async () => {
+                            await testDisableEnable();
+                        });
                     });
                 });
             });

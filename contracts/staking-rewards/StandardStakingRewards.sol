@@ -388,7 +388,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     function enableProgram(uint256 id, bool status) external onlyAdmin {
         ProgramData storage p = _programs[id];
 
-        _verifyProgramActive(p);
+        _verifyProgramExists(p);
 
         bool prevStatus = p.isEnabled;
         if (prevStatus == status) {
