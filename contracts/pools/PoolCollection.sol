@@ -73,12 +73,6 @@ enum PoolRateState {
     Stable
 }
 
-enum CalcTargetBNTTradingLiquidityAction {
-    Continue,
-    ResetAndReturn,
-    ReturnWithoutReset
-}
-
 /**
  * @dev Pool Collection contract
  *
@@ -1040,7 +1034,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         PoolLiquidity memory liquidity,
         Fraction memory effectiveFundingRate,
         uint256 minLiquidityForTrading
-    ) private pure returns (uint256, CalcTargetBNTTradingLiquidityAction) {
+    ) private pure returns (bool, uint256) {
         // calculate the target BNT trading liquidity based on the smaller between the following:
         // - pool funding limit (e.g., the total funding limit could have been reduced by the DAO)
         // - BNT liquidity required to match previously deposited based token liquidity
@@ -1055,7 +1049,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         // ensure that the target is above the minimum liquidity for trading
         if (targetBNTTradingLiquidity < minLiquidityForTrading) {
-            return (targetBNTTradingLiquidity, CalcTargetBNTTradingLiquidityAction.ResetAndReturn);
+            return (true, 0);
         }
 
         // calculate the new BNT trading liquidity and cap it by the growth factor
@@ -1066,7 +1060,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
             // ensure that we're not allocating more than the previously established limits
             if (newTargetBNTTradingLiquidity > targetBNTTradingLiquidity) {
-                return (targetBNTTradingLiquidity, CalcTargetBNTTradingLiquidityAction.ReturnWithoutReset);
+                return (false, 0);
             }
 
             targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
@@ -1083,7 +1077,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 liquidity.bntTradingLiquidity / LIQUIDITY_GROWTH_FACTOR
             );
         }
-        return (targetBNTTradingLiquidity, CalcTargetBNTTradingLiquidityAction.Continue);
+
+        return (true, targetBNTTradingLiquidity);
     }
 
     /**
@@ -1132,25 +1127,22 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             return;
         }
 
-        (
-            uint256 targetBNTTradingLiquidity,
-            CalcTargetBNTTradingLiquidityAction action
-        ) = _calcTargetBNTTradingLiquidity(
-                tokenReserveAmount,
-                _networkSettings.poolFundingLimit(pool),
-                _bntPool.availableFunding(pool),
-                liquidity,
-                effectiveFundingRate,
-                minLiquidityForTrading
-            );
+        (bool update, uint256 targetBNTTradingLiquidity) = _calcTargetBNTTradingLiquidity(
+            tokenReserveAmount,
+            _networkSettings.poolFundingLimit(pool),
+            _bntPool.availableFunding(pool),
+            liquidity,
+            effectiveFundingRate,
+            minLiquidityForTrading
+        );
 
-        if (action == CalcTargetBNTTradingLiquidityAction.ResetAndReturn) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
+        if (!update) {
             return;
         }
 
-        if (action == CalcTargetBNTTradingLiquidityAction.ReturnWithoutReset) {
+        if (targetBNTTradingLiquidity == 0) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+
             return;
         }
 
