@@ -420,7 +420,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         _verifyProgramLive(p);
 
-        _join(msg.sender, p, poolTokenAmount);
+        _join(msg.sender, p, poolTokenAmount, msg.sender);
     }
 
     /**
@@ -442,7 +442,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         // EIP2612 permit - either this call or the inner transferFrom will revert
         p.poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
 
-        _join(msg.sender, p, poolTokenAmount);
+        _join(msg.sender, p, poolTokenAmount, msg.sender);
     }
 
     /**
@@ -487,7 +487,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         _verifyProgramLive(p);
 
-        p.pool.permit(msg.sender, address(_network), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
+        p.pool.permit(msg.sender, address(this), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _depositAndJoin(msg.sender, p, tokenAmount);
     }
@@ -553,7 +553,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     function _join(
         address provider,
         ProgramData memory p,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        address payer
     ) private {
         // take a snapshot of the existing rewards (before increasing the stake)
         ProviderRewards storage data = _snapshotRewards(p, provider);
@@ -564,9 +565,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 prevStake = data.stakedAmount;
         data.stakedAmount = prevStake + poolTokenAmount;
 
-        // transfer the tokens from the provider (we aren't using safeTransferFrom, since the PoolToken contract is
-        // fully compliant)
-        p.poolToken.transferFrom(provider, address(this), poolTokenAmount);
+        // unless the payer is the contract itself (in which case, no additional transfer is required), transfer the
+        // tokens from the payer (we aren't using safeTransferFrom, since the PoolToken contract is fully compliant)
+        if (payer != address(this)) {
+            p.poolToken.transferFrom(payer, address(this), poolTokenAmount);
+        }
 
         emit ProviderJoined({
             pool: p.pool,
@@ -621,7 +624,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 revert EthAmountMismatch();
             }
 
-            poolTokenAmount = _network.depositFor{ value: tokenAmount }(provider, p.pool, tokenAmount);
+            poolTokenAmount = _network.deposit{ value: tokenAmount }(p.pool, tokenAmount);
 
             // refund the caller for the remaining ETH
             if (msg.value > tokenAmount) {
@@ -632,11 +635,14 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 revert EthAmountMismatch();
             }
 
-            // please note that that providers should have approved the network to spend their tokens explicitly
-            poolTokenAmount = _network.depositFor(provider, p.pool, tokenAmount);
+            // get the tokens from the providers and deposit them
+            p.pool.safeTransferFrom(provider, address(this), tokenAmount);
+            p.pool.ensureApprove(address(_network), tokenAmount);
+
+            poolTokenAmount = _network.deposit(p.pool, tokenAmount);
         }
 
-        _join(provider, p, poolTokenAmount);
+        _join(provider, p, poolTokenAmount, address(this));
     }
 
     /**
