@@ -448,6 +448,17 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
+    function leave(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
+        ProgramData memory p = _programs[id];
+
+        _verifyProgramExists(p);
+
+        _leave(msg.sender, p, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IStandardStakingRewards
+     */
     function depositAndJoin(uint256 id, uint256 tokenAmount)
         external
         payable
@@ -479,17 +490,6 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         p.pool.permit(msg.sender, address(_network), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _depositAndJoin(msg.sender, p, tokenAmount);
-    }
-
-    /**
-     * @inheritdoc IStandardStakingRewards
-     */
-    function leave(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
-        ProgramData memory p = _programs[id];
-
-        _verifyProgramExists(p);
-
-        _leave(msg.sender, p, poolTokenAmount);
     }
 
     /**
@@ -594,9 +594,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 remainingStake = data.stakedAmount - poolTokenAmount;
         data.stakedAmount = remainingStake;
 
-        // transfer the tokens from the provider (we aren't using safeTransferFrom, since the PoolToken contract is
-        // fully compliant)
-        p.poolToken.transferFrom(address(this), provider, poolTokenAmount);
+        // transfer the tokens to the provider
+        p.poolToken.transfer(provider, poolTokenAmount);
 
         emit ProviderLeft({
             pool: p.pool,

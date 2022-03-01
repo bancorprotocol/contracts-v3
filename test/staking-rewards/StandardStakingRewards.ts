@@ -780,6 +780,7 @@ describe('StandardStakingRewards', () => {
         let standardStakingRewards: TestStandardStakingRewards;
         let provider: Wallet;
 
+        const DEPOSIT_AMOUNT = toWei(1000);
         const TOTAL_REWARDS = toWei(10_000);
 
         beforeEach(async () => {
@@ -868,8 +869,6 @@ describe('StandardStakingRewards', () => {
                 let poolToken: IPoolToken;
                 let poolTokenAmount: BigNumber;
 
-                const DEPOSIT_AMOUNT = toWei(1000);
-
                 beforeEach(async () => {
                     if (rewardsData.isBNT()) {
                         rewardsToken = bnt;
@@ -925,13 +924,16 @@ describe('StandardStakingRewards', () => {
                         });
 
                         const testJoinProgram = async (id: BigNumber, amount: BigNumberish) => {
+                            const expectedUpdateTime = now > endTime ? endTime : now;
+
                             const prevProgramRewards = await standardStakingRewards.programRewards(id);
-                            expect(prevProgramRewards.lastUpdateTime).not.to.equal(now);
+                            expect(prevProgramRewards.lastUpdateTime).not.to.equal(expectedUpdateTime);
 
                             const prevProviderRewards = await standardStakingRewards.providerRewards(
                                 provider.address,
                                 id
                             );
+                            const prevProgramStake = await standardStakingRewards.programStake(id);
                             const prevProviderBalance = await poolToken.balanceOf(provider.address);
                             const prevStandardStakingRewardsBalance = await poolToken.balanceOf(
                                 standardStakingRewards.address
@@ -951,9 +953,12 @@ describe('StandardStakingRewards', () => {
                             const providerRewards = await standardStakingRewards.providerRewards(provider.address, id);
 
                             // ensure that the snapshot has been updated
-                            expect(programRewards.lastUpdateTime).to.equal(now);
+                            expect(programRewards.lastUpdateTime).to.equal(expectedUpdateTime);
 
-                            // ensure that the total staked amount has been updated
+                            // ensure that the stake amounts have been updated
+                            expect(await standardStakingRewards.programStake(id)).to.equal(
+                                prevProgramStake.add(amount)
+                            );
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
 
                             expect(await poolToken.balanceOf(provider.address)).to.equal(
@@ -972,7 +977,7 @@ describe('StandardStakingRewards', () => {
                             await testJoinProgram(id, poolTokenAmount);
                         });
 
-                        it('should join a previously joined program', async () => {
+                        it('should join the same program multiple times', async () => {
                             const count = 3;
                             for (let i = 0; i < count; i++) {
                                 await testJoinProgram(id, poolTokenAmount.div(count));
@@ -1024,6 +1029,187 @@ describe('StandardStakingRewards', () => {
                 for (const rewardsSymbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
                     context(`${poolSymbol} pool with ${rewardsSymbol} rewards`, () => {
                         testJoin(poolSymbol, rewardsSymbol);
+                    });
+                }
+            }
+        });
+
+        describe('leaving', () => {
+            describe('basic tests', () => {
+                let rewardsToken: TokenWithAddress;
+
+                beforeEach(async () => {
+                    rewardsToken = await createTestToken();
+
+                    await prepareSimplePool(
+                        new TokenData(TokenSymbol.TKN),
+                        new TokenData(TokenSymbol.TKN),
+                        rewardsToken,
+                        INITIAL_BALANCE,
+                        TOTAL_REWARDS
+                    );
+                });
+
+                it('should revert when attempting to leave a non-existing pool', async () => {
+                    await expect(standardStakingRewards.connect(provider).leave(0, 1)).to.be.revertedWith(
+                        'ProgramDoesNotExist'
+                    );
+                });
+
+                it('should revert when attempting to leave with an invalid amount', async () => {
+                    await expect(standardStakingRewards.connect(provider).leave(1, 0)).to.be.revertedWith('ZeroValue');
+                });
+            });
+
+            const testLeave = (poolSymbol: TokenSymbol, rewardsSymbol: TokenSymbol) => {
+                const poolData = new TokenData(poolSymbol);
+                const rewardsData = new TokenData(rewardsSymbol);
+                let pool: TokenWithAddress;
+                let rewardsToken: TokenWithAddress;
+                let poolToken: IPoolToken;
+                let poolTokenAmount: BigNumber;
+
+                beforeEach(async () => {
+                    if (rewardsData.isBNT()) {
+                        rewardsToken = bnt;
+                    } else {
+                        rewardsToken = await createToken(new TokenData(rewardsSymbol));
+                    }
+
+                    ({ token: pool, poolToken } = await prepareSimplePool(
+                        poolData,
+                        rewardsData,
+                        rewardsToken,
+                        INITIAL_BALANCE,
+                        TOTAL_REWARDS
+                    ));
+
+                    await transfer(deployer, pool, provider, DEPOSIT_AMOUNT);
+                    await depositToPool(provider, pool, DEPOSIT_AMOUNT, network);
+                    poolTokenAmount = await poolToken.balanceOf(provider.address);
+                });
+
+                context('when an active program', () => {
+                    let startTime: number;
+                    let endTime: number;
+
+                    let id: BigNumber;
+
+                    beforeEach(async () => {
+                        startTime = now;
+                        endTime = now + duration.weeks(12);
+
+                        id = await standardStakingRewards.nextProgramId();
+
+                        await standardStakingRewards.createProgram(
+                            pool.address,
+                            rewardsToken.address,
+                            TOTAL_REWARDS,
+                            startTime,
+                            endTime
+                        );
+
+                        await poolToken.connect(provider).approve(standardStakingRewards.address, poolTokenAmount);
+                        await standardStakingRewards.connect(provider).join(id, poolTokenAmount);
+
+                        await setTime(standardStakingRewards, now + duration.seconds(1));
+                    });
+
+                    const testLeaveProgram = async (id: BigNumber, amount: BigNumberish) => {
+                        const expectedUpdateTime = now > endTime ? endTime : now;
+
+                        const prevProgramRewards = await standardStakingRewards.programRewards(id);
+                        expect(prevProgramRewards.lastUpdateTime).not.to.equal(expectedUpdateTime);
+
+                        const prevProgramStake = await standardStakingRewards.programStake(id);
+                        const prevProviderRewards = await standardStakingRewards.providerRewards(provider.address, id);
+                        const prevProviderBalance = await poolToken.balanceOf(provider.address);
+                        const prevStandardStakingRewardsBalance = await poolToken.balanceOf(
+                            standardStakingRewards.address
+                        );
+                        const prevRewardsTokenBalance = await getBalance(rewardsToken, standardStakingRewards.address);
+
+                        const res = await standardStakingRewards.connect(provider).leave(id, amount);
+
+                        await expect(res)
+                            .to.emit(standardStakingRewards, 'ProviderLeft')
+                            .withArgs(
+                                pool.address,
+                                id,
+                                provider.address,
+                                amount,
+                                prevProviderRewards.stakedAmount.sub(amount)
+                            );
+
+                        const programRewards = await standardStakingRewards.programRewards(id);
+                        const providerRewards = await standardStakingRewards.providerRewards(provider.address, id);
+
+                        // ensure that the snapshot has been updated
+                        expect(programRewards.lastUpdateTime).to.equal(expectedUpdateTime);
+
+                        // ensure that the stake amounts have been updated
+                        expect(await standardStakingRewards.programStake(id)).to.equal(prevProgramStake.sub(amount));
+                        expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.sub(amount));
+
+                        expect(await poolToken.balanceOf(provider.address)).to.equal(prevProviderBalance.add(amount));
+                        expect(await poolToken.balanceOf(standardStakingRewards.address)).to.equal(
+                            prevStandardStakingRewardsBalance.sub(amount)
+                        );
+
+                        expect(await getBalance(rewardsToken, standardStakingRewards.address)).to.equal(
+                            prevRewardsTokenBalance
+                        );
+                    };
+
+                    it('should leave', async () => {
+                        await testLeaveProgram(id, poolTokenAmount);
+                    });
+
+                    it('should leave the same program multiple times', async () => {
+                        const count = 3;
+                        for (let i = 0; i < count; i++) {
+                            await testLeaveProgram(id, poolTokenAmount.div(count));
+
+                            await setTime(standardStakingRewards, now + duration.days(1));
+                        }
+                    });
+
+                    context('when the active program was disabled', () => {
+                        beforeEach(async () => {
+                            await standardStakingRewards.enableProgram(id, false);
+                        });
+
+                        it('should leave', async () => {
+                            await testLeaveProgram(id, poolTokenAmount);
+                        });
+                    });
+
+                    context('after the active program has ended', () => {
+                        beforeEach(async () => {
+                            await setTime(standardStakingRewards, endTime + 1);
+                        });
+
+                        it('should leave', async () => {
+                            await testLeaveProgram(id, poolTokenAmount);
+                        });
+                    });
+
+                    context('when the active program was terminated', () => {
+                        beforeEach(async () => {
+                            await standardStakingRewards.terminateProgram(id);
+                        });
+
+                        it('should leave', async () => {
+                            await testLeaveProgram(id, poolTokenAmount);
+                        });
+                    });
+                });
+            };
+
+            for (const poolSymbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+                for (const rewardsSymbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+                    context(`${poolSymbol} pool with ${rewardsSymbol} rewards`, () => {
+                        testLeave(poolSymbol, rewardsSymbol);
                     });
                 }
             }
