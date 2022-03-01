@@ -47,7 +47,7 @@ export const getBalances = async (tokens: TokenWithAddress[], account: string | 
 export const transfer = async (
     sourceAccount: SignerWithAddress,
     token: TokenWithAddress,
-    target: string | SignerWithAddress | BaseContract,
+    target: string | SignerWithAddress | BaseContract | Wallet,
     amount: BigNumberish
 ) => {
     const targetAddress = toAddress(target);

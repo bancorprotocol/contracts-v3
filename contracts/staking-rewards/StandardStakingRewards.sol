@@ -44,6 +44,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 rewardPerTokenPaid;
         uint256 pendingRewards;
         uint256 claimedRewards;
+        uint256 stakedAmount;
     }
 
     struct RewardData {
@@ -101,22 +102,19 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     mapping(Token => uint256) internal _activeProgramIdByPool;
 
     // a mapping between programs and their respective rewards data
-    mapping(uint256 => Rewards) private _programRewards;
+    mapping(uint256 => Rewards) internal _programRewards;
 
-    // a mapping between providers and their respective rewards data
-    mapping(address => ProviderRewards) private _providerRewards;
+    // a mapping between providers, programs and their respective rewards data
+    mapping(address => mapping(uint256 => ProviderRewards)) internal _providerRewards;
 
     // a mapping between programs and their total stakes
     mapping(uint256 => uint256) private _programStakes;
-
-    // a mapping between programs, providers and their stake amounts in specific programs
-    mapping(uint256 => mapping(address => uint256)) private _providerStakes;
 
     // a mapping between reward tokens and total unclaimed rewards
     mapping(Token => uint256) internal _unclaimedRewards;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 9] private __gap;
+    uint256[MAX_GAP - 8] private __gap;
 
     /**
      * @dev triggered when a program is created
@@ -277,6 +275,20 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
+    function programStake(uint256 id) external view returns (uint256) {
+        return _programStakes[id];
+    }
+
+    /**
+     * @inheritdoc IStandardStakingRewards
+     */
+    function providerStake(address provider, uint256 id) external view returns (uint256) {
+        return _providerRewards[provider][id].stakedAmount;
+    }
+
+    /**
+     * @inheritdoc IStandardStakingRewards
+     */
     function isProgramActive(uint256 id) external view returns (bool) {
         return _isProgramActive(_programs[id]);
     }
@@ -406,7 +418,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     function join(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActive(p);
+        _verifyProgramLive(p);
 
         _join(msg.sender, p, poolTokenAmount);
     }
@@ -424,7 +436,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     ) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActive(p);
+        _verifyProgramLive(p);
 
         // permit the amount the caller is trying to stake. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call or the inner transferFrom will revert
@@ -444,7 +456,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActive(p);
+        _verifyProgramLive(p);
 
         _depositAndJoin(msg.sender, p, tokenAmount);
     }
@@ -462,7 +474,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     ) external greaterThanZero(tokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActive(p);
+        _verifyProgramLive(p);
 
         p.pool.permit(msg.sender, address(_network), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
 
@@ -503,9 +515,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             }
 
             uint256 newRewardPerToken = _rewardPerToken(p, _programRewards[id]);
-            ProviderRewards memory providerRewards = _providerRewards[provider];
+            ProviderRewards memory providerRewards = _providerRewards[provider][id];
 
-            reward += _pendingRewards(provider, id, newRewardPerToken, providerRewards);
+            reward += _pendingRewards(newRewardPerToken, providerRewards);
         }
 
         return reward;
@@ -544,13 +556,13 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 poolTokenAmount
     ) private {
         // take a snapshot of the existing rewards (before increasing the stake)
-        _snapshotRewards(p, provider);
+        ProviderRewards storage data = _snapshotRewards(p, provider);
 
         // update both program and provider stakes
         _programStakes[p.id] += poolTokenAmount;
 
-        uint256 prevStake = _providerStakes[p.id][provider];
-        _providerStakes[p.id][provider] = prevStake + poolTokenAmount;
+        uint256 prevStake = data.stakedAmount;
+        data.stakedAmount = prevStake + poolTokenAmount;
 
         // transfer the tokens from the provider (we aren't using safeTransferFrom, since the PoolToken contract is
         // fully compliant)
@@ -574,13 +586,13 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 poolTokenAmount
     ) private {
         // take a snapshot of the existing rewards (before decreasing the stake)
-        _snapshotRewards(p, provider);
+        ProviderRewards storage data = _snapshotRewards(p, provider);
 
         // update both program and provider stakes
         _programStakes[p.id] -= poolTokenAmount;
 
-        uint256 remainingStake = _providerStakes[p.id][provider] - poolTokenAmount;
-        _providerStakes[p.id][provider] = remainingStake;
+        uint256 remainingStake = data.stakedAmount - poolTokenAmount;
+        data.stakedAmount = remainingStake;
 
         // transfer the tokens from the provider (we aren't using safeTransferFrom, since the PoolToken contract is
         // fully compliant)
@@ -734,17 +746,24 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev verifies that a program exists, active, and enabled
+     * @dev verifies that a program exists, and active
      */
     function _verifyProgramActive(ProgramData memory p) private view {
         _verifyProgramExists(p);
 
-        if (!p.isEnabled) {
-            revert ProgramDisabled();
-        }
-
         if (!_isProgramActive(p)) {
             revert ProgramInactive();
+        }
+    }
+
+    /**
+     * @dev verifies that a program exists, active, and enabled
+     */
+    function _verifyProgramLive(ProgramData memory p) private view {
+        _verifyProgramActive(p);
+
+        if (!p.isEnabled) {
+            revert ProgramDisabled();
         }
     }
 
@@ -763,7 +782,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint32 startTime,
         uint32 endTime
     ) private pure returns (uint256) {
-        return p.rewardRate * (endTime - startTime);
+        return startTime >= endTime ? 0 : p.rewardRate * (endTime - startTime);
     }
 
     /**
@@ -782,9 +801,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             rewards.lastUpdateTime = newUpdateTime;
         }
 
-        ProviderRewards storage providerRewards = _providerRewards[provider];
+        ProviderRewards storage providerRewards = _providerRewards[provider][p.id];
 
-        uint256 newPendingRewards = _pendingRewards(provider, p.id, newRewardPerToken, providerRewards);
+        uint256 newPendingRewards = _pendingRewards(newRewardPerToken, providerRewards);
         if (newPendingRewards != 0) {
             providerRewards.rewardPerTokenPaid = newRewardPerToken;
             providerRewards.pendingRewards = newPendingRewards;
@@ -821,17 +840,14 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @dev calculates provider's pending rewards
      */
-    function _pendingRewards(
-        address provider,
-        uint256 id,
-        uint256 updatedRewardPerToken,
-        ProviderRewards memory providerRewards
-    ) private view returns (uint256) {
-        uint256 providerStake = _providerStakes[id][provider];
-
+    function _pendingRewards(uint256 updatedRewardPerToken, ProviderRewards memory providerRewards)
+        private
+        pure
+        returns (uint256)
+    {
         return
             providerRewards.pendingRewards +
-            (providerStake * (updatedRewardPerToken - providerRewards.rewardPerTokenPaid)) /
+            (providerRewards.stakedAmount * (updatedRewardPerToken - providerRewards.rewardPerTokenPaid)) /
             REWARD_RATE_FACTOR;
     }
 

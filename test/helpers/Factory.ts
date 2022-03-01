@@ -397,7 +397,7 @@ const createSystemFixture = async () => {
 export const createSystem = async () => waffle.loadFixture(createSystemFixture);
 
 export const depositToPool = async (
-    provider: SignerWithAddress,
+    provider: SignerWithAddress | Wallet,
     token: TokenWithAddress,
     amount: BigNumberish,
     network: TestBancorNetwork

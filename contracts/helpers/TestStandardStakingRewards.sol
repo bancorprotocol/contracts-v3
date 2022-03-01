@@ -45,6 +45,14 @@ contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
         return _unclaimedRewards[rewardsToken];
     }
 
+    function programRewards(uint256 id) external view returns (Rewards memory) {
+        return _programRewards[id];
+    }
+
+    function providerRewards(address provider, uint256 id) external view returns (ProviderRewards memory) {
+        return _providerRewards[provider][id];
+    }
+
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();
     }

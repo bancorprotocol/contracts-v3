@@ -35,6 +35,16 @@ interface IStandardStakingRewards is IUpgradeable {
     function providerPrograms(address provider) external view returns (uint256[] memory);
 
     /**
+     * @dev returns the total staked amount in a specific program
+     */
+    function programStake(uint256 id) external view returns (uint256);
+
+    /**
+     * @dev returns the total staked amount of a specific provider in a specific program
+     */
+    function providerStake(address provider, uint256 id) external view returns (uint256);
+
+    /**
      * @dev returns whether the provided program is active
      */
 
