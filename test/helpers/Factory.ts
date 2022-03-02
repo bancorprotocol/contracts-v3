@@ -118,7 +118,7 @@ export const createStandardStakingRewards = async (
         ]
     });
 
-    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, stakingRewards.address);
+    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, stakingRewards.address);
 
     await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
 

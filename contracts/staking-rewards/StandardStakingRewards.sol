@@ -96,7 +96,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     mapping(address => EnumerableSetUpgradeable.UintSet) private _programIdsByProvider;
 
     // a mapping between program IDs and program data
-    mapping(uint256 => ProgramData) private _programs;
+    mapping(uint256 => ProgramData) internal _programs;
 
     // a mapping between pools and their currently active programs
     mapping(Token => uint256) internal _activeProgramIdByPool;
@@ -660,10 +660,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             amount: 0
         });
 
-        for (uint256 i = 0; i < ids.length; i++) {
-            uint256 id = ids[i];
-
-            ProgramData memory p = _programs[id];
+        for (uint256 i = 0; i < ids.length && maxAmount > 0; i++) {
+            ProgramData memory p = _programs[ids[i]];
 
             _verifyProgramExists(p);
 
@@ -685,9 +683,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             }
 
             if (stake) {
-                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: programReward });
-            } else {
                 emit RewardsStaked({ pool: p.pool, programId: p.id, provider: provider, amount: programReward });
+            } else {
+                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: programReward });
             }
         }
 
@@ -704,7 +702,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         address provider,
         ProgramData memory p,
         uint256 maxAmount
-    ) private returns (uint256) {
+    ) internal returns (uint256) {
         ProviderRewards storage providerRewards = _snapshotRewards(p, provider);
 
         uint256 reward = providerRewards.pendingRewards;
@@ -860,7 +858,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      * @dev distributes reward
      */
     function _distributeRewards(address recipient, RewardData memory rewardData) private {
-        if (_isBNT(rewardData.pool)) {
+        if (_isBNT(rewardData.rewardsToken)) {
             _bntGovernance.mint(recipient, rewardData.amount);
         } else {
             _externalRewardsVault.withdrawFunds(rewardData.rewardsToken, payable(recipient), rewardData.amount);

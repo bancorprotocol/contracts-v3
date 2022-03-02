@@ -7,6 +7,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { Time } from "../utility/Time.sol";
 
+import { ProgramData } from "../staking-rewards/interfaces/IStandardStakingRewards.sol";
 import { StandardStakingRewards } from "../staking-rewards/StandardStakingRewards.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
@@ -51,6 +52,26 @@ contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
 
     function providerRewards(address provider, uint256 id) external view returns (ProviderRewards memory) {
         return _providerRewards[provider][id];
+    }
+
+    function claimRewardsWithAmounts(uint256[] calldata ids, uint256 maxAmount) external returns (uint256[] memory) {
+        uint256[] memory amounts = new uint256[](ids.length);
+
+        for (uint256 i = 0; i < ids.length && maxAmount > 0; i++) {
+            uint256 id = ids[i];
+
+            ProgramData memory p = _programs[id];
+
+            uint256 programReward = _claimRewards(msg.sender, p, maxAmount);
+
+            amounts[i] = programReward;
+
+            if (maxAmount != type(uint256).max) {
+                maxAmount -= programReward;
+            }
+        }
+
+        return amounts;
     }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
