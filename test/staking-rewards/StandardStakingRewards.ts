@@ -2109,13 +2109,17 @@ describe('StandardStakingRewards', () => {
                                 maxRelativeError: new Decimal('0000000000000000000001')
                             });
 
-                            await expect(res)
-                                .to.emit(standardStakingRewards, 'RewardsClaimed')
-                                .withArgs(programData.pool.address, programData.id, p.address, claimed[0]);
+                            if (!claimed[0].isZero()) {
+                                await expect(res)
+                                    .to.emit(standardStakingRewards, 'RewardsClaimed')
+                                    .withArgs(programData.pool.address, programData.id, p.address, claimed[0]);
+                            }
 
-                            await expect(res)
-                                .to.emit(standardStakingRewards, 'RewardsClaimed')
-                                .withArgs(programData2.pool.address, programData2.id, p.address, claimed[1]);
+                            if (!claimed[1].isZero()) {
+                                await expect(res)
+                                    .to.emit(standardStakingRewards, 'RewardsClaimed')
+                                    .withArgs(programData2.pool.address, programData2.id, p.address, claimed[1]);
+                            }
 
                             expect(await standardStakingRewards.unclaimedRewards(rewardsToken.address)).to.equal(
                                 prevUnclaimedRewards.sub(totalClaimed)
@@ -2181,6 +2185,16 @@ describe('StandardStakingRewards', () => {
 
                         // increase the staking duration
                         await increaseTime(standardStakingRewards, duration.minutes(60));
+
+                        // ensure that claiming partial rewards works properly
+                        await testClaimRewards(toWei(1));
+
+                        // ensure that the program has finished
+                        await setTime(standardStakingRewards, rewardsData.endTime + duration.weeks(2));
+
+                        // ensure that claiming all remaining rewards, from an inactive programs, works properly
+                        await testClaimRewards();
+                    });
 
                         // ensure that claiming rewards works properly
                         await testClaimRewards();

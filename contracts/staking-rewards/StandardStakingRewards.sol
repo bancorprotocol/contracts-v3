@@ -709,9 +709,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         if (maxAmount != type(uint256).max && reward > maxAmount) {
             providerRewards.pendingRewards = reward - maxAmount;
-        } else {
-            providerRewards.pendingRewards = 0;
+
+            return maxAmount;
         }
+
+        providerRewards.pendingRewards = 0;
 
         return reward;
     }
