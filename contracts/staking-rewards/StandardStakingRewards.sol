@@ -837,7 +837,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         }
 
         uint32 newUpdateTime = uint32(Math.min(_time(), p.endTime));
-        if (newUpdateTime > rewards.lastUpdateTime) {
+        if (rewards.lastUpdateTime < newUpdateTime) {
             rewards.lastUpdateTime = newUpdateTime;
         }
 
