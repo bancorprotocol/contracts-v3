@@ -347,7 +347,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         // ensure that the rewards were already deposited to the rewards vault
         if (!_isBNT(rewardsToken)) {
-            if (rewardsToken.balanceOf(address(_externalRewardsVault)) - unclaimedRewards < totalRewards) {
+            if (rewardsToken.balanceOf(address(_externalRewardsVault)) < unclaimedRewards + totalRewards) {
                 revert InsufficientFunds();
             }
         }
