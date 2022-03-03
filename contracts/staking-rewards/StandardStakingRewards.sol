@@ -755,7 +755,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     function _isProgramActive(ProgramData memory p) private view returns (bool) {
         uint32 currTime = _time();
 
-        return p.id != 0 && p.startTime <= currTime && currTime <= p.endTime && _activeProgramIdByPool[p.pool] == p.id;
+        return
+            p.id >= INITIAL_PROGRAM_ID &&
+            p.startTime <= currTime &&
+            currTime <= p.endTime &&
+            _activeProgramIdByPool[p.pool] == p.id;
     }
 
     /**
