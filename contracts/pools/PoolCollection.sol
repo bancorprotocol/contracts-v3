@@ -166,7 +166,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     event PoolCreated(IPoolToken indexed poolToken, Token indexed token);
 
     /**
-     * @dev triggered when a pool is migrated into a this pool collection
+     * @dev triggered when a pool is migrated into this pool collection
      */
     event PoolMigratedIn(Token indexed token);
 
