@@ -868,9 +868,6 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         uint256 stakingEndTime = Math.min(currTime, p.endTime);
         uint256 stakingStartTime = Math.max(p.startTime, rewards.lastUpdateTime);
-        if (stakingStartTime == stakingEndTime) {
-            return rewards.rewardPerToken;
-        }
 
         return
             rewards.rewardPerToken +
