@@ -1,9 +1,9 @@
 import Contracts from '../../components/Contracts';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { toWei } from '../../utils/Types';
+import { Addressable, toWei } from '../../utils/Types';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 export const min = (a: BigNumberish, b: BigNumberish) =>
@@ -11,8 +11,7 @@ export const min = (a: BigNumberish, b: BigNumberish) =>
 export const max = (a: BigNumberish, b: BigNumberish) =>
     BigNumber.from(a).gt(b) ? BigNumber.from(a) : BigNumber.from(b);
 
-export const toAddress = (account: string | SignerWithAddress | Wallet | BaseContract) =>
-    typeof account === 'string' ? account : account.address;
+export const toAddress = (account: string | Addressable) => (typeof account === 'string' ? account : account.address);
 
 export const getTransactionGas = async (res: ContractTransaction) => {
     const receipt = await res.wait();
@@ -26,7 +25,7 @@ export const getTransactionCost = async (res: ContractTransaction) => {
     return receipt.effectiveGasPrice.mul(await getTransactionGas(res));
 };
 
-export const getBalance = async (token: TokenWithAddress, account: string | SignerWithAddress | Wallet) => {
+export const getBalance = async (token: TokenWithAddress, account: string | Addressable) => {
     const accountAddress = toAddress(account);
     const tokenAddress = token.address;
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
@@ -35,7 +34,7 @@ export const getBalance = async (token: TokenWithAddress, account: string | Sign
     return await (await Contracts.TestERC20Token.attach(tokenAddress)).balanceOf(accountAddress);
 };
 
-export const getBalances = async (tokens: TokenWithAddress[], account: string | SignerWithAddress) => {
+export const getBalances = async (tokens: TokenWithAddress[], account: string | Addressable) => {
     const balances: { [balance: string]: BigNumber } = {};
     for (const token of tokens) {
         balances[token.address] = await getBalance(token, account);
@@ -47,7 +46,7 @@ export const getBalances = async (tokens: TokenWithAddress[], account: string | 
 export const transfer = async (
     sourceAccount: SignerWithAddress,
     token: TokenWithAddress,
-    target: string | SignerWithAddress | BaseContract | Wallet,
+    target: string | Addressable,
     amount: BigNumberish
 ) => {
     const targetAddress = toAddress(target);
