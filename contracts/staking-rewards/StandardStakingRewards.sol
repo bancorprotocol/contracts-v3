@@ -250,7 +250,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256[] memory ids = new uint256[](lastProgramId);
 
         for (uint256 i = INITIAL_PROGRAM_ID; i <= lastProgramId; i++) {
-            ids[i - 1] = i;
+            ids[i - INITIAL_PROGRAM_ID] = i;
         }
 
         return ids;
