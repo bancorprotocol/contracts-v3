@@ -2,6 +2,7 @@ import Contracts, {
     BancorNetworkInfo,
     ExternalRewardsVault,
     IERC20,
+    IPoolToken,
     IVault,
     MasterVault,
     NetworkSettings,
@@ -12,8 +13,10 @@ import Contracts, {
     TestERC20Token,
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
-    TestPoolCollection
+    TestPoolCollection,
+    TestStandardStakingRewards
 } from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
@@ -29,6 +32,7 @@ import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import {
     createAutoCompoundingStakingRewards,
     createPool,
+    createStandardStakingRewards,
     createSystem,
     createTestToken,
     createToken,
@@ -1179,7 +1183,7 @@ describe('Profile @profile', () => {
         });
     });
 
-    describe('process rewards', () => {
+    describe('auto-compounding rewards', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
@@ -1368,5 +1372,259 @@ describe('Profile @profile', () => {
         };
 
         testRewardsMatrix(toWei(100_000), toWei(200_000));
+    });
+
+    describe('standard rewards', () => {
+        let network: TestBancorNetwork;
+        let networkInfo: BancorNetworkInfo;
+        let networkSettings: NetworkSettings;
+        let bntGovernance: TokenGovernance;
+        let bntPool: TestBNTPool;
+        let poolCollection: TestPoolCollection;
+        let externalRewardsVault: ExternalRewardsVault;
+        let standardStakingRewards: TestStandardStakingRewards;
+
+        let now: number;
+
+        let provider: SignerWithAddress;
+
+        before(async () => {
+            [, provider] = await ethers.getSigners();
+        });
+
+        beforeEach(async () => {
+            ({ network, networkInfo, networkSettings, bntGovernance, bntPool, externalRewardsVault, poolCollection } =
+                await createSystem());
+
+            standardStakingRewards = await createStandardStakingRewards(
+                network,
+                networkSettings,
+                bntGovernance,
+                bntPool,
+                externalRewardsVault
+            );
+
+            now = await latest();
+
+            await setTime(standardStakingRewards, now);
+        });
+
+        const prepareSimplePool = async (poolData: TokenData, initialBalance: BigNumberish) => {
+            // deposit initial stake so that the participating user would have some initial amount of pool tokens
+            const { token, poolToken } = await setupFundedPool(
+                {
+                    tokenData: poolData,
+                    balance: initialBalance,
+                    requestedLiquidity: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
+                    bntRate: 1,
+                    baseTokenRate: 2
+                },
+                deployer,
+                network,
+                networkInfo,
+                networkSettings,
+                poolCollection
+            );
+
+            return { token, poolToken };
+        };
+
+        const createProgram = async (
+            standardStakingRewards: TestStandardStakingRewards,
+            pool: TokenWithAddress,
+            rewardsToken: TokenWithAddress,
+            totalRewards: BigNumberish,
+            startTime: number,
+            endTime: number
+        ) => {
+            const id = await standardStakingRewards.nextProgramId();
+
+            await standardStakingRewards.createProgram(
+                pool.address,
+                rewardsToken.address,
+                totalRewards,
+                startTime,
+                endTime
+            );
+
+            return id;
+        };
+
+        const setTime = async (standardStakingRewards: TestStandardStakingRewards, time: number) => {
+            await standardStakingRewards.setTime(time);
+
+            now = time;
+        };
+
+        const increaseTime = async (standardStakingRewards: TestStandardStakingRewards, duration: number) =>
+            setTime(standardStakingRewards, now + duration);
+
+        interface ProgramSpec {
+            poolSymbol: TokenSymbol;
+            initialBalance: BigNumberish;
+            providerStake: BigNumberish;
+            totalRewards: BigNumberish;
+            duration: number;
+        }
+
+        // setups a pool with the same rewards token as the pool itself so that it'd be possible staking rewards to the
+        // same pool
+        const setupProgram = async (programSpec: ProgramSpec) => {
+            const poolData = new TokenData(programSpec.poolSymbol);
+
+            const { token: pool, poolToken } = await prepareSimplePool(poolData, programSpec.initialBalance);
+
+            const rewardsTokenData = poolData;
+            const rewardsToken = pool;
+
+            // if we're rewarding BNT - no additional funding is needed
+            if (!rewardsTokenData.isBNT()) {
+                await transfer(deployer, rewardsToken, externalRewardsVault, programSpec.totalRewards);
+            }
+
+            const startTime = now;
+            const endTime = startTime + programSpec.duration;
+
+            const id = await createProgram(
+                standardStakingRewards,
+                pool,
+                rewardsToken,
+                programSpec.totalRewards,
+                startTime,
+                endTime
+            );
+
+            await transfer(deployer, pool, provider, programSpec.providerStake);
+            await depositToPool(provider, pool, programSpec.providerStake, network);
+            const providerPoolTokenAmount = await poolToken.balanceOf(provider.address);
+
+            return {
+                id: id.toNumber(),
+                providerPoolTokenAmount,
+                poolToken
+            };
+        };
+
+        const programSpecToString = (programSpec: ProgramSpec) =>
+            `(pool=${
+                programSpec.poolSymbol
+            }, initialBalance=${programSpec.initialBalance.toString()}, stake=[${programSpec.providerStake.toString()}]) (rewards=${
+                programSpec.poolSymbol
+            }, totalRewards=${programSpec.totalRewards.toString()}, duration=${humanizeDuration(
+                programSpec.duration * 1000,
+                { units: ['d'] }
+            )})`;
+
+        const testClaiming = (programSpec: ProgramSpec) => {
+            let id: number;
+            let providerPoolTokenAmount: BigNumber;
+            let poolToken: IPoolToken;
+
+            describe(`full tests ${programSpecToString(programSpec)}`, () => {
+                beforeEach(async () => {
+                    ({ id, providerPoolTokenAmount, poolToken } = await setupProgram(programSpec));
+
+                    await poolToken.connect(provider).approve(standardStakingRewards.address, providerPoolTokenAmount);
+                });
+
+                it('should properly claim rewards', async () => {
+                    await profiler.profile(
+                        `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await increaseTime(standardStakingRewards, duration.days(1));
+
+                    await profiler.profile(
+                        `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await profiler.profile(
+                        `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                    );
+
+                    await increaseTime(standardStakingRewards, duration.days(1));
+
+                    await profiler.profile(
+                        `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                    );
+
+                    await profiler.profile(
+                        `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await increaseTime(standardStakingRewards, duration.days(1));
+
+                    await profiler.profile(
+                        `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await profiler.profile(
+                        `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                    );
+                });
+
+                it('should properly stake rewards', async () => {
+                    await profiler.profile(
+                        `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await increaseTime(standardStakingRewards, duration.days(1));
+
+                    await profiler.profile(
+                        `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await profiler.profile(
+                        `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                    );
+
+                    await increaseTime(standardStakingRewards, duration.days(1));
+
+                    await profiler.profile(
+                        `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                    );
+
+                    await profiler.profile(
+                        `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await increaseTime(standardStakingRewards, duration.days(1));
+
+                    await profiler.profile(
+                        `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                    );
+
+                    await profiler.profile(
+                        `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
+                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                    );
+                });
+            });
+        };
+
+        for (const poolSymbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+            context(`${poolSymbol} pool with ${poolSymbol} rewards`, () => {
+                testClaiming({
+                    poolSymbol,
+                    initialBalance: toWei(100_000),
+                    providerStake: toWei(10_000),
+                    duration: duration.weeks(12),
+                    totalRewards: toWei(50_000)
+                });
+            });
+        }
     });
 });
