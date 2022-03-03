@@ -1265,23 +1265,55 @@ describe('PoolCollection', () => {
                     });
 
                     context('when below the deposit limit', () => {
-                        context('when BNT liquidity for trading is below the minimum liquidity for trading', () => {
-                            beforeEach(async () => {
-                                const { baseTokenTradingLiquidity, stakedBalance } = await poolCollection.poolLiquidity(
-                                    token.address
-                                );
-
-                                await poolCollection.setTradingLiquidityT(token.address, {
-                                    bntTradingLiquidity: MIN_LIQUIDITY_FOR_TRADING.sub(1),
-                                    baseTokenTradingLiquidity,
-                                    stakedBalance
+                        context(
+                            'when the new BNT liquidity for trading is below the minimum liquidity for trading',
+                            () => {
+                                beforeEach(async () => {
+                                    // ensure that the calculation of the new liquidity will return at most 'minimum minus 1'
+                                    await networkSettings.setFundingLimit(
+                                        token.address,
+                                        MIN_LIQUIDITY_FOR_TRADING.sub(1)
+                                    );
                                 });
-                            });
 
-                            it('should deposit and reset the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Reset);
-                            });
-                        });
+                                it('should deposit and reset the trading liquidity when the pool is uninitialized', async () => {
+                                    await poolCollection.setAverageRateT(token.address, {
+                                        blockNumber: await poolCollection.currentBlockNumber(),
+                                        rate: { n: 0, d: 1 }
+                                    });
+
+                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                });
+
+                                it('should deposit without resetting the trading liquidity when the pool is unstable', async () => {
+                                    const liquidity = await poolCollection.poolLiquidity(token.address);
+
+                                    await poolCollection.setAverageRateT(token.address, {
+                                        blockNumber: await poolCollection.currentBlockNumber(),
+                                        rate: {
+                                            n: liquidity.baseTokenTradingLiquidity,
+                                            d: liquidity.bntTradingLiquidity
+                                        }
+                                    });
+
+                                    await testMultipleDepositsFor(TradingLiquidityState.Ignore);
+                                });
+
+                                it('should deposit and reset the trading liquidity when the pool is stable', async () => {
+                                    const liquidity = await poolCollection.poolLiquidity(token.address);
+
+                                    await poolCollection.setAverageRateT(token.address, {
+                                        blockNumber: await poolCollection.currentBlockNumber(),
+                                        rate: {
+                                            n: liquidity.bntTradingLiquidity,
+                                            d: liquidity.baseTokenTradingLiquidity
+                                        }
+                                    });
+
+                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                });
+                            }
+                        );
 
                         context('when the pool is unstable', () => {
                             const SPOT_RATE = {
