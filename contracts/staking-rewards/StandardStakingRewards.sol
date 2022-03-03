@@ -822,7 +822,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint32 startTime,
         uint32 endTime
     ) private pure returns (uint256) {
-        return startTime >= endTime ? 0 : p.rewardRate * (endTime - startTime);
+        return endTime > startTime ? p.rewardRate * (endTime - startTime) : 0;
     }
 
     /**
