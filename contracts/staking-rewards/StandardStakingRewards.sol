@@ -667,8 +667,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         bool externalPayer = payer != address(this);
 
         if (p.pool.isNative()) {
-            // unless the payer is the contract itself (e.g., during the staking process), in which case ETH is was
-            // already claimed and pending in the contract - verify and use the received ETH from the sender
+            // unless the payer is the contract itself (e.g., during the staking process), in which case ETH was already
+            // claimed and pending in the contract - verify and use the received ETH from the sender
             if (externalPayer) {
                 if (msg.value < tokenAmount) {
                     revert EthAmountMismatch();
