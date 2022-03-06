@@ -427,7 +427,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     function join(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramLive(p);
+        _verifyProgramActiveAndEnabled(p);
 
         _join(msg.sender, p, poolTokenAmount, msg.sender);
     }
@@ -445,7 +445,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     ) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramLive(p);
+        _verifyProgramActiveAndEnabled(p);
 
         // permit the amount the caller is trying to stake. Please note, that if the base token doesn't support
         // EIP2612 permit - either this call or the inner transferFrom will revert
@@ -476,7 +476,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramLive(p);
+        _verifyProgramActiveAndEnabled(p);
 
         _depositAndJoin(msg.sender, p, tokenAmount, msg.sender);
     }
@@ -494,7 +494,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     ) external greaterThanZero(tokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramLive(p);
+        _verifyProgramActiveAndEnabled(p);
 
         p.pool.permit(msg.sender, address(this), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
 
@@ -569,13 +569,13 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         _distributeRewards(address(this), rewardData);
 
-        // get the active pool for the reward token and ensure that it's live and accepting new stakes
+        // get the active pool for the reward token and ensure that it's active and enabled
         ProgramData memory p = _programs[_activeProgramIdByPool[rewardData.rewardsToken]];
 
-        _verifyProgramLive(p);
+        _verifyProgramActiveAndEnabled(p);
 
-        // deposit the tokens to the network and join the existing live program, but ensure not to attempt to transfer
-        // the tokens from the provider by setting the payer as the contract itself
+        // deposit the tokens to the network and join the existing  program, but ensure not to attempt to transfer the
+        // tokens from the provider by setting the payer as the contract itself
         _depositAndJoin(msg.sender, p, rewardData.amount, address(this));
 
         return rewardData.amount;
@@ -696,8 +696,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             poolTokenAmount = _network.deposit(p.pool, tokenAmount);
         }
 
-        // join the existing live program, but ensure not to attempt to transfer the tokens from the provider by setting
-        // the payer as the contract itself
+        // join the existing program, but ensure not to attempt to transfer the tokens from the provider by setting the
+        // payer as the contract itself
         _join(provider, p, poolTokenAmount, address(this));
     }
 
@@ -738,8 +738,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 maxAmount -= claimData.amount;
             }
 
-            // if the program is no longer live and there are no pending rewards - remove the program from the provider's
-            // program list
+            // if the program is no longer active and there are no pending rewards - remove the program from the
+            // provider's program list
             if (!_isProgramActive(p) && claimData.remaining == 0) {
                 _programIdsByProvider[provider].remove(p.id);
             }
@@ -841,7 +841,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @dev verifies that a program exists, active, and enabled
      */
-    function _verifyProgramLive(ProgramData memory p) private view {
+    function _verifyProgramActiveAndEnabled(ProgramData memory p) private view {
         _verifyProgramActive(p);
         _verifyProgramEnabled(p);
     }
