@@ -781,7 +781,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev returns whether the provided program is active
+     * @dev returns whether the specified program is active
      */
     function _isProgramActive(ProgramData memory p) private view returns (bool) {
         uint32 currTime = _time();
@@ -794,7 +794,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev returns whether the provided program is active
+     * @dev returns whether the specified program is active
      */
     function _isProgramEnabled(ProgramData memory p) private pure returns (bool) {
         return p.isEnabled;
@@ -937,7 +937,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev returns whether the provided array has duplicates
+     * @dev returns whether the specified array has duplicates
      */
     function _isArrayUnique(uint256[] calldata ids) private pure returns (bool) {
         for (uint256 i = 0; i < ids.length; i++) {

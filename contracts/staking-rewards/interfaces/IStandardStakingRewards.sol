@@ -25,7 +25,7 @@ interface IStandardStakingRewards is IUpgradeable {
     function programsIds() external view returns (uint256[] memory);
 
     /**
-     * @dev returns program data for each provided program id
+     * @dev returns program data for each specified program id
      */
     function programs(uint256[] calldata ids) external view returns (ProgramData[] memory);
 
@@ -45,12 +45,12 @@ interface IStandardStakingRewards is IUpgradeable {
     function providerStake(address provider, uint256 id) external view returns (uint256);
 
     /**
-     * @dev returns whether the provided program is active
+     * @dev returns whether the specified program is active
      */
     function isProgramActive(uint256 id) external view returns (bool);
 
     /**
-     * @dev returns whether the provided program is enabled
+     * @dev returns whether the specified program is enabled
      */
     function isProgramEnabled(uint256 id) external view returns (bool);
 
@@ -104,7 +104,7 @@ interface IStandardStakingRewards is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have provided a valid and unused EIP712 typed signature
+     * - the caller must have specified a valid and unused EIP712 typed signature
      */
     function joinPermitted(
         uint256 id,
@@ -120,7 +120,7 @@ interface IStandardStakingRewards is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have provided a valid and unused EIP712 typed signature
+     * - the caller must have specified a valid and unused EIP712 typed signature
      */
     function leave(uint256 id, uint256 poolTokenAmount) external;
 
@@ -139,7 +139,7 @@ interface IStandardStakingRewards is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have provided a valid and unused EIP712 typed signature
+     * - the caller must have specified a valid and unused EIP712 typed signature
      */
     function depositAndJoinPermitted(
         uint256 id,
@@ -155,7 +155,8 @@ interface IStandardStakingRewards is IUpgradeable {
      *
      * requirements:
      *
-     * - the provided program ids array needs to consist from unique and existing program ids with the same reward token
+     * - the specified program ids array needs to consist from unique and existing program ids with the same reward
+     *   token
      */
     function pendingRewards(address provider, uint256[] calldata ids) external view returns (uint256);
 
@@ -169,7 +170,8 @@ interface IStandardStakingRewards is IUpgradeable {
      *
      * requirements:
      *
-     * - the provided program ids array needs to consist from unique and existing program ids with the same reward token
+     * - the specified program ids array needs to consist from unique and existing program ids with the same reward
+     *   token
      * - the rewards token must have been whitelisted with an existing pool
      */
     function stakeRewards(uint256[] calldata ids, uint256 maxAmount) external returns (uint256);
