@@ -1846,58 +1846,42 @@ describe('StandardStakingRewards', () => {
                         ).to.be.revertedWith('ArrayNotUnique');
                     });
 
-                    it('should revert when attempting to claim rewards from multiple programs with different reward tokens', async () => {
-                        const newRewardsToken = await createTestToken();
+                    context('when the active program was disabled', () => {
+                        beforeEach(async () => {
+                            await standardStakingRewards.enableProgram(programData.id, false);
+                        });
 
-                        const { token: pool } = await prepareSimplePool(
-                            new TokenData(TokenSymbol.TKN2),
-                            new TokenData(TokenSymbol.TKN2),
-                            newRewardsToken,
-                            programSpec.initialBalance,
-                            rewardsSpec.totalRewards
-                        );
-                        const totalRewards = 1;
-                        await transfer(deployer, newRewardsToken, externalRewardsVault, totalRewards);
+                        it('should revert', async () => {
+                            await expect(
+                                standardStakingRewards.connect(provider).claimRewards([programData.id], MAX_UINT256)
+                            ).to.be.revertedWith('ProgramDisabled');
+                        });
 
-                        const newId = await createProgram(
-                            standardStakingRewards,
-                            pool,
-                            newRewardsToken,
-                            totalRewards,
-                            now,
-                            now + duration.years(1)
-                        );
-
-                        await expect(
-                            standardStakingRewards.connect(provider).claimRewards([programData.id, newId], MAX_UINT256)
-                        ).to.be.revertedWith('RewardsTokenMismatch');
+                        it('should revert', async () => {
+                            await expect(
+                                standardStakingRewards.connect(provider).stakeRewards([programData.id], MAX_UINT256)
+                            ).to.be.revertedWith('ProgramDisabled');
+                        });
                     });
 
-                    it('should revert when attempting to stake rewards from multiple programs with different reward tokens', async () => {
-                        const newRewardsToken = await createTestToken();
-
-                        const { token: pool } = await prepareSimplePool(
-                            new TokenData(TokenSymbol.TKN2),
-                            new TokenData(TokenSymbol.TKN2),
-                            newRewardsToken,
-                            programSpec.initialBalance,
-                            rewardsSpec.totalRewards
-                        );
-                        const totalRewards = 1;
-                        await transfer(deployer, newRewardsToken, externalRewardsVault, totalRewards);
-
-                        const newId = await createProgram(
-                            standardStakingRewards,
-                            pool,
-                            newRewardsToken,
-                            totalRewards,
-                            now,
-                            now + duration.years(1)
-                        );
+                    it('should revert when attempting to claim rewards for non-existing programs', async () => {
+                        await expect(
+                            standardStakingRewards.connect(provider).claimRewards([10000], MAX_UINT256)
+                        ).to.be.revertedWith('ProgramDoesNotExist');
 
                         await expect(
-                            standardStakingRewards.connect(provider).stakeRewards([programData.id, newId], MAX_UINT256)
-                        ).to.be.revertedWith('RewardsTokenMismatch');
+                            standardStakingRewards.connect(provider).claimRewards([programData.id, 10000], MAX_UINT256)
+                        ).to.be.revertedWith('ProgramDoesNotExist');
+                    });
+
+                    it('should revert when attempting to stake rewards for non-existing programs', async () => {
+                        await expect(
+                            standardStakingRewards.connect(provider).stakeRewards([10000], MAX_UINT256)
+                        ).to.be.revertedWith('ProgramDoesNotExist');
+
+                        await expect(
+                            standardStakingRewards.connect(provider).stakeRewards([programData.id, 10000], MAX_UINT256)
+                        ).to.be.revertedWith('ProgramDoesNotExist');
                     });
                 });
             };

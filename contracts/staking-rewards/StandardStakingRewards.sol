@@ -719,7 +719,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         for (uint256 i = 0; i < ids.length && maxAmount > 0; i++) {
             ProgramData memory p = _programs[ids[i]];
 
-            _verifyProgramExists(p);
+            _verifyProgramEnabled(p);
 
             if (i == 0) {
                 rewardData.pool = p.pool;
@@ -828,14 +828,22 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev verifies that a program exists, active, and enabled
+     * @dev verifies that a program is enabled
      */
-    function _verifyProgramLive(ProgramData memory p) private view {
-        _verifyProgramActive(p);
+    function _verifyProgramEnabled(ProgramData memory p) private pure {
+        _verifyProgramExists(p);
 
         if (!p.isEnabled) {
             revert ProgramDisabled();
         }
+    }
+
+    /**
+     * @dev verifies that a program exists, active, and enabled
+     */
+    function _verifyProgramLive(ProgramData memory p) private view {
+        _verifyProgramActive(p);
+        _verifyProgramEnabled(p);
     }
 
     /**
