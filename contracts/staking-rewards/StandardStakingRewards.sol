@@ -535,7 +535,12 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function claimRewards(uint256[] calldata ids, uint256 maxAmount) external uniqueArray(ids) returns (uint256) {
+    function claimRewards(uint256[] calldata ids, uint256 maxAmount)
+        external
+        uniqueArray(ids)
+        nonReentrant
+        returns (uint256)
+    {
         RewardData memory rewardData = _claimRewards(msg.sender, ids, maxAmount, false);
 
         if (rewardData.amount == 0) {
@@ -550,7 +555,12 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function stakeRewards(uint256[] calldata ids, uint256 maxAmount) external uniqueArray(ids) returns (uint256) {
+    function stakeRewards(uint256[] calldata ids, uint256 maxAmount)
+        external
+        uniqueArray(ids)
+        nonReentrant
+        returns (uint256)
+    {
         RewardData memory rewardData = _claimRewards(msg.sender, ids, maxAmount, true);
 
         if (rewardData.amount == 0) {
