@@ -787,7 +787,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint32 currTime = _time();
 
         return
-            p.id >= INITIAL_PROGRAM_ID &&
+            _doesProgramExist(p) &&
             p.startTime <= currTime &&
             currTime <= p.endTime &&
             _activeProgramIdByPool[p.pool] == p.id;
