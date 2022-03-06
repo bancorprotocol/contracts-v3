@@ -572,7 +572,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         _verifyProgramActiveAndEnabled(p);
 
-        // deposit the tokens to the network and join the existing  program, but ensure not to attempt to transfer the
+        // deposit the tokens to the network and join the existing program, but ensure not to attempt to transfer the
         // tokens from the provider by setting the payer as the contract itself
         _depositAndJoin(msg.sender, p, rewardData.amount, address(this));
 
