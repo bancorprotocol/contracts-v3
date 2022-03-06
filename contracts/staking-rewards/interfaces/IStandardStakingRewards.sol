@@ -162,12 +162,12 @@ interface IStandardStakingRewards is IUpgradeable {
     function pendingRewards(address provider, uint256[] calldata ids) external view returns (uint256);
 
     /**
-     * @dev claims rewards and the respective reward amount
+     * @dev claims rewards and returns the respective reward amount
      */
     function claimRewards(uint256[] calldata ids, uint256 maxAmount) external returns (uint256);
 
     /**
-     * @dev claims and stake rewards and and returns the respective pool token amount
+     * @dev claims and stake rewards and returns the respective pool token amount
      *
      * requirements:
      *

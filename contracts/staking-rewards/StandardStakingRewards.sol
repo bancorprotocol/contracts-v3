@@ -727,7 +727,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev claims rewards
+     * @dev claims rewards and returns the respective reward amount
      */
     function _claimRewards(
         address provider,
