@@ -261,7 +261,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      */
     function programs(uint256[] calldata ids) external view uniqueArray(ids) returns (ProgramData[] memory) {
         uint256 length = ids.length;
-        ProgramData[] memory list = new ProgramData[](ids.length);
+        ProgramData[] memory list = new ProgramData[](length);
 
         for (uint256 i = 0; i < length; i++) {
             list[i] = _programs[ids[i]];
@@ -910,11 +910,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      * @dev returns whether the provided array has duplicates
      */
     function _isArrayUnique(uint256[] calldata ids) private pure returns (bool) {
-        if (ids.length <= 1) {
-            return true;
-        }
-
-        for (uint256 i = 0; i < ids.length - 1; i++) {
+        for (uint256 i = 0; i < ids.length; i++) {
             for (uint256 j = i + 1; j < ids.length; j++) {
                 if (ids[i] == ids[j]) {
                     return false;
