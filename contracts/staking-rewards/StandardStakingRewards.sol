@@ -886,14 +886,14 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      * @dev calculates current reward per-token amount
      */
     function _rewardPerToken(ProgramData memory p, Rewards memory rewards) private view returns (uint256) {
-        uint256 totalStaked = _programStakes[p.id];
-        if (totalStaked == 0) {
-            return rewards.rewardPerToken;
-        }
-
         uint256 currTime = _time();
         if (currTime < p.startTime) {
             return 0;
+        }
+
+        uint256 totalStaked = _programStakes[p.id];
+        if (totalStaked == 0) {
+            return rewards.rewardPerToken;
         }
 
         uint256 stakingEndTime = Math.min(currTime, p.endTime);
