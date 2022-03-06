@@ -618,7 +618,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev removes (some of) provider's from the program
+     * @dev removes (some of) provider's stake from the program
      */
     function _leave(
         address provider,

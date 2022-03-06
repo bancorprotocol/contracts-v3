@@ -116,7 +116,7 @@ interface IStandardStakingRewards is IUpgradeable {
     ) external;
 
     /**
-     * @dev removes (some of) provider's from the program
+     * @dev removes (some of) provider's stake from the program
      *
      * requirements:
      *
