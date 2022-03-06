@@ -600,7 +600,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         data.stakedAmount = prevStake + poolTokenAmount;
 
         // unless the payer is the contract itself (in which case, no additional transfer is required), transfer the
-        // tokens from the payer (we aren't using safeTransferFrom, since the PoolToken contract is fully compliant)
+        // tokens from the payer (we aren't using safeTransferFrom, since the PoolToken is a fully compliant ERC20 token
+        // contract)
         if (payer != address(this)) {
             p.poolToken.transferFrom(payer, address(this), poolTokenAmount);
         }
@@ -634,7 +635,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 remainingStake = data.stakedAmount - poolTokenAmount;
         data.stakedAmount = remainingStake;
 
-        // transfer the tokens to the provider
+        // transfer the tokens to the provider (we aren't using safeTransfer, since the PoolToken is a fully
+        // compliant ERC20 token contract)
         p.poolToken.transfer(provider, poolTokenAmount);
 
         // if the provider has removed all of its stake and there are no pending rewards - remove the program from the
