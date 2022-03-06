@@ -338,8 +338,6 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         }
 
         IPoolToken poolToken;
-        uint256 unclaimedRewards = _unclaimedRewards[rewardsToken];
-
         if (_isBNT(pool)) {
             poolToken = _bntPoolToken;
         } else {
@@ -351,6 +349,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         }
 
         // ensure that the rewards were already deposited to the rewards vault
+        uint256 unclaimedRewards = _unclaimedRewards[rewardsToken];
         if (!_isBNT(rewardsToken)) {
             if (rewardsToken.balanceOf(address(_externalRewardsVault)) < unclaimedRewards + totalRewards) {
                 revert InsufficientFunds();
