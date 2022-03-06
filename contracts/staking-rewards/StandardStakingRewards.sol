@@ -25,7 +25,7 @@ import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
 
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
-import { IStandardStakingRewards, ProgramData } from "./interfaces/IStandardStakingRewards.sol";
+import { IStandardStakingRewards, ProgramData, StakeAmounts } from "./interfaces/IStandardStakingRewards.sol";
 
 /**
  * @dev Standard Staking Rewards contract
@@ -478,7 +478,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         _verifyProgramActiveAndEnabled(p);
 
-        _depositAndJoin(msg.sender, p, tokenAmount, msg.sender);
+        _depositAndJoin(msg.sender, p, tokenAmount);
     }
 
     /**
@@ -498,7 +498,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         p.pool.permit(msg.sender, address(this), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
 
-        _depositAndJoin(msg.sender, p, tokenAmount, msg.sender);
+        _depositAndJoin(msg.sender, p, tokenAmount);
     }
 
     /**
@@ -557,26 +557,21 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         external
         uniqueArray(ids)
         nonReentrant
-        returns (uint256)
+        returns (StakeAmounts memory)
     {
         RewardData memory rewardData = _claimRewards(msg.sender, ids, maxAmount, true);
 
         if (rewardData.amount == 0) {
-            return 0;
+            return StakeAmounts({ stakedRewardAmount: 0, poolTokenAmount: 0 });
         }
 
         _distributeRewards(address(this), rewardData);
 
-        // get the active pool for the reward token and ensure that it's active and enabled
-        ProgramData memory p = _programs[_activeProgramIdByPool[rewardData.rewardsToken]];
+        // deposit provider's tokens to the network. Please note, that since we're staking rewards, then the deposit
+        // should come from the contract itself, but the pool tokens should be sent to the provider directly
+        uint256 poolTokenAmount = _deposit(msg.sender, rewardData.rewardsToken, rewardData.amount, address(this));
 
-        _verifyProgramActiveAndEnabled(p);
-
-        // deposit the tokens to the network and join the existing program, but ensure not to attempt to transfer the
-        // tokens from the provider by setting the payer as the contract itself
-        _depositAndJoin(msg.sender, p, rewardData.amount, address(this));
-
-        return rewardData.amount;
+        return StakeAmounts({ stakedRewardAmount: rewardData.amount, poolTokenAmount: poolTokenAmount });
     }
 
     /**
@@ -653,18 +648,18 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev deposits and adds provider's stake to the program
+     * @dev deposits provider's stake to the network and returns the received pool token amount
      */
-    function _depositAndJoin(
+    function _deposit(
         address provider,
-        ProgramData memory p,
+        Token pool,
         uint256 tokenAmount,
         address payer
-    ) private {
+    ) private returns (uint256) {
         uint256 poolTokenAmount;
         bool externalPayer = payer != address(this);
 
-        if (p.pool.isNative()) {
+        if (pool.isNative()) {
             // unless the payer is the contract itself (e.g., during the staking process), in which case ETH was already
             // claimed and pending in the contract - verify and use the received ETH from the sender
             if (externalPayer) {
@@ -673,11 +668,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 }
             }
 
-            poolTokenAmount = _network.deposit{ value: tokenAmount }(p.pool, tokenAmount);
+            poolTokenAmount = _network.depositFor{ value: tokenAmount }(provider, pool, tokenAmount);
 
             // refund the caller for the remaining ETH
             if (externalPayer && msg.value > tokenAmount) {
-                payable(address(provider)).sendValue(msg.value - tokenAmount);
+                payable(address(payer)).sendValue(msg.value - tokenAmount);
             }
         } else {
             if (msg.value > 0) {
@@ -687,12 +682,27 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             // unless the payer is the contract itself (e.g., during the staking process), in which case the tokens were
             // already claimed and pending in the contract - get the tokens from the provider
             if (externalPayer) {
-                p.pool.safeTransferFrom(payer, address(this), tokenAmount);
+                pool.safeTransferFrom(payer, address(this), tokenAmount);
             }
-            p.pool.ensureApprove(address(_network), tokenAmount);
+            pool.ensureApprove(address(_network), tokenAmount);
 
-            poolTokenAmount = _network.deposit(p.pool, tokenAmount);
+            poolTokenAmount = _network.depositFor(provider, pool, tokenAmount);
         }
+
+        return poolTokenAmount;
+    }
+
+    /**
+     * @dev deposits and adds provider's stake to the program
+     */
+    function _depositAndJoin(
+        address provider,
+        ProgramData memory p,
+        uint256 tokenAmount
+    ) private {
+        // deposit provider's tokens to the network and let the contract itself to claim the pool tokens so that it can
+        // immediately add them to a program
+        uint256 poolTokenAmount = _deposit(address(this), p.pool, tokenAmount, provider);
 
         // join the existing program, but ensure not to attempt to transfer the tokens from the provider by setting the
         // payer as the contract itself

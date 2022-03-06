@@ -416,6 +416,7 @@ export const depositToPool = async (
 
 export interface PoolSpec {
     tokenData: TokenData;
+    token?: TokenWithAddress;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
     bntRate: BigNumberish;
@@ -435,10 +436,11 @@ const setupPool = async (
     poolCollection: TestPoolCollection,
     enableTrading: boolean
 ) => {
-    if (spec.tokenData.isBNT()) {
+    const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.BNT;
+    const bnt = await factory.attach(await networkInfo.bnt());
+
+    if (spec.token?.address === bnt.address || spec.tokenData.isBNT()) {
         const poolToken = await Contracts.PoolToken.attach(await networkInfo.bntPoolToken());
-        const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.BNT;
-        const bnt = await factory.attach(await networkInfo.bnt());
 
         // ensure that there is enough space to deposit BNT
         const reserveToken = await createTestToken();
@@ -452,7 +454,7 @@ const setupPool = async (
         return { poolToken, token: bnt };
     }
 
-    const token = await createToken(spec.tokenData);
+    const token = spec.token || (await createToken(spec.tokenData));
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setFundingLimit(token.address, MAX_UINT256);

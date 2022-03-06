@@ -18,6 +18,11 @@ struct ProgramData {
     uint256 rewardRate;
 }
 
+struct StakeAmounts {
+    uint256 stakedRewardAmount;
+    uint256 poolTokenAmount;
+}
+
 interface IStandardStakingRewards is IUpgradeable {
     /**
      * @dev returns all program ids
@@ -161,12 +166,12 @@ interface IStandardStakingRewards is IUpgradeable {
     function pendingRewards(address provider, uint256[] calldata ids) external view returns (uint256);
 
     /**
-     * @dev claims rewards and returns the respective reward amount
+     * @dev claims rewards and returns the claimed reward amount
      */
     function claimRewards(uint256[] calldata ids, uint256 maxAmount) external returns (uint256);
 
     /**
-     * @dev claims and stake rewards and returns the respective pool token amount
+     * @dev claims and stake rewards and returns the claimed reward amount and the received pool token amount
      *
      * requirements:
      *
@@ -174,5 +179,5 @@ interface IStandardStakingRewards is IUpgradeable {
      *   token
      * - the rewards token must have been whitelisted with an existing pool
      */
-    function stakeRewards(uint256[] calldata ids, uint256 maxAmount) external returns (uint256);
+    function stakeRewards(uint256[] calldata ids, uint256 maxAmount) external returns (StakeAmounts memory);
 }
