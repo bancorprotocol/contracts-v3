@@ -850,18 +850,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      * @dev returns the remaining rewards of given program
      */
     function _remainingRewards(ProgramData memory p) private view returns (uint256) {
-        return _rewards(p, _time(), p.endTime);
-    }
+        uint32 currTime = _time();
 
-    /**
-     * @dev returns the total available rewards in the specified period
-     */
-    function _rewards(
-        ProgramData memory p,
-        uint32 startTime,
-        uint32 endTime
-    ) private pure returns (uint256) {
-        return endTime > startTime ? p.rewardRate * (endTime - startTime) : 0;
+        return p.endTime > currTime ? p.rewardRate * (p.endTime - currTime) : 0;
     }
 
     /**
