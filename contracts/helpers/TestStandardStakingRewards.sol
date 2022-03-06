@@ -62,12 +62,12 @@ contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
 
             ProgramData memory p = _programs[id];
 
-            uint256 programReward = _claimRewards(msg.sender, p, maxAmount);
+            ClaimData memory claimData = _claimRewards(msg.sender, p, maxAmount);
 
-            amounts[i] = programReward;
+            amounts[i] = claimData.amount;
 
             if (maxAmount != type(uint256).max) {
-                maxAmount -= programReward;
+                maxAmount -= claimData.amount;
             }
         }
 

@@ -11,7 +11,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied, AlreadyExists } from "../utility/Utils.sol";
+import { Utils, AccessDenied } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
@@ -51,6 +51,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         Token pool;
         Token rewardsToken;
         uint256 amount;
+    }
+
+    struct ClaimData {
+        uint256 amount;
+        uint256 remaining;
     }
 
     error ArrayNotUnique();
@@ -273,7 +278,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function providerPrograms(address provider) external view returns (uint256[] memory) {
+    function providerProgramIds(address provider) external view returns (uint256[] memory) {
         return _programIdsByProvider[provider].values();
     }
 
@@ -591,6 +596,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             p.poolToken.transferFrom(payer, address(this), poolTokenAmount);
         }
 
+        // add the program to the provider's program list
+        _programIdsByProvider[provider].add(p.id);
+
         emit ProviderJoined({
             pool: p.pool,
             programId: p.id,
@@ -619,6 +627,12 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         // transfer the tokens to the provider
         p.poolToken.transfer(provider, poolTokenAmount);
+
+        // if the provider has removed all of its stake and there are no pending rewards - remove the program from the
+        // provider's program list
+        if (remainingStake == 0 && data.pendingRewards == 0) {
+            _programIdsByProvider[provider].remove(p.id);
+        }
 
         emit ProviderLeft({
             pool: p.pool,
@@ -705,18 +719,24 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 revert RewardsTokenMismatch();
             }
 
-            uint256 programReward = _claimRewards(provider, p, maxAmount);
+            ClaimData memory claimData = _claimRewards(provider, p, maxAmount);
 
-            rewardData.amount += programReward;
+            rewardData.amount += claimData.amount;
 
             if (maxAmount != type(uint256).max) {
-                maxAmount -= programReward;
+                maxAmount -= claimData.amount;
+            }
+
+            // if the program is no longer live and there are no pending rewards - remove the program from the provider's
+            // program list
+            if (!_isProgramActive(p) && claimData.remaining == 0) {
+                _programIdsByProvider[provider].remove(p.id);
             }
 
             if (stake) {
-                emit RewardsStaked({ pool: p.pool, programId: p.id, provider: provider, amount: programReward });
+                emit RewardsStaked({ pool: p.pool, programId: p.id, provider: provider, amount: claimData.amount });
             } else {
-                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: programReward });
+                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: claimData.amount });
             }
         }
 
@@ -727,13 +747,13 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev claims rewards and returns the respective reward amount
+     * @dev claims rewards and returns the received and the pending reward amounts
      */
     function _claimRewards(
         address provider,
         ProgramData memory p,
         uint256 maxAmount
-    ) internal returns (uint256) {
+    ) internal returns (ClaimData memory) {
         ProviderRewards storage providerRewards = _snapshotRewards(p, provider);
 
         uint256 reward = providerRewards.pendingRewards;
@@ -741,12 +761,12 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         if (maxAmount != type(uint256).max && reward > maxAmount) {
             providerRewards.pendingRewards = reward - maxAmount;
 
-            return maxAmount;
+            return ClaimData({ amount: maxAmount, remaining: providerRewards.pendingRewards });
         }
 
         providerRewards.pendingRewards = 0;
 
-        return reward;
+        return ClaimData({ amount: reward, remaining: 0 });
     }
 
     /**

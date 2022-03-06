@@ -971,11 +971,27 @@ describe('StandardStakingRewards', () => {
                                 standardStakingRewards.address
                             );
 
+                            const providerPrograms = (
+                                await standardStakingRewards.providerProgramIds(provider.address)
+                            ).map((id) => id.toNumber());
+
+                            if (prevProgramStake.isZero()) {
+                                expect(providerPrograms).not.to.include(id.toNumber());
+                            } else {
+                                expect(providerPrograms).to.include(id.toNumber());
+                            }
+
                             const res = await standardStakingRewards.connect(provider).join(id, amount);
 
                             await expect(res)
                                 .to.emit(standardStakingRewards, 'ProviderJoined')
                                 .withArgs(pool.address, id, provider.address, amount, prevProviderRewards.stakedAmount);
+
+                            expect(
+                                (await standardStakingRewards.providerProgramIds(provider.address)).map((id) =>
+                                    id.toNumber()
+                                )
+                            ).to.include(id.toNumber());
 
                             const programRewards = await standardStakingRewards.programRewards(id);
                             const providerRewards = await standardStakingRewards.providerRewards(provider.address, id);
@@ -1145,8 +1161,11 @@ describe('StandardStakingRewards', () => {
                     const testLeaveProgram = async (id: BigNumber, amount: BigNumberish) => {
                         const expectedUpdateTime = now > endTime ? endTime : now;
 
-                        const prevProgramRewards = await standardStakingRewards.programRewards(id);
-                        expect(prevProgramRewards.lastUpdateTime).not.to.equal(expectedUpdateTime);
+                        expect(
+                            (await standardStakingRewards.providerProgramIds(provider.address)).map((id) =>
+                                id.toNumber()
+                            )
+                        ).to.include(id.toNumber());
 
                         const prevProgramStake = await standardStakingRewards.programStake(id);
                         const prevProviderRewards = await standardStakingRewards.providerRewards(provider.address, id);
@@ -1170,6 +1189,19 @@ describe('StandardStakingRewards', () => {
 
                         const programRewards = await standardStakingRewards.programRewards(id);
                         const providerRewards = await standardStakingRewards.providerRewards(provider.address, id);
+
+                        // ensure that the program has been removed from provider's programs if the provider has removed
+                        // all of its stake and there are no pending rewards
+                        const pendingRewards = await standardStakingRewards.pendingRewards(provider.address, [id]);
+                        const providerPrograms = (
+                            await standardStakingRewards.providerProgramIds(provider.address)
+                        ).map((id) => id.toNumber());
+
+                        if (providerRewards.stakedAmount.isZero() && pendingRewards.isZero()) {
+                            expect(providerPrograms).to.not.include(id.toNumber());
+                        } else {
+                            expect(providerPrograms).to.include(id.toNumber());
+                        }
 
                         // ensure that the snapshot has been updated
                         expect(programRewards.lastUpdateTime).to.equal(expectedUpdateTime);
@@ -1199,6 +1231,18 @@ describe('StandardStakingRewards', () => {
 
                             await increaseTime(standardStakingRewards, duration.days(1));
                         }
+                    });
+
+                    context('when no pending rewards', () => {
+                        beforeEach(async () => {
+                            await increaseTime(standardStakingRewards, duration.days(1));
+
+                            await standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256);
+                        });
+
+                        it('should leave', async () => {
+                            await testLeaveProgram(id, poolTokenAmount);
+                        });
                     });
 
                     context('when the active program was disabled', () => {
@@ -2211,6 +2255,20 @@ describe('StandardStakingRewards', () => {
                             expect(await standardStakingRewards.unclaimedRewards(rewardsToken.address)).to.equal(
                                 prevUnclaimedRewards.sub(totalClaimed)
                             );
+
+                            // ensure that the program has been removed from provider's programs if it's no longer active
+                            // and there are no pending rewards
+                            const pendingRewards = await standardStakingRewards.pendingRewards(provider.address, [id]);
+                            const isProgramActive = await standardStakingRewards.isProgramActive(id);
+                            const providerPrograms = (
+                                await standardStakingRewards.providerProgramIds(provider.address)
+                            ).map((id) => id.toNumber());
+
+                            if (!isProgramActive && pendingRewards.isZero()) {
+                                expect(providerPrograms).to.not.include(id);
+                            } else {
+                                expect(providerPrograms).to.include(id);
+                            }
 
                             if (stake) {
                                 expect(await getBalance(rewardsToken, p)).to.equal(
