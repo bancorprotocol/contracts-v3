@@ -661,7 +661,7 @@ describe('StandardStakingRewards', () => {
                     await testTerminate();
                 });
 
-                context.only('when rewards were distributed', () => {
+                context('when rewards were distributed', () => {
                     beforeEach(async () => {
                         await increaseTime(standardStakingRewards, duration.days(3));
                     });
@@ -892,7 +892,7 @@ describe('StandardStakingRewards', () => {
                             .joinPermitted(id, amount, MAX_UINT256, signature.v, signature.r, signature.s);
                     };
 
-                    it('should revert when attempting to join a non-existing pool', async () => {
+                    it('should revert when attempting to join a non-existing program', async () => {
                         await expect(join(0, 1)).to.be.revertedWith('ProgramDoesNotExist');
                     });
 
@@ -1112,7 +1112,7 @@ describe('StandardStakingRewards', () => {
                     );
                 });
 
-                it('should revert when attempting to leave a non-existing pool', async () => {
+                it('should revert when attempting to leave a non-existing program', async () => {
                     await expect(standardStakingRewards.connect(provider).leave(0, 1)).to.be.revertedWith(
                         'ProgramDoesNotExist'
                     );
@@ -1395,7 +1395,7 @@ describe('StandardStakingRewards', () => {
                             .depositAndJoinPermitted(id, amount, MAX_UINT256, signature.v, signature.r, signature.s);
                     };
 
-                    it('should revert when attempting to deposit and join a non-existing pool', async () => {
+                    it('should revert when attempting to deposit and join a non-existing program', async () => {
                         await expect(depositAndJoin(0, 1)).to.be.revertedWith('ProgramDoesNotExist');
                     });
 
