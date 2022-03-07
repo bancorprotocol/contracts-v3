@@ -1799,7 +1799,7 @@ describe('PoolCollection', () => {
                 poolToken = await createPool(token, network, networkSettings, poolCollection);
 
                 await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
-                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+                await networkSettings.setMinLiquidityForTrading(0);
                 await networkSettings.setFundingLimit(token.address, MAX_UINT256.div(2));
 
                 await poolCollection.setTradingFeePPM(token.address, tradingFeePPM);
@@ -1831,7 +1831,7 @@ describe('PoolCollection', () => {
                 await poolCollection.enableTrading(token.address, bntTradingLiquidity, baseTokenTradingLiquidity);
             });
 
-            it.only('stress test', async () => {
+            it('@stress test', async () => {
                 await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, TradingLiquidityState.Update);
             });
         };
@@ -1846,14 +1846,14 @@ describe('PoolCollection', () => {
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const poolTokenAmount of [1, 123, 12_345]) {
-                for (const poolTokenTotalSupply of [12_345, 123_456, 1_234_567]) {
-                    for (const bntTradingLiquidity of [12_345, 123_456, 1_234_567]) {
-                        for (const baseTokenTradingLiquidity of [12_345, 123_456, 1_234_567]) {
-                            for (const stakedBalance of [12_345, 123_456, 1_234_567]) {
-                                for (const balanceOfMasterVault of [12_345, 123_456, 1_234_567]) {
-                                    for (const balanceOfExternalProtectionVault of [0, 12_345, 123_456, 1_234_567]) {
-                                        for (const tradingFee of [1, 2.5, 5]) {
-                                            for (const withdrawalFee of [0, 1, 5]) {
+                for (const poolTokenTotalSupply of [12_345, 1_234_567]) {
+                    for (const bntTradingLiquidity of [1_234, 1_234_567]) {
+                        for (const baseTokenTradingLiquidity of [1_234, 1_234_567]) {
+                            for (const stakedBalance of [1_234, 1_234_567]) {
+                                for (const balanceOfMasterVault of [1_234, 1_234_567]) {
+                                    for (const balanceOfExternalProtectionVault of [0, 1_234_567]) {
+                                        for (const tradingFee of [0, 5]) {
+                                            for (const withdrawalFee of [0.1, 5]) {
                                                 context(
                                                     [
                                                         `${symbol}`,
