@@ -1810,7 +1810,7 @@ describe('PoolCollection', () => {
                     stakedBalance
                 });
                 await poolCollection.requestFundingT(CONTEXT_ID, token.address, stakedBalance);
-                await poolCollection.mintPoolTokenT(token.address, deployer.address, poolTokenTotalSupply);
+                await poolCollection.mintPoolTokenT(token.address, provider.address, poolTokenTotalSupply);
 
                 const blockNumber = await latestBlockNumber();
                 await poolCollection.setBlockNumber(blockNumber);
@@ -1831,7 +1831,7 @@ describe('PoolCollection', () => {
                 await poolCollection.enableTrading(token.address, bntTradingLiquidity, baseTokenTradingLiquidity);
             });
 
-            it('@stress test', async () => {
+            it.only('stress test', async () => {
                 await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, TradingLiquidityState.Update);
             });
         };
@@ -1846,7 +1846,7 @@ describe('PoolCollection', () => {
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const poolTokenAmount of [1, 123, 12_345]) {
-                for (const poolTokenTotalSupply of [12_345, 1_234_567]) {
+                for (const poolTokenTotalSupply of [poolTokenAmount * 1_234, poolTokenAmount * 1_234_567]) {
                     for (const bntTradingLiquidity of [1_234, 1_234_567]) {
                         for (const baseTokenTradingLiquidity of [1_234, 1_234_567]) {
                             for (const stakedBalance of [1_234, 1_234_567]) {
