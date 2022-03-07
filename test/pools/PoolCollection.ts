@@ -1802,6 +1802,8 @@ describe('PoolCollection', () => {
                 await networkSettings.setMinLiquidityForTrading(0);
                 await networkSettings.setFundingLimit(token.address, MAX_UINT256.div(2));
 
+                const blockNumber = await latestBlockNumber();
+
                 await poolCollection.setTradingFeePPM(token.address, tradingFeePPM);
                 await poolCollection.setDepositLimit(token.address, MAX_UINT256);
                 await poolCollection.setTradingLiquidityT(token.address, {
@@ -1811,13 +1813,12 @@ describe('PoolCollection', () => {
                 });
                 await poolCollection.requestFundingT(CONTEXT_ID, token.address, bntTradingLiquidity);
                 await poolCollection.mintPoolTokenT(token.address, provider.address, poolTokenTotalSupply);
-
-                const blockNumber = await latestBlockNumber();
                 await poolCollection.setBlockNumber(blockNumber);
                 await poolCollection.setAverageRateT(token.address, {
                     blockNumber,
                     rate: { n: bntTradingLiquidity, d: baseTokenTradingLiquidity }
                 });
+
                 await transfer(deployer, token, masterVault, balanceOfMasterVault);
                 await transfer(deployer, token, externalProtectionVault, balanceOfExternalProtectionVault);
                 await network.depositToPoolCollectionForT(
@@ -1831,7 +1832,7 @@ describe('PoolCollection', () => {
                 await poolCollection.enableTrading(token.address, bntTradingLiquidity, baseTokenTradingLiquidity);
             });
 
-            it.only('stress test', async () => {
+            it('@stress test', async () => {
                 await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, TradingLiquidityState.Update);
             });
         };
