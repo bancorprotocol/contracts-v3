@@ -1151,7 +1151,7 @@ describe('StandardStakingRewards', () => {
                     poolTokenAmount = await poolToken.balanceOf(provider.address);
                 });
 
-                context('when an active program', () => {
+                context('with an active program', () => {
                     let startTime: number;
                     let endTime: number;
 
