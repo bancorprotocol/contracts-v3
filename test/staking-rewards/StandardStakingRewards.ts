@@ -1403,10 +1403,6 @@ describe('StandardStakingRewards', () => {
                         await expect(depositAndJoin(1, 0)).to.be.revertedWith('ZeroValue');
                     });
 
-                    it('should revert when attempting to deposit and join with an invalid amount', async () => {
-                        await expect(depositAndJoin(1, 0)).to.be.revertedWith('ZeroValue');
-                    });
-
                     if (!permitted) {
                         context('native pool', () => {
                             it('should revert when attempting to deposit and join with more than what was actually sent', async () => {
