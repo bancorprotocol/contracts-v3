@@ -1439,7 +1439,7 @@ describe('StandardStakingRewards', () => {
                         });
 
                         context('token pool', () => {
-                            it('should revert when attempting to deposit and join ETH into a non ETH pool', async () => {
+                            it('should revert when attempting to deposit and join with ETH into a non ETH pool', async () => {
                                 const amount = toWei(1);
 
                                 await expect(
