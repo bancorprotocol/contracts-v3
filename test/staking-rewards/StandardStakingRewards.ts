@@ -661,6 +661,16 @@ describe('StandardStakingRewards', () => {
                     await testTerminate();
                 });
 
+                context.only('when rewards were distributed', () => {
+                    beforeEach(async () => {
+                        await increaseTime(standardStakingRewards, duration.days(3));
+                    });
+
+                    it('should allow terminating the program', async () => {
+                        await testTerminate();
+                    });
+                });
+
                 context('when the active program was disabled', () => {
                     beforeEach(async () => {
                         await standardStakingRewards.enableProgram(id, false);
