@@ -129,8 +129,8 @@ describe('PoolCollection', () => {
                 .withArgs(
                     contextId,
                     token.address,
-                    await poolToken.totalSupply(),
                     newLiquidity.stakedBalance,
+                    await poolToken.totalSupply(),
                     await getBalance(token, masterVault.address)
                 );
         } else {
@@ -1554,6 +1554,9 @@ describe('PoolCollection', () => {
                         token.address,
                         poolTokenAmount
                     );
+                    const expectedWithdrawnAmount = withdrawalAmounts.baseTokensToTransferFromMasterVault.add(
+                        withdrawalAmounts.baseTokensToTransferFromEPV
+                    );
 
                     expect(expectedWithdrawalFee).to.almostEqual(withdrawalAmounts.baseTokensWithdrawalFee, {
                         maxAbsoluteError: new Decimal(1)
@@ -1567,7 +1570,7 @@ describe('PoolCollection', () => {
                         poolTokenAmount
                     );
 
-                    expect(withdrawnAmount).to.equal(withdrawalAmounts.baseTokensToTransferFromMasterVault);
+                    expect(withdrawnAmount).to.equal(expectedWithdrawnAmount);
 
                     const res = await network.withdrawFromPoolCollectionT(
                         poolCollection.address,
@@ -1583,7 +1586,7 @@ describe('PoolCollection', () => {
                             CONTEXT_ID,
                             token.address,
                             provider.address,
-                            withdrawalAmounts.baseTokensToTransferFromMasterVault,
+                            expectedWithdrawnAmount,
                             poolTokenAmount,
                             withdrawalAmounts.baseTokensToTransferFromEPV,
                             withdrawalAmounts.bntToMintForProvider,
@@ -1608,7 +1611,7 @@ describe('PoolCollection', () => {
                         prevNetworkPoolTokenBalance.sub(poolTokenAmount)
                     );
                     expect(await getBalance(token, provider)).to.equal(
-                        prevProviderBalance.add(withdrawalAmounts.baseTokensToTransferFromMasterVault)
+                        prevProviderBalance.add(expectedWithdrawnAmount)
                     );
 
                     expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
