@@ -104,7 +104,13 @@ describe('StandardStakingRewards', () => {
         startTime: number,
         endTime: number
     ) => {
-        const id = await standardStakingRewards.nextProgramId();
+        const id = await standardStakingRewards.callStatic.createProgram(
+            pool.address,
+            rewardsToken.address,
+            totalRewards,
+            startTime,
+            endTime
+        );
 
         await standardStakingRewards.createProgram(
             pool.address,

@@ -326,6 +326,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         greaterThanZero(totalRewards)
         onlyAdmin
         nonReentrant
+        returns (uint256)
     {
         uint32 currTime = _time();
         if (!(currTime <= startTime && startTime < endTime)) {
@@ -383,6 +384,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             startTime: startTime,
             endTime: endTime
         });
+
+        return id;
     }
 
     /**

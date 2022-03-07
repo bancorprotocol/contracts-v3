@@ -60,7 +60,7 @@ interface IStandardStakingRewards is IUpgradeable {
     function isProgramEnabled(uint256 id) external view returns (bool);
 
     /**
-     * @dev creates a program for a pool
+     * @dev creates a program for a pool and returns its ID
      *
      * requirements:
      *
@@ -74,7 +74,7 @@ interface IStandardStakingRewards is IUpgradeable {
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev terminates a rewards program
