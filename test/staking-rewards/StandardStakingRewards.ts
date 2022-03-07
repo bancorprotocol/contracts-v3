@@ -342,7 +342,7 @@ describe('StandardStakingRewards', () => {
                     ).to.be.revertedWith('ZeroValue');
                 });
 
-                it('should revert when attempting to create a program with an invalid duration', async () => {
+                it('should revert when attempting to create a program with an invalid start/end time', async () => {
                     await expect(
                         standardStakingRewards.createProgram(
                             pool.address,
