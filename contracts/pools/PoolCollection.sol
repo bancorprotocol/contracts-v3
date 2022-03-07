@@ -862,7 +862,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
             data.liquidity.bntTradingLiquidity,
             data.liquidity.baseTokenTradingLiquidity,
-            MathEx.subMax0(pool.balanceOf(address(_masterVault)), data.liquidity.baseTokenTradingLiquidity),
+            pool.balanceOf(address(_masterVault)) - data.liquidity.baseTokenTradingLiquidity,
             data.liquidity.stakedBalance,
             pool.balanceOf(address(_externalProtectionVault)),
             data.tradingFeePPM,
