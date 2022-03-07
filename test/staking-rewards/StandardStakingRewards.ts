@@ -1404,7 +1404,7 @@ describe('StandardStakingRewards', () => {
                     });
 
                     if (!permitted) {
-                        context('native pool', () => {
+                        context('native token pool', () => {
                             it('should revert when attempting to deposit and join with more than what was actually sent', async () => {
                                 const amount = toWei(1);
                                 const missingAmount = 1;
