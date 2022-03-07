@@ -127,7 +127,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     event ProgramCreated(
         Token indexed pool,
         uint256 indexed programId,
-        Token rewardsToken,
+        Token indexed rewardsToken,
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
