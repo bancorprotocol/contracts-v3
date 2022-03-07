@@ -1851,7 +1851,10 @@ describe('PoolCollection', () => {
                     for (const bntTradingLiquidity of [1_234, 1_234_567]) {
                         for (const baseTokenTradingLiquidity of [1_234, 1_234_567]) {
                             for (const stakedBalance of [1_234, 1_234_567]) {
-                                for (const balanceOfMasterVault of [baseTokenTradingLiquidity, baseTokenTradingLiquidity * 1_234]) {
+                                for (const balanceOfMasterVault of [
+                                    baseTokenTradingLiquidity,
+                                    baseTokenTradingLiquidity * 1_234
+                                ]) {
                                     for (const balanceOfExternalProtectionVault of [0, 1_234_567]) {
                                         for (const tradingFee of [0, 5]) {
                                             for (const withdrawalFee of [0.1, 5]) {
