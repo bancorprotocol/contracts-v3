@@ -1809,7 +1809,7 @@ describe('PoolCollection', () => {
                     baseTokenTradingLiquidity,
                     stakedBalance
                 });
-                await poolCollection.requestFundingT(CONTEXT_ID, token.address, stakedBalance);
+                await poolCollection.requestFundingT(CONTEXT_ID, token.address, bntTradingLiquidity);
                 await poolCollection.mintPoolTokenT(token.address, provider.address, poolTokenTotalSupply);
 
                 const blockNumber = await latestBlockNumber();
