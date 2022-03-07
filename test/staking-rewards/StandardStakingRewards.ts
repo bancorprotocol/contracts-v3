@@ -980,7 +980,8 @@ describe('StandardStakingRewards', () => {
                                 id
                             );
                             const prevProgramStake = await standardStakingRewards.programStake(id);
-                            const prevProviderBalance = await poolToken.balanceOf(provider.address);
+                            const prevProviderTokenBalance = await poolToken.balanceOf(provider.address);
+                            const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
                             const prevStandardStakingRewardsBalance = await poolToken.balanceOf(
                                 standardStakingRewards.address
                             );
@@ -1000,6 +1001,11 @@ describe('StandardStakingRewards', () => {
                             }
 
                             const res = await standardStakingRewards.connect(provider).join(id, amount);
+
+                            let transactionCost = BigNumber.from(0);
+                            if (rewardsData.isNative()) {
+                                transactionCost = await getTransactionCost(res);
+                            }
 
                             await expect(res)
                                 .to.emit(standardStakingRewards, 'ProviderJoined')
@@ -1024,12 +1030,14 @@ describe('StandardStakingRewards', () => {
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
 
                             expect(await poolToken.balanceOf(provider.address)).to.equal(
-                                prevProviderBalance.sub(amount)
+                                prevProviderTokenBalance.sub(amount)
+                            );
+                            expect(await getBalance(rewardsToken, provider.address)).to.equal(
+                                prevProviderRewardsTokenBalance.sub(transactionCost)
                             );
                             expect(await poolToken.balanceOf(standardStakingRewards.address)).to.equal(
                                 prevStandardStakingRewardsBalance.add(amount)
                             );
-
                             expect(await getBalance(rewardsToken, standardStakingRewards.address)).to.equal(
                                 prevRewardsTokenBalance
                             );
@@ -1187,13 +1195,19 @@ describe('StandardStakingRewards', () => {
 
                         const prevProgramStake = await standardStakingRewards.programStake(id);
                         const prevProviderRewards = await standardStakingRewards.providerRewards(provider.address, id);
-                        const prevProviderBalance = await poolToken.balanceOf(provider.address);
+                        const prevProviderTokenBalance = await poolToken.balanceOf(provider.address);
+                        const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
                         const prevStandardStakingRewardsBalance = await poolToken.balanceOf(
                             standardStakingRewards.address
                         );
                         const prevRewardsTokenBalance = await getBalance(rewardsToken, standardStakingRewards.address);
 
                         const res = await standardStakingRewards.connect(provider).leave(id, amount);
+
+                        let transactionCost = BigNumber.from(0);
+                        if (rewardsData.isNative()) {
+                            transactionCost = await getTransactionCost(res);
+                        }
 
                         await expect(res)
                             .to.emit(standardStakingRewards, 'ProviderLeft')
@@ -1228,11 +1242,15 @@ describe('StandardStakingRewards', () => {
                         expect(await standardStakingRewards.programStake(id)).to.equal(prevProgramStake.sub(amount));
                         expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.sub(amount));
 
-                        expect(await poolToken.balanceOf(provider.address)).to.equal(prevProviderBalance.add(amount));
+                        expect(await poolToken.balanceOf(provider.address)).to.equal(
+                            prevProviderTokenBalance.add(amount)
+                        );
+                        expect(await getBalance(rewardsToken, provider.address)).to.equal(
+                            prevProviderRewardsTokenBalance.sub(transactionCost)
+                        );
                         expect(await poolToken.balanceOf(standardStakingRewards.address)).to.equal(
                             prevStandardStakingRewardsBalance.sub(amount)
                         );
-
                         expect(await getBalance(rewardsToken, standardStakingRewards.address)).to.equal(
                             prevRewardsTokenBalance
                         );
@@ -1534,6 +1552,7 @@ describe('StandardStakingRewards', () => {
                             const prevProgramStake = await standardStakingRewards.programStake(id);
 
                             const prevProviderTokenBalance = await getBalance(pool, provider.address);
+                            const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
                             const prevStandardStakingRewardsBalance = await poolToken.balanceOf(
                                 standardStakingRewards.address
                             );
@@ -1569,7 +1588,7 @@ describe('StandardStakingRewards', () => {
                                 .depositAndJoin(id, amount, { value });
 
                             let transactionCost = BigNumber.from(0);
-                            if (poolData.isNative()) {
+                            if (poolData.isNative() || rewardsData.isNative()) {
                                 transactionCost = await getTransactionCost(res);
                             }
 
@@ -1594,14 +1613,17 @@ describe('StandardStakingRewards', () => {
                                 prevProgramStake.add(amount)
                             );
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
-
                             expect(await getBalance(pool, provider.address)).to.equal(
-                                prevProviderTokenBalance.sub(amount).sub(transactionCost)
+                                prevProviderTokenBalance.sub(amount).sub(poolData.isNative() ? transactionCost : 0)
+                            );
+                            expect(await getBalance(rewardsToken, provider.address)).to.equal(
+                                prevProviderRewardsTokenBalance
+                                    .sub(pool.address === rewardsToken.address ? amount : 0)
+                                    .sub(rewardsData.isNative() ? transactionCost : 0)
                             );
                             expect(await poolToken.balanceOf(standardStakingRewards.address)).to.equal(
                                 prevStandardStakingRewardsBalance.add(expectedPoolTokenAmount)
                             );
-
                             expect(await getBalance(rewardsToken, standardStakingRewards.address)).to.equal(
                                 prevRewardsTokenBalance
                             );
