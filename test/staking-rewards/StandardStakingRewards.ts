@@ -989,14 +989,14 @@ describe('StandardStakingRewards', () => {
                                 standardStakingRewards.address
                             );
 
-                            const providerPrograms = (
+                            const providerProgramIds = (
                                 await standardStakingRewards.providerProgramIds(provider.address)
                             ).map((id) => id.toNumber());
 
                             if (prevProgramStake.isZero()) {
-                                expect(providerPrograms).not.to.include(id.toNumber());
+                                expect(providerProgramIds).not.to.include(id.toNumber());
                             } else {
-                                expect(providerPrograms).to.include(id.toNumber());
+                                expect(providerProgramIds).to.include(id.toNumber());
                             }
 
                             const res = await standardStakingRewards.connect(provider).join(id, amount);
@@ -1211,14 +1211,14 @@ describe('StandardStakingRewards', () => {
                         // ensure that the program has been removed from provider's programs if the provider has removed
                         // all of its stake and there are no pending rewards
                         const pendingRewards = await standardStakingRewards.pendingRewards(provider.address, [id]);
-                        const providerPrograms = (
+                        const providerProgramIds = (
                             await standardStakingRewards.providerProgramIds(provider.address)
                         ).map((id) => id.toNumber());
 
                         if (providerRewards.stakedAmount.isZero() && pendingRewards.isZero()) {
-                            expect(providerPrograms).to.not.include(id.toNumber());
+                            expect(providerProgramIds).to.not.include(id.toNumber());
                         } else {
-                            expect(providerPrograms).to.include(id.toNumber());
+                            expect(providerProgramIds).to.include(id.toNumber());
                         }
 
                         // ensure that the snapshot has been updated
@@ -2325,14 +2325,14 @@ describe('StandardStakingRewards', () => {
                             // and there are no pending rewards
                             const pendingRewards = await standardStakingRewards.pendingRewards(p.address, [id]);
                             const isProgramActive = await standardStakingRewards.isProgramActive(id);
-                            const providerPrograms = (await standardStakingRewards.providerProgramIds(p.address)).map(
+                            const providerProgramIds = (await standardStakingRewards.providerProgramIds(p.address)).map(
                                 (id) => id.toNumber()
                             );
 
                             if (!isProgramActive && pendingRewards.isZero()) {
-                                expect(providerPrograms).to.not.include(id);
+                                expect(providerProgramIds).to.not.include(id);
                             } else {
-                                expect(providerPrograms).to.include(id);
+                                expect(providerProgramIds).to.include(id);
                             }
 
                             if (stake) {
