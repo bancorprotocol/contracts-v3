@@ -97,19 +97,20 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
             minReturnAmounts
         );
 
-        bool isToken0Whitelisted = _networkSettings.isTokenWhitelisted(orderedReserveTokens[0]);
-
-        for (uint256 i = isToken0Whitelisted ? 0 : 1; i < 2; i++) {
-            if (orderedReserveTokens[i].isNative()) {
-                _network.depositFor{ value: orderedReserveAmounts[i] }(
+        if (_networkSettings.isTokenWhitelisted(orderedReserveTokens[0])) {
+            if (orderedReserveTokens[0].isNative()) {
+                _network.depositFor{ value: orderedReserveAmounts[0] }(
                     msg.sender,
-                    orderedReserveTokens[i],
-                    orderedReserveAmounts[i]
+                    orderedReserveTokens[0],
+                    orderedReserveAmounts[0]
                 );
             } else {
-                orderedReserveTokens[i].toIERC20().safeApprove(address(_network), orderedReserveAmounts[i]);
-                _network.depositFor(msg.sender, orderedReserveTokens[i], orderedReserveAmounts[i]);
+                orderedReserveTokens[0].toIERC20().safeApprove(address(_network), orderedReserveAmounts[0]);
+                _network.depositFor(msg.sender, orderedReserveTokens[0], orderedReserveAmounts[0]);
             }
         }
+
+        orderedReserveTokens[1].toIERC20().safeApprove(address(_network), orderedReserveAmounts[1]);
+        _network.depositFor(msg.sender, orderedReserveTokens[1], orderedReserveAmounts[1]);
     }
 }
