@@ -1888,27 +1888,27 @@ describe('StandardStakingRewards', () => {
 
                     it('should revert when attempting to claim rewards for non-existing programs', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).claimRewards([10000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).claimRewards([10_000], MAX_UINT256)
                         ).to.be.revertedWith('ProgramDoesNotExist');
 
                         await expect(
-                            standardStakingRewards.connect(provider).claimRewards([programData.id, 10000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).claimRewards([programData.id, 10_000], MAX_UINT256)
                         ).to.be.revertedWith('ProgramDoesNotExist');
                     });
 
                     it('should revert when attempting to stake rewards for non-existing programs', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).stakeRewards([10000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).stakeRewards([10_000], MAX_UINT256)
                         ).to.be.revertedWith('ProgramDoesNotExist');
 
                         await expect(
-                            standardStakingRewards.connect(provider).stakeRewards([programData.id, 10000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).stakeRewards([programData.id, 10_000], MAX_UINT256)
                         ).to.be.revertedWith('ProgramDoesNotExist');
                     });
 
                     it('should revert when attempting to claim rewards with duplicate ids', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).claimRewards([10000, 10000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).claimRewards([10_000, 10_000], MAX_UINT256)
                         ).to.be.revertedWith('ArrayNotUnique');
 
                         await expect(
@@ -1920,7 +1920,7 @@ describe('StandardStakingRewards', () => {
 
                     it('should revert when attempting to stake rewards with duplicate ids', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).stakeRewards([10000, 10000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).stakeRewards([10_000, 10_000], MAX_UINT256)
                         ).to.be.revertedWith('ArrayNotUnique');
 
                         await expect(
