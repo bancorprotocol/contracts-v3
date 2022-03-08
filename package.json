@@ -43,8 +43,7 @@
         "format": "prettier --check --write contracts/**/*.sol test/**/*.ts --config .prettierrc",
         "snyk-protect": "snyk protect",
         "prepare": "yarn clean && yarn build && yarn snyk-protect && tsc && copyfiles -u 1 \"typechain/**/*.d.ts\" dist/typechain",
-        "clean": "rm -rf artifacts cache coverage typechain-types",
-        "hh": "hardhat"
+        "clean": "rm -rf artifacts cache coverage typechain-types"
     },
     "dependencies": {
         "hardhat": "2.8.4"
