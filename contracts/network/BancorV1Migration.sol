@@ -81,36 +81,21 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
 
         Token[] memory reserveTokens = converter.reserveTokens();
 
-        // ensure to migrate BNT liquidity last, in order to reduce some cases when migration wouldn't have
-        // been possible
-        Token[] memory orderedReserveTokens = new Token[](2);
-        orderedReserveTokens[0] = reserveTokens[1].toERC20() == _bnt ? reserveTokens[0] : reserveTokens[1];
-        orderedReserveTokens[1] = Token(address(_bnt));
-
         uint256[] memory minReturnAmounts = new uint256[](2);
         minReturnAmounts[0] = 1;
         minReturnAmounts[1] = 1;
 
-        uint256[] memory orderedReserveAmounts = converter.removeLiquidity(
-            amount,
-            orderedReserveTokens,
-            minReturnAmounts
-        );
+        uint256[] memory reserveAmounts = converter.removeLiquidity(amount, reserveTokens, minReturnAmounts);
 
-        if (_networkSettings.isTokenWhitelisted(orderedReserveTokens[0])) {
-            if (orderedReserveTokens[0].isNative()) {
-                _network.depositFor{ value: orderedReserveAmounts[0] }(
-                    msg.sender,
-                    orderedReserveTokens[0],
-                    orderedReserveAmounts[0]
-                );
-            } else {
-                orderedReserveTokens[0].toIERC20().safeApprove(address(_network), orderedReserveAmounts[0]);
-                _network.depositFor(msg.sender, orderedReserveTokens[0], orderedReserveAmounts[0]);
+        for (uint256 i = 0; i < 2; i++) {
+            if (reserveTokens[i].isEqual(_bnt) || _networkSettings.isTokenWhitelisted(reserveTokens[i])) {
+                if (reserveTokens[i].isNative()) {
+                    _network.depositFor{ value: reserveAmounts[i] }(msg.sender, reserveTokens[i], reserveAmounts[i]);
+                } else {
+                    reserveTokens[i].ensureApprove(address(_network), reserveAmounts[i]);
+                    _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
+                }
             }
         }
-
-        orderedReserveTokens[1].toIERC20().safeApprove(address(_network), orderedReserveAmounts[1]);
-        _network.depositFor(msg.sender, orderedReserveTokens[1], orderedReserveAmounts[1]);
     }
 }
