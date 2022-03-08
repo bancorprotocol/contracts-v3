@@ -31,7 +31,7 @@
         "test:ci": "CI=1 yarn test",
         "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 'test/deployment/**/*.ts'",
         "test:deploy:mainnet": "HARDHAT_NETWORK=hardhat FORKING=1 yarn test:deploy",
-        "dev": "hardhat node",
+        "dev": "hardhat node --no-deploy",
         "profile": "PROFILE=1 yarn test ${DEBUG:+--network localhost}",
         "profile:debug": "DEBUG=1 yarn profile",
         "size": "yarn rebuild && hardhat size-contracts",
