@@ -8,9 +8,9 @@ const {
 } = ethers;
 
 export enum DeploymentNetwork {
-    HARDHAT = 'hardhat',
-    LOCALHOST = 'localhost',
-    MAINNET = 'mainnet'
+    Hardhat = 'hardhat',
+    Localhost = 'localhost',
+    Mainnet = 'mainnet'
 }
 
 export const MAX_UINT256 = MaxUint256;
