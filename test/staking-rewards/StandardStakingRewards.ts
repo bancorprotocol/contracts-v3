@@ -970,7 +970,7 @@ describe('StandardStakingRewards', () => {
                         });
 
                         const testJoinProgram = async (id: BigNumber, amount: BigNumberish) => {
-                            const expectedUpdateTime = now > endTime ? endTime : now;
+                            const expectedUpdateTime = Math.min(now, endTime);
 
                             const prevProgramRewards = await standardStakingRewards.programRewards(id);
                             expect(prevProgramRewards.lastUpdateTime).not.to.equal(expectedUpdateTime);
@@ -1185,7 +1185,7 @@ describe('StandardStakingRewards', () => {
                     });
 
                     const testLeaveProgram = async (id: BigNumber, amount: BigNumberish) => {
-                        const expectedUpdateTime = now > endTime ? endTime : now;
+                        const expectedUpdateTime = Math.min(now, endTime);
 
                         expect(
                             (await standardStakingRewards.providerProgramIds(provider.address)).map((id) =>
@@ -1540,7 +1540,7 @@ describe('StandardStakingRewards', () => {
                         }
 
                         const testDepositAndJoinProgram = async (id: BigNumber, amount: BigNumberish) => {
-                            const expectedUpdateTime = now > endTime ? endTime : now;
+                            const expectedUpdateTime = Math.min(now, endTime);
 
                             const prevProgramRewards = await standardStakingRewards.programRewards(id);
                             expect(prevProgramRewards.lastUpdateTime).not.to.equal(expectedUpdateTime);
