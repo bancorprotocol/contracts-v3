@@ -6,12 +6,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
 
     await deploy({
         name: ContractName.BancorV1MigrationV1,
         from: deployer,
-        args: [network.address, bnt.address]
+        args: [network.address, networkSettings.address, bnt.address]
     });
 
     return true;
