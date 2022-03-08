@@ -29,6 +29,7 @@ import { Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts } from 'hardhat';
 import { Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
+import { capitalize } from 'lodash';
 import path from 'path';
 
 const {
@@ -319,3 +320,11 @@ export const save = async (deployment: Deployment) => {
 };
 
 export const deploymentExists = async (tag: string) => (await ethers.getContractOrNull(tag)) !== null;
+
+export const toDeployTag = (filename: string) =>
+    path
+        .basename(filename)
+        .split('.')[0]
+        .split('-')
+        .slice(1)
+        .reduce((res, c) => res + capitalize(c), '');
