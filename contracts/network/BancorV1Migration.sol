@@ -13,6 +13,7 @@ import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { BancorNetwork } from "./BancorNetwork.sol";
+import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 
 interface IBancorConverterV1 {
     function reserveTokens() external view returns (Token[] memory);
@@ -35,17 +36,22 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     // the network contract
     BancorNetwork private immutable _network;
 
+    // the network settings contract
+    INetworkSettings private immutable _networkSettings;
+
     // the address of the BNT token
     IERC20 private immutable _bnt;
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(BancorNetwork initNetwork, IERC20 initBNT)
-        validAddress(address(initNetwork))
-        validAddress(address(initBNT))
-    {
+    constructor(
+        BancorNetwork initNetwork,
+        INetworkSettings initNetworkSettings,
+        IERC20 initBNT
+    ) validAddress(address(initNetwork)) validAddress(address(initNetworkSettings)) validAddress(address(initBNT)) {
         _network = initNetwork;
+        _networkSettings = initNetworkSettings;
         _bnt = initBNT;
     }
 
@@ -91,7 +97,9 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
             minReturnAmounts
         );
 
-        for (uint256 i = 0; i < 2; i++) {
+        bool isToken0Whitelisted = _networkSettings.isTokenWhitelisted(orderedReserveTokens[0]);
+
+        for (uint256 i = isToken0Whitelisted ? 0 : 1; i < 2; i++) {
             if (orderedReserveTokens[i].isNative()) {
                 _network.depositFor{ value: orderedReserveAmounts[i] }(
                     msg.sender,
