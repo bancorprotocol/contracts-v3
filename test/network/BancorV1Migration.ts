@@ -182,10 +182,11 @@ describe('BancorV1Migration', () => {
         await network.connect(provider).withdraw(networkIds[0]);
 
         const basePoolTokenAmount = await getBalance(basePoolToken, provider.address);
-        await basePoolToken.connect(provider).approve(network.address, basePoolTokenAmount);
 
         if (isTokenWhitelisted) {
+            await basePoolToken.connect(provider).approve(network.address, basePoolTokenAmount);
             await network.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount);
+
             const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
 
             const prevProviderBaseBalance = await getBalance(baseToken, provider);
@@ -199,11 +200,7 @@ describe('BancorV1Migration', () => {
                 prevProviderBaseBalance.add(deductFee(migratedBaseAmount))
             );
         } else {
-            await expect(
-                network.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount)
-            ).to.be.revertedWith('ZeroValue');
-            const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-            expect(baseIds).to.be.empty;
+            expect(basePoolTokenAmount).to.equal(0);
         }
 
         const currProviderBNTBalance = await getBalance(bnt, provider);
