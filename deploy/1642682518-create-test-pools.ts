@@ -27,16 +27,16 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         });
 
         await execute({
-            name: ContractName.NetworkSettingsV1,
-            methodName: 'setFundingLimit',
-            args: [testToken.address, FUNDING_LIMIT],
+            name: ContractName.BancorNetworkV1,
+            methodName: 'createPool',
+            args: [PoolType.Standard, testToken.address],
             from: deployer
         });
 
         await execute({
-            name: ContractName.BancorNetworkV1,
-            methodName: 'createPool',
-            args: [PoolType.Standard, testToken.address],
+            name: ContractName.NetworkSettingsV1,
+            methodName: 'setFundingLimit',
+            args: [testToken.address, FUNDING_LIMIT],
             from: deployer
         });
 
