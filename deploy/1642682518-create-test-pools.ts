@@ -7,10 +7,15 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const DEPOSIT_LIMIT = toWei(1_000_000);
 const FUNDING_LIMIT = toWei(10_000_000);
-const INITIAL_DEPOSIT = toWei(500_000);
 const TRADING_FEE = toPPM(0.2);
 const BNT_FUNDING_RATE = 1;
 const BASE_TOKEN_FUNDING_RATE = 2;
+
+const InitialDeposits = {
+    [ContractName.TestToken1]: toWei(50_000),
+    [ContractName.TestToken2]: toWei(500_000),
+    [ContractName.TestToken3]: toWei(1_000_000)
+};
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
@@ -58,14 +63,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         await execute({
             name: contractName,
             methodName: 'approve',
-            args: [network.address, INITIAL_DEPOSIT],
+            args: [network.address, InitialDeposits[contractName]],
             from: deployer
         });
 
         await execute({
             name: ContractName.BancorNetworkV1,
             methodName: 'deposit',
-            args: [testToken.address, INITIAL_DEPOSIT],
+            args: [testToken.address, InitialDeposits[contractName]],
             from: deployer
         });
 
