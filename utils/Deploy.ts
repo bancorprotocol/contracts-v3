@@ -19,6 +19,7 @@ import {
     PoolTokenFactory,
     ProxyAdmin,
     StandardStakingRewards,
+    TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
@@ -81,12 +82,19 @@ enum NewContractName {
     StandardStakingRewardsV1 = 'StandardStakingRewardsV1'
 }
 
+enum TestContractName {
+    TestToken1 = 'TestToken1',
+    TestToken2 = 'TestToken2',
+    TestToken3 = 'TestToken3'
+}
+
 export const ContractName = {
     ...LegacyContractName,
-    ...NewContractName
+    ...NewContractName,
+    ...TestContractName
 };
 
-export type ContractName = LegacyContractName | NewContractName;
+export type ContractName = LegacyContractName | NewContractName | TestContractName;
 
 export enum DeploymentTag {
     V2 = 'V2',
@@ -126,9 +134,16 @@ const DeployedNewContracts = {
     StandardStakingRewardsV1: deployed<StandardStakingRewards>(ContractName.StandardStakingRewardsV1)
 };
 
+const DeployedTestContracts = {
+    TestToken1: deployed<TestERC20Token>(ContractName.TestToken1),
+    TestToken2: deployed<TestERC20Token>(ContractName.TestToken2),
+    TestToken3: deployed<TestERC20Token>(ContractName.TestToken3)
+};
+
 export const DeployedContracts = {
     ...DeployedLegacyContracts,
-    ...DeployedNewContracts
+    ...DeployedNewContracts,
+    ...DeployedTestContracts
 };
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
