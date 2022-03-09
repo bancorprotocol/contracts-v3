@@ -237,7 +237,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         bytes32 indexed contextId,
         Token indexed pool,
         Token indexed token,
-        uint256 liquidity
+        uint256 prevLiquidity,
+        uint256 newLiquidity
     );
 
     /**
@@ -603,7 +604,14 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         data.poolToken.mint(provider, poolTokenAmount);
 
         // adjust the trading liquidity based on the base token vault balance and funding limits
-        _updateTradingLiquidity(contextId, pool, data, data.liquidity, _networkSettings.minLiquidityForTrading());
+        _updateTradingLiquidity(
+            contextId,
+            pool,
+            data,
+            data.liquidity,
+            data.averageRate.rate.fromFraction112(),
+            _networkSettings.minLiquidityForTrading()
+        );
 
         emit TokenDeposited({
             contextId: contextId,
@@ -1102,33 +1110,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         Token pool,
         Pool storage data,
         PoolLiquidity memory liquidity,
-        uint256 minLiquidityForTrading
-    ) private {
-        // ensure that the BNT trading liquidity is above the minimum liquidity for trading
-        if (liquidity.bntTradingLiquidity < minLiquidityForTrading) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
-            return;
-        }
-
-        _updateTradingLiquidity(
-            contextId,
-            pool,
-            data,
-            liquidity,
-            data.averageRate.rate.fromFraction112(),
-            minLiquidityForTrading
-        );
-    }
-
-    /**
-     * @dev adjusts the trading liquidity based on the base token vault balance and funding limits
-     */
-    function _updateTradingLiquidity(
-        bytes32 contextId,
-        Token pool,
-        Pool storage data,
-        PoolLiquidity memory liquidity,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private {
@@ -1203,7 +1184,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 contextId: contextId,
                 pool: pool,
                 token: Token(address(_bnt)),
-                liquidity: newLiquidity.bntTradingLiquidity
+                prevLiquidity: prevLiquidity.bntTradingLiquidity,
+                newLiquidity: newLiquidity.bntTradingLiquidity
             });
         }
 
@@ -1212,7 +1194,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 contextId: contextId,
                 pool: pool,
                 token: pool,
-                liquidity: newLiquidity.baseTokenTradingLiquidity
+                prevLiquidity: prevLiquidity.baseTokenTradingLiquidity,
+                newLiquidity: newLiquidity.baseTokenTradingLiquidity
             });
         }
     }

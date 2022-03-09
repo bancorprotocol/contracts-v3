@@ -108,7 +108,7 @@ describe('PoolCollection', () => {
         if (!prevLiquidity.bntTradingLiquidity.eq(newLiquidity.bntTradingLiquidity)) {
             await expect(res)
                 .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(contextId, token.address, bnt.address, newLiquidity.bntTradingLiquidity);
+                .withArgs(contextId, token.address, bnt.address, prevLiquidity.bntTradingLiquidity, newLiquidity.bntTradingLiquidity);
         } else {
             await expect(res).not.to.emit(poolCollection, 'TradingLiquidityUpdated');
         }
@@ -116,7 +116,7 @@ describe('PoolCollection', () => {
         if (!prevLiquidity.baseTokenTradingLiquidity.eq(newLiquidity.baseTokenTradingLiquidity)) {
             await expect(res)
                 .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(contextId, token.address, token.address, newLiquidity.baseTokenTradingLiquidity);
+                .withArgs(contextId, token.address, token.address, prevLiquidity.baseTokenTradingLiquidity, newLiquidity.baseTokenTradingLiquidity);
         } else {
             await expect(res).not.to.emit(poolCollection, 'TradingLiquidityUpdated');
         }
@@ -129,8 +129,8 @@ describe('PoolCollection', () => {
                 .withArgs(
                     contextId,
                     token.address,
-                    await poolToken.totalSupply(),
                     newLiquidity.stakedBalance,
+                    await poolToken.totalSupply(),
                     await getBalance(token, masterVault.address)
                 );
         } else {
@@ -1265,23 +1265,55 @@ describe('PoolCollection', () => {
                     });
 
                     context('when below the deposit limit', () => {
-                        context('when BNT liquidity for trading is below the minimum liquidity for trading', () => {
-                            beforeEach(async () => {
-                                const { baseTokenTradingLiquidity, stakedBalance } = await poolCollection.poolLiquidity(
-                                    token.address
-                                );
-
-                                await poolCollection.setTradingLiquidityT(token.address, {
-                                    bntTradingLiquidity: MIN_LIQUIDITY_FOR_TRADING.sub(1),
-                                    baseTokenTradingLiquidity,
-                                    stakedBalance
+                        context(
+                            'when the new BNT liquidity for trading is below the minimum liquidity for trading',
+                            () => {
+                                beforeEach(async () => {
+                                    // ensure that the calculation of the new liquidity will return at most 'minimum minus 1'
+                                    await networkSettings.setFundingLimit(
+                                        token.address,
+                                        MIN_LIQUIDITY_FOR_TRADING.sub(1)
+                                    );
                                 });
-                            });
 
-                            it('should deposit and reset the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Reset);
-                            });
-                        });
+                                it('should deposit and reset the trading liquidity when the pool is uninitialized', async () => {
+                                    await poolCollection.setAverageRateT(token.address, {
+                                        blockNumber: await poolCollection.currentBlockNumber(),
+                                        rate: { n: 0, d: 1 }
+                                    });
+
+                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                });
+
+                                it('should deposit without resetting the trading liquidity when the pool is unstable', async () => {
+                                    const liquidity = await poolCollection.poolLiquidity(token.address);
+
+                                    await poolCollection.setAverageRateT(token.address, {
+                                        blockNumber: await poolCollection.currentBlockNumber(),
+                                        rate: {
+                                            n: liquidity.baseTokenTradingLiquidity,
+                                            d: liquidity.bntTradingLiquidity
+                                        }
+                                    });
+
+                                    await testMultipleDepositsFor(TradingLiquidityState.Ignore);
+                                });
+
+                                it('should deposit and reset the trading liquidity when the pool is stable', async () => {
+                                    const liquidity = await poolCollection.poolLiquidity(token.address);
+
+                                    await poolCollection.setAverageRateT(token.address, {
+                                        blockNumber: await poolCollection.currentBlockNumber(),
+                                        rate: {
+                                            n: liquidity.bntTradingLiquidity,
+                                            d: liquidity.baseTokenTradingLiquidity
+                                        }
+                                    });
+
+                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                });
+                            }
+                        );
 
                         context('when the pool is unstable', () => {
                             const SPOT_RATE = {
@@ -1522,6 +1554,9 @@ describe('PoolCollection', () => {
                         token.address,
                         poolTokenAmount
                     );
+                    const expectedWithdrawnAmount = withdrawalAmounts.baseTokensToTransferFromMasterVault.add(
+                        withdrawalAmounts.baseTokensToTransferFromEPV
+                    );
 
                     expect(expectedWithdrawalFee).to.almostEqual(withdrawalAmounts.baseTokensWithdrawalFee, {
                         maxAbsoluteError: new Decimal(1)
@@ -1535,7 +1570,7 @@ describe('PoolCollection', () => {
                         poolTokenAmount
                     );
 
-                    expect(withdrawnAmount).to.equal(withdrawalAmounts.baseTokensToTransferFromMasterVault);
+                    expect(withdrawnAmount).to.equal(expectedWithdrawnAmount);
 
                     const res = await network.withdrawFromPoolCollectionT(
                         poolCollection.address,
@@ -1551,7 +1586,7 @@ describe('PoolCollection', () => {
                             CONTEXT_ID,
                             token.address,
                             provider.address,
-                            withdrawalAmounts.baseTokensToTransferFromMasterVault,
+                            expectedWithdrawnAmount,
                             poolTokenAmount,
                             withdrawalAmounts.baseTokensToTransferFromEPV,
                             withdrawalAmounts.bntToMintForProvider,
@@ -1576,7 +1611,7 @@ describe('PoolCollection', () => {
                         prevNetworkPoolTokenBalance.sub(poolTokenAmount)
                     );
                     expect(await getBalance(token, provider)).to.equal(
-                        prevProviderBalance.add(withdrawalAmounts.baseTokensToTransferFromMasterVault)
+                        prevProviderBalance.add(expectedWithdrawnAmount)
                     );
 
                     expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
@@ -2742,6 +2777,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 bnt.address,
+                                                prevLiquidity.bntTradingLiquidity,
                                                 liquidity.bntTradingLiquidity
                                             );
 
@@ -2751,6 +2787,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 reserveToken.address,
+                                                prevLiquidity.baseTokenTradingLiquidity,
                                                 liquidity.baseTokenTradingLiquidity
                                             );
 
@@ -2905,6 +2942,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 bnt.address,
+                                                prevLiquidity.bntTradingLiquidity,
                                                 liquidity.bntTradingLiquidity
                                             );
 
@@ -2914,6 +2952,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 reserveToken.address,
+                                                prevLiquidity.baseTokenTradingLiquidity,
                                                 liquidity.baseTokenTradingLiquidity
                                             );
 
