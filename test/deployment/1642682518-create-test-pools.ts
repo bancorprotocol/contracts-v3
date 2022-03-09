@@ -13,7 +13,7 @@ describeDeployment('1642682518-create-test-pools', toDeployTag(__filename), asyn
     const DEPOSIT_LIMIT = toWei(1_000_000);
     const FUNDING_LIMIT = toWei(10_000_000);
     const INITIAL_DEPOSIT = toWei(500_000);
-    const TRADING_FEE = toPPM(20);
+    const TRADING_FEE = toPPM(0.2);
     const BNT_FUNDING_RATE = 1;
     const BASE_TOKEN_FUNDING_RATE = 2;
 
