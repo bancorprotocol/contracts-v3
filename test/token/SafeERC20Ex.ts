@@ -1,28 +1,28 @@
 import Contracts, { TestERC20Token, TestSafeERC20Ex } from '../../components/Contracts';
+import { createTestToken } from '../helpers/Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 describe('SafeERC20Ex', () => {
-    const TOTAL_SUPPLY = 1_000_000;
-
     let safeERC20: TestSafeERC20Ex;
     let token: TestERC20Token;
 
+    let deployer: SignerWithAddress;
     let spender: SignerWithAddress;
     let sender: string;
 
     before(async () => {
-        [, spender] = await ethers.getSigners();
+        [deployer, spender] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
         safeERC20 = await Contracts.TestSafeERC20Ex.deploy();
         sender = safeERC20.address;
 
-        token = await Contracts.TestERC20Token.deploy('ERC', 'ERC1', TOTAL_SUPPLY);
+        token = await createTestToken();
 
-        await token.transfer(safeERC20.address, TOTAL_SUPPLY / 2);
+        await token.transfer(safeERC20.address, (await token.balanceOf(deployer.address)).div(2));
     });
 
     it('should set allowance', async () => {

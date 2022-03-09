@@ -17,7 +17,7 @@ import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
-    createStakingRewards,
+    createAutoCompoundingStakingRewards,
     createSystem,
     createTestToken,
     depositToPool,
@@ -93,14 +93,6 @@ describe('AutoCompoundingStakingRewards', () => {
     describe('construction', () => {
         beforeEach(async () => {
             ({ network, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } = await createSystem());
-
-            autoCompoundingStakingRewards = await createStakingRewards(
-                network,
-                networkSettings,
-                bnt,
-                bntPool,
-                externalRewardsVault
-            );
         });
 
         it('should revert when attempting to create with an invalid network contract', async () => {
@@ -148,12 +140,28 @@ describe('AutoCompoundingStakingRewards', () => {
         });
 
         it('should revert when attempting to reinitialize', async () => {
+            const autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
+                network,
+                networkSettings,
+                bnt,
+                bntPool,
+                externalRewardsVault
+            );
+
             await expect(autoCompoundingStakingRewards.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
             );
         });
 
         it('should be properly initialized', async () => {
+            const autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
+                network,
+                networkSettings,
+                bnt,
+                bntPool,
+                externalRewardsVault
+            );
+
             expect(await autoCompoundingStakingRewards.version()).to.equal(1);
 
             await expectRoles(autoCompoundingStakingRewards, Roles.Upgradeable);
@@ -199,7 +207,7 @@ describe('AutoCompoundingStakingRewards', () => {
             const EFFECTIVE_END_TIME = END_TIME || START_TIME + ExponentialDecay.MAX_DURATION;
 
             beforeEach(async () => {
-                autoCompoundingStakingRewards = await createStakingRewards(
+                autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
                     network,
                     networkSettings,
                     bnt,
@@ -1030,7 +1038,7 @@ describe('AutoCompoundingStakingRewards', () => {
 
                 rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
 
-                autoCompoundingStakingRewards = await createStakingRewards(
+                autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
                     network,
                     networkSettings,
                     bnt,

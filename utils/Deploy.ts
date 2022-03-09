@@ -18,16 +18,17 @@ import {
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
+    StandardStakingRewards,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
-import { VBNT, BNT, TokenGovernance } from '../components/LegacyContracts';
+import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
 import { DeploymentNetwork } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { Contract } from 'ethers';
 import fs from 'fs';
-import { deployments, ethers, getNamedAccounts, config } from 'hardhat';
-import { ProxyOptions as DeployProxyOptions, Address } from 'hardhat-deploy/types';
+import { config, deployments, ethers, getNamedAccounts } from 'hardhat';
+import { Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
 import path from 'path';
 
 const {
@@ -75,7 +76,8 @@ enum NewContractName {
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
     PoolCollectionUpgraderV1 = 'PoolCollectionUpgraderV1',
     PoolTokenFactoryV1 = 'PoolTokenFactoryV1',
-    ProxyAdmin = 'ProxyAdmin'
+    ProxyAdmin = 'ProxyAdmin',
+    StandardStakingRewardsV1 = 'StandardStakingRewardsV1'
 }
 
 export const ContractName = {
@@ -119,7 +121,8 @@ const DeployedNewContracts = {
     PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
     PoolCollectionUpgraderV1: deployed<PoolCollectionUpgrader>(ContractName.PoolCollectionUpgraderV1),
     PoolTokenFactoryV1: deployed<PoolTokenFactory>(ContractName.PoolTokenFactoryV1),
-    ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin)
+    ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin),
+    StandardStakingRewardsV1: deployed<StandardStakingRewards>(ContractName.StandardStakingRewardsV1)
 };
 
 export const DeployedContracts = {
@@ -127,10 +130,10 @@ export const DeployedContracts = {
     ...DeployedNewContracts
 };
 
-export const isHardhat = () => getNetworkName() === DeploymentNetwork.HARDHAT;
+export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isMainnetFork = () => isHardhatMainnetFork();
-export const isMainnet = () => getNetworkName() === DeploymentNetwork.MAINNET || isMainnetFork();
+export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
 export const isLive = () => isMainnet() && !isMainnetFork();
 
 const TEST_MINIMUM_BALANCE = toWei(10);

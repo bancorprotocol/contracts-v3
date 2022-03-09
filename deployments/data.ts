@@ -8,14 +8,14 @@ const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
 
 const TestNamedAccounts = {
     ethWhale: {
-        [DeploymentNetwork.HARDHAT]: '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'
+        [DeploymentNetwork.Hardhat]: '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'
     }
 };
 
 let counter = 0;
 const mainnet = (address: string, fallback?: string) => ({
-    [DeploymentNetwork.HARDHAT]: isForking ? address : fallback || counter++,
-    [DeploymentNetwork.MAINNET]: address
+    [DeploymentNetwork.Hardhat]: isForking ? address : fallback || counter++,
+    [DeploymentNetwork.Mainnet]: address
 });
 
 const LegacyNamedAccounts = {
@@ -53,8 +53,8 @@ export const ExternalContracts = {
         }
     ],
     deployments: {
-        [DeploymentNetwork.HARDHAT]: [
-            `deployments/${isForking ? DeploymentNetwork.MAINNET : DeploymentNetwork.HARDHAT}`
+        [DeploymentNetwork.Hardhat]: [
+            `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Hardhat}`
         ]
     }
 };
