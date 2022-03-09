@@ -147,17 +147,19 @@ describe('BancorV1Migration', () => {
         const prevConverterBNTBalance = await getBalance(bnt, converter.address);
         const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
         const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+        const prevProviderBaseBalance = await getBalance(baseToken, provider.address);
         const prevPoolTokenSupply = await poolToken.totalSupply();
 
         const poolTokenAmount = portionOf(await getBalance(poolToken, provider.address));
-        await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
-
-        await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
+        const res0 = await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
+        const res1 = await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
+        const cost = isNativeToken ? (await getTransactionCost(res0)).add(await getTransactionCost(res1)) : 0;
 
         const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
         const currConverterBNTBalance = await getBalance(bnt, converter.address);
         const currConverterBaseBalance = await getBalance(baseToken, converter.address);
         const currVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+        const currProviderBaseBalance = await getBalance(baseToken, provider.address);
         const currPoolTokenSupply = await poolToken.totalSupply();
 
         const migratedBaseAmount = portionOf(baseAmount);
@@ -168,6 +170,9 @@ describe('BancorV1Migration', () => {
         );
         expect(currConverterBaseBalance).to.equal(prevConverterBaseBalance.sub(migratedBaseAmount));
         expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(isTokenWhitelisted ? migratedBaseAmount : 0));
+        expect(currProviderBaseBalance).to.equal(
+            prevProviderBaseBalance.add(isTokenWhitelisted ? 0 : migratedBaseAmount).sub(cost)
+        );
         expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
         const prevProviderBNTBalance = await getBalance(bnt, provider);
