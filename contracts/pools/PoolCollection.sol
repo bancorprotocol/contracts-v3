@@ -237,7 +237,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         bytes32 indexed contextId,
         Token indexed pool,
         Token indexed token,
-        uint256 liquidity
+        uint256 prevLiquidity,
+        uint256 newLiquidity
     );
 
     /**
@@ -1183,7 +1184,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 contextId: contextId,
                 pool: pool,
                 token: Token(address(_bnt)),
-                liquidity: newLiquidity.bntTradingLiquidity
+                prevLiquidity: prevLiquidity.bntTradingLiquidity,
+                newLiquidity: newLiquidity.bntTradingLiquidity
             });
         }
 
@@ -1192,7 +1194,8 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 contextId: contextId,
                 pool: pool,
                 token: pool,
-                liquidity: newLiquidity.baseTokenTradingLiquidity
+                prevLiquidity: prevLiquidity.baseTokenTradingLiquidity,
+                newLiquidity: newLiquidity.baseTokenTradingLiquidity
             });
         }
     }
