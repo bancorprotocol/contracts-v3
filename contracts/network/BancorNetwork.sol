@@ -171,7 +171,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint16 indexed poolType,
         Token indexed pool,
         IPoolCollection indexed poolCollection,
-        uint16 version
+        uint16 poolCollectionVersion
     );
 
     /**
@@ -500,7 +500,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             poolType: poolType,
             pool: token,
             poolCollection: poolCollection,
-            version: poolCollection.version()
+            poolCollectionVersion: poolCollection.version()
         });
     }
 
