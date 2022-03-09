@@ -23,7 +23,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await execute({
         name: ContractName.NetworkSettingsV1,
         methodName: 'setWithdrawalFeePPM',
-        args: [toPPM(5)],
+        args: [toPPM(0.25)],
         from: deployer
     });
 
