@@ -108,7 +108,7 @@ describe('PoolCollection', () => {
         if (!prevLiquidity.bntTradingLiquidity.eq(newLiquidity.bntTradingLiquidity)) {
             await expect(res)
                 .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(contextId, token.address, bnt.address, newLiquidity.bntTradingLiquidity);
+                .withArgs(contextId, token.address, bnt.address, prevLiquidity.bntTradingLiquidity, newLiquidity.bntTradingLiquidity);
         } else {
             await expect(res).not.to.emit(poolCollection, 'TradingLiquidityUpdated');
         }
@@ -116,7 +116,7 @@ describe('PoolCollection', () => {
         if (!prevLiquidity.baseTokenTradingLiquidity.eq(newLiquidity.baseTokenTradingLiquidity)) {
             await expect(res)
                 .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                .withArgs(contextId, token.address, token.address, newLiquidity.baseTokenTradingLiquidity);
+                .withArgs(contextId, token.address, token.address, prevLiquidity.baseTokenTradingLiquidity, newLiquidity.baseTokenTradingLiquidity);
         } else {
             await expect(res).not.to.emit(poolCollection, 'TradingLiquidityUpdated');
         }
@@ -2777,6 +2777,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 bnt.address,
+                                                prevLiquidity.bntTradingLiquidity,
                                                 liquidity.bntTradingLiquidity
                                             );
 
@@ -2786,6 +2787,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 reserveToken.address,
+                                                prevLiquidity.baseTokenTradingLiquidity,
                                                 liquidity.baseTokenTradingLiquidity
                                             );
 
@@ -2940,6 +2942,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 bnt.address,
+                                                prevLiquidity.bntTradingLiquidity,
                                                 liquidity.bntTradingLiquidity
                                             );
 
@@ -2949,6 +2952,7 @@ describe('PoolCollection', () => {
                                                 CONTEXT_ID,
                                                 reserveToken.address,
                                                 reserveToken.address,
+                                                prevLiquidity.baseTokenTradingLiquidity,
                                                 liquidity.baseTokenTradingLiquidity
                                             );
 

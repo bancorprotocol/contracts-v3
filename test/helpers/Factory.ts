@@ -83,22 +83,46 @@ export const createProxy = async <F extends ContractFactory>(
 
 const getDeployer = async () => (await ethers.getSigners())[0];
 
-export const createStakingRewards = async (
+export const createAutoCompoundingStakingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bnt: IERC20,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const autoCompoundingStakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+    const stakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
         ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address]
     });
 
-    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, autoCompoundingStakingRewards.address);
+    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, stakingRewards.address);
 
-    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, autoCompoundingStakingRewards.address);
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
 
-    return autoCompoundingStakingRewards;
+    return stakingRewards;
+};
+
+export const createStandardStakingRewards = async (
+    network: TestBancorNetwork | BancorNetwork,
+    networkSettings: NetworkSettings,
+    bntGovernance: TokenGovernance,
+    bntPool: TestBNTPool | BNTPool,
+    externalRewardsVault: ExternalRewardsVault
+) => {
+    const stakingRewards = await createProxy(Contracts.TestStandardStakingRewards, {
+        ctorArgs: [
+            network.address,
+            networkSettings.address,
+            bntGovernance.address,
+            bntPool.address,
+            externalRewardsVault.address
+        ]
+    });
+
+    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, stakingRewards.address);
+
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
+
+    return stakingRewards;
 };
 
 const createGovernedToken = async (
@@ -373,7 +397,7 @@ const createSystemFixture = async () => {
 export const createSystem = async () => waffle.loadFixture(createSystemFixture);
 
 export const depositToPool = async (
-    provider: SignerWithAddress,
+    provider: SignerWithAddress | Wallet,
     token: TokenWithAddress,
     amount: BigNumberish,
     network: TestBancorNetwork
@@ -392,6 +416,7 @@ export const depositToPool = async (
 
 export interface PoolSpec {
     tokenData: TokenData;
+    token?: TokenWithAddress;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
     bntRate: BigNumberish;
@@ -411,10 +436,11 @@ const setupPool = async (
     poolCollection: TestPoolCollection,
     enableTrading: boolean
 ) => {
-    if (spec.tokenData.isBNT()) {
+    const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.BNT;
+    const bnt = await factory.attach(await networkInfo.bnt());
+
+    if (spec.token?.address === bnt.address || spec.tokenData.isBNT()) {
         const poolToken = await Contracts.PoolToken.attach(await networkInfo.bntPoolToken());
-        const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.BNT;
-        const bnt = await factory.attach(await networkInfo.bnt());
 
         // ensure that there is enough space to deposit BNT
         const reserveToken = await createTestToken();
@@ -428,7 +454,7 @@ const setupPool = async (
         return { poolToken, token: bnt };
     }
 
-    const token = await createToken(spec.tokenData);
+    const token = spec.token || (await createToken(spec.tokenData));
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setFundingLimit(token.address, MAX_UINT256);

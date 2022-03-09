@@ -3,6 +3,7 @@ import {
     AutoCompoundingStakingRewards,
     BancorNetwork,
     BancorNetworkInfo,
+    BancorPortal,
     BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
@@ -11,7 +12,8 @@ import {
     PendingWithdrawals,
     PoolCollection,
     PoolCollectionUpgrader,
-    PoolTokenFactory
+    PoolTokenFactory,
+    StandardStakingRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { DeployedContracts, DeploymentTag, isMainnet } from '../../utils/Deploy';
@@ -39,7 +41,9 @@ describe('network', () => {
     let poolCollectionUpgrader: PoolCollectionUpgrader;
     let poolCollection: PoolCollection;
     let autoCompoundingStakingRewards: AutoCompoundingStakingRewards;
+    let standardStakingRewards: StandardStakingRewards;
     let networkInfo: BancorNetworkInfo;
+    let bancorPortal: BancorPortal;
 
     before(async () => {
         ({ deployer, foundationMultisig, daoMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
@@ -61,7 +65,9 @@ describe('network', () => {
         poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
         autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewardsV1.deployed();
+        standardStakingRewards = await DeployedContracts.StandardStakingRewardsV1.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
+        bancorPortal = await DeployedContracts.BancorPortalV1.deployed();
     });
 
     it('should have the correct set of roles', async () => {
@@ -76,7 +82,9 @@ describe('network', () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [bntPool.address, liquidityProtection, stakingRewards] : [bntPool.address]
+            isMainnet()
+                ? [standardStakingRewards.address, bntPool.address, liquidityProtection, stakingRewards]
+                : [standardStakingRewards.address, bntPool.address]
         );
 
         await expectRoleMembers(
@@ -104,7 +112,8 @@ describe('network', () => {
 
         await expectRoleMembers(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
         await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
-            autoCompoundingStakingRewards.address
+            autoCompoundingStakingRewards.address,
+            standardStakingRewards.address
         ]);
 
         await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
@@ -130,6 +139,10 @@ describe('network', () => {
 
         await expectRoleMembers(autoCompoundingStakingRewards, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
+        await expectRoleMembers(standardStakingRewards, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+
         await expectRoleMembers(networkInfo, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+
+        await expectRoleMembers(bancorPortal, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
     });
 });
