@@ -113,6 +113,23 @@ library TokenLibrary {
     }
 
     /**
+     * @dev approves a specific amount of the ETH/ERC20 token from a specific holder
+     *
+     * note that the function ignores a ETH/ERC20 token which represents an ETH reserve
+     */
+    function safeApprove(
+        Token token,
+        address spender,
+        uint256 amount
+    ) internal {
+        if (amount == 0 || isNative(token)) {
+            return;
+        }
+
+        toIERC20(token).safeApprove(spender, amount);
+    }
+
+    /**
      * @dev ensures that the spender has sufficient allowance
      *
      * note that this function ignores a ETH/ERC20 token which represents an ETH reserve

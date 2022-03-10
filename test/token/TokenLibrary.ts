@@ -8,7 +8,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe('TokenLibrary', () => {
+describe.only('TokenLibrary', () => {
     const TOTAL_SUPPLY = 1_000_000;
 
     let tokenLibrary: TestTokenLibrary;
@@ -78,7 +78,19 @@ describe('TokenLibrary', () => {
             }
 
             if (tokenData.isNative()) {
-                it('should ignore the request to transfer the reserve token on behalf of a different account', async () => {
+                it('should ignore the request to transfer the reserve token on behalf of a different account using safeApprove', async () => {
+                    const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
+                    const prevRecipientBalance = await getBalance(token, recipient);
+
+                    const amount = 100_000;
+                    await tokenLibrary.safeApprove(token.address, tokenLibrary.address, amount);
+                    await tokenLibrary.safeTransferFrom(token.address, tokenLibrary.address, recipient.address, amount);
+
+                    expect(await getBalance(token, tokenLibrary.address)).to.equal(prevLibraryBalance);
+                    expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance);
+                });
+
+                it('should ignore the request to transfer the reserve token on behalf of a different account using ensureApprove', async () => {
                     const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                     const prevRecipientBalance = await getBalance(token, recipient);
 
@@ -120,7 +132,23 @@ describe('TokenLibrary', () => {
                         await transfer(deployer, token, tokenLibrary.address, amount);
                     });
 
-                    it('should properly transfer the reserve token on behalf of a different account', async () => {
+                    it('should properly transfer the reserve token on behalf of a different account using safeApprove', async () => {
+                        const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
+                        const prevRecipientBalance = await getBalance(token, recipient);
+
+                        await tokenLibrary.safeApprove(token.address, tokenLibrary.address, amount);
+                        await tokenLibrary.safeTransferFrom(
+                            token.address,
+                            tokenLibrary.address,
+                            recipient.address,
+                            amount
+                        );
+
+                        expect(await getBalance(token, tokenLibrary.address)).to.equal(prevLibraryBalance.sub(amount));
+                        expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance.add(amount));
+                    });
+
+                    it('should properly transfer the reserve token on behalf of a different account using ensureApprove', async () => {
                         const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                         const prevRecipientBalance = await getBalance(token, recipient);
 
@@ -137,7 +165,15 @@ describe('TokenLibrary', () => {
                     });
                 }
 
-                it('should allow setting the allowance', async () => {
+                it('should allow setting the allowance using safeApprove', async () => {
+                    const allowance = 1_000_000;
+
+                    await tokenLibrary.safeApprove(token.address, spender.address, allowance);
+
+                    expect(await token.allowance(tokenLibrary.address, spender.address)).to.equal(allowance);
+                });
+
+                it('should allow setting the allowance using ensureApprove', async () => {
                     const allowance = 1_000_000;
 
                     await tokenLibrary.ensureApprove(token.address, spender.address, allowance);
