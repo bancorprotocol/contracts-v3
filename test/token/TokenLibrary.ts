@@ -8,7 +8,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe.only('TokenLibrary', () => {
+describe('TokenLibrary', () => {
     const TOTAL_SUPPLY = 1_000_000;
 
     let tokenLibrary: TestTokenLibrary;
