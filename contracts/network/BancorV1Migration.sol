@@ -96,7 +96,11 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
                     _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
                 }
             } else {
-                reserveTokens[i].safeTransfer(msg.sender, reserveAmounts[i]);
+                if (reserveTokens[i].isNative()) {
+                    payable(msg.sender).transfer(reserveAmounts[i]);
+                } else {
+                    reserveTokens[i].safeTransfer(msg.sender, reserveAmounts[i]);
+                }
             }
         }
     }
