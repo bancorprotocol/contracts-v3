@@ -65,20 +65,30 @@ describe('BancorV1Migration', () => {
             masterVault
         } = await createSystem());
 
-        bancorV1Migration = await Contracts.BancorV1Migration.deploy(network.address, bnt.address);
+        bancorV1Migration = await Contracts.BancorV1Migration.deploy(
+            network.address,
+            networkSettings.address,
+            bnt.address
+        );
     });
 
     describe('construction', () => {
         it('should revert when attempting to create with an invalid network contract', async () => {
-            await expect(Contracts.BancorV1Migration.deploy(ZERO_ADDRESS, bnt.address)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+            await expect(
+                Contracts.BancorV1Migration.deploy(ZERO_ADDRESS, networkSettings.address, bnt.address)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid network settings contract', async () => {
+            await expect(
+                Contracts.BancorV1Migration.deploy(network.address, ZERO_ADDRESS, bnt.address)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT contract', async () => {
-            await expect(Contracts.BancorV1Migration.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+            await expect(
+                Contracts.BancorV1Migration.deploy(network.address, networkSettings.address, ZERO_ADDRESS)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -126,6 +136,7 @@ describe('BancorV1Migration', () => {
         bntAmount: BigNumberish,
         baseAmount: BigNumberish,
         isNativeToken: boolean,
+        isTokenWhitelisted: boolean,
         percent: number
     ) => {
         const portionOf = (amount: BigNumberish) => BigNumber.from(amount).mul(percent).div(100);
@@ -136,17 +147,19 @@ describe('BancorV1Migration', () => {
         const prevConverterBNTBalance = await getBalance(bnt, converter.address);
         const prevConverterBaseBalance = await getBalance(baseToken, converter.address);
         const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+        const prevProviderBaseBalance = await getBalance(baseToken, provider.address);
         const prevPoolTokenSupply = await poolToken.totalSupply();
 
         const poolTokenAmount = portionOf(await getBalance(poolToken, provider.address));
-        await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
-
-        await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
+        const res0 = await poolToken.connect(provider).approve(bancorV1Migration.address, poolTokenAmount);
+        const res1 = await bancorV1Migration.connect(provider).migratePoolTokens(poolToken.address, poolTokenAmount);
+        const cost = isNativeToken ? (await getTransactionCost(res0)).add(await getTransactionCost(res1)) : 0;
 
         const currProviderPoolTokenBalance = await getBalance(poolToken, provider.address);
         const currConverterBNTBalance = await getBalance(bnt, converter.address);
         const currConverterBaseBalance = await getBalance(baseToken, converter.address);
         const currVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+        const currProviderBaseBalance = await getBalance(baseToken, provider.address);
         const currPoolTokenSupply = await poolToken.totalSupply();
 
         const migratedBaseAmount = portionOf(baseAmount);
@@ -156,7 +169,10 @@ describe('BancorV1Migration', () => {
             prevConverterBNTBalance.sub(prevConverterBNTBalance.mul(migratedBaseAmount).div(prevConverterBaseBalance))
         );
         expect(currConverterBaseBalance).to.equal(prevConverterBaseBalance.sub(migratedBaseAmount));
-        expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(migratedBaseAmount));
+        expect(currVaultBaseBalance).to.equal(prevVaultBaseBalance.add(isTokenWhitelisted ? migratedBaseAmount : 0));
+        expect(currProviderBaseBalance).to.equal(
+            prevProviderBaseBalance.add(isTokenWhitelisted ? 0 : migratedBaseAmount).sub(cost)
+        );
         expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
         const prevProviderBNTBalance = await getBalance(bnt, provider);
@@ -171,26 +187,29 @@ describe('BancorV1Migration', () => {
         await network.connect(provider).withdraw(networkIds[0]);
 
         const basePoolTokenAmount = await getBalance(basePoolToken, provider.address);
-        await basePoolToken.connect(provider).approve(network.address, basePoolTokenAmount);
-        await network.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount);
-        const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
 
-        const prevProviderBaseBalance = await getBalance(baseToken, provider);
+        if (isTokenWhitelisted) {
+            await basePoolToken.connect(provider).approve(network.address, basePoolTokenAmount);
+            await network.connect(provider).initWithdrawal(basePoolToken.address, basePoolTokenAmount);
 
-        const res = await network.connect(provider).withdraw(baseIds[0]);
+            const baseIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
 
-        let transactionCost = BigNumber.from(0);
-        if (isNativeToken) {
-            transactionCost = await getTransactionCost(res);
+            const prevProviderBaseBalance = await getBalance(baseToken, provider);
+
+            const res = await network.connect(provider).withdraw(baseIds[0]);
+            const transactionCost = isNativeToken ? await getTransactionCost(res) : 0;
+
+            const currProviderBaseBalance = await getBalance(baseToken, provider);
+
+            expect(currProviderBaseBalance.add(transactionCost)).to.equal(
+                prevProviderBaseBalance.add(deductFee(migratedBaseAmount))
+            );
+        } else {
+            expect(basePoolTokenAmount).to.equal(0);
         }
 
         const currProviderBNTBalance = await getBalance(bnt, provider);
-        const currProviderBaseBalance = await getBalance(baseToken, provider);
-
         expect(currProviderBNTBalance).to.equal(prevProviderBNTBalance.add(deductFee(portionOf(bntAmount))));
-        expect(currProviderBaseBalance.add(transactionCost)).to.equal(
-            prevProviderBaseBalance.add(deductFee(migratedBaseAmount))
-        );
     };
 
     const deposit = async (amount: BigNumberish, isNativeToken: boolean) => {
@@ -209,6 +228,7 @@ describe('BancorV1Migration', () => {
         bntAmount: BigNumberish,
         baseAmount: BigNumberish,
         isNativeToken: boolean,
+        isTokenWhitelisted: boolean,
         percent: number
     ) => {
         const withdrawalFeePPM = toPPM(withdrawalFeePercent);
@@ -217,28 +237,41 @@ describe('BancorV1Migration', () => {
             describe(`BNT amount = ${bntAmount}`, () => {
                 describe(`base amount = ${baseAmount}`, () => {
                     describe(`base token = ${isNativeToken ? 'ETH' : 'ERC20'}`, () => {
-                        beforeEach(async () => {
-                            await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
-                            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
+                        describe(`base token is ${isTokenWhitelisted ? '' : 'not'} whitelisted`, () => {
+                            beforeEach(async () => {
+                                await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
+                                await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
 
-                            await initLegacySystem(bntAmount, baseAmount, isNativeToken);
+                                await initLegacySystem(bntAmount, baseAmount, isNativeToken);
 
-                            // ensure that enough funding has been requested before a migration
-                            await deposit(DEPOSIT_AMOUNT, isNativeToken);
-
-                            await poolCollection.enableTrading(
-                                baseToken.address,
-                                BNT_FUNDING_RATE,
-                                BASE_TOKEN_FUNDING_RATE
-                            );
-
-                            for (let i = 0; i < 5; i++) {
+                                // ensure that enough funding has been requested before a migration
                                 await deposit(DEPOSIT_AMOUNT, isNativeToken);
-                            }
-                        });
 
-                        it(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
-                            await verify(withdrawalFeePPM, bntAmount, baseAmount, isNativeToken, percent);
+                                await poolCollection.enableTrading(
+                                    baseToken.address,
+                                    BNT_FUNDING_RATE,
+                                    BASE_TOKEN_FUNDING_RATE
+                                );
+
+                                for (let i = 0; i < 5; i++) {
+                                    await deposit(DEPOSIT_AMOUNT, isNativeToken);
+                                }
+
+                                if (!isTokenWhitelisted) {
+                                    await networkSettings.removeTokenFromWhitelist(baseToken.address);
+                                }
+                            });
+
+                            it(`verifies that the caller can migrate ${percent}% of its pool tokens`, async () => {
+                                await verify(
+                                    withdrawalFeePPM,
+                                    bntAmount,
+                                    baseAmount,
+                                    isNativeToken,
+                                    isTokenWhitelisted,
+                                    percent
+                                );
+                            });
                         });
                     });
                 });
@@ -251,8 +284,10 @@ describe('BancorV1Migration', () => {
             for (const bntAmount of [1_000_000, 5_000_000]) {
                 for (const baseAmount of [1_000_000, 5_000_000]) {
                     for (const isNativeToken of [false, true]) {
-                        for (const percent of [10, 100]) {
-                            test(withdrawalFeeP, bntAmount, baseAmount, isNativeToken, percent);
+                        for (const isTokenWhitelisted of [false, true]) {
+                            for (const percent of [10, 100]) {
+                                test(withdrawalFeeP, bntAmount, baseAmount, isNativeToken, isTokenWhitelisted, percent);
+                            }
                         }
                     }
                 }
@@ -265,8 +300,10 @@ describe('BancorV1Migration', () => {
             for (const bntAmount of [1_000_000, 2_500_000, 5_000_000]) {
                 for (const baseAmount of [1_000_000, 2_500_000, 5_000_000]) {
                     for (const isNativeToken of [false, true]) {
-                        for (const percent of [10, 25, 50, 100]) {
-                            test(withdrawalFeeP, bntAmount, baseAmount, isNativeToken, percent);
+                        for (const isTokenWhitelisted of [false, true]) {
+                            for (const percent of [25, 100]) {
+                                test(withdrawalFeeP, bntAmount, baseAmount, isNativeToken, isTokenWhitelisted, percent);
+                            }
                         }
                     }
                 }

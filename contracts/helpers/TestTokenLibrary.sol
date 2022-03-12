@@ -44,6 +44,14 @@ contract TestTokenLibrary {
         token.safeTransferFrom(from, to, amount);
     }
 
+    function safeApprove(
+        Token token,
+        address spender,
+        uint256 amount
+    ) external {
+        token.safeApprove(spender, amount);
+    }
+
     function ensureApprove(
         Token token,
         address spender,
