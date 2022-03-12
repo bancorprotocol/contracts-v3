@@ -10,7 +10,8 @@ export enum TokenSymbol {
     bnBNT = 'bnBNT',
     TKN = 'TKN',
     TKN1 = 'TKN1',
-    TKN2 = 'TKN2'
+    TKN2 = 'TKN2',
+    TKN3 = 'TKN3'
 }
 
 interface Errors {
@@ -18,6 +19,12 @@ interface Errors {
     exceedsBalance?: string;
     burnExceedsBalance?: string;
 }
+
+const DEFAULT_ERRORS: Errors = {
+    exceedsAllowance: 'ERC20: insufficient allowance',
+    exceedsBalance: 'ERC20: transfer amount exceeds balance',
+    burnExceedsBalance: 'ERC20: burn amount exceeds balance'
+};
 
 const TOKEN_DATA = {
     [TokenSymbol.ETH]: {
@@ -44,38 +51,27 @@ const TOKEN_DATA = {
     [TokenSymbol.bnBNT]: {
         name: 'Bancor BNT Pool Token',
         decimals: DEFAULT_DECIMALS,
-        errors: {
-            exceedsAllowance: 'ERC20: insufficient allowance',
-            exceedsBalance: 'ERC20: transfer amount exceeds balance',
-            burnExceedsBalance: 'ERC20: burn amount exceeds balance'
-        }
+        errors: DEFAULT_ERRORS
     },
     [TokenSymbol.TKN]: {
         name: 'Test Token',
         decimals: DEFAULT_DECIMALS,
-        errors: {
-            exceedsAllowance: 'ERC20: insufficient allowance',
-            exceedsBalance: 'ERC20: transfer amount exceeds balance',
-            burnExceedsBalance: 'ERC20: burn amount exceeds balance'
-        }
+        errors: DEFAULT_ERRORS
     },
     [TokenSymbol.TKN1]: {
         name: 'Test Token 1',
         decimals: DEFAULT_DECIMALS,
-        errors: {
-            exceedsAllowance: 'ERC20: insufficient allowance',
-            exceedsBalance: 'ERC20: transfer amount exceeds balance',
-            burnExceedsBalance: 'ERC20: burn amount exceeds balance'
-        }
+        errors: DEFAULT_ERRORS
     },
     [TokenSymbol.TKN2]: {
         name: 'Test Token 2',
         decimals: DEFAULT_DECIMALS,
-        errors: {
-            exceedsAllowance: 'ERC20: insufficient allowance',
-            exceedsBalance: 'ERC20: transfer amount exceeds balance',
-            burnExceedsBalance: 'ERC20: burn amount exceeds balance'
-        }
+        errors: DEFAULT_ERRORS
+    },
+    [TokenSymbol.TKN3]: {
+        name: 'Test Token 3',
+        decimals: DEFAULT_DECIMALS,
+        errors: DEFAULT_ERRORS
     }
 };
 

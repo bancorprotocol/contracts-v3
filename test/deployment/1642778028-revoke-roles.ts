@@ -1,11 +1,11 @@
 import { AccessControlEnumerableUpgradeable } from '../../components/Contracts';
-import { ContractName, DeployedContracts, DeploymentTag } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, toDeployTag } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642778028-revoke-roles', DeploymentTag.V3, () => {
+describeDeployment('1642778028-revoke-roles', toDeployTag(__filename), () => {
     let deployer: string;
     let daoMultisig: string;
 
