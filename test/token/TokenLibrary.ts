@@ -78,7 +78,7 @@ describe('TokenLibrary', () => {
             }
 
             if (tokenData.isNative()) {
-                it('should ignore the request to transfer the reserve token on behalf of a different account using safeApprove', async () => {
+                it('should ignore the request to transfer the reserve token on behalf of a different account using safe approve', async () => {
                     const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                     const prevRecipientBalance = await getBalance(token, recipient);
 
@@ -90,7 +90,7 @@ describe('TokenLibrary', () => {
                     expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance);
                 });
 
-                it('should ignore the request to transfer the reserve token on behalf of a different account using ensureApprove', async () => {
+                it('should ignore the request to transfer the reserve token on behalf of a different account using ensure approve', async () => {
                     const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                     const prevRecipientBalance = await getBalance(token, recipient);
 
@@ -132,7 +132,7 @@ describe('TokenLibrary', () => {
                         await transfer(deployer, token, tokenLibrary.address, amount);
                     });
 
-                    it('should properly transfer the reserve token on behalf of a different account using safeApprove', async () => {
+                    it('should properly transfer the reserve token on behalf of a different account using safe approve', async () => {
                         const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                         const prevRecipientBalance = await getBalance(token, recipient);
 
@@ -148,7 +148,7 @@ describe('TokenLibrary', () => {
                         expect(await getBalance(token, recipient)).to.equal(prevRecipientBalance.add(amount));
                     });
 
-                    it('should properly transfer the reserve token on behalf of a different account using ensureApprove', async () => {
+                    it('should properly transfer the reserve token on behalf of a different account using ensure approve', async () => {
                         const prevLibraryBalance = await getBalance(token, tokenLibrary.address);
                         const prevRecipientBalance = await getBalance(token, recipient);
 
@@ -165,7 +165,7 @@ describe('TokenLibrary', () => {
                     });
                 }
 
-                it('should allow setting the allowance using safeApprove', async () => {
+                it('should allow setting the allowance using safe approve', async () => {
                     const allowance = 1_000_000;
 
                     await tokenLibrary.safeApprove(token.address, spender.address, allowance);
@@ -173,7 +173,7 @@ describe('TokenLibrary', () => {
                     expect(await token.allowance(tokenLibrary.address, spender.address)).to.equal(allowance);
                 });
 
-                it('should allow setting the allowance using ensureApprove', async () => {
+                it('should allow setting the allowance using ensure approve', async () => {
                     const allowance = 1_000_000;
 
                     await tokenLibrary.ensureApprove(token.address, spender.address, allowance);

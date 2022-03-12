@@ -301,7 +301,7 @@ describe('BancorV1Migration', () => {
                 for (const baseAmount of [1_000_000, 2_500_000, 5_000_000]) {
                     for (const isNativeToken of [false, true]) {
                         for (const isTokenWhitelisted of [false, true]) {
-                            for (const percent of [10, 25, 50, 100]) {
+                            for (const percent of [25, 100]) {
                                 test(withdrawalFeeP, bntAmount, baseAmount, isNativeToken, isTokenWhitelisted, percent);
                             }
                         }

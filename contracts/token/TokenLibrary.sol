@@ -122,7 +122,7 @@ library TokenLibrary {
         address spender,
         uint256 amount
     ) internal {
-        if (amount == 0 || isNative(token)) {
+        if (isNative(token)) {
             return;
         }
 
