@@ -859,11 +859,16 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             revert DoesNotExist();
         }
 
+        // the base token trading liquidity of a given pool can never be higher than the base token balance of the vault
+        // whenever the base token trading liquidity is updated, it is set to at most the base token balance of the vault
+        uint256 baseTokenExcessAmount = pool.balanceOf(address(_masterVault)) -
+            data.liquidity.baseTokenTradingLiquidity;
+
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
             data.liquidity.bntTradingLiquidity,
             data.liquidity.baseTokenTradingLiquidity,
-            MathEx.subMax0(pool.balanceOf(address(_masterVault)), data.liquidity.baseTokenTradingLiquidity),
+            baseTokenExcessAmount,
             data.liquidity.stakedBalance,
             pool.balanceOf(address(_externalProtectionVault)),
             data.tradingFeePPM,
