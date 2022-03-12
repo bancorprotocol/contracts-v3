@@ -1,4 +1,4 @@
-import { ContractName, DeploymentTag, grantRole, revokeRole } from '../utils/Deploy';
+import { ContractName, DeploymentTag, grantRole, revokeRole, toDeployTag } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -41,8 +41,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = 'RevokeRoles';
+const tag = toDeployTag(__filename);
+
+func.id = tag;
 func.dependencies = CONTRACT_NAMES_TO_REVOKE;
-func.tags = [DeploymentTag.V3];
+func.tags = [DeploymentTag.V3, tag];
 
 export default func;
