@@ -175,6 +175,19 @@ describe('BancorV1Migration', () => {
         );
         expect(currPoolTokenSupply).to.equal(prevPoolTokenSupply.sub(poolTokenAmount));
 
+        await expect(res1)
+            .to.emit(bancorV1Migration, 'PositionMigrated')
+            .withArgs(
+                poolToken.address,
+                baseToken.address,
+                bnt.address,
+                provider.address,
+                portionOf(baseAmount),
+                portionOf(bntAmount),
+                isTokenWhitelisted,
+                true
+            );
+
         const prevProviderBNTBalance = await getBalance(bnt, provider);
 
         const bntPoolTokenAmount = await getBalance(bntPoolToken, provider.address);
