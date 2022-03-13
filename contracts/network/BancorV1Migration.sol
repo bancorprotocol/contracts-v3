@@ -42,6 +42,17 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     // the address of the BNT token
     IERC20 private immutable _bnt;
 
+    event PositionMigrated(
+        IPoolToken indexed poolToken,
+        Token indexed tokenA,
+        Token indexed tokenB,
+        address provider,
+        uint256 amountA,
+        uint256 amountB,
+        bool migratedA,
+        bool migratedB
+    );
+
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
@@ -87,12 +98,15 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
 
         uint256[] memory reserveAmounts = converter.removeLiquidity(amount, reserveTokens, minReturnAmounts);
 
+        bool[2] memory isMigrated;
+
         for (uint256 i = 0; i < 2; i++) {
-            if (reserveTokens[i].isEqual(_bnt) || _networkSettings.isTokenWhitelisted(reserveTokens[i])) {
+            isMigrated[i] = reserveTokens[i].isEqual(_bnt) || _networkSettings.isTokenWhitelisted(reserveTokens[i]);
+            if (isMigrated[i]) {
                 if (reserveTokens[i].isNative()) {
                     _network.depositFor{ value: reserveAmounts[i] }(msg.sender, reserveTokens[i], reserveAmounts[i]);
                 } else {
-                    reserveTokens[i].ensureApprove(address(_network), reserveAmounts[i]);
+                    reserveTokens[i].safeApprove(address(_network), reserveAmounts[i]);
                     _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
                 }
             } else {
@@ -103,5 +117,16 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
                 }
             }
         }
+
+        emit PositionMigrated(
+            poolToken,
+            reserveTokens[0],
+            reserveTokens[1],
+            msg.sender,
+            reserveAmounts[0],
+            reserveAmounts[1],
+            isMigrated[0],
+            isMigrated[1]
+        );
     }
 }
