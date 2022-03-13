@@ -20,6 +20,7 @@ interface EnvOptions {
     CI?: boolean;
     PROFILE?: boolean;
     ETHEREUM_PROVIDER_URL: string;
+    TENDERLY_FORK_URL: string;
     ETHERSCAN_API_KEY?: string;
     FORKING?: boolean;
 }
@@ -28,6 +29,7 @@ const {
     CI: isCI,
     PROFILE: isProfiling,
     ETHEREUM_PROVIDER_URL = '',
+    TENDERLY_FORK_URL = '',
     ETHERSCAN_API_KEY,
     FORKING: isForking
 }: EnvOptions = process.env as any as EnvOptions;
@@ -94,6 +96,12 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Mainnet]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
+            saveDeployments: true,
+            live: true
+        },
+        [DeploymentNetwork.Tenderly]: {
+            chainId: 1,
+            url: TENDERLY_FORK_URL,
             saveDeployments: true,
             live: true
         }

@@ -1,4 +1,4 @@
-import { ContractName, DeployedContracts, isMainnet, toDeployTag } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, isMainnetFork, toDeployTag } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
@@ -14,7 +14,7 @@ describeDeployment('1642682517-create-test-tokens', toDeployTag(__filename), asy
         ({ deployer } = await getNamedAccounts());
     });
 
-    if (!isMainnet()) {
+    if (!isMainnet() || isMainnetFork()) {
         it('should deploy all test tokens', async () => {
             for (const { symbol, contractName } of [
                 { symbol: TokenSymbol.TKN1, contractName: ContractName.TestToken1 },
