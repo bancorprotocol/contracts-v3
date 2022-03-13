@@ -187,9 +187,7 @@ const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
     const src = path.join(path.resolve('./', config.typechain.outDir), `${contract}.ts`);
-    const networkName = getNetworkName();
-    const deploymentDir = config.external?.deployments![networkName][0];
-    const destDir = deploymentDir || path.join(config.paths.deployments, networkName);
+    const destDir = path.join(config.paths.deployments, getNetworkName());
     const dest = path.join(destDir, `${name}.ts`);
 
     // don't save types for legacy contracts
