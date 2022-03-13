@@ -346,6 +346,11 @@ export const save = async (deployment: Deployment) => {
 };
 
 const verifyTenderly = async (deployment: Deployment) => {
+    // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
+    if (!isMainnet() && !isTenderlyFork()) {
+        return;
+    }
+
     const { name, contract, address } = deployment;
 
     const contractName = normalizedContractName(contract || name);
