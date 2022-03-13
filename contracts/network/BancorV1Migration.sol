@@ -13,6 +13,7 @@ import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { BancorNetwork } from "./BancorNetwork.sol";
+import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 
 interface IBancorConverterV1 {
     function reserveTokens() external view returns (Token[] memory);
@@ -35,17 +36,33 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     // the network contract
     BancorNetwork private immutable _network;
 
+    // the network settings contract
+    INetworkSettings private immutable _networkSettings;
+
     // the address of the BNT token
     IERC20 private immutable _bnt;
+
+    event PositionMigrated(
+        IPoolToken indexed poolToken,
+        Token indexed tokenA,
+        Token indexed tokenB,
+        address provider,
+        uint256 amountA,
+        uint256 amountB,
+        bool migratedA,
+        bool migratedB
+    );
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(BancorNetwork initNetwork, IERC20 initBNT)
-        validAddress(address(initNetwork))
-        validAddress(address(initBNT))
-    {
+    constructor(
+        BancorNetwork initNetwork,
+        INetworkSettings initNetworkSettings,
+        IERC20 initBNT
+    ) validAddress(address(initNetwork)) validAddress(address(initNetworkSettings)) validAddress(address(initBNT)) {
         _network = initNetwork;
+        _networkSettings = initNetworkSettings;
         _bnt = initBNT;
     }
 
@@ -75,33 +92,41 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
 
         Token[] memory reserveTokens = converter.reserveTokens();
 
-        // ensure to migrate BNT liquidity last, in order to reduce some cases when migration wouldn't have
-        // been possible
-        Token[] memory orderedReserveTokens = new Token[](2);
-        orderedReserveTokens[0] = reserveTokens[1].toERC20() == _bnt ? reserveTokens[0] : reserveTokens[1];
-        orderedReserveTokens[1] = Token(address(_bnt));
-
         uint256[] memory minReturnAmounts = new uint256[](2);
         minReturnAmounts[0] = 1;
         minReturnAmounts[1] = 1;
 
-        uint256[] memory orderedReserveAmounts = converter.removeLiquidity(
-            amount,
-            orderedReserveTokens,
-            minReturnAmounts
-        );
+        uint256[] memory reserveAmounts = converter.removeLiquidity(amount, reserveTokens, minReturnAmounts);
+
+        bool[2] memory isMigrated;
 
         for (uint256 i = 0; i < 2; i++) {
-            if (orderedReserveTokens[i].isNative()) {
-                _network.depositFor{ value: orderedReserveAmounts[i] }(
-                    msg.sender,
-                    orderedReserveTokens[i],
-                    orderedReserveAmounts[i]
-                );
+            isMigrated[i] = reserveTokens[i].isEqual(_bnt) || _networkSettings.isTokenWhitelisted(reserveTokens[i]);
+            if (isMigrated[i]) {
+                if (reserveTokens[i].isNative()) {
+                    _network.depositFor{ value: reserveAmounts[i] }(msg.sender, reserveTokens[i], reserveAmounts[i]);
+                } else {
+                    reserveTokens[i].safeApprove(address(_network), reserveAmounts[i]);
+                    _network.depositFor(msg.sender, reserveTokens[i], reserveAmounts[i]);
+                }
             } else {
-                orderedReserveTokens[i].toIERC20().safeApprove(address(_network), orderedReserveAmounts[i]);
-                _network.depositFor(msg.sender, orderedReserveTokens[i], orderedReserveAmounts[i]);
+                if (reserveTokens[i].isNative()) {
+                    payable(msg.sender).transfer(reserveAmounts[i]);
+                } else {
+                    reserveTokens[i].safeTransfer(msg.sender, reserveAmounts[i]);
+                }
             }
         }
+
+        emit PositionMigrated(
+            poolToken,
+            reserveTokens[0],
+            reserveTokens[1],
+            msg.sender,
+            reserveAmounts[0],
+            reserveAmounts[1],
+            isMigrated[0],
+            isMigrated[1]
+        );
     }
 }
