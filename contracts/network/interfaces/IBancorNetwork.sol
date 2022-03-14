@@ -152,9 +152,9 @@ interface IBancorNetwork is IUpgradeable {
     function withdraw(uint256 id) external returns (uint256);
 
     /**
-     * @dev returns the withdrawn amount
+     * @dev returns the withdrawn base token amount and the withdrawn BNT amount
      */
-    function withdrawAmount(address provider, IPoolToken poolToken, uint256 poolTokenAmount) external view returns (uint256);
+    function withdrawAmount(address provider, IPoolToken poolToken, uint256 poolTokenAmount) external view returns (uint256, uint256);
 
     /**
      * @dev performs a trade by providing the input source amount

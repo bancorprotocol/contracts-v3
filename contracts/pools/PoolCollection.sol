@@ -668,11 +668,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         view
         validAddress(provider)
         greaterThanZero(poolTokenAmount)
-        returns (uint256)
+        returns (uint256, uint256)
     {
         WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
-        return amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV;
+        return (amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV, amounts.bntToMintForProvider);
     }
 
     /**

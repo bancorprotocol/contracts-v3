@@ -153,13 +153,13 @@ interface IPoolCollection is IVersioned {
     ) external returns (uint256);
 
     /**
-     * @dev returns the withdrawn base token amount
+     * @dev returns the withdrawn base token amount and the withdrawn BNT amount
      */
     function withdrawAmount(
         address provider,
         Token pool,
         uint256 poolTokenAmount
-    ) external view returns (uint256);
+    ) external view returns (uint256, uint256);
 
     /**
      * @dev performs a trade by providing the source amount and returns the target amount and the associated fee
