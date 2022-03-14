@@ -1486,15 +1486,19 @@ describe('PoolCollection', () => {
                 maxAbsoluteError: new Decimal(1)
             });
 
-            const withdrawnAmount = await network.callStatic.withdrawFromPoolCollectionT(
-                poolCollection.address,
-                CONTEXT_ID,
+            const withdrawnAmount = await poolCollection.withdrawAmount(
                 provider.address,
                 token.address,
                 poolTokenAmount
             );
 
-            expect(withdrawnAmount).to.equal(expectedWithdrawnAmount);
+            expect(withdrawnAmount[0]).to.equal(
+                withdrawalAmounts.baseTokensWithdrawalAmount.sub(withdrawalAmounts.baseTokensWithdrawalFee)
+            );
+            expect(withdrawnAmount[1]).to.equal(
+                withdrawalAmounts.baseTokensToTransferFromMasterVault.add(withdrawalAmounts.baseTokensToTransferFromEPV)
+            );
+            expect(withdrawnAmount[2]).to.equal(withdrawalAmounts.bntToMintForProvider);
 
             const res = await network.withdrawFromPoolCollectionT(
                 poolCollection.address,

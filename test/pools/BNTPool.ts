@@ -824,11 +824,7 @@ describe('BNTPool', () => {
                             .mul(prevStakedBalance.mul(WITHDRAWAL_FEE))
                             .div(prevPoolTokenTotalSupply.mul(PPM_RESOLUTION));
 
-                        const withdrawnAmount = await network.callStatic.withdrawFromBNTPoolT(
-                            CONTEXT_ID,
-                            provider.address,
-                            poolTokenAmount
-                        );
+                        const withdrawnAmount = await bntPool.withdrawAmount(provider.address, poolTokenAmount);
 
                         expect(withdrawnAmount).to.equal(expectedBNTAmount);
 
