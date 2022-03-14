@@ -1723,26 +1723,33 @@ describe('PoolCollection', () => {
                                             const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
                                             const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
                                             const ok = Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
-                                            it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
-                                                const { liquidity } = await poolCollection.poolData(token.address);
-                                                await poolCollection.setAverageRateT(token.address, {
-                                                    blockNumber: 1,
-                                                    rate: {
-                                                        n: liquidity.bntTradingLiquidity.mul(nf),
-                                                        d: liquidity.baseTokenTradingLiquidity.mul(df)
+
+                                            context(`ns=${ns}, nx=${nx}, dx=${dx}`, () => {
+                                                beforeEach(async () => {
+                                                    const { liquidity } = await poolCollection.poolData(token.address);
+
+                                                    await poolCollection.setAverageRateT(token.address, {
+                                                        blockNumber: 1,
+                                                        rate: {
+                                                            n: liquidity.bntTradingLiquidity.mul(nf),
+                                                            d: liquidity.baseTokenTradingLiquidity.mul(df)
+                                                        }
+                                                    });
+                                                });
+
+                                                it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
+                                                    if (ok) {
+                                                        await testMultipleWithdrawals(TradingLiquidityState.Update);
+                                                    } else {
+                                                        await expect(
+                                                            withdrawAndVerifyState(
+                                                                totalBasePoolTokenAmount,
+                                                                withdrawalFeePPM,
+                                                                TradingLiquidityState.Update
+                                                            )
+                                                        ).to.be.revertedWith('RateUnstable');
                                                     }
                                                 });
-                                                if (ok) {
-                                                    await testMultipleWithdrawals(TradingLiquidityState.Update);
-                                                } else {
-                                                    await expect(
-                                                        withdrawAndVerifyState(
-                                                            totalBasePoolTokenAmount,
-                                                            withdrawalFeePPM,
-                                                            TradingLiquidityState.Update
-                                                        )
-                                                    ).to.be.revertedWith('RateUnstable');
-                                                }
                                             });
                                         }
                                     }
@@ -1850,7 +1857,7 @@ describe('PoolCollection', () => {
         };
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
-            for (const withdrawalFee of [0, 1, 5]) {
+            for (const withdrawalFee of [0, 1]) {
                 context(`${symbol}, withdrawalFee=${withdrawalFee}%`, () => {
                     testWithdrawal(new TokenData(symbol), toPPM(withdrawalFee));
                 });
@@ -1858,8 +1865,8 @@ describe('PoolCollection', () => {
         }
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
-            for (const poolTokenAmount of [1, 123, 12_345]) {
-                for (const poolTokenTotalSupply of [poolTokenAmount * 1_234, poolTokenAmount * 1_234_567]) {
+            for (const poolTokenAmount of [1, 12_345]) {
+                for (const poolTokenTotalSupply of [poolTokenAmount * 1_234_567]) {
                     for (const bntTradingLiquidity of [1_234, 1_234_567]) {
                         for (const baseTokenTradingLiquidity of [1_234, 1_234_567]) {
                             for (const stakedBalance of [1_234, 1_234_567]) {
@@ -1868,8 +1875,8 @@ describe('PoolCollection', () => {
                                     baseTokenTradingLiquidity * 1_234
                                 ]) {
                                     for (const balanceOfExternalProtectionVault of [0, 1_234_567]) {
-                                        for (const tradingFee of [0, 5]) {
-                                            for (const withdrawalFee of [0.1, 5]) {
+                                        for (const tradingFee of [1]) {
+                                            for (const withdrawalFee of [0.1]) {
                                                 context(
                                                     [
                                                         `${symbol}`,
@@ -3125,10 +3132,10 @@ describe('PoolCollection', () => {
                     };
 
                     describe('regular tests', () => {
-                        for (const sourceBalance of [1_000_000, 5_000_000]) {
-                            for (const targetBalance of [1_000_000, 5_000_000]) {
-                                for (const tradingFeePercent of [0, 10]) {
-                                    for (const networkFeePercent of [0, 20]) {
+                        for (const sourceBalance of [1_000_000]) {
+                            for (const targetBalance of [5_000_000]) {
+                                for (const tradingFeePercent of [10]) {
+                                    for (const networkFeePercent of [20]) {
                                         for (const amount of [1_000]) {
                                             testTrading({
                                                 sourceBalance: toWei(sourceBalance),
@@ -3146,18 +3153,18 @@ describe('PoolCollection', () => {
                     });
 
                     describe('@stress tests', () => {
-                        for (const sourceBalance of [1_000_000, 5_000_000, 100_000_000]) {
-                            for (const targetBalance of [1_000_000, 5_000_000, 100_000_000]) {
-                                for (const tradingFeePercent of [0, 1, 10]) {
+                        for (const sourceBalance of [1_000_000, 100_000_000]) {
+                            for (const targetBalance of [1_000_000, 100_000_000]) {
+                                for (const tradingFeePercent of [0, 10]) {
                                     for (const networkFeePercent of [0, 20]) {
-                                        for (const amount of [1_000, 10_000, 100_000]) {
+                                        for (const amount of [1_000, 100_000]) {
                                             testTrading({
                                                 sourceBalance: toWei(sourceBalance),
                                                 targetBalance: toWei(targetBalance),
                                                 tradingFeePPM: toPPM(tradingFeePercent),
                                                 networkFeePPM: toPPM(networkFeePercent),
                                                 amount: toWei(amount),
-                                                blockNumbers: [0, 1, 2, 10, 10, 100, 200, 400, 500]
+                                                blockNumbers: [0, 1, 2, 10, 10, 100, 400]
                                             });
                                         }
                                     }
@@ -3210,7 +3217,7 @@ describe('PoolCollection', () => {
             ).to.be.revertedWith('DoesNotExist');
         });
 
-        for (const feeAmount of [0, 12_345, toWei(12_345)]) {
+        for (const feeAmount of [0, 12_345]) {
             it(`should collect fees of ${feeAmount.toString()}`, async () => {
                 const prevPoolLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
 
@@ -3255,7 +3262,7 @@ describe('PoolCollection', () => {
             );
         });
 
-        for (const tokenAmount of [0, 1000, toWei(20_000), toWei(3_000_000)]) {
+        for (const tokenAmount of [0, 1000, toWei(20_000)]) {
             context(`underlying amount of ${tokenAmount.toString()}`, () => {
                 it('should properly convert between underlying amount and pool token amount', async () => {
                     const poolTokenTotalSupply = await poolToken.totalSupply();
