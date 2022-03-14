@@ -1751,11 +1751,12 @@ describe('BancorNetwork', () => {
 
                         const currProviderBNTBalance = await bnt.balanceOf(provider.address);
                         const currProviderTokenBalance = await getBalance(token, provider.address);
+                        expect(currProviderBNTBalance).to.equal(prevProviderBNTBalance);
                         expect(withdrawAmount[0]).to.equal(
                             currProviderTokenBalance.sub(prevProviderTokenBalance).add(transactionCost.toString())
                         );
-                        expect(withdrawAmount[0]).to.equal(withdrawAmount[1]);
-                        expect(withdrawAmount[2]).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
+                        expect(withdrawAmount[1]).to.equal(withdrawAmount[0]);
+                        expect(withdrawAmount[2]).to.equal(0); // currProviderBNTBalance.sub(prevProviderBNTBalance)
 
                         expect(await poolToken.totalSupply()).to.equal(
                             prevPoolTokenTotalSupply.sub(request.poolTokenAmount)
