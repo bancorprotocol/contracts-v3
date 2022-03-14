@@ -641,13 +641,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         address provider,
         Token pool,
         uint256 poolTokenAmount
-    )
-        external
-        only(address(_network))
-        validAddress(provider)
-        greaterThanZero(poolTokenAmount)
-        returns (uint256)
-    {
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
         // obtain the withdrawal amounts
         WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
@@ -669,7 +663,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         view
         validAddress(provider)
         greaterThanZero(poolTokenAmount)
-        returns (uint256, uint256, uint256)
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
     {
         WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
@@ -889,7 +887,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
 
-        uint256 baseTokensWithdrawalAmount = MathEx.mulDivF(poolTokenAmount, data.liquidity.stakedBalance, poolTokenTotalSupply);
+        uint256 baseTokensWithdrawalAmount = MathEx.mulDivF(
+            poolTokenAmount,
+            data.liquidity.stakedBalance,
+            poolTokenTotalSupply
+        );
 
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
             data.liquidity.bntTradingLiquidity,

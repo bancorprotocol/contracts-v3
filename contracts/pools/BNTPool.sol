@@ -406,10 +406,13 @@ contract BNTPool is IBNTPool, Vault {
     /**
      * @inheritdoc IBNTPool
      */
-    function withdrawAmount(
-        address provider,
-        uint256 poolTokenAmount
-    ) external view validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
+    function withdrawAmount(address provider, uint256 poolTokenAmount)
+        external
+        view
+        validAddress(provider)
+        greaterThanZero(poolTokenAmount)
+        returns (uint256)
+    {
         WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         return amounts.bntAmount;
