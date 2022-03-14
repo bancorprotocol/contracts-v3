@@ -5527,8 +5527,9 @@ hardhat-deploy-tenderly@^0.1.1:
     axios "^0.24.0"
     js-yaml "^4.1.0"
 
-"hardhat-deploy@file:../hardhat-deploy":
+hardhat-deploy@lbeder/hardhat-deploy:
   version "0.10.6"
+  resolved "https://codeload.github.com/lbeder/hardhat-deploy/tar.gz/407e8bc89deba88748d71edc765910b2e36a4d50"
   dependencies:
     "@ethersproject/abi" "^5.4.0"
     "@ethersproject/abstract-signer" "^5.4.1"

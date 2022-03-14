@@ -93,7 +93,7 @@
         "ethers": "^5.5.4",
         "hardhat-contract-sizer": "^2.5.0",
         "hardhat-dependency-compiler": "^1.1.2",
-        "hardhat-deploy": "file:../hardhat-deploy",
+        "hardhat-deploy": "lbeder/hardhat-deploy",
         "hardhat-deploy-tenderly": "^0.1.1",
         "hardhat-watcher": "^2.1.1",
         "humanize-duration": "^3.27.1",
