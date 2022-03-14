@@ -62,6 +62,7 @@ struct WithdrawalAmounts {
     Sint256 bntTradingLiquidityDelta; // BNT amount to add to the trading liquidity and to the master vault
     Sint256 bntProtocolHoldingsDelta; // BNT amount add to the protocol equity
     uint256 baseTokensWithdrawalFee; // base token amount to keep in the pool as a withdrawal fee
+    uint256 baseTokensWithdrawalAmount; // base token amount equivalent to the base pool token's withdrawal amount
     uint256 poolTokenTotalSupply; // base pool token's total supply
     uint256 newBaseTokenTradingLiquidity; // new base token trading liquidity
     uint256 newBNTTradingLiquidity; // new BNT trading liquidity
@@ -668,11 +669,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         view
         validAddress(provider)
         greaterThanZero(poolTokenAmount)
-        returns (uint256, uint256)
+        returns (uint256, uint256, uint256)
     {
         WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
-        return (amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV, amounts.bntToMintForProvider);
+        return (
+            amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
+            amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
+            amounts.bntToMintForProvider
+        );
     }
 
     /**
@@ -883,6 +888,9 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             data.liquidity.baseTokenTradingLiquidity;
 
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
+
+        uint256 baseTokensWithdrawalAmount = MathEx.mulDivF(poolTokenAmount, data.liquidity.stakedBalance, poolTokenTotalSupply);
+
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
             data.liquidity.bntTradingLiquidity,
             data.liquidity.baseTokenTradingLiquidity,
@@ -891,7 +899,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
             pool.balanceOf(address(_externalProtectionVault)),
             data.tradingFeePPM,
             _networkSettings.withdrawalFeePPM(),
-            MathEx.mulDivF(poolTokenAmount, data.liquidity.stakedBalance, poolTokenTotalSupply)
+            baseTokensWithdrawalAmount
         );
 
         return
@@ -903,6 +911,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
                 bntTradingLiquidityDelta: output.p,
                 bntProtocolHoldingsDelta: output.q,
                 baseTokensWithdrawalFee: output.v,
+                baseTokensWithdrawalAmount: baseTokensWithdrawalAmount,
                 poolTokenTotalSupply: poolTokenTotalSupply,
                 newBaseTokenTradingLiquidity: output.r.isNeg
                     ? data.liquidity.baseTokenTradingLiquidity - output.r.value
