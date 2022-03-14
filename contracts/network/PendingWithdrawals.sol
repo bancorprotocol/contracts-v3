@@ -225,74 +225,49 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     ) external only(address(_network)) returns (CompletedWithdrawal memory) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
-        (uint256 poolTokenAmount, uint256 reserveTokenAmount) = _completeWithdrawalReturn(provider, request);
+        if (provider != request.provider) {
+            revert AccessDenied();
+        }
+
+        uint32 currentTime = _time();
+        if (!_canWithdrawAt(currentTime, request.createdAt)) {
+            revert WithdrawalNotAllowed();
+        }
 
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(provider, id);
 
+        // get the pool token value in reserve/pool tokens
+        uint256 currentReserveTokenAmount = _poolTokenUnderlying(request.reserveToken, request.poolTokenAmount);
+
+        // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
+        // of the request
+        assert(currentReserveTokenAmount >= request.reserveTokenAmount);
+
+        // burn the delta between the recorded pool token amount and the amount represented by the reserve token value
+        uint256 currentPoolTokenAmount = request.reserveTokenAmount == currentReserveTokenAmount
+            ? request.poolTokenAmount
+            : MathEx.mulDivF(request.poolTokenAmount, request.reserveTokenAmount, currentReserveTokenAmount);
+
         // since pool token value can only go up, there’s usually burning
-        if (request.poolTokenAmount > poolTokenAmount) {
-            request.poolToken.burn(request.poolTokenAmount - poolTokenAmount);
+        if (request.poolTokenAmount > currentPoolTokenAmount) {
+            request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
         }
 
         // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, poolTokenAmount);
+        request.poolToken.safeTransfer(msg.sender, currentPoolTokenAmount);
 
         emit WithdrawalCompleted({
             contextId: contextId,
             pool: request.poolToken.reserveToken(),
             provider: provider,
             requestId: id,
-            poolTokenAmount: poolTokenAmount,
-            reserveTokenAmount: reserveTokenAmount,
-            timeElapsed: _time() - request.createdAt
+            poolTokenAmount: currentPoolTokenAmount,
+            reserveTokenAmount: currentReserveTokenAmount,
+            timeElapsed: currentTime - request.createdAt
         });
 
-        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: poolTokenAmount });
-    }
-
-    /**
-     * @inheritdoc IPendingWithdrawals
-     */
-    function completeWithdrawalReturn(
-        address provider,
-        uint256 id
-    ) external view returns (CompletedWithdrawal memory) {
-        WithdrawalRequest memory request = _withdrawalRequests[id];
-
-        (uint256 poolTokenAmount, ) = _completeWithdrawalReturn(provider, request);
-
-        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: poolTokenAmount });
-    }
-
-    /**
-     * @dev returns the pool token amount, the reserve token amount and the time elapsed
-     */
-    function _completeWithdrawalReturn(
-        address provider,
-        WithdrawalRequest memory request
-    ) private view returns (uint256, uint256, uint32) {
-        if (provider != request.provider) {
-            revert AccessDenied();
-        }
-
-        if (!_canWithdrawAt(_time(), request.createdAt)) {
-            revert WithdrawalNotAllowed();
-        }
-
-        // get the pool token value in reserve/pool tokens
-        uint256 reserveTokenAmount = _poolTokenUnderlying(request.reserveToken, request.poolTokenAmount);
-
-        // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
-        // of the request
-        assert(reserveTokenAmount >= request.reserveTokenAmount);
-
-        // burn the delta between the recorded pool token amount and the amount represented by the reserve token value
-        uint256 poolTokenAmount = request.reserveTokenAmount == reserveTokenAmount
-            ? request.poolTokenAmount
-            : MathEx.mulDivF(request.poolTokenAmount, request.reserveTokenAmount, reserveTokenAmount);
-
-        return (poolTokenAmount, reserveTokenAmount);
+        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: currentPoolTokenAmount });
     }
 
     /**

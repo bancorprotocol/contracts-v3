@@ -96,18 +96,6 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external returns (CompletedWithdrawal memory);
 
     /**
-     * @dev returns the pool token and its transferred amount
-     *
-     * requirements:
-     *
-     * - the lock duration has ended
-     */
-    function completeWithdrawalReturn(
-        address provider,
-        uint256 id
-    ) external view returns (CompletedWithdrawal memory);
-
-    /**
      * @dev returns whether the given request is ready for withdrawal
      */
     function isReadyForWithdrawal(uint256 id) external view returns (bool);
