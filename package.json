@@ -61,7 +61,7 @@
         "@nomiclabs/hardhat-waffle": "^2.0.3",
         "@openzeppelin/contracts": "4.5.0",
         "@openzeppelin/contracts-upgradeable": "4.5.2",
-        "@tenderly/hardhat-tenderly": "^1.0.13",
+        "@tenderly/hardhat-tenderly": "1.1.0-beta.6",
         "@trivago/prettier-plugin-sort-imports": "^3.2.0",
         "@typechain/ethers-v5": "^8.0.5",
         "@typechain/hardhat": "^3.1.0",
@@ -112,6 +112,9 @@
         "ts-node": "^10.7.0",
         "typechain": "^6.1.0",
         "typescript": "^4.6.2"
+    },
+    "resolutions": {
+        "@tenderly/hardhat-tenderly/@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers"
     },
     "snyk": true
 }

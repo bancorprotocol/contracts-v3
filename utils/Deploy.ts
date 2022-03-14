@@ -43,9 +43,10 @@ const {
 
 interface EnvOptions {
     FORKING?: boolean;
+    TENDERLY_FORK_ID?: string;
 }
 
-const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
+const { FORKING: isForking, TENDERLY_FORK_ID }: EnvOptions = process.env as any as EnvOptions;
 
 const deployed = <F extends Contract>(name: ContractName) => ({
     deployed: async () => ethers.getContract<F>(name)
@@ -355,7 +356,11 @@ const verifyTenderly = async (deployment: Deployment) => {
 
     const contractName = normalizedContractName(contract || name);
 
-    return tenderly.verify({
+    const tenderlyNetwork = tenderly.network();
+
+    tenderlyNetwork.setFork(TENDERLY_FORK_ID);
+
+    return tenderlyNetwork.verify({
         name: contractName,
         address
     });
