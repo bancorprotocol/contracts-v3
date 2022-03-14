@@ -102,6 +102,7 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Tenderly]: {
             chainId: 1,
             url: TENDERLY_FORK_URL,
+            autoImpersonate: true,
             saveDeployments: true,
             live: true
         }

@@ -5529,7 +5529,7 @@ hardhat-deploy-tenderly@^0.1.1:
 
 hardhat-deploy@lbeder/hardhat-deploy:
   version "0.10.6"
-  resolved "https://codeload.github.com/lbeder/hardhat-deploy/tar.gz/407e8bc89deba88748d71edc765910b2e36a4d50"
+  resolved "https://codeload.github.com/lbeder/hardhat-deploy/tar.gz/aab398a75b05652d8dd8bfab54a490d4303c3b19"
   dependencies:
     "@ethersproject/abi" "^5.4.0"
     "@ethersproject/abstract-signer" "^5.4.1"
