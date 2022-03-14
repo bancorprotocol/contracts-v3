@@ -379,7 +379,7 @@ contract BNTPool is IBNTPool, Vault {
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
-    ) external only(address(_network)) greaterThanZero(poolTokenAmount) validAddress(provider) returns (uint256) {
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
         WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
@@ -399,6 +399,18 @@ contract BNTPool is IBNTPool, Vault {
             vbntAmount: poolTokenAmount,
             withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
+
+        return amounts.bntAmount;
+    }
+
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function withdrawAmount(
+        address provider,
+        uint256 poolTokenAmount
+    ) external view validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
+        WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         return amounts.bntAmount;
     }

@@ -152,6 +152,11 @@ interface IBancorNetwork is IUpgradeable {
     function withdraw(uint256 id) external returns (uint256);
 
     /**
+     * @dev returns the withdrawn amount
+     */
+    function withdrawAmount(uint256 id, address provider) external returns (uint256);
+
+    /**
      * @dev performs a trade by providing the input source amount
      *
      * requirements:

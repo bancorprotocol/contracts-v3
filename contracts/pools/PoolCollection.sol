@@ -645,7 +645,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         only(address(_network))
         validAddress(provider)
         greaterThanZero(poolTokenAmount)
-        nonReentrant
         returns (uint256)
     {
         // obtain the withdrawal amounts
@@ -655,6 +654,25 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         _executeWithdrawal(contextId, provider, pool, poolTokenAmount, amounts);
 
         return amounts.baseTokensToTransferFromMasterVault;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function withdrawAmount(
+        address provider,
+        Token pool,
+        uint256 poolTokenAmount
+    )
+        external
+        view
+        validAddress(provider)
+        greaterThanZero(poolTokenAmount)
+        returns (uint256)
+    {
+        WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
+
+        return amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV;
     }
 
     /**

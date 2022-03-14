@@ -117,6 +117,14 @@ interface IBNTPool is IVault {
     ) external returns (uint256);
 
     /**
+     * @dev returns the withdrawn BNT amount
+     */
+    function withdrawAmount(
+        address provider,
+        uint256 poolTokenAmount
+    ) external view returns (uint256);
+
+    /**
      * @dev requests BNT funding
      *
      * requirements:

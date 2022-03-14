@@ -605,6 +605,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
+    function withdrawAmount(uint256 id, address provider) external view returns (uint256) {
+        CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawalReturn(provider, id);
+
+        if (completedRequest.poolToken == _bntPoolToken) {
+            return _bntPool.withdrawAmount(provider, completedRequest.poolTokenAmount);
+        }
+
+        Token pool = completedRequest.poolToken.reserveToken();
+        IPoolCollection poolCollection = _poolCollection(pool);
+        return poolCollection.withdrawAmount(provider, pool, completedRequest.poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function tradeBySourceAmount(
         Token sourceToken,
         Token targetToken,
