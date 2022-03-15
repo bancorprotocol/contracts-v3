@@ -31,6 +31,8 @@
         "test:ci": "CI=1 yarn test",
         "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 'test/deployment/**/*.ts'",
         "test:deploy:mainnet": "HARDHAT_NETWORK=hardhat FORKING=1 yarn test:deploy",
+        "deploy": "hardhat deploy",
+        "deploy:fork": "HARDHAT_NETWORK=tenderly yarn deploy",
         "dev": "hardhat node --no-deploy",
         "profile": "PROFILE=1 yarn test ${DEBUG:+--network localhost}",
         "profile:debug": "DEBUG=1 yarn profile",
@@ -43,6 +45,7 @@
         "format": "prettier --check --write contracts/**/*.sol test/**/*.ts --config .prettierrc",
         "snyk-protect": "snyk protect",
         "prepare": "yarn clean && yarn build && yarn snyk-protect && tsc && copyfiles -u 1 \"typechain/**/*.d.ts\" dist/typechain",
+        "postinstall": "scripts/fix-github-hardhat-deploy.sh",
         "clean": "rm -rf artifacts cache coverage typechain-types"
     },
     "dependencies": {
@@ -58,7 +61,7 @@
         "@nomiclabs/hardhat-waffle": "^2.0.3",
         "@openzeppelin/contracts": "4.5.0",
         "@openzeppelin/contracts-upgradeable": "4.5.2",
-        "@tenderly/hardhat-tenderly": "^1.0.13",
+        "@tenderly/hardhat-tenderly": "1.1.0-beta.6",
         "@trivago/prettier-plugin-sort-imports": "^3.2.0",
         "@typechain/ethers-v5": "^8.0.5",
         "@typechain/hardhat": "^3.1.0",
@@ -90,7 +93,8 @@
         "ethers": "^5.5.4",
         "hardhat-contract-sizer": "^2.5.0",
         "hardhat-dependency-compiler": "^1.1.2",
-        "hardhat-deploy": "^0.10.5",
+        "hardhat-deploy": "lbeder/hardhat-deploy",
+        "hardhat-deploy-tenderly": "^0.1.1",
         "hardhat-watcher": "^2.1.1",
         "humanize-duration": "^3.27.1",
         "lodash": "^4.17.21",
@@ -108,6 +112,9 @@
         "ts-node": "^10.7.0",
         "typechain": "^6.1.0",
         "typescript": "^4.6.2"
+    },
+    "resolutions": {
+        "@tenderly/hardhat-tenderly/@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers"
     },
     "snyk": true
 }
