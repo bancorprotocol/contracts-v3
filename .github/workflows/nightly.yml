@@ -11,7 +11,7 @@ on:
       - master
       - dev
   schedule:
-    - cron: '0 0 12 * * ? *' # at 12:00:00pm every day
+    - cron: '0 0 * * *' # at 12:00:00pm every day
 
 jobs:
   check_latest_commit_date:
