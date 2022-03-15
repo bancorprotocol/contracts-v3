@@ -41,7 +41,6 @@ const {
 const mochaOptions = (): MochaOptions => {
     let timeout = 600000;
     let grep;
-    let invert = false;
     let reporter;
 
     if (isProfiling) {
@@ -52,11 +51,11 @@ const mochaOptions = (): MochaOptions => {
         reporter = 'mocha-silent-reporter';
     } else if (isCI) {
         // if we're running in CI, run all the tests
+        // TODO: nightly?
         grep = '';
     } else {
         // if we're running in dev, filter out stress and profile tests
-        grep = '@stress|@profile';
-        invert = true;
+        grep = '^((?!@stress|@profile).)*$';
     }
 
     return {
@@ -64,7 +63,6 @@ const mochaOptions = (): MochaOptions => {
         color: true,
         bail: true,
         grep,
-        invert,
         reporter
     };
 };
