@@ -167,7 +167,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when a new pool is added
      */
-    event PoolAdded(uint16 indexed poolType, Token indexed pool, IPoolCollection indexed poolCollection);
+    event PoolAdded(Token indexed pool, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when funds are migrated
@@ -491,7 +491,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // add the pool collection to the reverse pool collection lookup
         _collectionByPool[token] = poolCollection;
 
-        emit PoolAdded({ poolType: poolType, pool: token, poolCollection: poolCollection });
+        emit PoolAdded({ pool: token, poolCollection: poolCollection });
     }
 
     /**

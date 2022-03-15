@@ -54,14 +54,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @dev triggered when an existing pool is upgraded
      */
-    event PoolUpgraded(
-        uint16 indexed poolType,
-        Token indexed pool,
-        IPoolCollection prevPoolCollection,
-        IPoolCollection newPoolCollection,
-        uint16 prevVersion,
-        uint16 newVersion
-    );
+    event PoolUpgraded(uint16 indexed poolType, Token indexed pool, uint16 prevVersion, uint16 newVersion);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -131,8 +124,6 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             emit PoolUpgraded({
                 poolType: poolType,
                 pool: pool,
-                prevPoolCollection: prevPoolCollection,
-                newPoolCollection: newPoolCollection,
                 prevVersion: prevPoolCollection.version(),
                 newVersion: newPoolCollection.version()
             });
