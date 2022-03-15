@@ -568,6 +568,26 @@ describe('BancorNetworkInfo', () => {
 
             expect(await networkInfo.isReadyForWithdrawal(id)).to.be.true;
         });
+
+        it('should not return withdrawal amounts when the pool token is invalid', async () => {
+            await expect(networkInfo.withdrawalAmounts(ZERO_ADDRESS, poolTokenAmount)).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should not return withdrawal amounts when the pool token amount is zero', async () => {
+            await expect(networkInfo.withdrawalAmounts(poolToken.address, 0)).to.be.revertedWith('ZeroValue');
+        });
+
+        it('should return withdrawal amounts', async () => {
+            const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
+                poolToken.address,
+                poolTokenAmount
+            );
+            expect(totalAmount).to.equal(poolTokenAmount);
+            expect(baseTokenAmount).to.equal(poolTokenAmount);
+            expect(bntAmount).to.equal(0);
+        });
     });
 
     describe('pool token calculations', () => {
