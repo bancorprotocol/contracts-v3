@@ -11,7 +11,7 @@ import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVaul
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
-import { IPoolCollection, WithdrawalReturn } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, WithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
@@ -315,11 +315,11 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         view
         validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
-        returns (WithdrawalReturn memory)
+        returns (WithdrawalAmounts memory)
     {
         if (poolToken == _bntPoolToken) {
             uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
-            return WithdrawalReturn({
+            return WithdrawalAmounts({
                 totalAmount: amount,
                 baseTokenAmount: 0,
                 bntAmount: amount

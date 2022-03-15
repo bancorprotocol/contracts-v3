@@ -48,7 +48,7 @@ contract BNTPool is IBNTPool, Vault {
 
     error FundingLimitExceeded();
 
-    struct WithdrawalAmounts {
+    struct WithdrawalInternalAmounts {
         uint256 bntAmount;
         uint256 withdrawalFeeAmount;
     }
@@ -380,7 +380,7 @@ contract BNTPool is IBNTPool, Vault {
         address provider,
         uint256 poolTokenAmount
     ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
-        WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
+        WithdrawalInternalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
@@ -412,7 +412,7 @@ contract BNTPool is IBNTPool, Vault {
         greaterThanZero(poolTokenAmount)
         returns (uint256)
     {
-        WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
+        WithdrawalInternalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         return amounts.bntAmount;
     }
@@ -577,7 +577,7 @@ contract BNTPool is IBNTPool, Vault {
     /**
      * @dev returns withdrawal amounts
      */
-    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
+    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalInternalAmounts memory) {
         // calculate BNT amount to transfer
         uint256 bntAmount = _poolTokenToUnderlying(poolTokenAmount);
 
@@ -586,6 +586,6 @@ contract BNTPool is IBNTPool, Vault {
 
         bntAmount -= withdrawalFeeAmount;
 
-        return WithdrawalAmounts({ bntAmount: bntAmount, withdrawalFeeAmount: withdrawalFeeAmount });
+        return WithdrawalInternalAmounts({ bntAmount: bntAmount, withdrawalFeeAmount: withdrawalFeeAmount });
     }
 }

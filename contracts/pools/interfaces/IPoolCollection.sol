@@ -36,7 +36,7 @@ struct Pool {
     PoolLiquidity liquidity; // the overall liquidity in the pool
 }
 
-struct WithdrawalReturn {
+struct WithdrawalAmounts {
     uint256 totalAmount;
     uint256 baseTokenAmount;
     uint256 bntAmount;
@@ -165,7 +165,7 @@ interface IPoolCollection is IVersioned {
     function withdrawalAmounts(
         Token pool,
         uint256 poolTokenAmount
-    ) external view returns (WithdrawalReturn memory);
+    ) external view returns (WithdrawalAmounts memory);
 
     /**
      * @dev performs a trade by providing the source amount and returns the target amount and the associated fee

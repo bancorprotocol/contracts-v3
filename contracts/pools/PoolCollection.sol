@@ -47,7 +47,7 @@ import {
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
     TradeAmountAndFee,
-    WithdrawalReturn
+    WithdrawalAmounts
 } from "./interfaces/IPoolCollection.sol";
 
 import { IBNTPool } from "./interfaces/IBNTPool.sol";
@@ -55,7 +55,7 @@ import { IBNTPool } from "./interfaces/IBNTPool.sol";
 import { PoolCollectionWithdrawal } from "./PoolCollectionWithdrawal.sol";
 
 // base token withdrawal output amounts
-struct WithdrawalAmounts {
+struct WithdrawalInternalAmounts {
     uint256 baseTokensToTransferFromMasterVault; // base token amount to transfer from the master vault to the provider
     uint256 bntToMintForProvider; // BNT amount to mint directly for the provider
     uint256 baseTokensToTransferFromEPV; // base token amount to transfer from the external protection vault to the provider
@@ -644,7 +644,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         uint256 poolTokenAmount
     ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
         // obtain the withdrawal amounts
-        WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
+        WithdrawalInternalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
         // execute the actual withdrawal
         _executeWithdrawal(contextId, provider, pool, poolTokenAmount, amounts);
@@ -660,11 +660,11 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         view
         validAddress(address(pool))
         greaterThanZero(poolTokenAmount)
-        returns (WithdrawalReturn memory)
+        returns (WithdrawalAmounts memory)
     {
-        WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
+        WithdrawalInternalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
-        return WithdrawalReturn({
+        return WithdrawalAmounts({
             totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
             baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
             bntAmount: amounts.bntToMintForProvider
@@ -866,7 +866,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     function _poolWithdrawalAmounts(Token pool, uint256 poolTokenAmount)
         internal
         view
-        returns (WithdrawalAmounts memory)
+        returns (WithdrawalInternalAmounts memory)
     {
         Pool memory data = _poolData[pool];
         if (!_validPool(data)) {
@@ -898,7 +898,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         );
 
         return
-            WithdrawalAmounts({
+            WithdrawalInternalAmounts({
                 baseTokensToTransferFromMasterVault: output.s,
                 bntToMintForProvider: output.t,
                 baseTokensToTransferFromEPV: output.u,
@@ -933,7 +933,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         address provider,
         Token pool,
         uint256 poolTokenAmount,
-        WithdrawalAmounts memory amounts
+        WithdrawalInternalAmounts memory amounts
     ) private {
         Pool storage data = _poolStorage(pool);
         PoolLiquidity storage liquidity = data.liquidity;
