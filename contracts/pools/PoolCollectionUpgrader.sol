@@ -58,9 +58,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
         uint16 indexed poolType,
         Token indexed pool,
         IPoolCollection prevPoolCollection,
-        IPoolCollection newPoolCollection,
-        uint16 prevVersion,
-        uint16 newVersion
+        IPoolCollection newPoolCollection
     );
 
     /**
@@ -132,9 +130,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
                 poolType: poolType,
                 pool: pool,
                 prevPoolCollection: prevPoolCollection,
-                newPoolCollection: newPoolCollection,
-                prevVersion: prevPoolCollection.version(),
-                newVersion: newPoolCollection.version()
+                newPoolCollection: newPoolCollection
             });
 
             return newPoolCollection;

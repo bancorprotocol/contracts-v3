@@ -190,9 +190,7 @@ describe('PoolCollectionUpgrader', () => {
                         await targetPoolCollection.poolType(),
                         reserveToken.address,
                         poolCollection.address,
-                        targetPoolCollection.address,
-                        await poolCollection.version(),
-                        await targetPoolCollection.version()
+                        targetPoolCollection.address
                     );
 
                 newPoolData = await targetPoolCollection.poolData(reserveToken.address);
