@@ -46,7 +46,8 @@ import {
     TRADING_STATUS_UPDATE_DEFAULT,
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
-    TradeAmountAndFee
+    TradeAmountAndFee,
+    WithdrawalReturn
 } from "./interfaces/IPoolCollection.sol";
 
 import { IBNTPool } from "./interfaces/IBNTPool.sol";
@@ -659,19 +660,15 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         view
         validAddress(address(pool))
         greaterThanZero(poolTokenAmount)
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
+        returns (WithdrawalReturn memory)
     {
         WithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
-        return (
-            amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
-            amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
-            amounts.bntToMintForProvider
-        );
+        return WithdrawalReturn({
+            totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
+            baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
+            bntAmount: amounts.bntToMintForProvider
+        });
     }
 
     /**

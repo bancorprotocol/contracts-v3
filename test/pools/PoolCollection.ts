@@ -1483,17 +1483,17 @@ describe('PoolCollection', () => {
                 maxAbsoluteError: new Decimal(1)
             });
 
-            const withdrawalAmounts = await poolCollection.withdrawalAmounts(token.address, poolTokenAmount);
+            const { totalAmount, baseTokenAmount, bntAmount } = await poolCollection.withdrawalAmounts(token.address, poolTokenAmount);
 
-            expect(withdrawalAmounts[0]).to.equal(
+            expect(totalAmount).to.equal(
                 poolWithdrawalAmounts.baseTokensWithdrawalAmount.sub(poolWithdrawalAmounts.baseTokensWithdrawalFee)
             );
-            expect(withdrawalAmounts[1]).to.equal(
+            expect(baseTokenAmount).to.equal(
                 poolWithdrawalAmounts.baseTokensToTransferFromMasterVault.add(
                     poolWithdrawalAmounts.baseTokensToTransferFromEPV
                 )
             );
-            expect(withdrawalAmounts[2]).to.equal(poolWithdrawalAmounts.bntToMintForProvider);
+            expect(bntAmount).to.equal(poolWithdrawalAmounts.bntToMintForProvider);
 
             const res = await network.withdrawFromPoolCollectionT(
                 poolCollection.address,
@@ -1509,7 +1509,7 @@ describe('PoolCollection', () => {
                     CONTEXT_ID,
                     token.address,
                     provider.address,
-                    withdrawalAmounts[1],
+                    baseTokenAmount,
                     poolTokenAmount,
                     poolWithdrawalAmounts.baseTokensToTransferFromEPV,
                     poolWithdrawalAmounts.bntToMintForProvider,
@@ -1533,7 +1533,7 @@ describe('PoolCollection', () => {
             expect(await poolToken.balanceOf(network.address)).to.equal(
                 prevNetworkPoolTokenBalance.sub(poolTokenAmount)
             );
-            expect(await getBalance(token, provider)).to.equal(prevProviderBalance.add(withdrawalAmounts[1]));
+            expect(await getBalance(token, provider)).to.equal(prevProviderBalance.add(baseTokenAmount));
 
             expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
 
