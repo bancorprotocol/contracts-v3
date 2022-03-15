@@ -2518,10 +2518,10 @@ describe('StandardStakingRewards', () => {
 
                             context(`and ${poolSymbol2} pool with ${rewardsSymbol} rewards`, () => {
                                 for (const initialBalance of [toWei(1_000_000)]) {
-                                    for (const providerStake of [1000, toWei(100_000)]) {
-                                        for (const providerStake2 of [2000, toWei(200_000)]) {
-                                            for (const totalRewards of [toWei(10_000), toWei(1_000_000)]) {
-                                                for (const programDuration of [duration.weeks(12), duration.years(1)]) {
+                                    for (const providerStake of [toWei(100_000)]) {
+                                        for (const providerStake2 of [toWei(200_000)]) {
+                                            for (const totalRewards of [toWei(1_000_000)]) {
+                                                for (const programDuration of [duration.weeks(12)]) {
                                                     testClaiming(
                                                         {
                                                             poolSymbol,
