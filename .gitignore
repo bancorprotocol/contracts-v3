@@ -16,6 +16,7 @@ contracts/hardhat-dependency-compiler
 deployments/*
 !deployments/data.ts
 !deployments/mainnet
+!deployments/tenderly
 
 .coverage_artifacts
 .coverage_contracts
