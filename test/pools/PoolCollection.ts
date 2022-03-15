@@ -1483,16 +1483,15 @@ describe('PoolCollection', () => {
                 maxAbsoluteError: new Decimal(1)
             });
 
-            const withdrawalAmounts = await poolCollection.withdrawalAmounts(
-                token.address,
-                poolTokenAmount
-            );
+            const withdrawalAmounts = await poolCollection.withdrawalAmounts(token.address, poolTokenAmount);
 
             expect(withdrawalAmounts[0]).to.equal(
                 poolWithdrawalAmounts.baseTokensWithdrawalAmount.sub(poolWithdrawalAmounts.baseTokensWithdrawalFee)
             );
             expect(withdrawalAmounts[1]).to.equal(
-                poolWithdrawalAmounts.baseTokensToTransferFromMasterVault.add(poolWithdrawalAmounts.baseTokensToTransferFromEPV)
+                poolWithdrawalAmounts.baseTokensToTransferFromMasterVault.add(
+                    poolWithdrawalAmounts.baseTokensToTransferFromEPV
+                )
             );
             expect(withdrawalAmounts[2]).to.equal(poolWithdrawalAmounts.bntToMintForProvider);
 

@@ -605,10 +605,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawalAmounts(
-        IPoolToken poolToken,
-        uint256 poolTokenAmount
-    )
+    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount)
         external
         view
         validAddress(address(poolToken))

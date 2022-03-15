@@ -654,10 +654,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function withdrawalAmounts(
-        Token pool,
-        uint256 poolTokenAmount
-    )
+    function withdrawalAmounts(Token pool, uint256 poolTokenAmount)
         external
         view
         validAddress(address(pool))
