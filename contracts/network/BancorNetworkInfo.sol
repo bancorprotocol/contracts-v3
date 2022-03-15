@@ -308,6 +308,30 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount)
+        external
+        view
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        if (poolToken == _bntPoolToken) {
+            uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
+            return (amount, amount, 0);
+        }
+
+        Token pool = poolToken.reserveToken();
+        IPoolCollection poolCollection = _poolCollection(pool);
+        return poolCollection.withdrawalAmounts(pool, poolTokenAmount);
+    }
+
+    /**
      * @dev returns either the source amount or the target amount by providing the source and the target tokens
      * and whether we're interested in the target or the source amount
      */

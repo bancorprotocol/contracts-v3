@@ -123,4 +123,10 @@ interface IBancorNetworkInfo is IUpgradeable {
      * @dev converts the specified underlying base token amount to pool token amount
      */
     function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256);
+
+    /**
+     * @dev returns the amounts that would be returned if the position is currently withdrawn,
+     * along with the breakdown of the base token and the BNT compensation
+     */
+    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount) external view returns (uint256, uint256, uint256);
 }

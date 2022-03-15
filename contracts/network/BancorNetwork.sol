@@ -605,30 +605,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount)
-        external
-        view
-        validAddress(address(poolToken))
-        greaterThanZero(poolTokenAmount)
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        if (poolToken == _bntPoolToken) {
-            uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
-            return (amount, amount, 0);
-        }
-
-        Token pool = poolToken.reserveToken();
-        IPoolCollection poolCollection = _poolCollection(pool);
-        return poolCollection.withdrawalAmounts(pool, poolTokenAmount);
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
     function tradeBySourceAmount(
         Token sourceToken,
         Token targetToken,

@@ -1581,6 +1581,7 @@ describe('BancorNetwork', () => {
 
     describe('withdraw', () => {
         let network: TestBancorNetwork;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
@@ -1599,6 +1600,7 @@ describe('BancorNetwork', () => {
         beforeEach(async () => {
             ({
                 network,
+                networkInfo,
                 networkSettings,
                 bnt,
                 vbnt,
@@ -1715,7 +1717,7 @@ describe('BancorNetwork', () => {
                     let transactionCost = BigNumber.from(0);
 
                     if (tokenData.isBNT()) {
-                        const withdrawalAmounts = await network.withdrawalAmounts(
+                        const withdrawalAmounts = await networkInfo.withdrawalAmounts(
                             bntPoolToken.address,
                             request.poolTokenAmount
                         );
@@ -1737,7 +1739,7 @@ describe('BancorNetwork', () => {
                             prevProviderVBNTBalance.sub(request.poolTokenAmount)
                         );
                     } else {
-                        const withdrawalAmounts = await network.withdrawalAmounts(
+                        const withdrawalAmounts = await networkInfo.withdrawalAmounts(
                             poolToken.address,
                             request.poolTokenAmount
                         );
