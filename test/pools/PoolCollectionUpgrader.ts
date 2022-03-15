@@ -189,6 +189,8 @@ describe('PoolCollectionUpgrader', () => {
                     .withArgs(
                         await targetPoolCollection.poolType(),
                         reserveToken.address,
+                        poolCollection.address,
+                        targetPoolCollection.address,
                         await poolCollection.version(),
                         await targetPoolCollection.version()
                     );
