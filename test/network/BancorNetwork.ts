@@ -1716,8 +1716,8 @@ describe('BancorNetwork', () => {
 
                     let transactionCost = BigNumber.from(0);
 
-                    if (tokenData.isBNT()) {                    
-                        const { totalAmount,baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
+                    if (tokenData.isBNT()) {
+                        const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
                             bntPoolToken.address,
                             request.poolTokenAmount
                         );
@@ -1739,7 +1739,7 @@ describe('BancorNetwork', () => {
                             prevProviderVBNTBalance.sub(request.poolTokenAmount)
                         );
                     } else {
-                        const { totalAmount,baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
+                        const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
                             poolToken.address,
                             request.poolTokenAmount
                         );

@@ -319,11 +319,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     {
         if (poolToken == _bntPoolToken) {
             uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
-            return WithdrawalAmounts({
-                totalAmount: amount,
-                baseTokenAmount: 0,
-                bntAmount: amount
-            });
+            return WithdrawalAmounts({ totalAmount: amount, baseTokenAmount: 0, bntAmount: amount });
         }
 
         Token pool = poolToken.reserveToken();

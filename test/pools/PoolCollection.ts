@@ -1483,7 +1483,10 @@ describe('PoolCollection', () => {
                 maxAbsoluteError: new Decimal(1)
             });
 
-            const { totalAmount, baseTokenAmount, bntAmount } = await poolCollection.withdrawalAmounts(token.address, poolTokenAmount);
+            const { totalAmount, baseTokenAmount, bntAmount } = await poolCollection.withdrawalAmounts(
+                token.address,
+                poolTokenAmount
+            );
 
             expect(totalAmount).to.equal(
                 poolWithdrawalAmounts.baseTokensWithdrawalAmount.sub(poolWithdrawalAmounts.baseTokensWithdrawalFee)

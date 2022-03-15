@@ -664,11 +664,12 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     {
         WithdrawalInternalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
 
-        return WithdrawalAmounts({
-            totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
-            baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
-            bntAmount: amounts.bntToMintForProvider
-        });
+        return
+            WithdrawalAmounts({
+                totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
+                baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
+                bntAmount: amounts.bntToMintForProvider
+            });
     }
 
     /**
