@@ -93,6 +93,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
     error AlreadyEnabled();
     error DepositLimitExceeded();
+    error DepositingDisabled();
     error InsufficientLiquidity();
     error InsufficientSourceAmount();
     error InsufficientTargetAmount();
@@ -583,6 +584,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         returns (uint256)
     {
         Pool storage data = _poolStorage(pool);
+
+        if (!data.depositingEnabled) {
+            revert DepositingDisabled();
+        }
 
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = data.liquidity.stakedBalance;

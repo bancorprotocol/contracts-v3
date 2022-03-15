@@ -1206,6 +1206,24 @@ describe('PoolCollection', () => {
                     }
                 };
 
+                context('when depositing is disabled', () => {
+                    beforeEach(async () => {
+                        await poolCollection.enableDepositing(token.address, false);
+                    });
+
+                    it('should revert', async () => {
+                        await expect(
+                            network.depositToPoolCollectionForT(
+                                poolCollection.address,
+                                CONTEXT_ID,
+                                provider.address,
+                                token.address,
+                                1
+                            )
+                        ).to.be.revertedWith('DepositingDisabled');
+                    });
+                });
+
                 context('when trading is disabled', () => {
                     context('when at the deposit limit', () => {
                         beforeEach(async () => {
