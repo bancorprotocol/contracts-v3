@@ -420,7 +420,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
         Pool memory data = _poolData[pool];
 
-        return MathEx.mulDivF(poolTokenAmount, data.liquidity.stakedBalance, data.poolToken.totalSupply());
+        return _poolTokenToUnderlying(data.poolToken.totalSupply(), poolTokenAmount, data.liquidity.stakedBalance);
     }
 
     /**
@@ -883,10 +883,10 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
 
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
 
-        uint256 baseTokensWithdrawalAmount = MathEx.mulDivF(
+        uint256 baseTokensWithdrawalAmount = _poolTokenToUnderlying(
+            poolTokenTotalSupply,
             poolTokenAmount,
-            data.liquidity.stakedBalance,
-            poolTokenTotalSupply
+            data.liquidity.stakedBalance
         );
 
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
@@ -1056,6 +1056,26 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
      */
     function _validPool(Pool memory pool) private pure returns (bool) {
         return address(pool.poolToken) != address(0);
+    }
+
+    /**
+     * @dev calculates base tokens amount
+     */
+    function _poolTokenToUnderlying(
+        uint256 poolTokenSupply,
+        uint256 poolTokenAmount,
+        uint256 stakedBalance
+    ) private pure returns (uint256) {
+        if (poolTokenSupply == 0) {
+            // if this is the initial liquidity provision - use a one-to-one pool token to base token rate
+            if (stakedBalance > 0) {
+                revert InvalidStakedBalance();
+            }
+
+            return poolTokenAmount;
+        }
+
+        return MathEx.mulDivF(poolTokenAmount, stakedBalance, poolTokenSupply);
     }
 
     /**
