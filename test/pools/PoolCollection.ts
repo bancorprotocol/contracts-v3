@@ -1557,9 +1557,9 @@ describe('PoolCollection', () => {
 
                 case TradingLiquidityState.Update:
                     expect(liquidity.baseTokenTradingLiquidity).to.equal(
-                        withdrawalAmounts.newBaseTokenTradingLiquidity
+                        poolWithdrawalAmounts.newBaseTokenTradingLiquidity
                     );
-                    expect(liquidity.bntTradingLiquidity).to.equal(withdrawalAmounts.newBNTTradingLiquidity);
+                    expect(liquidity.bntTradingLiquidity).to.equal(poolWithdrawalAmounts.newBNTTradingLiquidity);
 
                     break;
             }
