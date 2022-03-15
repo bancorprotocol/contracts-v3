@@ -10,7 +10,8 @@ const {
 export enum DeploymentNetwork {
     Hardhat = 'hardhat',
     Localhost = 'localhost',
-    Mainnet = 'mainnet'
+    Mainnet = 'mainnet',
+    Tenderly = 'tenderly'
 }
 
 export const MAX_UINT256 = MaxUint256;

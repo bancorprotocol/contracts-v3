@@ -1,5 +1,13 @@
 import { PoolType } from '../utils/Constants';
-import { ContractName, DeployedContracts, DeploymentTag, execute, isMainnet, toDeployTag } from '../utils/Deploy';
+import {
+    ContractName,
+    DeployedContracts,
+    DeploymentTag,
+    execute,
+    isMainnet,
+    isMainnetFork,
+    toDeployTag
+} from '../utils/Deploy';
 import { toPPM, toWei } from '../utils/Types';
 import SetNetworkSettings from './1642682516-set-network-settings';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -88,7 +96,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 const tag = toDeployTag(__filename);
 
 func.id = tag;
-func.skip = async () => isMainnet();
+func.skip = async () => isMainnet() && !isMainnetFork();
 func.dependencies = [
     SetNetworkSettings.id!,
     ContractName.TestToken1,

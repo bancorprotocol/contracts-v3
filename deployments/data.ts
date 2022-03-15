@@ -15,7 +15,8 @@ const TestNamedAccounts = {
 let counter = 0;
 const mainnet = (address: string, fallback?: string) => ({
     [DeploymentNetwork.Hardhat]: isForking ? address : fallback || counter++,
-    [DeploymentNetwork.Mainnet]: address
+    [DeploymentNetwork.Mainnet]: address,
+    [DeploymentNetwork.Tenderly]: address
 });
 
 const LegacyNamedAccounts = {
@@ -46,7 +47,7 @@ export const NamedAccounts = {
 export const ExternalContracts = {
     contracts: [
         {
-            artifacts: '../v2/artifacts'
+            artifacts: 'node_modules/@bancor/contracts-solidity/artifacts'
         },
         {
             artifacts: 'node_modules/@bancor/token-governance/artifacts'
