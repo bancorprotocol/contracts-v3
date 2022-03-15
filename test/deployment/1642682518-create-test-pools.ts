@@ -1,5 +1,5 @@
 import { NetworkSettings, PoolCollection } from '../../components/Contracts';
-import { ContractName, DeployedContracts, isMainnet, toDeployTag } from '../../utils/Deploy';
+import { ContractName, DeployedContracts, isMainnet, isMainnetFork, toDeployTag } from '../../utils/Deploy';
 import { toPPM, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
@@ -25,7 +25,7 @@ describeDeployment('1642682518-create-test-pools', toDeployTag(__filename), asyn
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
     });
 
-    if (!isMainnet()) {
+    if (!isMainnet() || isMainnetFork()) {
         it('should create all test pools', async () => {
             for (const contractName of [ContractName.TestToken1, ContractName.TestToken2, ContractName.TestToken3]) {
                 const testToken = await DeployedContracts[contractName].deployed();
