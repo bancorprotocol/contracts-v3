@@ -17,7 +17,7 @@ import { MochaOptions } from 'mocha';
 import 'solidity-coverage';
 
 interface EnvOptions {
-    CI?: boolean;
+    NIGHTLY?: boolean;
     PROFILE?: boolean;
     ETHEREUM_PROVIDER_URL?: string;
     TENDERLY_FORK_ID?: string;
@@ -28,7 +28,7 @@ interface EnvOptions {
 }
 
 const {
-    CI: isCI,
+    NIGHTLY: isNightly,
     PROFILE: isProfiling,
     ETHEREUM_PROVIDER_URL = '',
     TENDERLY_FORK_ID = '',
@@ -49,9 +49,8 @@ const mochaOptions = (): MochaOptions => {
         timeout = 0;
         grep = '@profile';
         reporter = 'mocha-silent-reporter';
-    } else if (isCI) {
-        // if we're running in CI, run all the tests
-        // TODO: nightly?
+    } else if (isNightly) {
+        // if we're running the nightly CI test, run all the tests
         grep = '';
     } else {
         // if we're running in dev, filter out stress and profile tests

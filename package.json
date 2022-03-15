@@ -28,6 +28,7 @@
         "test:coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat coverage",
         "test:coverage:deploy": "yarn test:coverage --testfiles 'test/deployment/**/*.ts'",
         "test:ci": "CI=1 yarn test",
+        "test:nightly": "NIGHTLY=1 CI=1 NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
         "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 'test/deployment/**/*.ts'",
         "test:deploy:mainnet": "HARDHAT_NETWORK=hardhat FORKING=1 yarn test:deploy",
         "deploy": "hardhat deploy",
