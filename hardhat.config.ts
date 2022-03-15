@@ -19,7 +19,10 @@ import 'solidity-coverage';
 interface EnvOptions {
     CI?: boolean;
     PROFILE?: boolean;
-    ETHEREUM_PROVIDER_URL: string;
+    ETHEREUM_PROVIDER_URL?: string;
+    TENDERLY_FORK_ID?: string;
+    TENDERLY_PROJECT?: string;
+    TENDERLY_USERNAME?: string;
     ETHERSCAN_API_KEY?: string;
     FORKING?: boolean;
 }
@@ -28,6 +31,9 @@ const {
     CI: isCI,
     PROFILE: isProfiling,
     ETHEREUM_PROVIDER_URL = '',
+    TENDERLY_FORK_ID = '',
+    TENDERLY_PROJECT = '',
+    TENDERLY_USERNAME = '',
     ETHERSCAN_API_KEY,
     FORKING: isForking
 }: EnvOptions = process.env as any as EnvOptions;
@@ -96,7 +102,20 @@ const config: HardhatUserConfig = {
             url: ETHEREUM_PROVIDER_URL,
             saveDeployments: true,
             live: true
+        },
+        [DeploymentNetwork.Tenderly]: {
+            chainId: 1,
+            url: `https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}`,
+            autoImpersonate: true,
+            saveDeployments: true,
+            live: true
         }
+    },
+
+    tenderly: {
+        forkNetwork: '1',
+        project: TENDERLY_PROJECT,
+        username: TENDERLY_USERNAME
     },
 
     solidity: {

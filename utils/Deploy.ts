@@ -28,7 +28,7 @@ import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { Contract } from 'ethers';
 import fs from 'fs';
-import { config, deployments, ethers, getNamedAccounts } from 'hardhat';
+import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
 import { Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
 import { capitalize } from 'lodash';
 import path from 'path';
@@ -43,9 +43,10 @@ const {
 
 interface EnvOptions {
     FORKING?: boolean;
+    TENDERLY_FORK_ID?: string;
 }
 
-const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
+const { FORKING: isForking, TENDERLY_FORK_ID }: EnvOptions = process.env as any as EnvOptions;
 
 const deployed = <F extends Contract>(name: ContractName) => ({
     deployed: async () => ethers.getContract<F>(name)
@@ -148,7 +149,8 @@ export const DeployedContracts = {
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;
-export const isMainnetFork = () => isHardhatMainnetFork();
+export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
+export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
 export const isLive = () => isMainnet() && !isMainnetFork();
 
@@ -246,7 +248,9 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    await saveTypes({ name, contract: contractName });
+    const data = { name, contract: contractName };
+    await saveTypes(data);
+    await verifyTenderly({ address: res.address, ...data });
 
     return res.address;
 };
@@ -329,9 +333,37 @@ interface Deployment {
 export const save = async (deployment: Deployment) => {
     const { name, contract, address } = deployment;
 
-    const { abi } = await getExtendedArtifact(normalizedContractName(contract || name));
+    const contractName = normalizedContractName(contract || name);
+    const { abi } = await getExtendedArtifact(contractName);
 
-    return saveContract(name, { abi, address });
+    // save the typechain for future use
+    await saveTypes({ name, contract: contractName });
+
+    // save the deployment json data in the deployments folder
+    await saveContract(name, { abi, address });
+
+    // publish the contract to Tenderly
+    return verifyTenderly(deployment);
+};
+
+const verifyTenderly = async (deployment: Deployment) => {
+    // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
+    if (!isMainnet() && !isTenderlyFork()) {
+        return;
+    }
+
+    const { name, contract, address } = deployment;
+
+    const contractName = normalizedContractName(contract || name);
+
+    const tenderlyNetwork = tenderly.network();
+
+    tenderlyNetwork.setFork(TENDERLY_FORK_ID);
+
+    return tenderlyNetwork.verify({
+        name: contractName,
+        address
+    });
 };
 
 export const deploymentExists = async (tag: string) => (await ethers.getContractOrNull(tag)) !== null;

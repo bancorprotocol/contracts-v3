@@ -1,4 +1,4 @@
-import { ContractName, deploy, DeploymentTag, isMainnet, toDeployTag } from '../utils/Deploy';
+import { ContractName, deploy, DeploymentTag, isMainnet, isMainnetFork, toDeployTag } from '../utils/Deploy';
 import { TokenData, TokenSymbol } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -30,7 +30,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 const tag = toDeployTag(__filename);
 
 func.id = tag;
-func.skip = async () => isMainnet();
+func.skip = async () => isMainnet() && !isMainnetFork();
 func.tags = [DeploymentTag.V3, ContractName.TestToken1, ContractName.TestToken2, ContractName.TestToken3, tag];
 
 export default func;
