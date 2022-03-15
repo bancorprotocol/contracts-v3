@@ -1715,17 +1715,16 @@ describe('BancorNetwork', () => {
                     let transactionCost = BigNumber.from(0);
 
                     if (tokenData.isBNT()) {
-                        const withdrawAmount = await network.withdrawAmount(
-                            provider.address,
+                        const withdrawalAmounts = await network.withdrawalAmounts(
                             bntPoolToken.address,
                             request.poolTokenAmount
                         );
                         await network.connect(provider).withdraw(request.id);
 
                         const currProviderBNTBalance = await bnt.balanceOf(provider.address);
-                        expect(withdrawAmount[0]).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
-                        expect(withdrawAmount[1]).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
-                        expect(withdrawAmount[2]).to.equal(0);
+                        expect(withdrawalAmounts[0]).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
+                        expect(withdrawalAmounts[1]).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
+                        expect(withdrawalAmounts[2]).to.equal(0);
 
                         expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
                         expect(await poolToken.balanceOf(bntPool.address)).to.equal(
@@ -1738,8 +1737,7 @@ describe('BancorNetwork', () => {
                             prevProviderVBNTBalance.sub(request.poolTokenAmount)
                         );
                     } else {
-                        const withdrawAmount = await network.withdrawAmount(
-                            provider.address,
+                        const withdrawalAmounts = await network.withdrawalAmounts(
                             poolToken.address,
                             request.poolTokenAmount
                         );
@@ -1752,11 +1750,11 @@ describe('BancorNetwork', () => {
                         const currProviderBNTBalance = await bnt.balanceOf(provider.address);
                         const currProviderTokenBalance = await getBalance(token, provider.address);
                         expect(currProviderBNTBalance).to.equal(prevProviderBNTBalance);
-                        expect(withdrawAmount[0]).to.equal(
+                        expect(withdrawalAmounts[0]).to.equal(
                             currProviderTokenBalance.sub(prevProviderTokenBalance).add(transactionCost.toString())
                         );
-                        expect(withdrawAmount[1]).to.equal(withdrawAmount[0]);
-                        expect(withdrawAmount[2]).to.equal(0); // currProviderBNTBalance.sub(prevProviderBNTBalance)
+                        expect(withdrawalAmounts[1]).to.equal(withdrawalAmounts[0]);
+                        expect(withdrawalAmounts[2]).to.equal(0); // currProviderBNTBalance.sub(prevProviderBNTBalance)
 
                         expect(await poolToken.totalSupply()).to.equal(
                             prevPoolTokenTotalSupply.sub(request.poolTokenAmount)

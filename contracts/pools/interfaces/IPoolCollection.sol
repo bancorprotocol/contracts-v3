@@ -153,10 +153,10 @@ interface IPoolCollection is IVersioned {
     ) external returns (uint256);
 
     /**
-     * @dev returns the total withdrawn amount in base token units, the part of it in base token units, and the part of it in BNT units
+     * @dev returns the amounts that would be returned if the position is currently withdrawn,
+     * along with the breakdown of the base token and the BNT compensation
      */
-    function withdrawAmount(
-        address provider,
+    function withdrawalAmounts(
         Token pool,
         uint256 poolTokenAmount
     ) external view returns (uint256, uint256, uint256);

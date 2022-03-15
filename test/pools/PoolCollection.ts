@@ -1477,28 +1477,24 @@ describe('PoolCollection', () => {
             const underlyingAmount = await poolCollection.poolTokenToUnderlying(token.address, poolTokenAmount);
             const expectedWithdrawalFee = underlyingAmount.mul(withdrawalFeePPM).div(PPM_RESOLUTION);
 
-            const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
-            const expectedWithdrawnAmount = withdrawalAmounts.baseTokensToTransferFromMasterVault.add(
-                withdrawalAmounts.baseTokensToTransferFromEPV
-            );
+            const poolWithdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
 
-            expect(expectedWithdrawalFee).to.almostEqual(withdrawalAmounts.baseTokensWithdrawalFee, {
+            expect(expectedWithdrawalFee).to.almostEqual(poolWithdrawalAmounts.baseTokensWithdrawalFee, {
                 maxAbsoluteError: new Decimal(1)
             });
 
-            const withdrawnAmount = await poolCollection.withdrawAmount(
-                provider.address,
+            const withdrawalAmounts = await poolCollection.withdrawalAmounts(
                 token.address,
                 poolTokenAmount
             );
 
-            expect(withdrawnAmount[0]).to.equal(
-                withdrawalAmounts.baseTokensWithdrawalAmount.sub(withdrawalAmounts.baseTokensWithdrawalFee)
+            expect(withdrawalAmounts[0]).to.equal(
+                poolWithdrawalAmounts.baseTokensWithdrawalAmount.sub(poolWithdrawalAmounts.baseTokensWithdrawalFee)
             );
-            expect(withdrawnAmount[1]).to.equal(
-                withdrawalAmounts.baseTokensToTransferFromMasterVault.add(withdrawalAmounts.baseTokensToTransferFromEPV)
+            expect(withdrawalAmounts[1]).to.equal(
+                poolWithdrawalAmounts.baseTokensToTransferFromMasterVault.add(poolWithdrawalAmounts.baseTokensToTransferFromEPV)
             );
-            expect(withdrawnAmount[2]).to.equal(withdrawalAmounts.bntToMintForProvider);
+            expect(withdrawalAmounts[2]).to.equal(poolWithdrawalAmounts.bntToMintForProvider);
 
             const res = await network.withdrawFromPoolCollectionT(
                 poolCollection.address,
@@ -1514,11 +1510,11 @@ describe('PoolCollection', () => {
                     CONTEXT_ID,
                     token.address,
                     provider.address,
-                    expectedWithdrawnAmount,
+                    withdrawalAmounts[1],
                     poolTokenAmount,
-                    withdrawalAmounts.baseTokensToTransferFromEPV,
-                    withdrawalAmounts.bntToMintForProvider,
-                    withdrawalAmounts.baseTokensWithdrawalFee
+                    poolWithdrawalAmounts.baseTokensToTransferFromEPV,
+                    poolWithdrawalAmounts.bntToMintForProvider,
+                    poolWithdrawalAmounts.baseTokensWithdrawalFee
                 );
 
             const { liquidity } = await poolCollection.poolData(token.address);
@@ -1538,7 +1534,7 @@ describe('PoolCollection', () => {
             expect(await poolToken.balanceOf(network.address)).to.equal(
                 prevNetworkPoolTokenBalance.sub(poolTokenAmount)
             );
-            expect(await getBalance(token, provider)).to.equal(prevProviderBalance.add(expectedWithdrawnAmount));
+            expect(await getBalance(token, provider)).to.equal(prevProviderBalance.add(withdrawalAmounts[1]));
 
             expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
 

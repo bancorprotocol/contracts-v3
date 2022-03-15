@@ -605,13 +605,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawAmount(
-        address provider,
+    function withdrawalAmounts(
         IPoolToken poolToken,
         uint256 poolTokenAmount
     )
         external
         view
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
         returns (
             uint256,
             uint256,
@@ -619,13 +620,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         )
     {
         if (poolToken == _bntPoolToken) {
-            uint256 amount = _bntPool.withdrawAmount(provider, poolTokenAmount);
+            uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
             return (amount, amount, 0);
         }
 
         Token pool = poolToken.reserveToken();
         IPoolCollection poolCollection = _poolCollection(pool);
-        return poolCollection.withdrawAmount(provider, pool, poolTokenAmount);
+        return poolCollection.withdrawalAmounts(pool, poolTokenAmount);
     }
 
     /**
