@@ -457,7 +457,7 @@ contract BNTPool is IBNTPool, Vault {
 
         emit TotalLiquidityUpdated({
             contextId: contextId,
-            poolTokenSupply: poolTokenTotalSupply,
+            poolTokenSupply: poolTokenTotalSupply + poolTokenAmount,
             stakedBalance: newStakedBalance,
             actualBalance: _bnt.balanceOf(address(_masterVault))
         });
@@ -508,7 +508,7 @@ contract BNTPool is IBNTPool, Vault {
 
         emit TotalLiquidityUpdated({
             contextId: contextId,
-            poolTokenSupply: poolTokenTotalSupply,
+            poolTokenSupply: poolTokenTotalSupply - poolTokenAmount,
             stakedBalance: newStakedBalance,
             actualBalance: _bnt.balanceOf(address(_masterVault))
         });

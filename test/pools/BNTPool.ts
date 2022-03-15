@@ -301,6 +301,15 @@ describe('BNTPool', () => {
                 .to.emit(bntPool, 'FundingRequested')
                 .withArgs(CONTEXT_ID, reserveToken.address, expectedAmount, expectedPoolTokenAmount);
 
+            await expect(res)
+                .to.emit(bntPool, 'TotalLiquidityUpdated')
+                .withArgs(
+                    CONTEXT_ID,
+                    await bntPoolToken.totalSupply(),
+                    await bntPool.stakedBalance(),
+                    await bnt.balanceOf(masterVault.address)
+                );
+
             expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
             expect(await bntPool.currentPoolFunding(reserveToken.address)).to.equal(prevFunding.add(expectedAmount));
             expect(await bntPool.availableFunding(reserveToken.address)).to.equal(
@@ -491,6 +500,15 @@ describe('BNTPool', () => {
                 await expect(res)
                     .to.emit(bntPool, 'FundingRenounced')
                     .withArgs(CONTEXT_ID, reserveToken.address, amount, expectedPoolTokenAmount);
+
+                await expect(res)
+                    .to.emit(bntPool, 'TotalLiquidityUpdated')
+                    .withArgs(
+                        CONTEXT_ID,
+                        await bntPoolToken.totalSupply(),
+                        await bntPool.stakedBalance(),
+                        await bnt.balanceOf(masterVault.address)
+                    );
 
                 expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.sub(reduceFundingAmount));
                 expect(await bntPool.currentPoolFunding(reserveToken.address)).to.equal(
