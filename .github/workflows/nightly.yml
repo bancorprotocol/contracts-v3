@@ -16,14 +16,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Print the Latest Commit
-        run: echo ${{ github.sha }}
 
       - id: should_run
         continue-on-error: true
         name: Check Latest Commit
         if: ${{ github.event_name == 'schedule' }}
-        run: test -z $(git rev-list --after="24 hours" ${{ github.sha }}) && echo "::set-output name=should_run::false"
+        run: |
+          [[ $(git rev-list --after="24 hours" --first-parent HEAD) ]] && echo "::set-output name=should_run::true"
 
   test:
     name: Full Test
@@ -32,7 +31,7 @@ jobs:
     timeout-minutes: 1200
 
     needs: check_latest_commit_date
-    if: ${{ needs.check_latest_commit_date.outputs.should_run != 'false' }}
+    if: needs.check_latest_commit_date.outputs.should_run == 'true'
 
     steps:
       - name: Cancel Previous Runs
