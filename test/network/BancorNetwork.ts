@@ -1381,7 +1381,7 @@ describe('BancorNetwork', () => {
                                 });
                             };
 
-                            for (const amount of [10_000, toWei(1_000_000)]) {
+                            for (const amount of [toWei(1_000_000)]) {
                                 testDepositAmount(BigNumber.from(amount));
                             }
                         });
@@ -1560,7 +1560,7 @@ describe('BancorNetwork', () => {
                                 });
                             };
 
-                            for (const amount of [10, 10_000, toWei(1_000_000)]) {
+                            for (const amount of [toWei(1_000_000)]) {
                                 testDepositAmount(BigNumber.from(amount));
                             }
                         });
@@ -2700,11 +2700,11 @@ describe('BancorNetwork', () => {
                 0
             );
 
-            for (const sourceBalance of [toWei(1_000_000), toWei(100_000_000)]) {
-                for (const targetBalance of [toWei(1_000_000), toWei(100_000_000)]) {
-                    for (const amount of [10_000, toWei(100)]) {
-                        for (const tradingFeePercent of [0, 5]) {
-                            for (const networkFeePercent of [0, 20]) {
+            for (const sourceBalance of [toWei(1_000_000)]) {
+                for (const targetBalance of [toWei(100_000_000)]) {
+                    for (const amount of [toWei(1000)]) {
+                        for (const tradingFeePercent of [5]) {
+                            for (const networkFeePercent of [20]) {
                                 // if either the source or the target token is BNT - only test fee in one of the
                                 // directions
                                 if (sourceTokenData.isBNT() || targetTokenData.isBNT()) {
@@ -2733,7 +2733,7 @@ describe('BancorNetwork', () => {
                                         BigNumber.from(amount)
                                     );
                                 } else {
-                                    for (const tradingFeePercent2 of [0, 5]) {
+                                    for (const tradingFeePercent2 of [10]) {
                                         testTrades(
                                             {
                                                 tokenData: new TokenData(sourceSymbol),
@@ -2974,7 +2974,7 @@ describe('BancorNetwork', () => {
         };
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
-            for (const flashLoanFee of [0, 1, 10]) {
+            for (const flashLoanFee of [0, 2.5]) {
                 context(`${symbol} with fee=${flashLoanFee}%`, () => {
                     testFlashLoan(new TokenData(symbol), toPPM(flashLoanFee));
                 });

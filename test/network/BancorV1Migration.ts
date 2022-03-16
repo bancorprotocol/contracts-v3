@@ -250,7 +250,7 @@ describe('BancorV1Migration', () => {
             describe(`BNT amount = ${bntAmount}`, () => {
                 describe(`base amount = ${baseAmount}`, () => {
                     describe(`base token = ${isNativeToken ? 'ETH' : 'ERC20'}`, () => {
-                        describe(`base token is ${isTokenWhitelisted ? '' : 'not'} whitelisted`, () => {
+                        describe(`base token is ${isTokenWhitelisted ? '' : 'not '}whitelisted`, () => {
                             beforeEach(async () => {
                                 await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
                                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY);
@@ -292,10 +292,10 @@ describe('BancorV1Migration', () => {
         });
     };
 
-    describe('quick tests', () => {
-        for (const withdrawalFeeP of [1, 5]) {
-            for (const bntAmount of [1_000_000, 5_000_000]) {
-                for (const baseAmount of [1_000_000, 5_000_000]) {
+    describe('regular tests', () => {
+        for (const withdrawalFeeP of [5]) {
+            for (const bntAmount of [1_000_000]) {
+                for (const baseAmount of [5_000_000]) {
                     for (const isNativeToken of [false, true]) {
                         for (const isTokenWhitelisted of [false, true]) {
                             for (const percent of [10, 100]) {
@@ -309,9 +309,9 @@ describe('BancorV1Migration', () => {
     });
 
     describe('@stress tests', () => {
-        for (const withdrawalFeeP of [1, 2.5, 5]) {
-            for (const bntAmount of [1_000_000, 2_500_000, 5_000_000]) {
-                for (const baseAmount of [1_000_000, 2_500_000, 5_000_000]) {
+        for (const withdrawalFeeP of [1, 2.5]) {
+            for (const bntAmount of [1_000_000, 5_000_000]) {
+                for (const baseAmount of [1_000_000, 5_000_000]) {
                     for (const isNativeToken of [false, true]) {
                         for (const isTokenWhitelisted of [false, true]) {
                             for (const percent of [25, 100]) {
