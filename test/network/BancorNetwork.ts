@@ -2873,16 +2873,12 @@ describe('BancorNetwork', () => {
                 const prevBNTBalance = await getBalance(token, network.address);
 
                 const data = '0x1234';
-                const contextId = solidityKeccak256(
-                    ['address', 'uint32', 'address', 'uint256', 'address', 'bytes'],
-                    [deployer.address, await network.currentTime(), token.address, LOAN_AMOUNT, recipient.address, data]
-                );
 
                 const res = network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
 
                 await expect(res)
                     .to.emit(network, 'FlashLoanCompleted')
-                    .withArgs(contextId, token.address, deployer.address, LOAN_AMOUNT, FEE_AMOUNT);
+                    .withArgs(token.address, deployer.address, LOAN_AMOUNT, FEE_AMOUNT);
 
                 const callbackData = await recipient.callbackData();
                 expect(callbackData.caller).to.equal(deployer.address);
@@ -3719,16 +3715,11 @@ describe('BancorNetwork', () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
                 const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
 
-                const contextId = solidityKeccak256(
-                    ['address', 'uint32', 'address'],
-                    [networkFeeManager.address, await network.currentTime(), recipient]
-                );
-
                 const res = await network.connect(networkFeeManager).withdrawNetworkFees(recipient);
 
                 await expect(res)
                     .to.emit(network, 'NetworkFeesWithdrawn')
-                    .withArgs(contextId, networkFeeManager.address, recipient, pendingNetworkFeeAmount);
+                    .withArgs(networkFeeManager.address, recipient, pendingNetworkFeeAmount);
 
                 expect(await bnt.balanceOf(recipient)).to.equal(prevBNTBalance.add(pendingNetworkFeeAmount));
 
