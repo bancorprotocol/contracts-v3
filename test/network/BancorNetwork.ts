@@ -3687,7 +3687,7 @@ describe('BancorNetwork', () => {
             it('should not withdraw any pending network fees', async () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
 
-                const res = await network.connect(networkFeeManager).withdrawNetworkFees();
+                const res = await network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address);
 
                 await expect(res).to.not.emit(network, 'NetworkFeesWithdrawn');
 
@@ -3703,21 +3703,22 @@ describe('BancorNetwork', () => {
             });
 
             it('should withdraw all the pending network fees', async () => {
+                const recipient = nonOwner.address;
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
                 const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
 
                 const contextId = solidityKeccak256(
-                    ['address', 'uint32'],
-                    [networkFeeManager.address, await network.currentTime()]
+                    ['address', 'uint32', 'address'],
+                    [networkFeeManager.address, await network.currentTime(), recipient]
                 );
 
-                const res = await network.connect(networkFeeManager).withdrawNetworkFees();
+                const res = await network.connect(networkFeeManager).withdrawNetworkFees(recipient);
 
-                await expect(res).to.emit(network, 'NetworkFeesWithdrawn').withArgs(contextId, pendingNetworkFeeAmount);
+                await expect(res)
+                    .to.emit(network, 'NetworkFeesWithdrawn')
+                    .withArgs(contextId, recipient, pendingNetworkFeeAmount);
 
-                expect(await bnt.balanceOf(networkFeeManager.address)).to.equal(
-                    prevBNTBalance.add(pendingNetworkFeeAmount)
-                );
+                expect(await bnt.balanceOf(recipient)).to.equal(prevBNTBalance.add(pendingNetworkFeeAmount));
 
                 expect(await network.pendingNetworkFeeAmount()).to.equal(0);
             });
@@ -3728,9 +3729,9 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should revert when attempting to withdraw the pending network fees', async () => {
-                    await expect(network.connect(networkFeeManager).withdrawNetworkFees()).to.be.revertedWith(
-                        'Pausable: paused'
-                    );
+                    await expect(
+                        network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address)
+                    ).to.be.revertedWith('Pausable: paused');
                 });
             });
         });
