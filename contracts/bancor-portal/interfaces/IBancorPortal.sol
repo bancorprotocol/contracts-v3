@@ -5,13 +5,6 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { Token } from "../../token/Token.sol";
 
-struct MigrationResult {
-    Token tokenA;
-    Token tokenB;
-    uint256 amountA;
-    uint256 amountB;
-}
-
 struct UniswapV2PositionMigration {
     uint256 amountA;
     uint256 amountB;
