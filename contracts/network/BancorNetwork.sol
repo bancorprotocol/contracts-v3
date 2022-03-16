@@ -210,7 +210,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when network fees are withdrawn
      */
-    event NetworkFeesWithdrawn(bytes32 indexed contextId, address indexed recipient, uint256 amount);
+    event NetworkFeesWithdrawn(
+        bytes32 indexed contextId,
+        address indexed caller,
+        address indexed recipient,
+        uint256 amount
+    );
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -868,7 +873,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), pendingNetworkFeeAmount);
 
-        emit NetworkFeesWithdrawn(contextId, recipient, pendingNetworkFeeAmount);
+        emit NetworkFeesWithdrawn(contextId, msg.sender, recipient, pendingNetworkFeeAmount);
     }
 
     /**

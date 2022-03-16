@@ -3728,7 +3728,7 @@ describe('BancorNetwork', () => {
 
                 await expect(res)
                     .to.emit(network, 'NetworkFeesWithdrawn')
-                    .withArgs(contextId, recipient, pendingNetworkFeeAmount);
+                    .withArgs(contextId, networkFeeManager.address, recipient, pendingNetworkFeeAmount);
 
                 expect(await bnt.balanceOf(recipient)).to.equal(prevBNTBalance.add(pendingNetworkFeeAmount));
 
