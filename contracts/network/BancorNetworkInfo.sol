@@ -11,7 +11,7 @@ import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVaul
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
-import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, WithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
@@ -305,6 +305,26 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
             _isBNT(pool)
                 ? _bntPool.underlyingToPoolToken(tokenAmount)
                 : _poolCollection(pool).underlyingToPoolToken(pool, tokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount)
+        external
+        view
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        returns (WithdrawalAmounts memory)
+    {
+        if (poolToken == _bntPoolToken) {
+            uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
+            return WithdrawalAmounts({ totalAmount: amount, baseTokenAmount: 0, bntAmount: amount });
+        }
+
+        Token pool = poolToken.reserveToken();
+        IPoolCollection poolCollection = _poolCollection(pool);
+        return poolCollection.withdrawalAmounts(pool, poolTokenAmount);
     }
 
     /**
