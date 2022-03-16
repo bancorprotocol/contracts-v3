@@ -114,10 +114,8 @@ contract PoolTokenFactory is IPoolTokenFactory, Upgradeable, Utils {
         uint8 customDecimals = _tokenDecimalsOverrides[token];
         uint8 tokenDecimals = customDecimals != 0 ? customDecimals : token.decimals();
 
-        string memory symbol = string(abi.encodePacked(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol));
-        string memory name = string(
-            abi.encodePacked(POOL_TOKEN_NAME_PREFIX, " ", tokenSymbol, " ", POOL_TOKEN_NAME_SUFFIX)
-        );
+        string memory symbol = string.concat(POOL_TOKEN_SYMBOL_PREFIX, tokenSymbol);
+        string memory name = string.concat(POOL_TOKEN_NAME_PREFIX, " ", tokenSymbol, " ", POOL_TOKEN_NAME_SUFFIX);
 
         PoolToken newPoolToken = new PoolToken(name, symbol, tokenDecimals, token);
 
