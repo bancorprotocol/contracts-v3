@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -58,6 +58,12 @@ interface IStandardStakingRewards is IUpgradeable {
      * @dev returns whether the specified program is enabled
      */
     function isProgramEnabled(uint256 id) external view returns (bool);
+
+    /**
+     * @dev returns the ID of the currently active program of a given pool
+     * returns 0 if no program is currently active for the given pool
+     */
+    function activeProgramId(Token pool) external view returns (uint256);
 
     /**
      * @dev creates a program for a pool and returns its ID

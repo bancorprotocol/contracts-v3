@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -140,7 +140,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev initializes the contract and its parents
      */
-    function __AutoCompoundingStakingRewards_init() internal initializer {
+    function __AutoCompoundingStakingRewards_init() internal onlyInitializing {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
@@ -150,7 +150,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev performs contract-specific initialization
      */
-    function __AutoCompoundingStakingRewards_init_unchained() internal initializer {}
+    function __AutoCompoundingStakingRewards_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 

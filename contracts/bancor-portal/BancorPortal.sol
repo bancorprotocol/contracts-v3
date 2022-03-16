@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -20,7 +20,16 @@ import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { NetworkSettings } from "../network/NetworkSettings.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { IBancorPortal, MigrationResult, UniswapV2PositionMigration } from "./interfaces/IBancorPortal.sol";
+import { IBancorPortal, UniswapV2PositionMigration } from "./interfaces/IBancorPortal.sol";
+
+struct MigrationResult {
+    Token tokenA;
+    Token tokenB;
+    uint256 amountA;
+    uint256 amountB;
+    bool depositedA;
+    bool depositedB;
+}
 
 /**
  * @dev one click liquidity migration between other DEXes into Bancor v3
@@ -65,7 +74,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         Token indexed tokenA,
         Token indexed tokenB,
         uint256 amountA,
-        uint256 amountB
+        uint256 amountB,
+        bool depositedA,
+        bool depositedB
     );
 
     /**
@@ -76,7 +87,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         Token indexed tokenA,
         Token indexed tokenB,
         uint256 amountA,
-        uint256 amountB
+        uint256 amountB,
+        bool depositedA,
+        bool depositedB
     );
 
     error UnsupportedTokens();
@@ -130,7 +143,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorPortal_init() internal initializer {
+    function __BancorPortal_init() internal onlyInitializing {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
@@ -140,7 +153,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorPortal_init_unchained() internal initializer {}
+    function __BancorPortal_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev ETH receive callback
@@ -176,7 +189,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             tokenA: res.tokenA,
             tokenB: res.tokenB,
             amountA: res.amountA,
-            amountB: res.amountB
+            amountB: res.amountB,
+            depositedA: res.depositedA,
+            depositedB: res.depositedB
         });
 
         return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
@@ -211,7 +226,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             tokenA: res.tokenA,
             tokenB: res.tokenB,
             amountA: res.amountA,
-            amountB: res.amountB
+            amountB: res.amountB,
+            depositedA: res.depositedA,
+            depositedB: res.depositedB
         });
 
         return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
@@ -274,7 +291,15 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             }
         }
 
-        return MigrationResult({ tokenA: tokens[0], tokenB: tokens[1], amountA: deposited[0], amountB: deposited[1] });
+        return
+            MigrationResult({
+                tokenA: tokens[0],
+                tokenB: tokens[1],
+                amountA: deposited[0],
+                amountB: deposited[1],
+                depositedA: whitelist[0],
+                depositedB: whitelist[1]
+            });
     }
 
     /**

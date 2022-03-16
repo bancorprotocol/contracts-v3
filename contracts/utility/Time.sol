@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 /**
  * @dev this contract abstracts the block timestamp in order to allow for more flexible control in tests
