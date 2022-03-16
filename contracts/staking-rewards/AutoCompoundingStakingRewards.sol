@@ -185,6 +185,13 @@ contract AutoCompoundingStakingRewards is
     /**
      * @inheritdoc IAutoCompoundingStakingRewards
      */
+    function pools() external view returns (address[] memory) {
+        return _programByPool.values();
+    }
+
+    /**
+     * @inheritdoc IAutoCompoundingStakingRewards
+     */
     function isProgramActive(Token pool) external view returns (bool) {
         ProgramData memory p = _programs[pool];
 
@@ -298,6 +305,8 @@ contract AutoCompoundingStakingRewards is
         }
 
         delete _programs[pool];
+
+        assert(_programByPool.remove(address(pool)));
 
         emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }

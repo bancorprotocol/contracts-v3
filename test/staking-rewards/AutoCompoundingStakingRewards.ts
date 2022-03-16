@@ -391,6 +391,9 @@ describe('AutoCompoundingStakingRewards', () => {
 
                                     if (isProgramTimingValid) {
                                         it(`should complete`, async () => {
+                                            const poolsBefore = await autoCompoundingStakingRewards.pools();
+                                            expect(poolsBefore).to.not.include(token.address);
+
                                             const res = await autoCompoundingStakingRewards.createProgram(
                                                 token.address,
                                                 rewardsVault.address,
@@ -399,6 +402,9 @@ describe('AutoCompoundingStakingRewards', () => {
                                                 startTime,
                                                 endTime
                                             );
+
+                                            const poolsAfter = await autoCompoundingStakingRewards.pools();
+                                            expect(poolsAfter).to.include(token.address);
 
                                             await expect(res)
                                                 .to.emit(autoCompoundingStakingRewards, 'ProgramCreated')
@@ -425,6 +431,9 @@ describe('AutoCompoundingStakingRewards', () => {
                                         });
                                     } else {
                                         it(`should revert`, async () => {
+                                            const poolsBefore = await autoCompoundingStakingRewards.pools();
+                                            expect(poolsBefore).to.not.include(token.address);
+
                                             await expect(
                                                 autoCompoundingStakingRewards.createProgram(
                                                     token.address,
@@ -435,6 +444,9 @@ describe('AutoCompoundingStakingRewards', () => {
                                                     endTime
                                                 )
                                             ).to.be.revertedWith('InvalidParam');
+
+                                            const poolsAfter = await autoCompoundingStakingRewards.pools();
+                                            expect(poolsAfter).to.not.include(token.address);
                                         });
                                     }
                                 });
@@ -471,7 +483,13 @@ describe('AutoCompoundingStakingRewards', () => {
                         });
 
                         it('should terminate a program which has not yet started', async () => {
-                            const res = autoCompoundingStakingRewards.terminateProgram(token.address);
+                            const poolsBefore = await autoCompoundingStakingRewards.pools();
+                            expect(poolsBefore).to.include(token.address);
+
+                            const res = await autoCompoundingStakingRewards.terminateProgram(token.address);
+
+                            const poolsAfter = await autoCompoundingStakingRewards.pools();
+                            expect(poolsAfter).to.not.include(token.address);
 
                             await expect(res)
                                 .to.emit(autoCompoundingStakingRewards, 'ProgramTerminated')
@@ -493,7 +511,13 @@ describe('AutoCompoundingStakingRewards', () => {
                         it('should terminate a program which has already started', async () => {
                             await autoCompoundingStakingRewards.setTime(START_TIME);
 
-                            const res = autoCompoundingStakingRewards.terminateProgram(token.address);
+                            const poolsBefore = await autoCompoundingStakingRewards.pools();
+                            expect(poolsBefore).to.include(token.address);
+
+                            const res = await autoCompoundingStakingRewards.terminateProgram(token.address);
+
+                            const poolsAfter = await autoCompoundingStakingRewards.pools();
+                            expect(poolsAfter).to.not.include(token.address);
 
                             await expect(res)
                                 .to.emit(autoCompoundingStakingRewards, 'ProgramTerminated')
