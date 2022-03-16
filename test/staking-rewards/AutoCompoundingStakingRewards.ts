@@ -444,9 +444,6 @@ describe('AutoCompoundingStakingRewards', () => {
                                                     endTime
                                                 )
                                             ).to.be.revertedWith('InvalidParam');
-
-                                            const poolsAfter = await autoCompoundingStakingRewards.pools();
-                                            expect(poolsAfter).to.not.include(token.address);
                                         });
                                     }
                                 });
