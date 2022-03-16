@@ -130,7 +130,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev initializes the contract and its parents
      */
-    function __BancorPortal_init() internal initializer {
+    function __BancorPortal_init() internal onlyInitializing {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
@@ -140,7 +140,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev performs contract-specific initialization
      */
-    function __BancorPortal_init_unchained() internal initializer {}
+    function __BancorPortal_init_unchained() internal onlyInitializing {}
 
     /**
      * @dev ETH receive callback

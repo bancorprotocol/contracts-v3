@@ -140,7 +140,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev initializes the contract and its parents
      */
-    function __AutoCompoundingStakingRewards_init() internal initializer {
+    function __AutoCompoundingStakingRewards_init() internal onlyInitializing {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
@@ -150,7 +150,7 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev performs contract-specific initialization
      */
-    function __AutoCompoundingStakingRewards_init_unchained() internal initializer {}
+    function __AutoCompoundingStakingRewards_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 
