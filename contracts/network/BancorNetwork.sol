@@ -208,6 +208,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     );
 
     /**
+     * @dev triggered when network fees are withdrawn
+     */
+    event NetworkFeesWithdrawn(bytes32 indexed contextId, uint256 amount);
+
+    /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(
@@ -847,6 +852,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc IBancorNetwork
      */
     function withdrawNetworkFees() external whenNotPaused onlyRoleMember(ROLE_NETWORK_FEE_MANAGER) {
+        bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time()));
+
         uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
         if (pendingNetworkFeeAmount == 0) {
             return;
@@ -855,6 +862,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _pendingNetworkFeeAmount = 0;
 
         _masterVault.withdrawFunds(Token(address(_bnt)), payable(address(msg.sender)), pendingNetworkFeeAmount);
+
+        emit NetworkFeesWithdrawn(contextId, pendingNetworkFeeAmount);
     }
 
     /**
