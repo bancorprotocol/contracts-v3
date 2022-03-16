@@ -37,6 +37,11 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     function programs() external view returns (ProgramData[] memory);
 
     /**
+     * @dev returns a list of all the pools which have a program associated with them
+     */
+    function pools() external view returns (address[] memory);
+
+    /**
      * @dev returns whether a program is currently active
      */
     function isProgramActive(Token pool) external view returns (bool);
