@@ -66,7 +66,7 @@ contract BNTPool is IBNTPool, Vault {
     IPoolToken internal immutable _poolToken;
 
     // the total staked BNT balance in the network
-    uint256 internal _stakedBalance;
+    uint256 private _stakedBalance;
 
     // a mapping between pools and their current funding
     mapping(Token => uint256) private _currentPoolFunding;
