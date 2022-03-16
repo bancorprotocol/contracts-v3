@@ -211,7 +211,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @dev initializes the contract and its parents
      */
-    function __StandardStakingRewards_init() internal initializer {
+    function __StandardStakingRewards_init() internal onlyInitializing {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
@@ -221,7 +221,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @dev performs contract-specific initialization
      */
-    function __StandardStakingRewards_init_unchained() internal initializer {
+    function __StandardStakingRewards_init_unchained() internal onlyInitializing {
         _nextProgramId = INITIAL_PROGRAM_ID;
     }
 
@@ -307,6 +307,13 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      */
     function isProgramEnabled(uint256 id) external view returns (bool) {
         return _isProgramEnabled(_programs[id]);
+    }
+
+    /**
+     * @inheritdoc IStandardStakingRewards
+     */
+    function activeProgramId(Token pool) external view returns (uint256) {
+        return _activeProgramIdByPool[pool];
     }
 
     /**

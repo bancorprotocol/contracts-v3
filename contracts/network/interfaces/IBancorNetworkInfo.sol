@@ -10,6 +10,7 @@ import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProte
 import { IExternalRewardsVault } from "../../vaults/interfaces/IExternalRewardsVault.sol";
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
+import { WithdrawalAmounts } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
 import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
 
@@ -123,4 +124,10 @@ interface IBancorNetworkInfo is IUpgradeable {
      * @dev converts the specified underlying base token amount to pool token amount
      */
     function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256);
+
+    /**
+     * @dev returns the amounts that would be returned if the position is currently withdrawn,
+     * along with the breakdown of the base token and the BNT compensation
+     */
+    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount) external view returns (WithdrawalAmounts memory);
 }

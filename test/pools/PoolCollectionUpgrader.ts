@@ -186,14 +186,7 @@ describe('PoolCollectionUpgrader', () => {
                 const res = await network.upgradePoolT(poolCollectionUpgrader.address, reserveToken.address);
                 await expect(res)
                     .to.emit(poolCollectionUpgrader, 'PoolUpgraded')
-                    .withArgs(
-                        await targetPoolCollection.poolType(),
-                        reserveToken.address,
-                        poolCollection.address,
-                        targetPoolCollection.address,
-                        await poolCollection.version(),
-                        await targetPoolCollection.version()
-                    );
+                    .withArgs(reserveToken.address, poolCollection.address, targetPoolCollection.address);
 
                 newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData).to.deep.equal(poolData);

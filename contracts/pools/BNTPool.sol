@@ -48,7 +48,7 @@ contract BNTPool is IBNTPool, Vault {
 
     error FundingLimitExceeded();
 
-    struct WithdrawalAmounts {
+    struct InternalWithdrawalAmounts {
         uint256 bntAmount;
         uint256 withdrawalFeeAmount;
     }
@@ -379,8 +379,8 @@ contract BNTPool is IBNTPool, Vault {
         bytes32 contextId,
         address provider,
         uint256 poolTokenAmount
-    ) external only(address(_network)) greaterThanZero(poolTokenAmount) validAddress(provider) returns (uint256) {
-        WithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
+        InternalWithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
@@ -399,6 +399,20 @@ contract BNTPool is IBNTPool, Vault {
             vbntAmount: poolTokenAmount,
             withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
+
+        return amounts.bntAmount;
+    }
+
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function withdrawalAmount(uint256 poolTokenAmount)
+        external
+        view
+        greaterThanZero(poolTokenAmount)
+        returns (uint256)
+    {
+        InternalWithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         return amounts.bntAmount;
     }
@@ -457,7 +471,7 @@ contract BNTPool is IBNTPool, Vault {
 
         emit TotalLiquidityUpdated({
             contextId: contextId,
-            poolTokenSupply: poolTokenTotalSupply,
+            poolTokenSupply: poolTokenTotalSupply + poolTokenAmount,
             stakedBalance: newStakedBalance,
             actualBalance: _bnt.balanceOf(address(_masterVault))
         });
@@ -508,7 +522,7 @@ contract BNTPool is IBNTPool, Vault {
 
         emit TotalLiquidityUpdated({
             contextId: contextId,
-            poolTokenSupply: poolTokenTotalSupply,
+            poolTokenSupply: poolTokenTotalSupply - poolTokenAmount,
             stakedBalance: newStakedBalance,
             actualBalance: _bnt.balanceOf(address(_masterVault))
         });
@@ -563,7 +577,7 @@ contract BNTPool is IBNTPool, Vault {
     /**
      * @dev returns withdrawal amounts
      */
-    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (WithdrawalAmounts memory) {
+    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (InternalWithdrawalAmounts memory) {
         // calculate BNT amount to transfer
         uint256 bntAmount = _poolTokenToUnderlying(poolTokenAmount);
 
@@ -572,6 +586,6 @@ contract BNTPool is IBNTPool, Vault {
 
         bntAmount -= withdrawalFeeAmount;
 
-        return WithdrawalAmounts({ bntAmount: bntAmount, withdrawalFeeAmount: withdrawalFeeAmount });
+        return InternalWithdrawalAmounts({ bntAmount: bntAmount, withdrawalFeeAmount: withdrawalFeeAmount });
     }
 }

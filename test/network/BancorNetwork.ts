@@ -788,7 +788,7 @@ describe('BancorNetwork', () => {
                         const res = await network.createPool(poolType, reserveToken.address);
                         await expect(res)
                             .to.emit(network, 'PoolAdded')
-                            .withArgs(poolType, reserveToken.address, poolCollection.address);
+                            .withArgs(reserveToken.address, poolCollection.address);
 
                         expect(await network.isPoolValid(reserveToken.address)).to.be.true;
                         expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
@@ -1581,6 +1581,7 @@ describe('BancorNetwork', () => {
 
     describe('withdraw', () => {
         let network: TestBancorNetwork;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
@@ -1599,6 +1600,7 @@ describe('BancorNetwork', () => {
         beforeEach(async () => {
             ({
                 network,
+                networkInfo,
                 networkSettings,
                 bnt,
                 vbnt,
@@ -1705,6 +1707,7 @@ describe('BancorNetwork', () => {
                     const prevCollectionPoolTokenBalance = await poolToken.balanceOf(poolCollection.address);
                     const prevProviderPoolTokenBalance = await poolToken.balanceOf(provider.address);
 
+                    const prevProviderBNTBalance = await bnt.balanceOf(provider.address);
                     const prevProviderTokenBalance = await getBalance(token, provider.address);
 
                     const prevVBNTTotalSupply = await vbnt.totalSupply();
@@ -1714,7 +1717,16 @@ describe('BancorNetwork', () => {
                     let transactionCost = BigNumber.from(0);
 
                     if (tokenData.isBNT()) {
+                        const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
+                            bntPoolToken.address,
+                            request.poolTokenAmount
+                        );
                         await network.connect(provider).withdraw(request.id);
+
+                        const currProviderBNTBalance = await bnt.balanceOf(provider.address);
+                        expect(totalAmount).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
+                        expect(bntAmount).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
+                        expect(baseTokenAmount).to.equal(0);
 
                         expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
                         expect(await poolToken.balanceOf(bntPool.address)).to.equal(
@@ -1727,11 +1739,24 @@ describe('BancorNetwork', () => {
                             prevProviderVBNTBalance.sub(request.poolTokenAmount)
                         );
                     } else {
+                        const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
+                            poolToken.address,
+                            request.poolTokenAmount
+                        );
                         const res = await network.connect(provider).withdraw(request.id);
 
                         if (tokenData.isNative()) {
                             transactionCost = await getTransactionCost(res);
                         }
+
+                        const currProviderBNTBalance = await bnt.balanceOf(provider.address);
+                        const currProviderTokenBalance = await getBalance(token, provider.address);
+                        expect(currProviderBNTBalance).to.equal(prevProviderBNTBalance);
+                        expect(totalAmount).to.equal(
+                            currProviderTokenBalance.sub(prevProviderTokenBalance).add(transactionCost.toString())
+                        );
+                        expect(baseTokenAmount).to.equal(totalAmount);
+                        expect(bntAmount).to.equal(0); // currProviderBNTBalance.sub(prevProviderBNTBalance)
 
                         expect(await poolToken.totalSupply()).to.equal(
                             prevPoolTokenTotalSupply.sub(request.poolTokenAmount)
