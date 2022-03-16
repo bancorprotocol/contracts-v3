@@ -147,7 +147,15 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken1.address, whitelistedToken2.address, AMOUNT, AMOUNT);
+                .withArgs(
+                    user.address,
+                    whitelistedToken1.address,
+                    whitelistedToken2.address,
+                    AMOUNT,
+                    AMOUNT,
+                    true,
+                    true
+                );
         });
     });
 
@@ -309,7 +317,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO);
+                .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO, true, false);
         });
 
         it('deposits when only token2 is whitelisted', async () => {
@@ -323,7 +331,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, unlistedToken.address, whitelistedToken.address, ZERO, AMOUNT);
+                .withArgs(user.address, unlistedToken.address, whitelistedToken.address, ZERO, AMOUNT, false, true);
         });
 
         it('deposits both tokens when possible', async () => {
@@ -337,7 +345,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, token1.address, token2.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, token1.address, token2.address, AMOUNT, AMOUNT, true, true);
         });
 
         it('deposits when token1 is the native token and token2 is unlisted', async () => {
@@ -351,7 +359,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO);
+                .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO, true, false);
         });
 
         it('deposits when token1 is the native token and token2 is whitelisted', async () => {
@@ -365,7 +373,15 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken1.address, whitelistedToken2.address, AMOUNT, AMOUNT);
+                .withArgs(
+                    user.address,
+                    whitelistedToken1.address,
+                    whitelistedToken2.address,
+                    AMOUNT,
+                    AMOUNT,
+                    true,
+                    true
+                );
         });
 
         it('deposits when token1 is unlisted and token2 is the native token', async () => {
@@ -379,7 +395,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, unlistedToken.address, whitelistedToken.address, ZERO, AMOUNT);
+                .withArgs(user.address, unlistedToken.address, whitelistedToken.address, ZERO, AMOUNT, false, true);
         });
 
         it('deposits when token1 is whitelisted and token2 is the native token', async () => {
@@ -393,7 +409,15 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken1.address, whitelistedToken2.address, AMOUNT, AMOUNT);
+                .withArgs(
+                    user.address,
+                    whitelistedToken1.address,
+                    whitelistedToken2.address,
+                    AMOUNT,
+                    AMOUNT,
+                    true,
+                    true
+                );
         });
 
         it('deposits when token1 is bnt and token2 is unlisted', async () => {
@@ -409,7 +433,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, bnt.address, unlistedToken.address, AMOUNT, ZERO);
+                .withArgs(user.address, bnt.address, unlistedToken.address, AMOUNT, ZERO, true, false);
         });
 
         it('deposits when token1 is unlisted and token2 is bnt', async () => {
@@ -425,7 +449,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, unlistedToken.address, bnt.address, ZERO, AMOUNT);
+                .withArgs(user.address, unlistedToken.address, bnt.address, ZERO, AMOUNT, false, true);
         });
 
         it('deposits when token1 is bnt and token2 is whitelisted', async () => {
@@ -440,7 +464,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, bnt.address, whitelistedToken.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, bnt.address, whitelistedToken.address, AMOUNT, AMOUNT, true, true);
         });
 
         it('deposits when token1 is whitelisted and token2 is bnt', async () => {
@@ -455,7 +479,7 @@ describe('BancorPortal', () => {
             ]);
             expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken.address, bnt.address, AMOUNT, AMOUNT);
+                .withArgs(user.address, whitelistedToken.address, bnt.address, AMOUNT, AMOUNT, true, true);
         });
     });
 
@@ -477,7 +501,7 @@ describe('BancorPortal', () => {
             );
             expect(res)
                 .to.emit(bancorPortal, 'SushiSwapV2PositionMigrated')
-                .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO);
+                .withArgs(user.address, whitelistedToken.address, unlistedToken.address, AMOUNT, ZERO, true, false);
         });
     });
 
