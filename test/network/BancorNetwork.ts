@@ -3698,13 +3698,13 @@ describe('BancorNetwork', () => {
                 expect(await network.pendingNetworkFeeAmount()).to.be.gt(0);
             });
 
-            it('should revert if the caller is unauthorized', async () => {
+            it('should revert when the withdrawal caller is not a network-fee manager', async () => {
                 await expect(
                     network.connect(deployer).withdrawNetworkFees(networkFeeManager.address)
                 ).to.be.revertedWith('AccessDenied');
             });
 
-            it('should revert if the recipient is invalid', async () => {
+            it('should revert when the withdrawal recipient is invalid', async () => {
                 await expect(network.connect(networkFeeManager).withdrawNetworkFees(ZERO_ADDRESS)).to.be.revertedWith(
                     'InvalidAddress'
                 );
