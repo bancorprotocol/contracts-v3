@@ -3702,6 +3702,12 @@ describe('BancorNetwork', () => {
                 expect(await network.pendingNetworkFeeAmount()).to.be.gt(0);
             });
 
+            it('should revert if the recipient is invalid', async () => {
+                await expect(network.connect(networkFeeManager).withdrawNetworkFees(ZERO_ADDRESS)).to.be.revertedWith(
+                    'InvalidAddress'
+                );
+            });
+
             it('should withdraw all the pending network fees', async () => {
                 const recipient = nonOwner.address;
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);

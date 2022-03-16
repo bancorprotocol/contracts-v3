@@ -851,7 +851,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawNetworkFees(address recipient) external whenNotPaused onlyRoleMember(ROLE_NETWORK_FEE_MANAGER) {
+    function withdrawNetworkFees(address recipient)
+        external
+        whenNotPaused
+        onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
+        validAddress(recipient)
+    {
         bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), recipient));
 
         uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
