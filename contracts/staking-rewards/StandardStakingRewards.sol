@@ -104,7 +104,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     mapping(uint256 => ProgramData) internal _programs;
 
     // a mapping between pools and their currently active programs
-    mapping(Token => uint256) internal _activeProgramIdByPool;
+    mapping(Token => uint256) private _activeProgramIdByPool;
 
     // a mapping between programs and their respective rewards data
     mapping(uint256 => Rewards) internal _programRewards;

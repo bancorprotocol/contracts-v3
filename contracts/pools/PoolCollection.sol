@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.12;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -87,7 +86,7 @@ enum PoolRateState {
  *
  * - the address of reserve token serves as the pool unique ID in both contract functions and events
  */
-contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber, Utils {
+contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     using TokenLibrary for Token;
     using FractionLibrary for Fraction;
     using FractionLibrary for Fraction112;
