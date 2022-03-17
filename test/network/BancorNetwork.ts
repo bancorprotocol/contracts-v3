@@ -3227,6 +3227,9 @@ describe('BancorNetwork', () => {
                         const res = await liquidityProtection.migratePositions([protectionId]);
                         const transactionCost = isNativeToken ? await getTransactionCost(res) : BigNumber.from(0);
 
+                        // verify event
+                        await expect(res).to.emit(network, 'FundsMigrated');
+
                         // verify protected liquidities
                         expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
 
@@ -3382,7 +3385,10 @@ describe('BancorNetwork', () => {
                     const prevVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
                     await liquidityProtection.setTime(now + duration.seconds(1));
-                    await liquidityProtection.migratePositions([protectionId]);
+                    const res = await liquidityProtection.migratePositions([protectionId]);
+
+                    // verify event
+                    await expect(res).to.emit(network, 'FundsMigrated');
 
                     // verify protected liquidities
                     expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
