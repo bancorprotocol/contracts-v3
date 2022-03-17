@@ -67,7 +67,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     uint256[MAX_GAP - 0] private __gap;
 
     /**
-     * @dev triggered after a succesful Uniswap V2 migration
+     * @dev triggered after a successful Uniswap V2 migration
      */
     event UniswapV2PositionMigrated(
         address indexed provider,
@@ -80,7 +80,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     );
 
     /**
-     * @dev triggered after a succesful SushiSwap V1 migration
+     * @dev triggered after a successful SushiSwap V1 migration
      */
     event SushiSwapV2PositionMigrated(
         address indexed provider,
