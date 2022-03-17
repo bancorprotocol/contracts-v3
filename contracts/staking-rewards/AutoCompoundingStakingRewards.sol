@@ -218,13 +218,7 @@ contract AutoCompoundingStakingRewards is
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    )
-        external
-        validAddress(address(pool))
-        validAddress(address(rewardsVault))
-        greaterThanZero(totalRewards)
-        onlyAdmin
-    {
+    ) external validAddress(address(pool)) validAddress(address(rewardsVault)) greaterThanZero(totalRewards) onlyAdmin {
         if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();
         }

@@ -577,13 +577,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         address provider,
         Token pool,
         uint256 tokenAmount
-    )
-        external
-        only(address(_network))
-        validAddress(provider)
-        greaterThanZero(tokenAmount)
-        returns (uint256)
-    {
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(tokenAmount) returns (uint256) {
         Pool storage data = _poolStorage(pool);
 
         if (!data.depositingEnabled) {
