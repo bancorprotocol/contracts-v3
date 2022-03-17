@@ -2898,16 +2898,12 @@ describe('BancorNetwork', () => {
                 const prevBNTBalance = await getBalance(token, network.address);
 
                 const data = '0x1234';
-                const contextId = solidityKeccak256(
-                    ['address', 'uint32', 'address', 'uint256', 'address', 'bytes'],
-                    [deployer.address, await network.currentTime(), token.address, LOAN_AMOUNT, recipient.address, data]
-                );
 
                 const res = network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
 
                 await expect(res)
                     .to.emit(network, 'FlashLoanCompleted')
-                    .withArgs(contextId, token.address, deployer.address, LOAN_AMOUNT, FEE_AMOUNT);
+                    .withArgs(token.address, deployer.address, LOAN_AMOUNT, FEE_AMOUNT);
 
                 const callbackData = await recipient.callbackData();
                 expect(callbackData.caller).to.equal(deployer.address);
@@ -3712,7 +3708,9 @@ describe('BancorNetwork', () => {
             it('should not withdraw any pending network fees', async () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
 
-                await network.connect(networkFeeManager).withdrawNetworkFees();
+                const res = await network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address);
+
+                await expect(res).to.not.emit(network, 'NetworkFeesWithdrawn');
 
                 expect(await bnt.balanceOf(networkFeeManager.address)).to.equal(prevBNTBalance);
             });
@@ -3725,15 +3723,30 @@ describe('BancorNetwork', () => {
                 expect(await network.pendingNetworkFeeAmount()).to.be.gt(0);
             });
 
+            it('should revert when the withdrawal caller is not a network-fee manager', async () => {
+                await expect(
+                    network.connect(deployer).withdrawNetworkFees(networkFeeManager.address)
+                ).to.be.revertedWith('AccessDenied');
+            });
+
+            it('should revert when the withdrawal recipient is invalid', async () => {
+                await expect(network.connect(networkFeeManager).withdrawNetworkFees(ZERO_ADDRESS)).to.be.revertedWith(
+                    'InvalidAddress'
+                );
+            });
+
             it('should withdraw all the pending network fees', async () => {
+                const recipient = nonOwner.address;
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
                 const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
 
-                await network.connect(networkFeeManager).withdrawNetworkFees();
+                const res = await network.connect(networkFeeManager).withdrawNetworkFees(recipient);
 
-                expect(await bnt.balanceOf(networkFeeManager.address)).to.equal(
-                    prevBNTBalance.add(pendingNetworkFeeAmount)
-                );
+                await expect(res)
+                    .to.emit(network, 'NetworkFeesWithdrawn')
+                    .withArgs(networkFeeManager.address, recipient, pendingNetworkFeeAmount);
+
+                expect(await bnt.balanceOf(recipient)).to.equal(prevBNTBalance.add(pendingNetworkFeeAmount));
 
                 expect(await network.pendingNetworkFeeAmount()).to.equal(0);
             });
@@ -3744,9 +3757,9 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should revert when attempting to withdraw the pending network fees', async () => {
-                    await expect(network.connect(networkFeeManager).withdrawNetworkFees()).to.be.revertedWith(
-                        'Pausable: paused'
-                    );
+                    await expect(
+                        network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address)
+                    ).to.be.revertedWith('Pausable: paused');
                 });
             });
         });

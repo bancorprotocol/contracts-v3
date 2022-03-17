@@ -199,13 +199,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when a flash-loan is completed
      */
-    event FlashLoanCompleted(
-        bytes32 indexed contextId,
-        Token indexed token,
-        address indexed borrower,
-        uint256 amount,
-        uint256 feeAmount
-    );
+    event FlashLoanCompleted(Token indexed token, address indexed borrower, uint256 amount, uint256 feeAmount);
+
+    /**
+     * @dev triggered when network fees are withdrawn
+     */
+    event NetworkFeesWithdrawn(address indexed caller, address indexed recipient, uint256 amount);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -759,15 +758,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             poolCollection.onFeesCollected(token, feeAmount);
         }
 
-        bytes32 contextId = keccak256(abi.encodePacked(msg.sender, _time(), token, amount, recipient, data));
-
-        emit FlashLoanCompleted({
-            contextId: contextId,
-            token: token,
-            borrower: msg.sender,
-            amount: amount,
-            feeAmount: feeAmount
-        });
+        emit FlashLoanCompleted({ token: token, borrower: msg.sender, amount: amount, feeAmount: feeAmount });
     }
 
     /**
@@ -846,7 +837,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawNetworkFees() external whenNotPaused onlyRoleMember(ROLE_NETWORK_FEE_MANAGER) {
+    function withdrawNetworkFees(address recipient)
+        external
+        whenNotPaused
+        onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
+        validAddress(recipient)
+    {
         uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
         if (pendingNetworkFeeAmount == 0) {
             return;
@@ -854,7 +850,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _pendingNetworkFeeAmount = 0;
 
-        _masterVault.withdrawFunds(Token(address(_bnt)), payable(address(msg.sender)), pendingNetworkFeeAmount);
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), pendingNetworkFeeAmount);
+
+        emit NetworkFeesWithdrawn(msg.sender, recipient, pendingNetworkFeeAmount);
     }
 
     /**

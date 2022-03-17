@@ -289,5 +289,5 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
      */
-    function withdrawNetworkFees() external;
+    function withdrawNetworkFees(address recipient) external;
 }
