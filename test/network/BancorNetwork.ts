@@ -2262,7 +2262,6 @@ describe('BancorNetwork', () => {
                     .to.emit(network, 'TokensTraded')
                     .withArgs(
                         contextId,
-                        targetToken.address,
                         bnt.address,
                         targetToken.address,
                         sourceAmount,
@@ -2277,7 +2276,6 @@ describe('BancorNetwork', () => {
                     .to.emit(network, 'TokensTraded')
                     .withArgs(
                         contextId,
-                        sourceToken.address,
                         sourceToken.address,
                         bnt.address,
                         sourceAmount,
@@ -2296,7 +2294,6 @@ describe('BancorNetwork', () => {
                     .to.emit(network, 'TokensTraded')
                     .withArgs(
                         contextId,
-                        sourceToken.address,
                         sourceToken.address,
                         bnt.address,
                         sourceAmount,
@@ -2318,7 +2315,6 @@ describe('BancorNetwork', () => {
                     .to.emit(network, 'TokensTraded')
                     .withArgs(
                         contextId,
-                        targetToken.address,
                         bnt.address,
                         targetToken.address,
                         // when providing the source amount, the source amount represents how much BNT we were required
