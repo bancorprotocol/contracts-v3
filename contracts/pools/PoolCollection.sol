@@ -359,7 +359,7 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
     /**
      * @inheritdoc IPoolCollection
      */
-    function createPool(Token token) external only(address(_network)) nonReentrant {
+    function createPool(Token token) external only(address(_network)) {
         if (!_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
@@ -582,7 +582,6 @@ contract PoolCollection is IPoolCollection, Owned, ReentrancyGuard, BlockNumber,
         only(address(_network))
         validAddress(provider)
         greaterThanZero(tokenAmount)
-        nonReentrant
         returns (uint256)
     {
         Pool storage data = _poolStorage(pool);

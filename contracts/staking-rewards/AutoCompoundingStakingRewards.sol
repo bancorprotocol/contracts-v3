@@ -224,7 +224,6 @@ contract AutoCompoundingStakingRewards is
         validAddress(address(rewardsVault))
         greaterThanZero(totalRewards)
         onlyAdmin
-        nonReentrant
     {
         if (_doesProgramExist(_programs[pool])) {
             revert ProgramAlreadyExists();

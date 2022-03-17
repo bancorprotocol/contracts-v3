@@ -341,7 +341,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function addPoolCollection(IPoolCollection poolCollection)
         external
         validAddress(address(poolCollection))
-        nonReentrant
         onlyAdmin
     {
         if (!_poolCollections.add(address(poolCollection))) {
@@ -375,7 +374,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         external
         validAddress(address(poolCollection))
         onlyAdmin
-        nonReentrant
     {
         // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
         _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
@@ -412,7 +410,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function setLatestPoolCollection(IPoolCollection poolCollection)
         external
-        nonReentrant
         validAddress(address(poolCollection))
         onlyAdmin
     {
@@ -829,7 +826,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount,
         uint256 availableAmount,
         uint256 originalAmount
-    ) external payable whenNotPaused onlyRoleMember(ROLE_MIGRATION_MANAGER) nonReentrant {
+    ) external payable whenNotPaused onlyRoleMember(ROLE_MIGRATION_MANAGER) {
         bytes32 contextId = keccak256(
             abi.encodePacked(msg.sender, _time(), token, provider, amount, availableAmount, originalAmount)
         );

@@ -331,7 +331,6 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         validAddress(address(rewardsToken))
         greaterThanZero(totalRewards)
         onlyAdmin
-        nonReentrant
         returns (uint256)
     {
         uint32 currTime = _time();
