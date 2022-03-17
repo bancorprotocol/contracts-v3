@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Fraction, Uint512, Sint256 } from "./Types.sol";
