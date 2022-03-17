@@ -259,7 +259,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
 
         emit WithdrawalCompleted({
             contextId: contextId,
-            pool: request.poolToken.reserveToken(),
+            pool: request.reserveToken,
             provider: provider,
             requestId: id,
             poolTokenAmount: currentPoolTokenAmount,
@@ -363,7 +363,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         request.poolToken.safeTransfer(request.provider, request.poolTokenAmount);
 
         emit WithdrawalCancelled({
-            pool: request.poolToken.reserveToken(),
+            pool: request.reserveToken,
             provider: request.provider,
             requestId: id,
             poolTokenAmount: request.poolTokenAmount,
