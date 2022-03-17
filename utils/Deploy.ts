@@ -220,19 +220,22 @@ interface DeployOptions {
     proxy?: ProxyOptions;
 }
 
+const PROXY_CONTRACT = 'TransparentUpgradeableProxyImmutable';
 const INITIALIZE = 'initialize';
 
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, args, proxy } = options;
+    const isProxy = !!proxy;
 
     await fundAccount(from);
 
     let proxyOptions: DeployProxyOptions = {};
-    if (proxy) {
+
+    if (isProxy) {
         const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
 
         proxyOptions = {
-            proxyContract: 'TransparentUpgradeableProxyImmutable',
+            proxyContract: PROXY_CONTRACT,
             execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } },
             owner: await proxyAdmin.owner(),
             viaAdminContract: ContractName.ProxyAdmin
@@ -244,13 +247,19 @@ export const deploy = async (options: DeployOptions) => {
         contract: contractName,
         from,
         args,
-        proxy: proxy ? proxyOptions : undefined,
+        proxy: isProxy ? proxyOptions : undefined,
         log: true
     });
 
     const data = { name, contract: contractName };
     await saveTypes(data);
-    await verifyTenderly({ address: res.address, ...data });
+
+    await verifyTenderly({
+        address: res.address,
+        proxy: isProxy,
+        implementation: isProxy ? res.implementation : undefined,
+        ...data
+    });
 
     return res.address;
 };
@@ -297,7 +306,8 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
 
     await save({
         name,
-        address
+        address,
+        skipVerification: true
     });
 
     return address;
@@ -328,10 +338,13 @@ interface Deployment {
     name: ContractName;
     contract?: string;
     address: Address;
+    proxy?: boolean;
+    implementation?: Address;
+    skipVerification?: boolean;
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address } = deployment;
+    const { name, contract, address, skipVerification } = deployment;
 
     const contractName = normalizedContractName(contract || name);
     const { abi } = await getExtendedArtifact(contractName);
@@ -342,9 +355,18 @@ export const save = async (deployment: Deployment) => {
     // save the deployment json data in the deployments folder
     await saveContract(name, { abi, address });
 
+    if (skipVerification) {
+        return;
+    }
+
     // publish the contract to Tenderly
     return verifyTenderly(deployment);
 };
+
+interface ContractData {
+    name: string;
+    address: Address;
+}
 
 const verifyTenderly = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
@@ -352,18 +374,33 @@ const verifyTenderly = async (deployment: Deployment) => {
         return;
     }
 
-    const { name, contract, address } = deployment;
-
-    const contractName = normalizedContractName(contract || name);
-
     const tenderlyNetwork = tenderly.network();
-
     tenderlyNetwork.setFork(TENDERLY_FORK_ID);
 
-    return tenderlyNetwork.verify({
-        name: contractName,
-        address
+    const { name, contract, address, proxy, implementation } = deployment;
+
+    const contracts: ContractData[] = [];
+    let contractAddress = address;
+
+    if (proxy) {
+        contracts.push({
+            name: PROXY_CONTRACT,
+            address
+        });
+
+        contractAddress = implementation!;
+    }
+
+    contracts.push({
+        name: normalizedContractName(contract || name),
+        address: contractAddress
     });
+
+    for (const contract of contracts) {
+        console.log('verifying (Tenderly)', contract.name, 'at', contract.address);
+
+        await tenderlyNetwork.verify(contract);
+    }
 };
 
 export const deploymentExists = async (tag: string) => (await ethers.getContractOrNull(tag)) !== null;
