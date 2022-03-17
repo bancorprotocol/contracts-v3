@@ -177,7 +177,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token indexed token,
         address indexed provider,
         uint256 amount,
-        uint256 availableAmount
+        uint256 availableAmount,
+        uint256 originalAmount
     );
 
     /**
@@ -840,7 +841,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             _depositBaseTokenFor(contextId, provider, token, amount, msg.sender, availableAmount);
         }
 
-        emit FundsMigrated(contextId, token, provider, amount, availableAmount);
+        emit FundsMigrated(contextId, token, provider, amount, availableAmount, originalAmount);
     }
 
     /**
