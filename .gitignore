@@ -17,6 +17,7 @@ deployments/*
 !deployments/data.ts
 !deployments/mainnet
 !deployments/tenderly
+deployments/tenderly/solcInputs
 
 .coverage_artifacts
 .coverage_contracts
