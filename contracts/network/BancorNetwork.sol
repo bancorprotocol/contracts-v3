@@ -184,8 +184,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev triggered on a successful trade
      */
     event TokensTraded(
-        bytes32 contextId,
-        Token indexed pool,
+        bytes32 indexed contextId,
         Token indexed sourceToken,
         Token indexed targetToken,
         uint256 sourceAmount,
@@ -1215,7 +1214,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         emit TokensTraded({
             contextId: contextId,
-            pool: pool,
             sourceToken: tokens.sourceToken,
             targetToken: tokens.targetToken,
             sourceAmount: tradeAmounts.sourceAmount,
