@@ -562,7 +562,9 @@ describe('BancorPortal', () => {
 
         // assert staked balances
         for (const t of bundles.map((b) => b.reserveToken)) {
-            if (isBNT(t)) continue;
+            if (isBNT(t)) {
+                continue;
+            }
 
             if (whitelist[t.address]) {
                 expect(newStakedBalances[t.address]).to.equal(previousStakedBalances[t.address].add(AMOUNT));
@@ -602,7 +604,9 @@ describe('BancorPortal', () => {
     ): Promise<AddressValueDictionary> => {
         const balances: { [address: string]: BigNumber } = {};
         for (const t of [token1, token2]) {
-            if (isBNT(t)) continue;
+            if (isBNT(t)) {
+                continue;
+            }
 
             balances[t.address] = (await poolCollection.poolData(t.address)).liquidity[2];
         }
