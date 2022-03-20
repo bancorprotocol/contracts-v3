@@ -562,7 +562,9 @@ describe('BancorPortal', () => {
 
         // assert staked balances
         for (const t of bundles.map((b) => b.reserveToken)) {
-            if (isNetworkToken(t)) continue;
+            if (isBNT(t)) {
+                continue;
+            }
 
             if (whitelist[t.address]) {
                 expect(newStakedBalances[t.address]).to.equal(previousStakedBalances[t.address].add(AMOUNT));
@@ -602,7 +604,9 @@ describe('BancorPortal', () => {
     ): Promise<AddressValueDictionary> => {
         const balances: { [address: string]: BigNumber } = {};
         for (const t of [token1, token2]) {
-            if (isNetworkToken(t)) continue;
+            if (isBNT(t)) {
+                continue;
+            }
 
             balances[t.address] = (await poolCollection.poolData(t.address)).liquidity[2];
         }
@@ -611,8 +615,8 @@ describe('BancorPortal', () => {
 
     const getWhitelist = async (token1: TokenWithAddress, token2: TokenWithAddress): Promise<Whitelist> => {
         return {
-            [token1.address]: isNetworkToken(token1) || (await networkSettings.isTokenWhitelisted(token1.address)),
-            [token2.address]: isNetworkToken(token2) || (await networkSettings.isTokenWhitelisted(token2.address))
+            [token1.address]: isBNT(token1) || (await networkSettings.isTokenWhitelisted(token1.address)),
+            [token2.address]: isBNT(token2) || (await networkSettings.isTokenWhitelisted(token2.address))
         };
     };
 
@@ -640,7 +644,7 @@ describe('BancorPortal', () => {
         return token.address === NATIVE_TOKEN_ADDRESS;
     };
 
-    const isNetworkToken = (token: TokenWithAddress): boolean => {
+    const isBNT = (token: TokenWithAddress): boolean => {
         return token.address === bnt.address;
     };
 });
