@@ -48,8 +48,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
 
-    // the network token contract
-    IERC20 private immutable _networkToken;
+    // the bnt contract
+    IERC20 private immutable _bnt;
 
     // Uniswap v2 router contract
     IUniswapV2Router02 private immutable _uniswapV2Router;
@@ -101,7 +101,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     constructor(
         IBancorNetwork network,
         INetworkSettings networkSettings,
-        IERC20 networkToken,
+        IERC20 bnt,
         IUniswapV2Router02 uniswapV2Router,
         IUniswapV2Factory uniswapV2Factory,
         IUniswapV2Router02 sushiSwapV2Router,
@@ -109,7 +109,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     )
         validAddress(address(network))
         validAddress(address(networkSettings))
-        validAddress(address(networkToken))
+        validAddress(address(bnt))
         validAddress(address(uniswapV2Router))
         validAddress(address(uniswapV2Factory))
         validAddress(address(sushiSwapV2Router))
@@ -117,7 +117,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     {
         _network = network;
         _networkSettings = networkSettings;
-        _networkToken = networkToken;
+        _bnt = bnt;
         _uniswapV2Router = uniswapV2Router;
         _uniswapV2Factory = uniswapV2Factory;
         _sushiSwapV2Router = sushiSwapV2Router;
@@ -266,7 +266,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
         for (uint256 i = 0; i < 2; i++) {
-            whitelist[i] = _isNetworkToken(tokens[i]) || _networkSettings.isTokenWhitelisted(tokens[i]);
+            whitelist[i] = tokens[i].isEqual(_bnt) || _networkSettings.isTokenWhitelisted(tokens[i]);
         }
         if (!whitelist[0] && !whitelist[1]) {
             revert UnsupportedTokens();
@@ -360,12 +360,5 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
                 deadline
             );
         }
-    }
-
-    /**
-     * @dev returns whether the specified token is the network token
-     */
-    function _isNetworkToken(Token token) private view returns (bool) {
-        return token.isEqual(_networkToken);
     }
 }
