@@ -2752,12 +2752,10 @@ describe('PoolCollection', () => {
                                 };
 
                                 const expectedNetworkFeeAmount = (
-                                    feeAmount: BigNumber,
+                                    targetNetworkFeeAmount: BigNumber,
                                     bntTradingLiquidity: BigNumber,
                                     baseTokenTradingLiquidity: BigNumber
                                 ) => {
-                                    const targetNetworkFeeAmount = feeAmount.mul(networkFeePPM).div(PPM_RESOLUTION);
-
                                     if (isSourceBNT) {
                                         return {
                                             bntFeeAmount: expectedTargetAmountAndFee(
@@ -2881,8 +2879,22 @@ describe('PoolCollection', () => {
                                             newBaseTokenTradingLiquidity = newBaseTokenTradingLiquidity.add(amount);
                                         }
 
+                                        const targetNetworkFeeAmount = expectedTargetAmounts.tradingFeeAmount
+                                            .mul(networkFeePPM)
+                                            .div(PPM_RESOLUTION);
+
+                                        expectedTargetAmounts.tradingFeeAmount =
+                                            expectedTargetAmounts.tradingFeeAmount.sub(targetNetworkFeeAmount);
+
+                                        if (isSourceBNT) {
+                                            newBaseTokenTradingLiquidity =
+                                                newBaseTokenTradingLiquidity.sub(targetNetworkFeeAmount);
+                                        } else {
+                                            newBNTTradingLiquidity = newBNTTradingLiquidity.sub(targetNetworkFeeAmount);
+                                        }
+
                                         const expectedNetworkFees = expectedNetworkFeeAmount(
-                                            expectedTargetAmounts.tradingFeeAmount,
+                                            targetNetworkFeeAmount,
                                             newBNTTradingLiquidity,
                                             newBaseTokenTradingLiquidity
                                         );
@@ -2891,11 +2903,7 @@ describe('PoolCollection', () => {
                                             maxRelativeError: new Decimal('0.0000000000000000001')
                                         });
                                         expect(targetAmountAndFee.tradingFeeAmount).to.almostEqual(
-                                            expectedTargetAmounts.tradingFeeAmount.sub(
-                                                isSourceBNT
-                                                    ? expectedNetworkFees.targetNetworkFeeAmount
-                                                    : expectedNetworkFees.bntFeeAmount
-                                            ),
+                                            expectedTargetAmounts.tradingFeeAmount,
                                             {
                                                 maxRelativeError: new Decimal('0.000000000000000006'),
                                                 relation: Relation.LesserOrEqual
@@ -2947,10 +2955,6 @@ describe('PoolCollection', () => {
                                         await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
 
                                         if (isSourceBNT) {
-                                            const targetNetworkFeeAmount = expectedTargetAmounts.tradingFeeAmount
-                                                .mul(networkFeePPM)
-                                                .div(PPM_RESOLUTION);
-
                                             expect(liquidity.bntTradingLiquidity).to.equal(
                                                 newBNTTradingLiquidity.sub(expectedNetworkFees.bntFeeAmount)
                                             );
@@ -2960,9 +2964,7 @@ describe('PoolCollection', () => {
                                                 )
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
-                                                prevLiquidity.stakedBalance
-                                                    .add(expectedTargetAmounts.tradingFeeAmount)
-                                                    .sub(targetNetworkFeeAmount)
+                                                prevLiquidity.stakedBalance.add(expectedTargetAmounts.tradingFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
@@ -3045,8 +3047,22 @@ describe('PoolCollection', () => {
                                             );
                                         }
 
+                                        const targetNetworkFeeAmount = expectedSourceAmounts.tradingFeeAmount
+                                            .mul(networkFeePPM)
+                                            .div(PPM_RESOLUTION);
+
+                                        expectedSourceAmounts.tradingFeeAmount =
+                                            expectedSourceAmounts.tradingFeeAmount.sub(targetNetworkFeeAmount);
+
+                                        if (isSourceBNT) {
+                                            newBaseTokenTradingLiquidity =
+                                                newBaseTokenTradingLiquidity.sub(targetNetworkFeeAmount);
+                                        } else {
+                                            newBNTTradingLiquidity = newBNTTradingLiquidity.sub(targetNetworkFeeAmount);
+                                        }
+
                                         const expectedNetworkFees = expectedNetworkFeeAmount(
-                                            expectedSourceAmounts.tradingFeeAmount,
+                                            targetNetworkFeeAmount,
                                             newBNTTradingLiquidity,
                                             newBaseTokenTradingLiquidity
                                         );
@@ -3055,11 +3071,7 @@ describe('PoolCollection', () => {
                                             maxRelativeError: new Decimal('0.0000000000000000001')
                                         });
                                         expect(sourceAmountAndFee.tradingFeeAmount).to.almostEqual(
-                                            expectedSourceAmounts.tradingFeeAmount.sub(
-                                                isSourceBNT
-                                                    ? expectedNetworkFees.targetNetworkFeeAmount
-                                                    : expectedNetworkFees.bntFeeAmount
-                                            ),
+                                            expectedSourceAmounts.tradingFeeAmount,
                                             {
                                                 maxRelativeError: new Decimal('0.000000000000000006'),
                                                 relation: Relation.LesserOrEqual
@@ -3112,10 +3124,6 @@ describe('PoolCollection', () => {
                                         await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
 
                                         if (isSourceBNT) {
-                                            const targetNetworkFeeAmount = expectedSourceAmounts.tradingFeeAmount
-                                                .mul(networkFeePPM)
-                                                .div(PPM_RESOLUTION);
-
                                             expect(liquidity.bntTradingLiquidity).to.equal(
                                                 newBNTTradingLiquidity.sub(expectedNetworkFees.bntFeeAmount)
                                             );
@@ -3125,9 +3133,7 @@ describe('PoolCollection', () => {
                                                 )
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
-                                                prevLiquidity.stakedBalance
-                                                    .add(expectedSourceAmounts.tradingFeeAmount)
-                                                    .sub(targetNetworkFeeAmount)
+                                                prevLiquidity.stakedBalance.add(expectedSourceAmounts.tradingFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
