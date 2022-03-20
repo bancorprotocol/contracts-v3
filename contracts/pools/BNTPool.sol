@@ -112,9 +112,9 @@ contract BNTPool is IBNTPool, Vault {
      */
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
+        uint256 liquidity,
         uint256 stakedBalance,
-        uint256 poolTokenSupply,
-        uint256 actualBalance
+        uint256 poolTokenSupply
     );
 
     /**
@@ -471,9 +471,9 @@ contract BNTPool is IBNTPool, Vault {
 
         emit TotalLiquidityUpdated({
             contextId: contextId,
-            poolTokenSupply: poolTokenTotalSupply + poolTokenAmount,
+            liquidity: _bnt.balanceOf(address(_masterVault)),
             stakedBalance: newStakedBalance,
-            actualBalance: _bnt.balanceOf(address(_masterVault))
+            poolTokenSupply: poolTokenTotalSupply + poolTokenAmount
         });
     }
 
@@ -522,9 +522,9 @@ contract BNTPool is IBNTPool, Vault {
 
         emit TotalLiquidityUpdated({
             contextId: contextId,
-            poolTokenSupply: poolTokenTotalSupply - poolTokenAmount,
+            liquidity: _bnt.balanceOf(address(_masterVault)),
             stakedBalance: newStakedBalance,
-            actualBalance: _bnt.balanceOf(address(_masterVault))
+            poolTokenSupply: poolTokenTotalSupply - poolTokenAmount
         });
     }
 

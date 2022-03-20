@@ -249,9 +249,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     event TotalLiquidityUpdated(
         bytes32 indexed contextId,
         Token indexed pool,
+        uint256 liquidity,
         uint256 stakedBalance,
-        uint256 poolTokenSupply,
-        uint256 actualBalance
+        uint256 poolTokenSupply
     );
 
     /**
@@ -1258,9 +1258,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             emit TotalLiquidityUpdated({
                 contextId: contextId,
                 pool: pool,
-                poolTokenSupply: poolTokenTotalSupply,
+                liquidity: pool.balanceOf(address(_masterVault)),
                 stakedBalance: newLiquidity.stakedBalance,
-                actualBalance: pool.balanceOf(address(_masterVault))
+                poolTokenSupply: poolTokenTotalSupply
             });
         }
     }

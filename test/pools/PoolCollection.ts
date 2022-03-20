@@ -141,9 +141,9 @@ describe('PoolCollection', () => {
                 .withArgs(
                     contextId,
                     token.address,
+                    await getBalance(token, masterVault.address),
                     newLiquidity.stakedBalance,
-                    await poolToken.totalSupply(),
-                    await getBalance(token, masterVault.address)
+                    await poolToken.totalSupply()
                 );
         } else {
             await expect(res).not.to.emit(poolCollection, 'TotalLiquidityUpdated');
