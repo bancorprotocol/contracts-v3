@@ -1466,9 +1466,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             return;
         }
 
-        // calculate the target network fee amount and update the trading fee amount accordingly
+        // calculate the target network fee amount
         uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, networkFeePPM, PPM_RESOLUTION);
+
+        // update the trading fee amount and the target balance
         result.tradingFeeAmount -= targetNetworkFeeAmount;
+        result.targetBalance -= targetNetworkFeeAmount;
 
         if (!result.isSourceBNT) {
             result.networkFeeAmount = targetNetworkFeeAmount;
