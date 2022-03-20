@@ -264,6 +264,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) internal onlyInitializing {
         __Upgradeable_init();
         __ReentrancyGuard_init();
+        __Pausable_init();
 
         __BancorNetwork_init_unchained(initBNTPool, initPendingWithdrawals, initPoolCollectionUpgrader);
     }
