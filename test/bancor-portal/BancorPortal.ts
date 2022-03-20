@@ -524,13 +524,13 @@ describe('BancorPortal', () => {
             expect(newBalances[token2.address].eq(previousBalances[token2.address].add(AMOUNT))).to.be.true;
         } else {
             if (whitelist[token1.address]) {
-                const transactionCost = isETH(token2) ? await getTransactionCost(res) : 0;
+                const transactionCost = isNativeToken(token2) ? await getTransactionCost(res) : 0;
                 expect(newBalances[token1.address].eq(previousBalances[token1.address])).to.be.true;
                 expect(
                     newBalances[token2.address].eq(previousBalances[token2.address].add(AMOUNT).sub(transactionCost))
                 ).to.be.true;
             } else {
-                const transactionCost = isETH(token1) ? await getTransactionCost(res) : 0;
+                const transactionCost = isNativeToken(token1) ? await getTransactionCost(res) : 0;
                 expect(
                     newBalances[token1.address].eq(previousBalances[token1.address].add(AMOUNT).sub(transactionCost))
                 ).to.be.true;
@@ -636,7 +636,7 @@ describe('BancorPortal', () => {
         return { poolToken, token };
     };
 
-    const isETH = (token: TokenWithAddress): boolean => {
+    const isNativeToken = (token: TokenWithAddress): boolean => {
         return token.address === NATIVE_TOKEN_ADDRESS;
     };
 
