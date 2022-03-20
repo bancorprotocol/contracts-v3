@@ -2997,9 +2997,7 @@ describe('BancorNetwork', () => {
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            await network
-                .connect(deployer)
-                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
+            await network.grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
         });
 
         const testLiquidityMigration = (
@@ -3181,6 +3179,53 @@ describe('BancorNetwork', () => {
                         await addProtectedLiquidity(poolToken, baseToken, isNativeToken, BigNumber.from(1000), owner);
                     });
 
+                    it('verifies that the funds-migrated event is emitted correctly', async () => {
+                        const amount = 1000;
+                        const availableAmount = 2000;
+                        const originalAmount = 4500;
+                        const value = isNativeToken ? availableAmount : 0;
+
+                        const contextId = solidityKeccak256(
+                            ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'uint256'],
+                            [
+                                deployer.address,
+                                await network.currentTime(),
+                                baseToken.address,
+                                deployer.address,
+                                amount,
+                                availableAmount,
+                                originalAmount
+                            ]
+                        );
+
+                        await network.grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, deployer.address);
+                        await bnt.approve(network.address, MAX_UINT256);
+                        await poolToken.approve(network.address, MAX_UINT256);
+                        if (!isNativeToken) {
+                            await baseToken.approve(network.address, MAX_UINT256);
+                        }
+
+                        const res = await network.migrateLiquidity(
+                            baseToken.address,
+                            deployer.address,
+                            amount,
+                            availableAmount,
+                            originalAmount,
+                            { value }
+                        );
+
+                        await expect(res)
+                            .to.emit(network, 'FundsMigrated')
+                            .withArgs(
+                                contextId,
+                                baseToken.address,
+                                deployer.address,
+                                amount,
+                                availableAmount,
+                                originalAmount
+                            );
+                    });
+
                     it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         await liquidityProtection.setTime(now + duration.seconds(1));
@@ -3218,6 +3263,9 @@ describe('BancorNetwork', () => {
 
                         const res = await liquidityProtection.migratePositions([protectionId]);
                         const transactionCost = isNativeToken ? await getTransactionCost(res) : BigNumber.from(0);
+
+                        // verify event
+                        await expect(res).to.emit(network, 'FundsMigrated');
 
                         // verify protected liquidities
                         expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
@@ -3342,6 +3390,42 @@ describe('BancorNetwork', () => {
                     await addProtectedLiquidity(poolToken, bnt, false, amount2, owner);
                 });
 
+                it('verifies that the funds-migrated event is emitted correctly', async () => {
+                    const amount = 1000;
+                    const availableAmount = 2000;
+                    const originalAmount = 4500;
+
+                    const contextId = solidityKeccak256(
+                        ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'uint256'],
+                        [
+                            deployer.address,
+                            await network.currentTime(),
+                            bnt.address,
+                            deployer.address,
+                            amount,
+                            availableAmount,
+                            originalAmount
+                        ]
+                    );
+
+                    await network.grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, deployer.address);
+                    await bnt.approve(network.address, MAX_UINT256);
+                    await poolToken.approve(network.address, MAX_UINT256);
+                    await baseToken.approve(network.address, MAX_UINT256);
+
+                    const res = await network.migrateLiquidity(
+                        bnt.address,
+                        deployer.address,
+                        amount,
+                        availableAmount,
+                        originalAmount
+                    );
+
+                    await expect(res)
+                        .to.emit(network, 'FundsMigrated')
+                        .withArgs(contextId, bnt.address, deployer.address, amount, availableAmount, originalAmount);
+                });
+
                 it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
                     const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                     await liquidityProtection.setTime(now + duration.seconds(1));
@@ -3374,7 +3458,10 @@ describe('BancorNetwork', () => {
                     const prevVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
                     await liquidityProtection.setTime(now + duration.seconds(1));
-                    await liquidityProtection.migratePositions([protectionId]);
+                    const res = await liquidityProtection.migratePositions([protectionId]);
+
+                    // verify event
+                    await expect(res).to.emit(network, 'FundsMigrated');
 
                     // verify protected liquidities
                     expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
