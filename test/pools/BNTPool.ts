@@ -305,9 +305,9 @@ describe('BNTPool', () => {
                 .to.emit(bntPool, 'TotalLiquidityUpdated')
                 .withArgs(
                     CONTEXT_ID,
-                    await bntPoolToken.totalSupply(),
+                    await bnt.balanceOf(masterVault.address),
                     await bntPool.stakedBalance(),
-                    await bnt.balanceOf(masterVault.address)
+                    await bntPoolToken.totalSupply()
                 );
 
             expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedAmount));
@@ -505,9 +505,9 @@ describe('BNTPool', () => {
                     .to.emit(bntPool, 'TotalLiquidityUpdated')
                     .withArgs(
                         CONTEXT_ID,
-                        await bntPoolToken.totalSupply(),
+                        await bnt.balanceOf(masterVault.address),
                         await bntPool.stakedBalance(),
-                        await bnt.balanceOf(masterVault.address)
+                        await bntPoolToken.totalSupply()
                     );
 
                 expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.sub(reduceFundingAmount));
