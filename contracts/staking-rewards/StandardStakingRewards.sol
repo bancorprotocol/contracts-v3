@@ -526,7 +526,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
             if (i == 0) {
                 rewardsToken = p.rewardsToken;
-            } else if (p.rewardsToken != rewardsToken) {
+            }
+
+            if (p.rewardsToken != rewardsToken) {
                 revert RewardsTokenMismatch();
             }
 
