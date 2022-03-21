@@ -210,7 +210,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev triggered when new liquidity is deposited into a pool
      */
-    event TokenDeposited(
+    event TokensDeposited(
         bytes32 indexed contextId,
         Token indexed token,
         address indexed provider,
@@ -221,7 +221,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev triggered when existing liquidity is withdrawn from a pool
      */
-    event TokenWithdrawn(
+    event TokensWithdrawn(
         bytes32 indexed contextId,
         Token indexed token,
         address indexed provider,
@@ -612,7 +612,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             _networkSettings.minLiquidityForTrading()
         );
 
-        emit TokenDeposited({
+        emit TokensDeposited({
             contextId: contextId,
             token: pool,
             provider: provider,
@@ -1006,7 +1006,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             );
         }
 
-        emit TokenWithdrawn({
+        emit TokensWithdrawn({
             contextId: contextId,
             token: pool,
             provider: provider,

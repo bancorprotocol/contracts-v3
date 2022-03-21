@@ -1102,7 +1102,7 @@ describe('PoolCollection', () => {
                     );
 
                     await expect(res)
-                        .to.emit(poolCollection, 'TokenDeposited')
+                        .to.emit(poolCollection, 'TokensDeposited')
                         .withArgs(CONTEXT_ID, token.address, provider.address, tokenAmount, expectedPoolTokenAmount);
 
                     const poolData = await poolCollection.poolData(token.address);
@@ -1525,7 +1525,7 @@ describe('PoolCollection', () => {
             );
 
             await expect(res)
-                .to.emit(poolCollection, 'TokenWithdrawn')
+                .to.emit(poolCollection, 'TokensWithdrawn')
                 .withArgs(
                     CONTEXT_ID,
                     token.address,
