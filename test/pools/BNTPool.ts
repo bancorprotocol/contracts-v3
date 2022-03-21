@@ -673,7 +673,7 @@ describe('BNTPool', () => {
                     );
 
                     await expect(res)
-                        .to.emit(bntPool, 'TokenDeposited')
+                        .to.emit(bntPool, 'TokensDeposited')
                         .withArgs(CONTEXT_ID, provider.address, amount, expectedPoolTokenAmount, expectedVBNTAmount);
 
                     expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance);
@@ -849,7 +849,7 @@ describe('BNTPool', () => {
                         const res = await network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount);
 
                         await expect(res)
-                            .to.emit(bntPool, 'TokenWithdrawn')
+                            .to.emit(bntPool, 'TokensWithdrawn')
                             .withArgs(
                                 CONTEXT_ID,
                                 provider.address,

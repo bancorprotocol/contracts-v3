@@ -77,7 +77,7 @@ contract BNTPool is IBNTPool, Vault {
     /**
      * @dev triggered when liquidity is deposited
      */
-    event TokenDeposited(
+    event TokensDeposited(
         bytes32 indexed contextId,
         address indexed provider,
         uint256 bntAmount,
@@ -88,7 +88,7 @@ contract BNTPool is IBNTPool, Vault {
     /**
      * @dev triggered when liquidity is withdrawn
      */
-    event TokenWithdrawn(
+    event TokensWithdrawn(
         bytes32 indexed contextId,
         address indexed provider,
         uint256 bntAmount,
@@ -361,7 +361,7 @@ contract BNTPool is IBNTPool, Vault {
             _vbntGovernance.mint(provider, vbntAmount);
         }
 
-        emit TokenDeposited({
+        emit TokensDeposited({
             contextId: contextId,
             provider: provider,
             bntAmount: bntAmount,
@@ -391,7 +391,7 @@ contract BNTPool is IBNTPool, Vault {
         // mint BNT to the provider
         _bntGovernance.mint(provider, amounts.bntAmount);
 
-        emit TokenWithdrawn({
+        emit TokensWithdrawn({
             contextId: contextId,
             provider: provider,
             bntAmount: amounts.bntAmount,
