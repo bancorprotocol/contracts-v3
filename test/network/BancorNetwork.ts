@@ -3878,6 +3878,7 @@ describe('BancorNetwork Financial Verification', () => {
 
     interface Flow {
         tradingFee: string;
+        networkFee: string;
         withdrawalFee: string;
         epVaultBalance: number;
         tknDecimals: number;
@@ -4070,6 +4071,7 @@ describe('BancorNetwork Financial Verification', () => {
         await bntGovernance.burn(await bnt.balanceOf(signers[0].address));
         await bntGovernance.mint(signers[0].address, bntAmount);
 
+        await networkSettings.setNetworkFeePPM(percentageToPPM(flow.networkFee));
         await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
         await networkSettings.setMinLiquidityForTrading(decimalToInteger(flow.bntMinLiquidity, bntDecimals));
         await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));

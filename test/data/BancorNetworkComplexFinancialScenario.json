@@ -1,5 +1,6 @@
 {
     "tradingFee": "0.25%",
+    "networkFee": "0%",
     "withdrawalFee": "0.25%",
     "epVaultBalance": "0",
     "tknDecimals": 18,
