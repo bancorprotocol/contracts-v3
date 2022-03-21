@@ -70,26 +70,26 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      * @dev triggered after a successful Uniswap V2 migration
      */
     event UniswapV2PositionMigrated(
-        address indexed provider,
         Token indexed tokenA,
         Token indexed tokenB,
         uint256 amountA,
         uint256 amountB,
         bool depositedA,
-        bool depositedB
+        bool depositedB,
+        address owner
     );
 
     /**
      * @dev triggered after a successful SushiSwap V1 migration
      */
     event SushiSwapV2PositionMigrated(
-        address indexed provider,
         Token indexed tokenA,
         Token indexed tokenB,
         uint256 amountA,
         uint256 amountB,
         bool depositedA,
-        bool depositedB
+        bool depositedB,
+        address owner
     );
 
     error UnsupportedTokens();
@@ -185,13 +185,13 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         );
 
         emit UniswapV2PositionMigrated({
-            provider: msg.sender,
             tokenA: res.tokenA,
             tokenB: res.tokenB,
             amountA: res.amountA,
             amountB: res.amountB,
             depositedA: res.depositedA,
-            depositedB: res.depositedB
+            depositedB: res.depositedB,
+            owner: msg.sender
         });
 
         return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
@@ -222,13 +222,13 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         );
 
         emit SushiSwapV2PositionMigrated({
-            provider: msg.sender,
             tokenA: res.tokenA,
             tokenB: res.tokenB,
             amountA: res.amountA,
             amountB: res.amountB,
             depositedA: res.depositedA,
-            depositedB: res.depositedB
+            depositedB: res.depositedB,
+            owner: msg.sender
         });
 
         return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
