@@ -12,7 +12,7 @@ import Contracts, {
     TestBNTPool,
     TestERC20Token,
     TestPoolCollection,
-    TestPoolCollectionUpgrader
+    TestPoolMigrator
 } from '../../components/Contracts';
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
@@ -159,7 +159,7 @@ describe('PoolCollection', () => {
         let bntPool: TestBNTPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
-        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let poolMigrator: TestPoolMigrator;
 
         beforeEach(async () => {
             ({
@@ -171,7 +171,7 @@ describe('PoolCollection', () => {
                 bntPool,
                 poolTokenFactory,
                 poolCollection,
-                poolCollectionUpgrader
+                poolMigrator
             } = await createSystem());
         });
 
@@ -185,7 +185,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -200,7 +200,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -215,7 +215,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -230,7 +230,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -245,7 +245,7 @@ describe('PoolCollection', () => {
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -260,7 +260,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     ZERO_ADDRESS,
                     poolTokenFactory.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -275,12 +275,12 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid pool collection upgrader contract', async () => {
+        it('should revert when attempting to create with an invalid pool migrator contract', async () => {
             await expect(
                 Contracts.PoolCollection.deploy(
                     network.address,
@@ -3360,7 +3360,7 @@ describe('PoolCollection', () => {
         let poolCollection: TestPoolCollection;
         let poolToken: PoolToken;
         let targetPoolCollection: TestPoolCollection;
-        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let poolMigrator: TestPoolMigrator;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
@@ -3373,7 +3373,7 @@ describe('PoolCollection', () => {
                 bntPool,
                 poolTokenFactory,
                 poolCollection,
-                poolCollectionUpgrader
+                poolMigrator
             } = await createSystem());
 
             reserveToken = await createTestToken();
@@ -3388,7 +3388,7 @@ describe('PoolCollection', () => {
                 bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
-                poolCollectionUpgrader,
+                poolMigrator,
                 (await poolCollection.version()) + 1
             );
             await network.addPoolCollection(targetPoolCollection.address);
@@ -3396,26 +3396,26 @@ describe('PoolCollection', () => {
         });
 
         describe('in', () => {
-            it('should revert when attempting to migrate a pool into a pool collection from a non-upgrader', async () => {
-                const nonUpgrader = deployer;
+            it('should revert when attempting to migrate a pool into a pool collection from a non-migrator', async () => {
+                const nonMigrator = deployer;
 
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
-                    targetPoolCollection.connect(nonUpgrader).migratePoolIn(reserveToken.address, poolData)
+                    targetPoolCollection.connect(nonMigrator).migratePoolIn(reserveToken.address, poolData)
                 ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when attempting to migrate an invalid pool into a pool collection', async () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
-                    poolCollectionUpgrader.migratePoolInT(targetPoolCollection.address, ZERO_ADDRESS, poolData)
+                    poolMigrator.migratePoolInT(targetPoolCollection.address, ZERO_ADDRESS, poolData)
                 ).to.be.revertedWith('InvalidAddress');
             });
 
             it('should revert when attempting to migrate an already existing pool into a pool collection', async () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
-                    poolCollectionUpgrader.migratePoolInT(poolCollection.address, reserveToken.address, poolData)
+                    poolMigrator.migratePoolInT(poolCollection.address, reserveToken.address, poolData)
                 ).to.be.revertedWith('AlreadyExists');
             });
 
@@ -3423,7 +3423,7 @@ describe('PoolCollection', () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
 
                 await expect(
-                    poolCollectionUpgrader.migratePoolInT(targetPoolCollection.address, reserveToken.address, poolData)
+                    poolMigrator.migratePoolInT(targetPoolCollection.address, reserveToken.address, poolData)
                 ).to.be.revertedWith('AccessDenied');
             });
 
@@ -3435,13 +3435,13 @@ describe('PoolCollection', () => {
 
                 const poolData = await poolCollection.poolData(reserveToken.address);
 
-                await poolCollectionUpgrader.migratePoolOutT(
+                await poolMigrator.migratePoolOutT(
                     poolCollection.address,
                     reserveToken.address,
                     targetPoolCollection.address
                 );
 
-                const res = await poolCollectionUpgrader.migratePoolInT(
+                const res = await poolMigrator.migratePoolInT(
                     targetPoolCollection.address,
                     reserveToken.address,
                     poolData
@@ -3457,19 +3457,19 @@ describe('PoolCollection', () => {
         });
 
         describe('out', () => {
-            it('should revert when attempting to migrate a pool out of a pool collection from a non-upgrader', async () => {
-                const nonUpgrader = deployer;
+            it('should revert when attempting to migrate a pool out of a pool collection from a non-migrator', async () => {
+                const nonMigrator = deployer;
 
                 await expect(
                     poolCollection
-                        .connect(nonUpgrader)
+                        .connect(nonMigrator)
                         .migratePoolOut(reserveToken.address, targetPoolCollection.address)
                 ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when attempting to migrate an invalid pool out of a pool collection', async () => {
                 await expect(
-                    poolCollectionUpgrader.migratePoolOutT(
+                    poolMigrator.migratePoolOutT(
                         poolCollection.address,
                         ZERO_ADDRESS,
                         targetPoolCollection.address
@@ -3479,7 +3479,7 @@ describe('PoolCollection', () => {
 
             it('should revert when attempting to migrate a pool out of a pool collection to an invalid pool collection', async () => {
                 await expect(
-                    poolCollectionUpgrader.migratePoolOutT(poolCollection.address, reserveToken.address, ZERO_ADDRESS)
+                    poolMigrator.migratePoolOutT(poolCollection.address, reserveToken.address, ZERO_ADDRESS)
                 ).to.be.revertedWith('InvalidAddress');
 
                 const newPoolCollection = await createPoolCollection(
@@ -3490,10 +3490,10 @@ describe('PoolCollection', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolCollectionUpgrader
+                    poolMigrator
                 );
                 await expect(
-                    poolCollectionUpgrader.migratePoolOutT(
+                    poolMigrator.migratePoolOutT(
                         poolCollection.address,
                         reserveToken.address,
                         newPoolCollection.address
@@ -3504,7 +3504,7 @@ describe('PoolCollection', () => {
             it('should revert when attempting to migrate a non-existing pool out of a pool collection', async () => {
                 const reserveToken2 = await createTestToken();
                 await expect(
-                    poolCollectionUpgrader.migratePoolOutT(
+                    poolMigrator.migratePoolOutT(
                         poolCollection.address,
                         reserveToken2.address,
                         targetPoolCollection.address
@@ -3518,7 +3518,7 @@ describe('PoolCollection', () => {
 
                 expect(await poolToken.owner()).to.equal(poolCollection.address);
 
-                const res = await poolCollectionUpgrader.migratePoolOutT(
+                const res = await poolMigrator.migratePoolOutT(
                     poolCollection.address,
                     reserveToken.address,
                     targetPoolCollection.address

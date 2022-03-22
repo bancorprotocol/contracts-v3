@@ -5,7 +5,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { Pool, PoolLiquidity, IPoolCollection, AverageRate } from "./interfaces/IPoolCollection.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
-import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../utility/Types.sol";
@@ -38,9 +38,9 @@ interface IPoolCollectionV1 is IPoolCollectionBase {
 }
 
 /**
- * @dev Pool Collection Upgrader contract
+ * @dev Pool Migrator contract
  */
-contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
+contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     error UnsupportedVersion();
 
     IPoolCollection private constant INVALID_POOL_COLLECTION = IPoolCollection(address(0));
@@ -52,9 +52,9 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     uint256[MAX_GAP - 0] private __gap;
 
     /**
-     * @dev triggered when an existing pool is upgraded
+     * @dev triggered when an existing pool is migrated
      */
-    event PoolUpgraded(Token indexed pool, IPoolCollection prevPoolCollection, IPoolCollection newPoolCollection);
+    event PoolMigrated(Token indexed pool, IPoolCollection prevPoolCollection, IPoolCollection newPoolCollection);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -67,7 +67,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __PoolCollectionUpgrader_init();
+        __PoolMigrator_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -75,16 +75,16 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     /**
      * @dev initializes the contract and its parents
      */
-    function __PoolCollectionUpgrader_init() internal onlyInitializing {
+    function __PoolMigrator_init() internal onlyInitializing {
         __Upgradeable_init();
 
-        __PoolCollectionUpgrader_init_unchained();
+        __PoolMigrator_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __PoolCollectionUpgrader_init_unchained() internal onlyInitializing {}
+    function __PoolMigrator_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 
@@ -96,9 +96,9 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     }
 
     /**
-     * @inheritdoc IPoolCollectionUpgrader
+     * @inheritdoc IPoolMigrator
      */
-    function upgradePool(Token pool) external only(address(_network)) returns (IPoolCollection) {
+    function migratePool(Token pool) external only(address(_network)) returns (IPoolCollection) {
         if (address(pool) == address(0)) {
             revert InvalidPool();
         }
@@ -109,7 +109,7 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
             revert InvalidPool();
         }
 
-        // get the latest pool collection corresponding to its type and ensure that an upgrade is necessary. Please
+        // get the latest pool collection corresponding to its type and ensure that a migration is necessary
         // note that it's currently not possible to add two pool collections with the same version or type
         uint16 poolType = prevPoolCollection.poolType();
         IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
@@ -119,9 +119,9 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
 
         // migrate all relevant values based on a historical collection version into the new pool collection
         if (prevPoolCollection.version() == 1) {
-            _upgradeFromV1(pool, IPoolCollectionV1(address(prevPoolCollection)), newPoolCollection);
+            _migrateFromV1(pool, IPoolCollectionV1(address(prevPoolCollection)), newPoolCollection);
 
-            emit PoolUpgraded({
+            emit PoolMigrated({
                 pool: pool,
                 prevPoolCollection: prevPoolCollection,
                 newPoolCollection: newPoolCollection
@@ -134,9 +134,9 @@ contract PoolCollectionUpgrader is IPoolCollectionUpgrader, Upgradeable, Utils {
     }
 
     /**
-     * @dev upgrades a V1 pool to the latest pool version
+     * @dev migrates a V1 pool to the latest pool version
      */
-    function _upgradeFromV1(
+    function _migrateFromV1(
         Token pool,
         IPoolCollectionV1 sourcePoolCollection,
         IPoolCollection targetPoolCollection

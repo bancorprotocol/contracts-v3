@@ -14,7 +14,7 @@ import {
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
-    PoolCollectionUpgrader,
+    PoolMigrator,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
@@ -77,7 +77,7 @@ enum NewContractName {
     NetworkSettingsV1 = 'NetworkSettingsV1',
     PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
-    PoolCollectionUpgraderV1 = 'PoolCollectionUpgraderV1',
+    PoolMigratorV1 = 'PoolMigratorV1',
     PoolTokenFactoryV1 = 'PoolTokenFactoryV1',
     ProxyAdmin = 'ProxyAdmin',
     StandardStakingRewardsV1 = 'StandardStakingRewardsV1'
@@ -129,7 +129,7 @@ const DeployedNewContracts = {
     NetworkSettingsV1: deployed<NetworkSettings>(ContractName.NetworkSettingsV1),
     PendingWithdrawalsV1: deployed<PendingWithdrawals>(ContractName.PendingWithdrawalsV1),
     PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
-    PoolCollectionUpgraderV1: deployed<PoolCollectionUpgrader>(ContractName.PoolCollectionUpgraderV1),
+    PoolMigratorV1: deployed<PoolMigrator>(ContractName.PoolMigratorV1),
     PoolTokenFactoryV1: deployed<PoolTokenFactory>(ContractName.PoolTokenFactoryV1),
     ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin),
     StandardStakingRewardsV1: deployed<StandardStakingRewards>(ContractName.StandardStakingRewardsV1)

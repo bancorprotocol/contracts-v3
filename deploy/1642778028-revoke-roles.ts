@@ -14,7 +14,7 @@ const CONTRACT_NAMES_TO_REVOKE = [
     ContractName.MasterVaultV1,
     ContractName.NetworkSettingsV1,
     ContractName.PendingWithdrawalsV1,
-    ContractName.PoolCollectionUpgraderV1,
+    ContractName.PoolMigratorV1,
     ContractName.PoolTokenFactoryV1,
     ContractName.StandardStakingRewardsV1
 ];

@@ -10,7 +10,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
 import { IPoolCollection, WithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
@@ -70,8 +70,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     // the pending withdrawals contract
     IPendingWithdrawals private immutable _pendingWithdrawals;
 
-    // the pool collection upgrader contract
-    IPoolCollectionUpgrader private immutable _poolCollectionUpgrader;
+    // the pool migrator contract
+    IPoolMigrator private immutable _poolMigrator;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -89,7 +89,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         IExternalRewardsVault initExternalRewardsVault,
         IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
-        IPoolCollectionUpgrader initPoolCollectionUpgrader
+        IPoolMigrator initPoolMigrator
     ) {
         _validAddress(address(initNetwork));
         _validAddress(address(initBNTGovernance));
@@ -100,7 +100,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _validAddress(address(initExternalRewardsVault));
         _validAddress(address(initBNTPool));
         _validAddress(address(initPendingWithdrawals));
-        _validAddress(address(initPoolCollectionUpgrader));
+        _validAddress(address(initPoolMigrator));
 
         _network = initNetwork;
         _bntGovernance = initBNTGovernance;
@@ -114,7 +114,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _bntPool = initBNTPool;
         _bntPoolToken = initBNTPool.poolToken();
         _pendingWithdrawals = initPendingWithdrawals;
-        _poolCollectionUpgrader = initPoolCollectionUpgrader;
+        _poolMigrator = initPoolMigrator;
     }
 
     /**
@@ -254,8 +254,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader) {
-        return _poolCollectionUpgrader;
+    function poolMigrator() external view returns (IPoolMigrator) {
+        return _poolMigrator;
     }
 
     /**

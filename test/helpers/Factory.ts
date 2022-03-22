@@ -8,7 +8,7 @@ import Contracts, {
     IERC20,
     MasterVault,
     NetworkSettings,
-    PoolCollectionUpgrader,
+    PoolMigrator,
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
@@ -193,7 +193,7 @@ export const createPoolCollection = async (
     bntPool: string | BNTPool,
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
-    poolCollectionUpgrader: string | PoolCollectionUpgrader,
+    poolMigrator: string | PoolMigrator,
     version: number = V1
 ) =>
     Contracts.TestPoolCollection.deploy(
@@ -205,7 +205,7 @@ export const createPoolCollection = async (
         toAddress(bntPool),
         toAddress(externalProtectionVault),
         toAddress(poolTokenFactory),
-        toAddress(poolCollectionUpgrader)
+        toAddress(poolMigrator)
     );
 
 const createBNTPool = async (
@@ -342,11 +342,11 @@ const createSystemFixture = async () => {
         ctorArgs: [network.address, bnt.address, bntPool.address]
     });
 
-    const poolCollectionUpgrader = await createProxy(Contracts.TestPoolCollectionUpgrader, {
+    const poolMigrator = await createProxy(Contracts.TestPoolMigrator, {
         ctorArgs: [network.address]
     });
 
-    await network.initialize(bntPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address);
+    await network.initialize(bntPool.address, pendingWithdrawals.address, poolMigrator.address);
 
     const networkInfo = await createProxy(Contracts.BancorNetworkInfo, {
         ctorArgs: [
@@ -359,7 +359,7 @@ const createSystemFixture = async () => {
             externalRewardsVault.address,
             bntPool.address,
             pendingWithdrawals.address,
-            poolCollectionUpgrader.address
+            poolMigrator.address
         ]
     });
 
@@ -371,7 +371,7 @@ const createSystemFixture = async () => {
         bntPool,
         externalProtectionVault,
         poolTokenFactory,
-        poolCollectionUpgrader
+        poolMigrator
     );
 
     return {
@@ -390,7 +390,7 @@ const createSystemFixture = async () => {
         pendingWithdrawals,
         poolTokenFactory,
         poolCollection,
-        poolCollectionUpgrader
+        poolMigrator
     };
 };
 

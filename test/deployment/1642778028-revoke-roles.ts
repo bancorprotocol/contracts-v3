@@ -25,7 +25,7 @@ describeDeployment('1642778028-revoke-roles', toDeployTag(__filename), () => {
             ContractName.MasterVaultV1,
             ContractName.NetworkSettingsV1,
             ContractName.PendingWithdrawalsV1,
-            ContractName.PoolCollectionUpgraderV1,
+            ContractName.PoolMigratorV1,
             ContractName.PoolTokenFactoryV1,
             ContractName.StandardStakingRewardsV1
         ]) {

@@ -34,7 +34,7 @@ import { Token } from "../token/Token.sol";
 import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
 
 import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
-import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
 
 // prettier-ignore
 import {
@@ -124,8 +124,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the pending withdrawals contract
     IPendingWithdrawals internal _pendingWithdrawals;
 
-    // the pool collection upgrader contract
-    IPoolCollectionUpgrader internal _poolCollectionUpgrader;
+    // the pool migrator contract
+    IPoolMigrator internal _poolMigrator;
 
     // the set of all valid pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
@@ -241,15 +241,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function initialize(
         IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
-        IPoolCollectionUpgrader initPoolCollectionUpgrader
+        IPoolMigrator initPoolMigrator
     )
         external
         validAddress(address(initBNTPool))
         validAddress(address(initPendingWithdrawals))
-        validAddress(address(initPoolCollectionUpgrader))
+        validAddress(address(initPoolMigrator))
         initializer
     {
-        __BancorNetwork_init(initBNTPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init(initBNTPool, initPendingWithdrawals, initPoolMigrator);
     }
 
     // solhint-disable func-name-mixedcase
@@ -260,13 +260,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function __BancorNetwork_init(
         IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
-        IPoolCollectionUpgrader initPoolCollectionUpgrader
+        IPoolMigrator initPoolMigrator
     ) internal onlyInitializing {
         __Upgradeable_init();
         __ReentrancyGuard_init();
         __Pausable_init();
 
-        __BancorNetwork_init_unchained(initBNTPool, initPendingWithdrawals, initPoolCollectionUpgrader);
+        __BancorNetwork_init_unchained(initBNTPool, initPendingWithdrawals, initPoolMigrator);
     }
 
     /**
@@ -275,11 +275,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function __BancorNetwork_init_unchained(
         IBNTPool initBNTPool,
         IPendingWithdrawals initPendingWithdrawals,
-        IPoolCollectionUpgrader initPoolCollectionUpgrader
+        IPoolMigrator initPoolMigrator
     ) internal onlyInitializing {
         _bntPool = initBNTPool;
         _pendingWithdrawals = initPendingWithdrawals;
-        _poolCollectionUpgrader = initPoolCollectionUpgrader;
+        _poolMigrator = initPoolMigrator;
 
         // set up administrative roles
         _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
@@ -497,13 +497,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function upgradePools(Token[] calldata pools) external nonReentrant {
+    function migratePools(Token[] calldata pools) external nonReentrant {
         uint256 length = pools.length;
         for (uint256 i = 0; i < length; i++) {
             Token pool = pools[i];
 
-            // request the pool collection upgrader to upgrade the pool and get the new pool collection it exists in
-            IPoolCollection newPoolCollection = _poolCollectionUpgrader.upgradePool(pool);
+            // request the pool migrator to migrate the pool and get the new pool collection it exists in
+            IPoolCollection newPoolCollection = _poolMigrator.migratePool(pool);
             if (newPoolCollection == IPoolCollection(address(0))) {
                 continue;
             }
