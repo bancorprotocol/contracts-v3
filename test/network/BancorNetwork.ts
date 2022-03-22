@@ -903,7 +903,7 @@ describe('BancorNetwork', () => {
             await network.setTime(await latest());
         });
 
-        it('should revert when attempting to migrate already migrated pools', async () => {
+        it('should revert when attempting to migrate a pool that was already migrated', async () => {
             await network.migratePools(reserveTokenAddresses);
 
             await expect(network.migratePools(reserveTokenAddresses)).to.be.revertedWith('InvalidPoolCollection');

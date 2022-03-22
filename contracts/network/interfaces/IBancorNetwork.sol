@@ -74,7 +74,7 @@ interface IBancorNetwork is IUpgradeable {
     function createPool(uint16 poolType, Token token) external;
 
     /**
-     * @dev migrates a list of pools
+     * @dev migrates a list of pools between pool collections
      *
      * notes:
      *

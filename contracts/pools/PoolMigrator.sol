@@ -52,7 +52,7 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     uint256[MAX_GAP - 0] private __gap;
 
     /**
-     * @dev triggered when an existing pool is migrated
+     * @dev triggered when an existing pool is migrated between pool collections
      */
     event PoolMigrated(Token indexed pool, IPoolCollection prevPoolCollection, IPoolCollection newPoolCollection);
 
