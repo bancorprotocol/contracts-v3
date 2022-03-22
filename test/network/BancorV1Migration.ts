@@ -181,11 +181,11 @@ describe('BancorV1Migration', () => {
                 poolToken.address,
                 baseToken.address,
                 bnt.address,
+                provider.address,
                 portionOf(baseAmount),
                 portionOf(bntAmount),
                 isTokenWhitelisted,
-                true,
-                provider.address
+                true
             );
 
         const prevProviderBNTBalance = await getBalance(bnt, provider);
