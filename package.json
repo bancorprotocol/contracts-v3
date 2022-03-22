@@ -33,6 +33,7 @@
         "test:deploy:mainnet": "HARDHAT_NETWORK=hardhat FORKING=1 yarn test:deploy",
         "deploy": "hardhat deploy",
         "deploy:fork": "HARDHAT_NETWORK=tenderly yarn deploy",
+        "run:fork": "HARDHAT_NETWORK=tenderly hardhat run",
         "dev": "hardhat node --no-deploy",
         "profile": "PROFILE=1 yarn test ${DEBUG:+--network localhost} --grep @profile",
         "profile:debug": "DEBUG=1 yarn profile",
