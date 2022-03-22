@@ -440,7 +440,7 @@ const setupPool = async (
     const bnt = await factory.attach(await networkInfo.bnt());
 
     if (spec.token?.address === bnt.address || spec.tokenData.isBNT()) {
-        const poolToken = await Contracts.PoolToken.attach(await networkInfo.bntPoolToken());
+        const poolToken = await Contracts.PoolToken.attach(await networkInfo.poolToken(bnt.address));
 
         // ensure that there is enough space to deposit BNT
         const reserveToken = await createTestToken();
