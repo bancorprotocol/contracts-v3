@@ -1,4 +1,4 @@
-import { deploy, ContractName, DeploymentTag, DeployedContracts, isMainnet } from '../utils/Deploy';
+import { ContractName, deploy, DeployedContracts, DeploymentTag, isMainnet } from '../utils/Deploy';
 import { BigNumber } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
