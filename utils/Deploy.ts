@@ -23,6 +23,7 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import { ExternalContracts } from '../deployments/data';
 import { DeploymentNetwork } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
@@ -373,7 +374,7 @@ interface ContractData {
 
 const verifyTenderly = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isMainnet() && !isTenderlyFork()) {
+    if (!isLive() && !isTenderlyFork()) {
         return;
     }
 
@@ -406,7 +407,22 @@ const verifyTenderly = async (deployment: Deployment) => {
     }
 };
 
-export const deploymentExists = async (tag: string) => (await ethers.getContractOrNull(tag)) !== null;
+export const deploymentExists = async (tag: string) => {
+    const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
+    const migrationsPath = path.resolve(
+        __dirname,
+        '../',
+        externalDeployments ? externalDeployments[0] : path.join('deployments', getNetworkName()),
+        '.migrations.json'
+    );
+
+    if (!fs.existsSync(migrationsPath)) {
+        return false;
+    }
+
+    const migrations = JSON.parse(fs.readFileSync(migrationsPath, 'utf-8'));
+    return migrations[tag];
+};
 
 export const toDeployTag = (filename: string) =>
     path

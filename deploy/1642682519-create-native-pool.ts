@@ -19,7 +19,7 @@ const MIN_LIQUIDITY_FOR_TRADING = toWei(10_000);
 const INITIAL_DEPOSIT = MIN_LIQUIDITY_FOR_TRADING.mul(NATIVE_TOKEN_FUNDING_RATE).div(BNT_FUNDING_RATE).mul(10);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer } = await getNamedAccounts();
+    const { deployer, ethWhale } = await getNamedAccounts();
 
     await execute({
         name: ContractName.NetworkSettingsV1,
@@ -61,7 +61,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             name: ContractName.BancorNetworkV1,
             methodName: 'deposit',
             args: [NATIVE_TOKEN_ADDRESS, INITIAL_DEPOSIT],
-            from: deployer,
+            from: isMainnetFork() ? ethWhale : deployer,
             value: INITIAL_DEPOSIT
         });
 

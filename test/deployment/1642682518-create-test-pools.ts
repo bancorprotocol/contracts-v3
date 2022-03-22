@@ -26,7 +26,7 @@ describeDeployment('1642682518-create-test-pools', toDeployTag(__filename), asyn
     });
 
     if (!isMainnet() || isMainnetFork()) {
-        it('should create all test pools', async () => {
+        it('should create the native token pools', async () => {
             for (const contractName of [ContractName.TestToken1, ContractName.TestToken2, ContractName.TestToken3]) {
                 const testToken = await DeployedContracts[contractName].deployed();
 
