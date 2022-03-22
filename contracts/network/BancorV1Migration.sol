@@ -44,9 +44,9 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
 
     event PositionMigrated(
         address indexed provider,
-        IPoolToken indexed poolToken,
-        Token tokenA,
-        Token tokenB,
+        IPoolToken poolToken,
+        Token indexed tokenA,
+        Token indexed tokenB,
         uint256 amountA,
         uint256 amountB,
         bool migratedA,
