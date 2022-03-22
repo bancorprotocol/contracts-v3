@@ -252,9 +252,9 @@ describe('BancorNetwork', () => {
                 bntPoolToken.address
             );
 
-            await expect(
-                network.initialize(bntPool.address, ZERO_ADDRESS, poolMigrator.address)
-            ).to.be.revertedWith('InvalidAddress');
+            await expect(network.initialize(bntPool.address, ZERO_ADDRESS, poolMigrator.address)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
         it('should revert when attempting to initialize with an invalid pool migrator contract', async () => {

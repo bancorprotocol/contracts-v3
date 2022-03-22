@@ -48,10 +48,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.createPool(token);
     }
 
-    function migratePoolT(IPoolMigrator poolMigrator, Token pool)
-        external
-        returns (IPoolCollection)
-    {
+    function migratePoolT(IPoolMigrator poolMigrator, Token pool) external returns (IPoolCollection) {
         return poolMigrator.migratePool(pool);
     }
 

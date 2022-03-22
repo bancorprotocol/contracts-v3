@@ -36,9 +36,7 @@ describe('PoolMigrator', () => {
         });
 
         it('should revert when attempting to create with an invalid network contract', async () => {
-            await expect(Contracts.TestPoolMigrator.deploy(ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+            await expect(Contracts.TestPoolMigrator.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -92,22 +90,20 @@ describe('PoolMigrator', () => {
         it('should revert when attempting to migrate from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(
-                poolMigrator.connect(nonNetwork).migratePool(reserveToken.address)
-            ).to.be.revertedWith('AccessDenied');
+            await expect(poolMigrator.connect(nonNetwork).migratePool(reserveToken.address)).to.be.revertedWith(
+                'AccessDenied'
+            );
         });
 
         it('should revert when attempting to migrate an invalid pool', async () => {
-            await expect(network.migratePoolT(poolMigrator.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidPool'
-            );
+            await expect(network.migratePoolT(poolMigrator.address, ZERO_ADDRESS)).to.be.revertedWith('InvalidPool');
         });
 
         it('should revert when attempting to migrate a non-existing pool', async () => {
             const reserveToken2 = await createTestToken();
-            await expect(
-                network.migratePoolT(poolMigrator.address, reserveToken2.address)
-            ).to.be.revertedWith('InvalidPool');
+            await expect(network.migratePoolT(poolMigrator.address, reserveToken2.address)).to.be.revertedWith(
+                'InvalidPool'
+            );
         });
 
         it('should revert when attempting to migrate a pool already existing in the latest pool collection', async () => {
@@ -145,9 +141,9 @@ describe('PoolMigrator', () => {
             );
             await createPool(reserveToken3, network, networkSettings, poolCollection3);
 
-            await expect(
-                network.migratePoolT(poolMigrator.address, reserveToken2.address)
-            ).to.be.revertedWith('UnsupportedVersion');
+            await expect(network.migratePoolT(poolMigrator.address, reserveToken2.address)).to.be.revertedWith(
+                'UnsupportedVersion'
+            );
         });
 
         context('v1', () => {

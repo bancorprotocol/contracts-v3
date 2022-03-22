@@ -3469,11 +3469,7 @@ describe('PoolCollection', () => {
 
             it('should revert when attempting to migrate an invalid pool out of a pool collection', async () => {
                 await expect(
-                    poolMigrator.migratePoolOutT(
-                        poolCollection.address,
-                        ZERO_ADDRESS,
-                        targetPoolCollection.address
-                    )
+                    poolMigrator.migratePoolOutT(poolCollection.address, ZERO_ADDRESS, targetPoolCollection.address)
                 ).to.be.revertedWith('DoesNotExist');
             });
 
