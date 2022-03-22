@@ -178,10 +178,10 @@ describe('BancorV1Migration', () => {
         await expect(res1)
             .to.emit(bancorV1Migration, 'PositionMigrated')
             .withArgs(
+                provider.address,
                 poolToken.address,
                 baseToken.address,
                 bnt.address,
-                provider.address,
                 portionOf(baseAmount),
                 portionOf(bntAmount),
                 isTokenWhitelisted,

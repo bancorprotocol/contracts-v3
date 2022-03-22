@@ -43,10 +43,10 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     IERC20 private immutable _bnt;
 
     event PositionMigrated(
+        address indexed provider,
         IPoolToken indexed poolToken,
-        Token indexed tokenA,
-        Token indexed tokenB,
-        address provider,
+        Token tokenA,
+        Token tokenB,
         uint256 amountA,
         uint256 amountB,
         bool migratedA,
@@ -118,15 +118,15 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
             }
         }
 
-        emit PositionMigrated(
-            poolToken,
-            reserveTokens[0],
-            reserveTokens[1],
-            msg.sender,
-            reserveAmounts[0],
-            reserveAmounts[1],
-            isMigrated[0],
-            isMigrated[1]
-        );
+        emit PositionMigrated({
+            provider: msg.sender,
+            poolToken: poolToken,
+            tokenA: reserveTokens[0],
+            tokenB: reserveTokens[1],
+            amountA: reserveAmounts[0],
+            amountB: reserveAmounts[1],
+            migratedA: isMigrated[0],
+            migratedB: isMigrated[1]
+        });
     }
 }
