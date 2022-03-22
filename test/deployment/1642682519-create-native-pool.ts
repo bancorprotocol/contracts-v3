@@ -25,7 +25,7 @@ describeDeployment('1642682519-create-native-pool', toDeployTag(__filename), asy
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
     });
 
-    it('should create all test pools', async () => {
+    it('should create the native pool', async () => {
         expect(await networkSettings.isTokenWhitelisted(NATIVE_TOKEN_ADDRESS)).to.be.true;
         expect(await networkSettings.poolFundingLimit(NATIVE_TOKEN_ADDRESS)).to.equal(FUNDING_LIMIT);
 
