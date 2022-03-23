@@ -12,7 +12,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
-import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
 import { PoolCollection, Pool, PoolLiquidity, InternalWithdrawalAmounts, PoolRateState } from "../pools/PoolCollection.sol";
 import { AverageRate } from "../pools/interfaces/IPoolCollection.sol";
 
@@ -34,7 +34,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolCollectionUpgrader initPoolCollectionUpgrader
+        IPoolMigrator initPoolMigrator
     )
         PoolCollection(
             initNetwork,
@@ -44,7 +44,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
             initBNTPool,
             initExternalProtectionVault,
             initPoolTokenFactory,
-            initPoolCollectionUpgrader
+            initPoolMigrator
         )
     {
         _version = initVersion;

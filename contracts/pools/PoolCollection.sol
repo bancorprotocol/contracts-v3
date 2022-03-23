@@ -34,7 +34,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "./interfaces/IPoolTokenFactory.sol";
-import { IPoolCollectionUpgrader } from "./interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 
 // prettier-ignore
 import {
@@ -155,8 +155,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the pool token factory contract
     IPoolTokenFactory private immutable _poolTokenFactory;
 
-    // the pool collection upgrader contract
-    IPoolCollectionUpgrader private immutable _poolCollectionUpgrader;
+    // the pool migrator contract
+    IPoolMigrator private immutable _poolMigrator;
 
     // a mapping between tokens and their pools
     mapping(Token => Pool) internal _poolData;
@@ -265,7 +265,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolCollectionUpgrader initPoolCollectionUpgrader
+        IPoolMigrator initPoolMigrator
     )
         validAddress(address(initNetwork))
         validAddress(address(initBNT))
@@ -274,7 +274,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         validAddress(address(initBNTPool))
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initPoolTokenFactory))
-        validAddress(address(initPoolCollectionUpgrader))
+        validAddress(address(initPoolMigrator))
     {
         _network = initNetwork;
         _bnt = initBNT;
@@ -283,7 +283,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _bntPool = initBNTPool;
         _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
-        _poolCollectionUpgrader = initPoolCollectionUpgrader;
+        _poolMigrator = initPoolMigrator;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -814,7 +814,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function migratePoolIn(Token pool, Pool calldata data)
         external
         validAddress(address(pool))
-        only(address(_poolCollectionUpgrader))
+        only(address(_poolMigrator))
     {
         _addPool(pool, data);
 
@@ -829,7 +829,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection)
         external
         validAddress(address(targetPoolCollection))
-        only(address(_poolCollectionUpgrader))
+        only(address(_poolMigrator))
     {
         if (_network.latestPoolCollection(POOL_TYPE) != targetPoolCollection) {
             revert InvalidPoolCollection();

@@ -13,7 +13,7 @@ import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolToken } from "./IPoolToken.sol";
 import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
-import { IPoolCollectionUpgrader } from "./IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "./IPoolMigrator.sol";
 
 struct PoolLiquidity {
     uint256 bntTradingLiquidity; // the BNT trading liquidity
@@ -229,7 +229,7 @@ interface IPoolCollection is IVersioned {
      *
      * requirements:
      *
-     * - the caller must be the pool collection upgrader contract
+     * - the caller must be the pool migrator contract
      */
     function migratePoolIn(Token pool, Pool calldata data) external;
 
@@ -238,7 +238,7 @@ interface IPoolCollection is IVersioned {
      *
      * requirements:
      *
-     * - the caller must be the pool collection upgrader contract
+     * - the caller must be the pool migrator contract
      */
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
 }

@@ -12,7 +12,7 @@ import Contracts, {
     TestBNTPool,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolCollectionUpgrader
+    TestPoolMigrator
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
@@ -63,7 +63,7 @@ describe('BancorNetworkInfo', () => {
         let vbntGovernance: TokenGovernance;
         let bntPool: TestBNTPool;
         let bntPoolToken: IPoolToken;
-        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let poolMigrator: TestPoolMigrator;
         let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let externalRewardsVault: ExternalRewardsVault;
@@ -80,7 +80,7 @@ describe('BancorNetworkInfo', () => {
                 vbntGovernance,
                 bntPool,
                 bntPoolToken,
-                poolCollectionUpgrader,
+                poolMigrator,
                 masterVault,
                 externalProtectionVault,
                 externalRewardsVault,
@@ -100,7 +100,7 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     bntPool.address,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -117,7 +117,7 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     bntPool.address,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -134,7 +134,7 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     bntPool.address,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -151,7 +151,7 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     bntPool.address,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -168,7 +168,7 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     bntPool.address,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -185,7 +185,7 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     bntPool.address,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -202,7 +202,7 @@ describe('BancorNetworkInfo', () => {
                     ZERO_ADDRESS,
                     bntPool.address,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -219,7 +219,7 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     ZERO_ADDRESS,
                     pendingWithdrawals.address,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -236,12 +236,12 @@ describe('BancorNetworkInfo', () => {
                     externalRewardsVault.address,
                     bntPool.address,
                     ZERO_ADDRESS,
-                    poolCollectionUpgrader.address
+                    poolMigrator.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid pool collection upgrader contract', async () => {
+        it('should revert when attempting to create with an invalid pool migrator contract', async () => {
             await expect(
                 Contracts.BancorNetworkInfo.deploy(
                     network.address,
@@ -281,7 +281,7 @@ describe('BancorNetworkInfo', () => {
             expect(await networkInfo.bntPool()).to.equal(bntPool.address);
             expect(await networkInfo.poolToken(bnt.address)).to.equal(bntPoolToken.address);
             expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
-            expect(await networkInfo.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
+            expect(await networkInfo.poolMigrator()).to.equal(poolMigrator.address);
         });
     });
 

@@ -11,7 +11,7 @@ import {
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
-    PoolCollectionUpgrader,
+    PoolMigrator,
     PoolTokenFactory,
     StandardStakingRewards
 } from '../../components/Contracts';
@@ -38,7 +38,7 @@ describe('network', () => {
     let bntPool: BNTPool;
     let pendingWithdrawals: PendingWithdrawals;
     let poolTokenFactory: PoolTokenFactory;
-    let poolCollectionUpgrader: PoolCollectionUpgrader;
+    let poolMigrator: PoolMigrator;
     let poolCollection: PoolCollection;
     let autoCompoundingStakingRewards: AutoCompoundingStakingRewards;
     let standardStakingRewards: StandardStakingRewards;
@@ -62,7 +62,7 @@ describe('network', () => {
         bntPool = await DeployedContracts.BNTPoolV1.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
         poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
-        poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
+        poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
         autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewardsV1.deployed();
         standardStakingRewards = await DeployedContracts.StandardStakingRewardsV1.deployed();
@@ -130,7 +130,7 @@ describe('network', () => {
 
         await expectRoleMembers(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
-        await expectRoleMembers(poolCollectionUpgrader, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
+        await expectRoleMembers(poolMigrator, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
         await expectRoleMembers(network, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
         await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER);

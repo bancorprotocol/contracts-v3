@@ -5,12 +5,12 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolCollection, Pool } from "../pools/interfaces/IPoolCollection.sol";
 
-import { PoolCollectionUpgrader } from "../pools/PoolCollectionUpgrader.sol";
+import { PoolMigrator } from "../pools/PoolMigrator.sol";
 
 import { Token } from "../token/Token.sol";
 
-contract TestPoolCollectionUpgrader is PoolCollectionUpgrader {
-    constructor(IBancorNetwork initNetwork) PoolCollectionUpgrader(initNetwork) {}
+contract TestPoolMigrator is PoolMigrator {
+    constructor(IBancorNetwork initNetwork) PoolMigrator(initNetwork) {}
 
     function migratePoolInT(
         IPoolCollection poolCollection,

@@ -14,7 +14,7 @@ import { Token } from "../../token/Token.sol";
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
-import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "../../pools/interfaces/IPoolMigrator.sol";
 
 import { INetworkSettings } from "./INetworkSettings.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
@@ -74,13 +74,13 @@ interface IBancorNetwork is IUpgradeable {
     function createPool(uint16 poolType, Token token) external;
 
     /**
-     * @dev upgrades a list of pools
+     * @dev migrates a list of pools between pool collections
      *
      * notes:
      *
      * - invalid or incompatible pools will be skipped gracefully
      */
-    function upgradePools(Token[] calldata pools) external;
+    function migratePools(Token[] calldata pools) external;
 
     /**
      * @dev deposits liquidity for the specified provider and returns the respective pool token amount

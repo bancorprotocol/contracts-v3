@@ -12,7 +12,7 @@ import Contracts, {
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolCollectionUpgrader
+    TestPoolMigrator
 } from '../../components/Contracts';
 import {
     DSToken,
@@ -125,7 +125,7 @@ describe('BancorNetwork', () => {
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
         let bntPool: TestBNTPool;
-        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let poolMigrator: TestPoolMigrator;
         let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
@@ -139,7 +139,7 @@ describe('BancorNetwork', () => {
                 bntGovernance,
                 vbntGovernance,
                 bntPool,
-                poolCollectionUpgrader,
+                poolMigrator,
                 masterVault,
                 externalProtectionVault,
                 pendingWithdrawals,
@@ -238,7 +238,7 @@ describe('BancorNetwork', () => {
             );
 
             await expect(
-                network.initialize(ZERO_ADDRESS, pendingWithdrawals.address, poolCollectionUpgrader.address)
+                network.initialize(ZERO_ADDRESS, pendingWithdrawals.address, poolMigrator.address)
             ).to.be.revertedWith('InvalidAddress');
         });
 
@@ -252,12 +252,12 @@ describe('BancorNetwork', () => {
                 bntPoolToken.address
             );
 
-            await expect(
-                network.initialize(bntPool.address, ZERO_ADDRESS, poolCollectionUpgrader.address)
-            ).to.be.revertedWith('InvalidAddress');
+            await expect(network.initialize(bntPool.address, ZERO_ADDRESS, poolMigrator.address)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
-        it('should revert when attempting to initialize with an invalid pool collection upgrader contract', async () => {
+        it('should revert when attempting to initialize with an invalid pool migrator contract', async () => {
             const network = await Contracts.BancorNetwork.deploy(
                 bntGovernance.address,
                 vbntGovernance.address,
@@ -274,7 +274,7 @@ describe('BancorNetwork', () => {
 
         it('should revert when attempting to reinitialize', async () => {
             await expect(
-                network.initialize(bntPool.address, pendingWithdrawals.address, poolCollectionUpgrader.address)
+                network.initialize(bntPool.address, pendingWithdrawals.address, poolMigrator.address)
             ).to.be.revertedWith('Initializable: contract is already initialized');
         });
 
@@ -371,7 +371,7 @@ describe('BancorNetwork', () => {
         let bntPool: TestBNTPool;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
-        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let poolMigrator: TestPoolMigrator;
         let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
 
@@ -385,7 +385,7 @@ describe('BancorNetwork', () => {
                 bntPool,
                 poolTokenFactory,
                 poolCollection,
-                poolCollectionUpgrader,
+                poolMigrator,
                 masterVault,
                 externalProtectionVault
             } = await createSystem());
@@ -450,7 +450,7 @@ describe('BancorNetwork', () => {
                         bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
-                        poolCollectionUpgrader,
+                        poolMigrator,
                         await poolCollection.version()
                     );
 
@@ -470,7 +470,7 @@ describe('BancorNetwork', () => {
                         bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
-                        poolCollectionUpgrader,
+                        poolMigrator,
                         (await poolCollection.version()) + 1
                     );
                     const poolType = await newPoolCollection.poolType();
@@ -507,7 +507,7 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolCollectionUpgrader,
+                    poolMigrator,
                     (await poolCollection.version()) + 1
                 );
                 const poolType = await newPoolCollection.poolType();
@@ -533,7 +533,7 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolCollectionUpgrader,
+                    poolMigrator,
                     (await poolCollection.version()) + 1
                 );
                 await expect(
@@ -554,7 +554,7 @@ describe('BancorNetwork', () => {
                         bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
-                        poolCollectionUpgrader,
+                        poolMigrator,
                         (await poolCollection.version()) + 1
                     );
                     lastCollection = await createPoolCollection(
@@ -566,7 +566,7 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
 
                         poolTokenFactory,
-                        poolCollectionUpgrader,
+                        poolMigrator,
                         (await newPoolCollection.version()) + 1
                     );
 
@@ -595,7 +595,7 @@ describe('BancorNetwork', () => {
                         bntPool,
                         externalProtectionVault,
                         poolTokenFactory,
-                        poolCollectionUpgrader
+                        poolMigrator
                     );
                     await expect(
                         network.removePoolCollection(otherCollection.address, newPoolCollection.address)
@@ -679,7 +679,7 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolCollectionUpgrader,
+                    poolMigrator,
                     (await poolCollection.version()) + 1
                 );
 
@@ -706,7 +706,7 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolCollectionUpgrader
+                    poolMigrator
                 );
                 await expect(network.setLatestPoolCollection(newPoolCollection2.address)).to.be.revertedWith(
                     'DoesNotExist'
@@ -829,7 +829,7 @@ describe('BancorNetwork', () => {
         });
     });
 
-    describe('upgrade pool', () => {
+    describe('migrate pool', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
@@ -840,7 +840,7 @@ describe('BancorNetwork', () => {
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
-        let poolCollectionUpgrader: TestPoolCollectionUpgrader;
+        let poolMigrator: TestPoolMigrator;
         let targetPoolCollection: TestPoolCollection;
 
         const reserveTokenSymbol = [TokenSymbol.TKN, TokenSymbol.ETH, TokenSymbol.TKN];
@@ -864,7 +864,7 @@ describe('BancorNetwork', () => {
                 externalProtectionVault,
                 pendingWithdrawals,
                 poolCollection,
-                poolCollectionUpgrader,
+                poolMigrator,
                 poolTokenFactory
             } = await createSystem());
 
@@ -899,7 +899,7 @@ describe('BancorNetwork', () => {
                 bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
-                poolCollectionUpgrader,
+                poolMigrator,
                 (await poolCollection.version()) + 1
             );
 
@@ -909,18 +909,18 @@ describe('BancorNetwork', () => {
             await network.setTime(await latest());
         });
 
-        it('should revert when attempting to upgrade already upgraded pools', async () => {
-            await network.upgradePools(reserveTokenAddresses);
+        it('should revert when attempting to migrate a pool that was already migrated', async () => {
+            await network.migratePools(reserveTokenAddresses);
 
-            await expect(network.upgradePools(reserveTokenAddresses)).to.be.revertedWith('InvalidPoolCollection');
+            await expect(network.migratePools(reserveTokenAddresses)).to.be.revertedWith('InvalidPoolCollection');
         });
 
-        it('should revert when attempting to upgrade invalid pools', async () => {
+        it('should revert when attempting to migrate invalid pools', async () => {
             const reserveTokenAddresses2 = [ZERO_ADDRESS, ZERO_ADDRESS, ...reserveTokenAddresses, ZERO_ADDRESS];
-            await expect(network.upgradePools(reserveTokenAddresses2)).to.be.revertedWith('InvalidPool');
+            await expect(network.migratePools(reserveTokenAddresses2)).to.be.revertedWith('InvalidPool');
         });
 
-        it('should upgrade pools', async () => {
+        it('should migrate pools', async () => {
             expect(await poolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
             expect(await targetPoolCollection.poolCount()).to.equal(0);
 
@@ -928,7 +928,7 @@ describe('BancorNetwork', () => {
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(poolCollection.address);
             }
 
-            await network.upgradePools(reserveTokenAddresses);
+            await network.migratePools(reserveTokenAddresses);
 
             expect(await poolCollection.poolCount()).to.equal(0);
             expect(await targetPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);

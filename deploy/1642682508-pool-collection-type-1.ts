@@ -13,7 +13,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntPool = await DeployedContracts.BNTPoolV1.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
     const poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
-    const poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
+    const poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
 
     const poolCollectionAddress = await deploy({
         name: ContractName.PoolCollectionType1V1,
@@ -27,7 +27,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             bntPool.address,
             externalProtectionVault.address,
             poolTokenFactory.address,
-            poolCollectionUpgrader.address
+            poolMigrator.address
         ]
     });
 
@@ -51,7 +51,7 @@ func.dependencies = [
     ContractName.ExternalProtectionVaultV1,
     ContractName.PoolTokenFactoryV1,
     ContractName.PendingWithdrawalsV1,
-    ContractName.PoolCollectionUpgraderV1
+    ContractName.PoolMigratorV1
 ];
 func.tags = [DeploymentTag.V3, ContractName.PoolCollectionType1V1];
 

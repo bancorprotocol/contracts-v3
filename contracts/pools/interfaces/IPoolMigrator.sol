@@ -10,11 +10,11 @@ import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
 import { IPoolCollection } from "./IPoolCollection.sol";
 
 /**
- * @dev Pool Collection Upgrader interface
+ * @dev Pool Migrator interface
  */
-interface IPoolCollectionUpgrader is IVersioned {
+interface IPoolMigrator is IVersioned {
     /**
-     * @dev upgrades a pool and returns the new pool collection it exists in
+     * @dev migrates a pool and returns the new pool collection it exists in
      *
      * notes:
      *
@@ -24,5 +24,5 @@ interface IPoolCollectionUpgrader is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function upgradePool(Token pool) external returns (IPoolCollection);
+    function migratePool(Token pool) external returns (IPoolCollection);
 }

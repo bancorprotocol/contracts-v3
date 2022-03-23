@@ -16,7 +16,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
-import { IPoolCollectionUpgrader } from "../pools/interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { Token } from "../token/Token.sol";
@@ -48,11 +48,8 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.createPool(token);
     }
 
-    function upgradePoolT(IPoolCollectionUpgrader poolCollectionUpgrader, Token pool)
-        external
-        returns (IPoolCollection)
-    {
-        return poolCollectionUpgrader.upgradePool(pool);
+    function migratePoolT(IPoolMigrator poolMigrator, Token pool) external returns (IPoolCollection) {
+        return poolMigrator.migratePool(pool);
     }
 
     function completeWithdrawalT(

@@ -16,7 +16,7 @@ import {
     NetworkSettings__factory,
     PendingWithdrawals__factory,
     PoolCollection__factory,
-    PoolCollectionUpgrader__factory,
+    PoolMigrator__factory,
     PoolToken__factory,
     PoolTokenFactory__factory,
     ProxyAdmin__factory,
@@ -34,7 +34,7 @@ import {
     TestOwned__factory,
     TestPendingWithdrawals__factory,
     TestPoolCollection__factory,
-    TestPoolCollectionUpgrader__factory,
+    TestPoolMigrator__factory,
     TestPoolCollectionWithdrawal__factory,
     TestSafeERC20Ex__factory,
     TestStakingRewardsMath__factory,
@@ -73,7 +73,7 @@ const getContracts = (signer?: Signer) => ({
     NetworkSettings: deployOrAttach('NetworkSettings', NetworkSettings__factory, signer),
     PendingWithdrawals: deployOrAttach('PendingWithdrawals', PendingWithdrawals__factory, signer),
     PoolCollection: deployOrAttach('PoolCollection', PoolCollection__factory, signer),
-    PoolCollectionUpgrader: deployOrAttach('PoolCollectionUpgrader', PoolCollectionUpgrader__factory, signer),
+    PoolMigrator: deployOrAttach('PoolMigrator', PoolMigrator__factory, signer),
     PoolToken: deployOrAttach('PoolToken', PoolToken__factory, signer),
     PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
@@ -94,9 +94,9 @@ const getContracts = (signer?: Signer) => ({
     TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
     TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
-    TestPoolCollectionUpgrader: deployOrAttach(
-        'TestPoolCollectionUpgrader',
-        TestPoolCollectionUpgrader__factory,
+    TestPoolMigrator: deployOrAttach(
+        'TestPoolMigrator',
+        TestPoolMigrator__factory,
         signer
     ),
     TestPoolCollectionWithdrawal: deployOrAttach(

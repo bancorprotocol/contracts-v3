@@ -11,7 +11,7 @@ import { IExternalRewardsVault } from "../../vaults/interfaces/IExternalRewardsV
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 import { WithdrawalAmounts } from "../../pools/interfaces/IPoolCollection.sol";
-import { IPoolCollectionUpgrader } from "../../pools/interfaces/IPoolCollectionUpgrader.sol";
+import { IPoolMigrator } from "../../pools/interfaces/IPoolMigrator.sol";
 import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
@@ -88,9 +88,9 @@ interface IBancorNetworkInfo is IUpgradeable {
     function pendingWithdrawals() external view returns (IPendingWithdrawals);
 
     /**
-     * @dev returns the pool collection upgrader contract
+     * @dev returns the pool migrator contract
      */
-    function poolCollectionUpgrader() external view returns (IPoolCollectionUpgrader);
+    function poolMigrator() external view returns (IPoolMigrator);
 
     /**
      * @dev returns the output amount when trading by providing the source amount

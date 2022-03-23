@@ -7,7 +7,7 @@ import {
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
-    PoolCollectionUpgrader,
+    PoolMigrator,
     PoolToken,
     ProxyAdmin
 } from '../../components/Contracts';
@@ -33,7 +33,7 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
     let bntPool: BNTPool;
     let bntPoolToken: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
-    let poolCollectionUpgrader: PoolCollectionUpgrader;
+    let poolMigrator: PoolMigrator;
 
     let networkInfo: BancorNetworkInfo;
 
@@ -55,7 +55,7 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
         bntPool = await DeployedContracts.BNTPoolV1.deployed();
         bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-        poolCollectionUpgrader = await DeployedContracts.PoolCollectionUpgraderV1.deployed();
+        poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
     });
 
@@ -76,7 +76,7 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
         expect(await networkInfo.bntPool()).to.equal(bntPool.address);
         expect(await networkInfo.poolToken(bnt.address)).to.equal(bntPoolToken.address);
         expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
-        expect(await networkInfo.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
+        expect(await networkInfo.poolMigrator()).to.equal(poolMigrator.address);
 
         await expectRoleMembers(networkInfo, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
