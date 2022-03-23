@@ -279,7 +279,7 @@ describe('BancorNetworkInfo', () => {
             expect(await networkInfo.externalProtectionVault()).to.equal(externalProtectionVault.address);
             expect(await networkInfo.externalRewardsVault()).to.equal(externalRewardsVault.address);
             expect(await networkInfo.bntPool()).to.equal(bntPool.address);
-            expect(await networkInfo.bntPoolToken()).to.equal(bntPoolToken.address);
+            expect(await networkInfo.poolToken(bnt.address)).to.equal(bntPoolToken.address);
             expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
             expect(await networkInfo.poolMigrator()).to.equal(poolMigrator.address);
         });
@@ -513,6 +513,7 @@ describe('BancorNetworkInfo', () => {
 
     describe('pending withdrawals', () => {
         let poolToken: PoolToken;
+        let token: TokenWithAddress;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
@@ -535,7 +536,7 @@ describe('BancorNetworkInfo', () => {
 
             await pendingWithdrawals.setTime(await latest());
 
-            ({ poolToken } = await setupFundedPool(
+            ({ poolToken, token } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
@@ -576,12 +577,12 @@ describe('BancorNetworkInfo', () => {
         });
 
         it('should not return withdrawal amounts when the pool token amount is zero', async () => {
-            await expect(networkInfo.withdrawalAmounts(poolToken.address, 0)).to.be.revertedWith('ZeroValue');
+            await expect(networkInfo.withdrawalAmounts(token.address, 0)).to.be.revertedWith('ZeroValue');
         });
 
         it('should return withdrawal amounts', async () => {
             const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
-                poolToken.address,
+                token.address,
                 poolTokenAmount
             );
             expect(totalAmount).to.equal(poolTokenAmount);
@@ -643,6 +644,13 @@ describe('BancorNetworkInfo', () => {
                 }
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+            });
+
+            it('should return the pool token correctly', async () => {
+                expect(await networkInfo.poolToken(bnt.address)).to.equal(await bntPool.poolToken());
+                expect(await networkInfo.poolToken(reserveToken.address)).to.equal(
+                    await poolCollection.poolToken(reserveToken.address)
+                );
             });
 
             for (const tokenAmount of [0, 1000, toWei(10_000), toWei(1_000_000)]) {

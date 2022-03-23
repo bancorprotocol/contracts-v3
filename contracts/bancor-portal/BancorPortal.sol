@@ -23,6 +23,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IBancorPortal, UniswapV2PositionMigration } from "./interfaces/IBancorPortal.sol";
 
 struct MigrationResult {
+    IUniswapV2Pair pair;
     Token tokenA;
     Token tokenB;
     uint256 amountA;
@@ -71,6 +72,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      */
     event UniswapV2PositionMigrated(
         address indexed provider,
+        IUniswapV2Pair poolToken,
         Token indexed tokenA,
         Token indexed tokenB,
         uint256 amountA,
@@ -84,6 +86,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      */
     event SushiSwapV2PositionMigrated(
         address indexed provider,
+        IUniswapV2Pair poolToken,
         Token indexed tokenA,
         Token indexed tokenB,
         uint256 amountA,
@@ -186,6 +189,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
 
         emit UniswapV2PositionMigrated({
             provider: msg.sender,
+            poolToken: res.pair,
             tokenA: res.tokenA,
             tokenB: res.tokenB,
             amountA: res.amountA,
@@ -223,6 +227,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
 
         emit SushiSwapV2PositionMigrated({
             provider: msg.sender,
+            poolToken: res.pair,
             tokenA: res.tokenA,
             tokenB: res.tokenB,
             amountA: res.amountA,
@@ -293,6 +298,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
 
         return
             MigrationResult({
+                pair: pair,
                 tokenA: tokens[0],
                 tokenB: tokens[1],
                 amountA: deposited[0],

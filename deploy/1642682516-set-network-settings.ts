@@ -40,6 +40,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         args: [{ burnRewardPPM: toPPM(10), burnRewardMaxAmount: toWei(100) }],
         from: deployer
     });
+
+    return true;
 };
 
 const tag = toDeployTag(__filename);

@@ -8,7 +8,8 @@ const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
 
 const TestNamedAccounts = {
     ethWhale: {
-        [DeploymentNetwork.Hardhat]: '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'
+        [DeploymentNetwork.Hardhat]: '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf',
+        [DeploymentNetwork.Tenderly]: '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'
     }
 };
 
