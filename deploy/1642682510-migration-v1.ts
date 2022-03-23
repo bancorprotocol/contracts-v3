@@ -1,4 +1,4 @@
-import { deploy, ContractName, DeploymentTag, DeployedContracts } from '../utils/Deploy';
+import { ContractName, deploy, DeployedContracts, DeploymentTag } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -18,7 +18,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.AutoCompoundingStakingRewardsV1;
+func.id = ContractName.BancorV1MigrationV1;
 func.dependencies = [DeploymentTag.V2, ContractName.BancorNetworkV1];
 func.tags = [DeploymentTag.V3, ContractName.BancorV1MigrationV1];
 

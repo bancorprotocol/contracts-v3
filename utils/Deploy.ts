@@ -23,10 +23,11 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import { ExternalContracts } from '../deployments/data';
 import { DeploymentNetwork } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
-import { Contract } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
 import { Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
@@ -217,6 +218,7 @@ interface DeployOptions {
     contract?: string;
     args?: any[];
     from: string;
+    value?: BigNumber;
     proxy?: ProxyOptions;
 }
 
@@ -224,7 +226,7 @@ const PROXY_CONTRACT = 'TransparentUpgradeableProxyImmutable';
 const INITIALIZE = 'initialize';
 
 export const deploy = async (options: DeployOptions) => {
-    const { name, contract, from, args, proxy } = options;
+    const { name, contract, from, value, args, proxy } = options;
     const isProxy = !!proxy;
 
     await fundAccount(from);
@@ -246,6 +248,7 @@ export const deploy = async (options: DeployOptions) => {
     const res = await deployContract(name, {
         contract: contractName,
         from,
+        value,
         args,
         proxy: isProxy ? proxyOptions : undefined,
         log: true
@@ -275,14 +278,15 @@ interface ExecuteOptions {
     methodName: string;
     args?: any[];
     from: string;
+    value?: BigNumber;
 }
 
 export const execute = async (options: ExecuteOptions) => {
-    const { name, methodName, from, args } = options;
+    const { name, methodName, from, value, args } = options;
 
     await fundAccount(from);
 
-    return executeTransaction(name, { from, log: true }, methodName, ...(args || []));
+    return executeTransaction(name, { from, value, log: true }, methodName, ...(args || []));
 };
 
 interface InitializeProxyOptions {
@@ -370,7 +374,7 @@ interface ContractData {
 
 const verifyTenderly = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isMainnet() && !isTenderlyFork()) {
+    if (!isLive() && !isTenderlyFork()) {
         return;
     }
 
@@ -403,7 +407,22 @@ const verifyTenderly = async (deployment: Deployment) => {
     }
 };
 
-export const deploymentExists = async (tag: string) => (await ethers.getContractOrNull(tag)) !== null;
+export const deploymentExists = async (tag: string) => {
+    const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
+    const migrationsPath = path.resolve(
+        __dirname,
+        '../',
+        externalDeployments ? externalDeployments[0] : path.join('deployments', getNetworkName()),
+        '.migrations.json'
+    );
+
+    if (!fs.existsSync(migrationsPath)) {
+        return false;
+    }
+
+    const migrations = JSON.parse(fs.readFileSync(migrationsPath, 'utf-8'));
+    return !!migrations[tag];
+};
 
 export const toDeployTag = (filename: string) =>
     path
