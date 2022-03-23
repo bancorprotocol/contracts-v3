@@ -482,16 +482,24 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @dev enables trading in a given pool, by providing the funding rate as two virtual balances, and updates its
      * trading liquidity
      *
+     * please note that the virtual balances should be derived from token prices, normalized to the smallest unit of
+     * tokens. For example:
+     *
+     * - if the price of one (10**18 wei) BNT is $X and the price of one (10**18 wei) TKN is $Y, then the virtual balances
+     *   should represent a ratio of X to Y
+     * - if the price of one (10**18 wei) BNT is $X and the price of one (10**6 wei) USDC is $Y, then the virtual balances
+     *   should represent a ratio of X to Y*10**12
+     *
      * requirements:
      *
      * - the caller must be the owner of the contract
      */
     function enableTrading(
         Token pool,
-        uint256 bntRate,
-        uint256 baseTokenRate
+        uint256 bntVirtualBalance,
+        uint256 baseTokenVirtualBalance
     ) external onlyOwner {
-        Fraction memory fundingRate = Fraction({ n: bntRate, d: baseTokenRate });
+        Fraction memory fundingRate = Fraction({ n: bntVirtualBalance, d: baseTokenVirtualBalance });
         _validRate(fundingRate);
 
         Pool storage data = _poolStorage(pool);

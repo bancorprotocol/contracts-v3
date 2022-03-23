@@ -54,8 +54,8 @@ import { ethers } from 'hardhat';
 const { formatBytes32String } = utils;
 
 describe('PoolCollection', () => {
-    const BNT_FUNDING_RATE = 1;
-    const BASE_TOKEN_FUNDING_RATE = 2;
+    const BNT_VIRTUAL_BALANCE = 1;
+    const BASE_TOKEN_VIRTUAL_BALANCE = 2;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const CONTEXT_ID = formatBytes32String('CTX');
 
@@ -649,15 +649,15 @@ describe('PoolCollection', () => {
 
                 const res = await poolCollection.enableTrading(
                     token.address,
-                    BNT_FUNDING_RATE,
-                    BASE_TOKEN_FUNDING_RATE
+                    BNT_VIRTUAL_BALANCE,
+                    BASE_TOKEN_VIRTUAL_BALANCE
                 );
 
                 const data = await poolCollection.poolData(token.address);
                 const { liquidity } = data;
 
                 expect(data.averageRate.blockNumber).to.equal(await poolCollection.currentBlockNumber());
-                expect(data.averageRate.rate).to.equal({ n: BNT_FUNDING_RATE, d: BASE_TOKEN_FUNDING_RATE });
+                expect(data.averageRate.rate).to.equal({ n: BNT_VIRTUAL_BALANCE, d: BASE_TOKEN_VIRTUAL_BALANCE });
 
                 expect(data.tradingEnabled).to.be.true;
 
@@ -665,7 +665,7 @@ describe('PoolCollection', () => {
                     MIN_LIQUIDITY_FOR_TRADING.mul(BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR)
                 );
                 expect(liquidity.baseTokenTradingLiquidity).to.equal(
-                    liquidity.bntTradingLiquidity.mul(BASE_TOKEN_FUNDING_RATE).div(BNT_FUNDING_RATE)
+                    liquidity.bntTradingLiquidity.mul(BASE_TOKEN_VIRTUAL_BALANCE).div(BNT_VIRTUAL_BALANCE)
                 );
                 expect(liquidity.stakedBalance).to.equal(totalLiquidity);
 
@@ -706,20 +706,24 @@ describe('PoolCollection', () => {
                 await expect(
                     poolCollection
                         .connect(nonOwner)
-                        .enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE)
+                        .enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
                 ).to.be.revertedWith('AccessDenied');
             });
 
             it('should revert when enabling trading an invalid pool', async () => {
                 await expect(
-                    poolCollection.enableTrading(ZERO_ADDRESS, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE)
+                    poolCollection.enableTrading(ZERO_ADDRESS, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
                 ).to.be.revertedWith('DoesNotExist');
             });
 
             it('should revert when enabling trading a non-existing pool', async () => {
                 const newReserveToken = await createTestToken();
                 await expect(
-                    poolCollection.enableTrading(newReserveToken.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE)
+                    poolCollection.enableTrading(
+                        newReserveToken.address,
+                        BNT_VIRTUAL_BALANCE,
+                        BASE_TOKEN_VIRTUAL_BALANCE
+                    )
                 ).to.be.revertedWith('DoesNotExist');
             });
 
@@ -730,14 +734,14 @@ describe('PoolCollection', () => {
             context('when no base token liquidity was deposited', () => {
                 it('should revert', async () => {
                     await expect(
-                        poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE)
+                        poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
                     ).to.be.revertedWith('InsufficientLiquidity');
                 });
             });
 
             context('with a base token liquidity deposit', () => {
-                const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                    .div(BNT_FUNDING_RATE)
+                const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                    .div(BNT_VIRTUAL_BALANCE)
                     .mul(1000);
 
                 beforeEach(async () => {
@@ -749,17 +753,17 @@ describe('PoolCollection', () => {
                 });
 
                 it('should save the reduced funding rate', async () => {
-                    const bntRate = MAX_UINT256.div(2);
-                    const baseTokenRate = MAX_UINT256.div(4);
-                    await poolCollection.enableTrading(token.address, bntRate, baseTokenRate);
+                    const bntVirtualBalance = MAX_UINT256.div(2);
+                    const baseTokenVirtualBalance = MAX_UINT256.div(4);
+                    await poolCollection.enableTrading(token.address, bntVirtualBalance, baseTokenVirtualBalance);
 
                     const {
                         averageRate: { rate }
                     } = await poolCollection.poolData(token.address);
 
-                    expect(rate).not.to.equal({ n: bntRate, d: baseTokenRate });
+                    expect(rate).not.to.equal({ n: bntVirtualBalance, d: baseTokenVirtualBalance });
                     expect(rate).to.almostEqual(
-                        { n: bntRate, d: baseTokenRate },
+                        { n: bntVirtualBalance, d: baseTokenVirtualBalance },
                         {
                             maxRelativeError: new Decimal('0.000000000000000000000001')
                         }
@@ -767,9 +771,9 @@ describe('PoolCollection', () => {
                 });
 
                 it('should revert when attempting to enable trading twice', async () => {
-                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                     await expect(
-                        poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE)
+                        poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
                     ).to.be.revertedWith('AlreadyEnabled');
                 });
 
@@ -780,7 +784,7 @@ describe('PoolCollection', () => {
 
                     it('should revert', async () => {
                         await expect(
-                            poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE)
+                            poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
                         ).to.be.revertedWith('InsufficientLiquidity');
                     });
                 });
@@ -801,7 +805,8 @@ describe('PoolCollection', () => {
 
             context('with multiple base token liquidity deposits', () => {
                 const DEPOSITS_COUNT = 10;
-                const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE).div(BNT_FUNDING_RATE);
+                const INITIAL_LIQUIDITY =
+                    MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE).div(BNT_VIRTUAL_BALANCE);
                 const TOTAL_INITIAL_LIQUIDITY = INITIAL_LIQUIDITY.mul(DEPOSITS_COUNT);
 
                 beforeEach(async () => {
@@ -906,14 +911,14 @@ describe('PoolCollection', () => {
             });
 
             context('when trading is enabled', () => {
-                const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                    .div(BNT_FUNDING_RATE)
+                const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                    .div(BNT_VIRTUAL_BALANCE)
                     .mul(10_000);
 
                 beforeEach(async () => {
                     await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
 
-                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
 
                     const { tradingEnabled } = await poolCollection.poolData(token.address);
                     expect(tradingEnabled).to.be.true;
@@ -1257,14 +1262,18 @@ describe('PoolCollection', () => {
                 });
 
                 context('when trading is enabled', () => {
-                    const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                        .div(BNT_FUNDING_RATE)
+                    const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                        .div(BNT_VIRTUAL_BALANCE)
                         .mul(1000);
 
                     beforeEach(async () => {
                         await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
 
-                        await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                        await poolCollection.enableTrading(
+                            token.address,
+                            BNT_VIRTUAL_BALANCE,
+                            BASE_TOKEN_VIRTUAL_BALANCE
+                        );
 
                         const { tradingEnabled } = await poolCollection.poolData(token.address);
                         expect(tradingEnabled).to.be.true;
@@ -1705,15 +1714,19 @@ describe('PoolCollection', () => {
 
                 context('when trading is enabled', () => {
                     beforeEach(async () => {
-                        await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                        await poolCollection.enableTrading(
+                            token.address,
+                            BNT_VIRTUAL_BALANCE,
+                            BASE_TOKEN_VIRTUAL_BALANCE
+                        );
                     });
 
                     context(
                         'when the matched target network liquidity is above the minimum liquidity for trading',
                         () => {
                             beforeEach(async () => {
-                                const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                                    .div(BNT_FUNDING_RATE)
+                                const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                                    .div(BNT_VIRTUAL_BALANCE)
                                     .mul(10_000);
                                 await transfer(deployer, token, masterVault, extraLiquidity);
 
@@ -2026,8 +2039,8 @@ describe('PoolCollection', () => {
                 });
 
                 context('when trading is enabled', () => {
-                    const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                        .div(BNT_FUNDING_RATE)
+                    const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                        .div(BNT_VIRTUAL_BALANCE)
                         .mul(10_000);
 
                     beforeEach(async () => {
@@ -2035,8 +2048,8 @@ describe('PoolCollection', () => {
 
                         await poolCollection.enableTrading(
                             reserveToken.address,
-                            BNT_FUNDING_RATE,
-                            BASE_TOKEN_FUNDING_RATE
+                            BNT_VIRTUAL_BALANCE,
+                            BASE_TOKEN_VIRTUAL_BALANCE
                         );
                     });
 

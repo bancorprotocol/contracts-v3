@@ -78,8 +78,8 @@ describe('StandardStakingRewards', () => {
                 token: poolData.symbol() === rewardsData.symbol() ? rewardsToken : undefined,
                 balance: initialBalance,
                 requestedLiquidity: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
-                bntRate: 1,
-                baseTokenRate: 2
+                bntVirtualBalance: 1,
+                baseTokenVirtualBalance: 2
             },
             deployer,
             network,
@@ -1853,8 +1853,8 @@ describe('StandardStakingRewards', () => {
                     token: rewardsData.rewardsToken,
                     balance: INITIAL_BALANCE,
                     requestedLiquidity: BigNumber.from(INITIAL_BALANCE).mul(1000),
-                    bntRate: 1,
-                    baseTokenRate: 2
+                    bntVirtualBalance: 1,
+                    baseTokenVirtualBalance: 2
                 },
                 deployer,
                 network,

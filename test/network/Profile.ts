@@ -59,8 +59,8 @@ describe('Profile @profile', () => {
     let deployer: SignerWithAddress;
     let stakingRewardsProvider: SignerWithAddress;
 
-    const BNT_FUNDING_RATE = 1;
-    const BASE_TOKEN_FUNDING_RATE = 2;
+    const BNT_VIRTUAL_BALANCE = 1;
+    const BASE_TOKEN_VIRTUAL_BALANCE = 2;
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
@@ -93,8 +93,8 @@ describe('Profile @profile', () => {
         const testDeposits = (tokenData: TokenData) => {
             let token: TokenWithAddress;
 
-            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                .div(BNT_FUNDING_RATE)
+            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                .div(BNT_VIRTUAL_BALANCE)
                 .mul(2);
 
             beforeEach(async () => {
@@ -118,7 +118,7 @@ describe('Profile @profile', () => {
                         await network.deposit(token.address, INITIAL_LIQUIDITY);
                     }
 
-                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                 }
 
                 await setTime(await latest());
@@ -484,7 +484,7 @@ describe('Profile @profile', () => {
                 }
 
                 if (!tokenData.isBNT()) {
-                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                 }
             });
 
@@ -524,8 +524,8 @@ describe('Profile @profile', () => {
                             'when the matched target network liquidity is above the minimum liquidity for trading',
                             () => {
                                 beforeEach(async () => {
-                                    const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                                        .div(BNT_FUNDING_RATE)
+                                    const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                                        .div(BNT_VIRTUAL_BALANCE)
                                         .mul(10_000);
 
                                     await transfer(deployer, token, masterVault, extraLiquidity);
@@ -945,15 +945,15 @@ describe('Profile @profile', () => {
                     tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 {
                     tokenData: targetTokenData,
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 toPPM(20),
                 toWei(1000)
@@ -975,8 +975,8 @@ describe('Profile @profile', () => {
                                             tradingFeePPM: sourceTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            bntRate: BNT_FUNDING_RATE,
-                                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                            bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                            baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                         },
                                         {
                                             tokenData: new TokenData(targetSymbol),
@@ -985,8 +985,8 @@ describe('Profile @profile', () => {
                                             tradingFeePPM: targetTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            bntRate: BNT_FUNDING_RATE,
-                                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                            bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                            baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                         },
                                         toPPM(networkFeePercent),
                                         BigNumber.from(amount)
@@ -999,16 +999,16 @@ describe('Profile @profile', () => {
                                                 balance: sourceBalance,
                                                 requestedLiquidity: sourceBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent),
-                                                bntRate: BNT_FUNDING_RATE,
-                                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                             },
                                             {
                                                 tokenData: new TokenData(targetSymbol),
                                                 balance: targetBalance,
                                                 requestedLiquidity: targetBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent2),
-                                                bntRate: BNT_FUNDING_RATE,
-                                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                             },
                                             toPPM(networkFeePercent),
                                             BigNumber.from(amount)
@@ -1051,8 +1051,8 @@ describe('Profile @profile', () => {
                         tokenData,
                         balance: BALANCE,
                         requestedLiquidity: BALANCE.mul(1000),
-                        bntRate: BNT_FUNDING_RATE,
-                        baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                     },
                     deployer,
                     network,
@@ -1123,8 +1123,8 @@ describe('Profile @profile', () => {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
                     requestedLiquidity: BALANCE.mul(1000),
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 provider as any as SignerWithAddress,
                 network,
@@ -1205,8 +1205,8 @@ describe('Profile @profile', () => {
                     tokenData,
                     balance: providerStake,
                     requestedLiquidity: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 deployer,
                 network,
@@ -1416,8 +1416,8 @@ describe('Profile @profile', () => {
                     tokenData: poolData,
                     balance: initialBalance,
                     requestedLiquidity: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
-                    bntRate: 1,
-                    baseTokenRate: 2
+                    bntVirtualBalance: 1,
+                    baseTokenVirtualBalance: 2
                 },
                 deployer,
                 network,

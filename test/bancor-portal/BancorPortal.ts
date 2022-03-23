@@ -54,8 +54,8 @@ describe('BancorPortal', () => {
 
     const AMOUNT = BigNumber.from(1000);
     const ZERO = BigNumber.from(0);
-    const BNT_FUNDING_RATE = 1;
-    const BASE_TOKEN_FUNDING_RATE = 2;
+    const BNT_VIRTUAL_BALANCE = 1;
+    const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
     shouldHaveGap('BancorPortal');
 
@@ -720,8 +720,8 @@ describe('BancorPortal', () => {
                 tokenData: new TokenData(symbol),
                 balance: balance,
                 requestedLiquidity: balance.mul(1000),
-                bntRate: BNT_FUNDING_RATE,
-                baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
             },
             deployer as any as SignerWithAddress,
             network,

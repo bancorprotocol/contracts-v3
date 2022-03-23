@@ -13,10 +13,10 @@ const BNT_TOKEN_PRICE_IN_CENTS = 2.37 * CENTS;
 const DEPOSIT_LIMIT = toWei(500_000 * CENTS).div(NATIVE_TOKEN_PRICE_IN_CENTS);
 const FUNDING_LIMIT = toWei(500_000 * CENTS).div(BNT_TOKEN_PRICE_IN_CENTS);
 const TRADING_FEE = toPPM(0.2);
-const BNT_FUNDING_RATE = NATIVE_TOKEN_PRICE_IN_CENTS;
-const NATIVE_TOKEN_FUNDING_RATE = BNT_TOKEN_PRICE_IN_CENTS;
+const BNT_VIRTUAL_BALANCE = NATIVE_TOKEN_PRICE_IN_CENTS;
+const NATIVE_TOKEN_VIRTUAL_RATE = BNT_TOKEN_PRICE_IN_CENTS;
 const MIN_LIQUIDITY_FOR_TRADING = toWei(10_000);
-const INITIAL_DEPOSIT = MIN_LIQUIDITY_FOR_TRADING.mul(NATIVE_TOKEN_FUNDING_RATE).div(BNT_FUNDING_RATE).mul(10);
+const INITIAL_DEPOSIT = MIN_LIQUIDITY_FOR_TRADING.mul(NATIVE_TOKEN_VIRTUAL_RATE).div(BNT_VIRTUAL_BALANCE).mul(10);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, ethWhale } = await getNamedAccounts();
@@ -68,7 +68,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         await execute({
             name: ContractName.PoolCollectionType1V1,
             methodName: 'enableTrading',
-            args: [NATIVE_TOKEN_ADDRESS, BNT_FUNDING_RATE, NATIVE_TOKEN_FUNDING_RATE],
+            args: [NATIVE_TOKEN_ADDRESS, BNT_VIRTUAL_BALANCE, NATIVE_TOKEN_VIRTUAL_RATE],
             from: deployer
         });
     }

@@ -11,8 +11,8 @@ describeDeployment('1642682518-create-test-pools', toDeployTag(__filename), asyn
     const DEPOSIT_LIMIT = toWei(1_000_000);
     const FUNDING_LIMIT = toWei(10_000_000);
     const TRADING_FEE = toPPM(0.2);
-    const BNT_FUNDING_RATE = 1;
-    const BASE_TOKEN_FUNDING_RATE = 2;
+    const BNT_VIRTUAL_BALANCE = 1;
+    const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
     const InitialDeposits = {
         [ContractName.TestToken1]: toWei(50_000),
@@ -38,7 +38,7 @@ describeDeployment('1642682518-create-test-pools', toDeployTag(__filename), asyn
                 expect(data.tradingFeePPM).to.equal(TRADING_FEE);
                 expect(data.liquidity.stakedBalance).to.equal(InitialDeposits[contractName]);
                 expect(data.liquidity.baseTokenTradingLiquidity).to.equal(
-                    data.liquidity.bntTradingLiquidity.mul(BASE_TOKEN_FUNDING_RATE).div(BNT_FUNDING_RATE)
+                    data.liquidity.bntTradingLiquidity.mul(BASE_TOKEN_VIRTUAL_BALANCE).div(BNT_VIRTUAL_BALANCE)
                 );
 
                 expect(data.tradingEnabled).to.be.true;

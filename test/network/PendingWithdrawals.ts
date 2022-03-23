@@ -27,8 +27,8 @@ describe('PendingWithdrawals', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
-    const BNT_FUNDING_RATE = 1;
-    const BASE_TOKEN_FUNDING_RATE = 2;
+    const BNT_VIRTUAL_BALANCE = 1;
+    const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
     shouldHaveGap('PendingWithdrawals', '_lockDuration');
 
@@ -244,8 +244,8 @@ describe('PendingWithdrawals', () => {
                                 tokenData: new TokenData(TokenSymbol.TKN),
                                 balance: toWei(1_000_000),
                                 requestedLiquidity: toWei(1_000_000).mul(1000),
-                                bntRate: BNT_FUNDING_RATE,
-                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                             },
                             provider as any as SignerWithAddress,
                             network,
@@ -315,8 +315,8 @@ describe('PendingWithdrawals', () => {
                             tokenData: new TokenData(TokenSymbol.TKN),
                             balance: toWei(1_000_000),
                             requestedLiquidity: toWei(1_000_000).mul(1000),
-                            bntRate: BNT_FUNDING_RATE,
-                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                            bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                            baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                         },
                         provider1,
                         network,
@@ -441,8 +441,8 @@ describe('PendingWithdrawals', () => {
                             tokenData: new TokenData(TokenSymbol.TKN),
                             balance: toWei(1_000_000),
                             requestedLiquidity: toWei(1_000_000).mul(1000),
-                            bntRate: BNT_FUNDING_RATE,
-                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                            bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                            baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                         },
                         provider,
                         network,
