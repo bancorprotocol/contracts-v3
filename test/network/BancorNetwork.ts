@@ -1718,7 +1718,7 @@ describe('BancorNetwork', () => {
 
                     if (tokenData.isBNT()) {
                         const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
-                            bnt.address,
+                            bntPoolToken.address,
                             request.poolTokenAmount
                         );
                         await network.connect(provider).withdraw(request.id);
@@ -1740,7 +1740,7 @@ describe('BancorNetwork', () => {
                         );
                     } else {
                         const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
-                            token.address,
+                            poolToken.address,
                             request.poolTokenAmount
                         );
                         const res = await network.connect(provider).withdraw(request.id);

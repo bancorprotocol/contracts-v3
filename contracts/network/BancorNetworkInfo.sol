@@ -240,7 +240,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function poolToken(Token pool) external view returns (IPoolToken) {
+    function poolTokenOf(Token pool) external view returns (IPoolToken) {
         return _isBNT(pool) ? _bntPoolToken : _poolCollection(pool).poolToken(pool);
     }
 
@@ -310,18 +310,19 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function withdrawalAmounts(Token pool, uint256 poolTokenAmount)
+    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount)
         external
         view
-        validAddress(address(pool))
+        validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
         returns (WithdrawalAmounts memory)
     {
-        if (_isBNT(pool)) {
+        if (poolToken == _bntPoolToken) {
             uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
             return WithdrawalAmounts({ totalAmount: amount, baseTokenAmount: 0, bntAmount: amount });
         }
 
+        Token pool = poolToken.reserveToken();
         IPoolCollection poolCollection = _poolCollection(pool);
         return poolCollection.withdrawalAmounts(pool, poolTokenAmount);
     }

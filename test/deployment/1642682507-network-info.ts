@@ -74,7 +74,7 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
         expect(await networkInfo.externalProtectionVault()).to.equal(externalProtectionVault.address);
         expect(await networkInfo.externalRewardsVault()).to.equal(externalRewardsVault.address);
         expect(await networkInfo.bntPool()).to.equal(bntPool.address);
-        expect(await networkInfo.poolToken(bnt.address)).to.equal(bntPoolToken.address);
+        expect(await networkInfo.poolTokenOf(bnt.address)).to.equal(bntPoolToken.address);
         expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
         expect(await networkInfo.poolCollectionUpgrader()).to.equal(poolCollectionUpgrader.address);
 

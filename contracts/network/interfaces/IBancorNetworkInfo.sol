@@ -80,7 +80,7 @@ interface IBancorNetworkInfo is IUpgradeable {
     /**
      * @dev returns the pool token contract for a given pool
      */
-    function poolToken(Token pool) external view returns (IPoolToken);
+    function poolTokenOf(Token pool) external view returns (IPoolToken);
 
     /**
      * @dev returns the pending withdrawals contract
@@ -129,5 +129,5 @@ interface IBancorNetworkInfo is IUpgradeable {
      * @dev returns the amounts that would be returned if the position is currently withdrawn,
      * along with the breakdown of the base token and the BNT compensation
      */
-    function withdrawalAmounts(Token pool, uint256 poolTokenAmount) external view returns (WithdrawalAmounts memory);
+    function withdrawalAmounts(IPoolToken poolToken, uint256 poolTokenAmount) external view returns (WithdrawalAmounts memory);
 }
