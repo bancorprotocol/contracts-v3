@@ -497,9 +497,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function enableTrading(
         Token pool,
         uint256 bntVirtualBalance,
-        uint256 baseVirtualBalance
+        uint256 baseTokenVirtualBalance
     ) external onlyOwner {
-        Fraction memory fundingRate = Fraction({ n: bntVirtualBalance, d: baseVirtualBalance });
+        Fraction memory fundingRate = Fraction({ n: bntVirtualBalance, d: baseTokenVirtualBalance });
         _validRate(fundingRate);
 
         Pool storage data = _poolStorage(pool);
