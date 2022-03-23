@@ -485,10 +485,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * please note that the virtual balances should be derived from token prices, normalized to the smallest unit of
      * tokens. For example:
      *
-     * - if the price of BNT (10**18 tokens) is $3 and the price of TKN (10**18 tokens) is $1, then the virtual balances
-     *   should represent a ratio of 1 to 3
-     * - if the price of BNT (10**18 tokens) is $3 and the price of USDC (10**6 tokens) is $1, then the virtual balances
-     *   should represent a ratio of 1 to 3*10**12
+     * - if the price of one (10**18 wei) BNT is $X and the price of one (10**18 wei) TKN is $Y, then the virtual balances
+     *   should represent a ratio of X to Y
+     * - if the price of one (10**18 wei) BNT is $X and the price of one (10**6 wei) USDC is $Y, then the virtual balances
+     *   should represent a ratio of X to Y*10**12
      *
      * requirements:
      *
