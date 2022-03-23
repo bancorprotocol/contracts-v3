@@ -39,10 +39,9 @@ export const cleanupTestDeployment = async () => {
         ]
     });
 
-    // re-impersonate all accounts
-    const unnamedAccounts = await getUnnamedAccounts();
+    // re-impersonate all named accounts
     const namedAccounts = Object.values(await getNamedAccounts());
-    for (const account of [...unnamedAccounts, ...namedAccounts]) {
+    for (const account of namedAccounts) {
         await network.provider.request({
             method: 'hardhat_impersonateAccount',
             params: [account]

@@ -421,7 +421,7 @@ export const deploymentExists = async (tag: string) => {
     }
 
     const migrations = JSON.parse(fs.readFileSync(migrationsPath, 'utf-8'));
-    return migrations[tag];
+    return !!migrations[tag];
 };
 
 export const toDeployTag = (filename: string) =>
