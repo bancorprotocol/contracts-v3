@@ -341,8 +341,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function addPoolCollection(IPoolCollection poolCollection)
         external
         validAddress(address(poolCollection))
-        nonReentrant
         onlyAdmin
+        nonReentrant
     {
         if (!_poolCollections.add(address(poolCollection))) {
             revert AlreadyExists();
@@ -412,9 +412,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function setLatestPoolCollection(IPoolCollection poolCollection)
         external
-        nonReentrant
         validAddress(address(poolCollection))
         onlyAdmin
+        nonReentrant
     {
         _verifyLatestPoolCollectionCandidate(poolCollection);
 
@@ -469,7 +469,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function createPool(uint16 poolType, Token token) external nonReentrant validAddress(address(token)) {
+    function createPool(uint16 poolType, Token token) external validAddress(address(token)) onlyAdmin nonReentrant {
         if (_isBNT(token)) {
             revert InvalidToken();
         }

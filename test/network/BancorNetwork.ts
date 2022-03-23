@@ -774,6 +774,12 @@ describe('BancorNetwork', () => {
                     await network.addPoolCollection(poolCollection.address);
                 });
 
+                it('should revert when a non-owner attempts to create a pool', async () => {
+                    await expect(
+                        network.connect(nonOwner).createPool(poolType, reserveToken.address)
+                    ).to.be.revertedWith('AccessDenied');
+                });
+
                 context('with a whitelisted token', () => {
                     beforeEach(async () => {
                         await networkSettings.addTokenToWhitelist(reserveToken.address);
