@@ -1,5 +1,5 @@
 import { deploymentExists, isLive, isMainnetFork } from '../../utils/Deploy';
-import { deployments, ethers, getNamedAccounts, getUnnamedAccounts, network } from 'hardhat';
+import { deployments, ethers, getNamedAccounts, network } from 'hardhat';
 import { Suite } from 'mocha';
 
 const { run } = deployments;
