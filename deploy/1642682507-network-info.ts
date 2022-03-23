@@ -1,4 +1,4 @@
-import { ContractName, DeploymentTag, deployProxy, DeployedContracts } from '../utils/Deploy';
+import { ContractName, DeployedContracts, DeploymentTag, deployProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 

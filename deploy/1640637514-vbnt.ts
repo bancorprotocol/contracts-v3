@@ -1,4 +1,4 @@
-import { ContractName, DeploymentTag, deploy, execute, isMainnet, grantRole, revokeRole } from '../utils/Deploy';
+import { ContractName, deploy, DeploymentTag, execute, grantRole, isMainnet, revokeRole } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { TokenData, TokenSymbol } from '../utils/TokenData';
 import { toWei } from '../utils/Types';

@@ -15,6 +15,6 @@
         },
         "outDir": "./dist"
     },
-    "include": ["./components", "./utils", "./test", "./deploy", "./typechain"],
+    "include": ["./components", "./utils", "./test", "./deploy", "./scripts", "./typechain"],
     "files": ["./hardhat.config.ts"]
 }
