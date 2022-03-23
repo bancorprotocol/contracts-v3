@@ -64,8 +64,8 @@ describe('AutoCompoundingStakingRewards', () => {
                 tokenData,
                 balance: providerStake,
                 requestedLiquidity: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
-                bntRate: 1,
-                baseTokenRate: 2
+                bntVirtualBalance: 1,
+                baseTokenVirtualBalance: 2
             },
             user,
             network,

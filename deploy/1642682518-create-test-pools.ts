@@ -16,8 +16,8 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const DEPOSIT_LIMIT = toWei(1_000_000);
 const FUNDING_LIMIT = toWei(10_000_000);
 const TRADING_FEE = toPPM(0.2);
-const BNT_FUNDING_RATE = 1;
-const BASE_TOKEN_FUNDING_RATE = 2;
+const BNT_VIRTUAL_BALANCE = 1;
+const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
 const InitialDeposits = {
     [ContractName.TestToken1]: toWei(50_000),
@@ -85,7 +85,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         await execute({
             name: ContractName.PoolCollectionType1V1,
             methodName: 'enableTrading',
-            args: [testToken.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE],
+            args: [testToken.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE],
             from: deployer
         });
     }

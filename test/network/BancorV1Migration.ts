@@ -21,8 +21,8 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('BancorV1Migration', () => {
-    const BNT_FUNDING_RATE = 1;
-    const BASE_TOKEN_FUNDING_RATE = 2;
+    const BNT_VIRTUAL_BALANCE = 1;
+    const BASE_TOKEN_VIRTUAL_BALANCE = 2;
     const FUNDING_LIMIT = BigNumber.from(100_000_000);
     const MIN_LIQUIDITY = BigNumber.from(100_000);
     const TOTAL_SUPPLY = BigNumber.from(1_000_000_000);
@@ -262,8 +262,8 @@ describe('BancorV1Migration', () => {
 
                                 await poolCollection.enableTrading(
                                     baseToken.address,
-                                    BNT_FUNDING_RATE,
-                                    BASE_TOKEN_FUNDING_RATE
+                                    BNT_VIRTUAL_BALANCE,
+                                    BASE_TOKEN_VIRTUAL_BALANCE
                                 );
 
                                 for (let i = 0; i < 5; i++) {

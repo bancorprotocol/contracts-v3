@@ -15,10 +15,10 @@ describeDeployment('1642682519-create-native-pool', toDeployTag(__filename), asy
     const DEPOSIT_LIMIT = toWei(500_000 * CENTS).div(NATIVE_TOKEN_PRICE_IN_CENTS);
     const FUNDING_LIMIT = toWei(500_000 * CENTS).div(BNT_TOKEN_PRICE_IN_CENTS);
     const TRADING_FEE = toPPM(0.2);
-    const BNT_FUNDING_RATE = NATIVE_TOKEN_PRICE_IN_CENTS;
-    const NATIVE_TOKEN_FUNDING_RATE = BNT_TOKEN_PRICE_IN_CENTS;
+    const BNT_VIRTUAL_BALANCE = NATIVE_TOKEN_PRICE_IN_CENTS;
+    const NATIVE_TOKEN_VIRTUAL_RATE = BNT_TOKEN_PRICE_IN_CENTS;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(10_000);
-    const INITIAL_DEPOSIT = MIN_LIQUIDITY_FOR_TRADING.mul(NATIVE_TOKEN_FUNDING_RATE).div(BNT_FUNDING_RATE).mul(10);
+    const INITIAL_DEPOSIT = MIN_LIQUIDITY_FOR_TRADING.mul(NATIVE_TOKEN_VIRTUAL_RATE).div(BNT_VIRTUAL_BALANCE).mul(10);
 
     beforeEach(async () => {
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
@@ -36,7 +36,7 @@ describeDeployment('1642682519-create-native-pool', toDeployTag(__filename), asy
         if (!isMainnet() || isMainnetFork()) {
             expect(data.liquidity.stakedBalance).to.equal(INITIAL_DEPOSIT);
             expect(data.liquidity.baseTokenTradingLiquidity).to.equal(
-                data.liquidity.bntTradingLiquidity.mul(NATIVE_TOKEN_FUNDING_RATE).div(BNT_FUNDING_RATE)
+                data.liquidity.bntTradingLiquidity.mul(NATIVE_TOKEN_VIRTUAL_RATE).div(BNT_VIRTUAL_BALANCE)
             );
 
             expect(data.tradingEnabled).to.be.true;

@@ -67,8 +67,8 @@ describe('BancorNetwork', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
-    const BNT_FUNDING_RATE = 1;
-    const BASE_TOKEN_FUNDING_RATE = 2;
+    const BNT_VIRTUAL_BALANCE = 1;
+    const BASE_TOKEN_VIRTUAL_BALANCE = 2;
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
@@ -872,8 +872,8 @@ describe('BancorNetwork', () => {
                         tokenData: new TokenData(symbol),
                         balance: INITIAL_LIQUIDITY,
                         requestedLiquidity: INITIAL_LIQUIDITY.mul(1000),
-                        bntRate: BNT_FUNDING_RATE,
-                        baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                     },
                     deployer,
                     network,
@@ -1053,8 +1053,8 @@ describe('BancorNetwork', () => {
             let poolToken: PoolToken;
             let token: TokenWithAddress;
 
-            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                .div(BNT_FUNDING_RATE)
+            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                .div(BNT_VIRTUAL_BALANCE)
                 .mul(2);
 
             beforeEach(async () => {
@@ -1080,7 +1080,7 @@ describe('BancorNetwork', () => {
                         await network.deposit(token.address, INITIAL_LIQUIDITY);
                     }
 
-                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                 }
 
                 await setTime(await latest());
@@ -1691,7 +1691,7 @@ describe('BancorNetwork', () => {
                 }
 
                 if (!tokenData.isBNT()) {
-                    await poolCollection.enableTrading(token.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                 }
             });
 
@@ -1826,8 +1826,8 @@ describe('BancorNetwork', () => {
                             'when the matched target network liquidity is above the minimum liquidity for trading',
                             () => {
                                 beforeEach(async () => {
-                                    const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                                        .div(BNT_FUNDING_RATE)
+                                    const extraLiquidity = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                                        .div(BNT_VIRTUAL_BALANCE)
                                         .mul(10_000);
 
                                     await transfer(deployer, token, masterVault, extraLiquidity);
@@ -2683,15 +2683,15 @@ describe('BancorNetwork', () => {
                     tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
                     requestedLiquidity: toWei(1_000_000).mul(1000),
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 {
                     tokenData: targetTokenData,
                     balance: toWei(5_000_000),
                     requestedLiquidity: toWei(5_000_000).mul(1000),
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 0
             );
@@ -2712,8 +2712,8 @@ describe('BancorNetwork', () => {
                                             tradingFeePPM: sourceTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            bntRate: BNT_FUNDING_RATE,
-                                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                            bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                            baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                         },
                                         {
                                             tokenData: new TokenData(targetSymbol),
@@ -2722,8 +2722,8 @@ describe('BancorNetwork', () => {
                                             tradingFeePPM: targetTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
-                                            bntRate: BNT_FUNDING_RATE,
-                                            baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                            bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                            baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                         },
                                         toPPM(networkFeePercent),
                                         BigNumber.from(amount)
@@ -2736,16 +2736,16 @@ describe('BancorNetwork', () => {
                                                 balance: sourceBalance,
                                                 requestedLiquidity: sourceBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent),
-                                                bntRate: BNT_FUNDING_RATE,
-                                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                             },
                                             {
                                                 tokenData: new TokenData(targetSymbol),
                                                 balance: targetBalance,
                                                 requestedLiquidity: targetBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent2),
-                                                bntRate: BNT_FUNDING_RATE,
-                                                baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                                                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                             },
                                             toPPM(networkFeePercent),
                                             BigNumber.from(amount)
@@ -2797,8 +2797,8 @@ describe('BancorNetwork', () => {
                         tokenData: new TokenData(TokenSymbol.TKN),
                         balance: BALANCE,
                         requestedLiquidity: BALANCE.mul(1000),
-                        bntRate: BNT_FUNDING_RATE,
-                        baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                     },
                     deployer,
                     network,
@@ -2873,8 +2873,8 @@ describe('BancorNetwork', () => {
                         tokenData,
                         balance: BALANCE,
                         requestedLiquidity: BALANCE.mul(1000),
-                        bntRate: BNT_FUNDING_RATE,
-                        baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                     },
                     deployer,
                     network,
@@ -3021,8 +3021,8 @@ describe('BancorNetwork', () => {
             let owner: SignerWithAddress;
             let provider: SignerWithAddress;
 
-            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_FUNDING_RATE)
-                .div(BNT_FUNDING_RATE)
+            const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+                .div(BNT_VIRTUAL_BALANCE)
                 .mul(2);
 
             const expectInRange = (x: BigNumber, y: BigNumber) => {
@@ -3147,7 +3147,7 @@ describe('BancorNetwork', () => {
                     await network.deposit(baseToken.address, INITIAL_LIQUIDITY);
                 }
 
-                await poolCollection.enableTrading(baseToken.address, BNT_FUNDING_RATE, BASE_TOKEN_FUNDING_RATE);
+                await poolCollection.enableTrading(baseToken.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
 
                 await bnt.approve(converter.address, reserve2Amount);
 
@@ -3604,8 +3604,8 @@ describe('BancorNetwork', () => {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
                     requestedLiquidity: BALANCE.mul(1000),
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 provider as any as SignerWithAddress,
                 network,
@@ -3764,8 +3764,8 @@ describe('BancorNetwork', () => {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: INITIAL_LIQUIDITY,
                     requestedLiquidity: INITIAL_LIQUIDITY.mul(1000),
-                    bntRate: BNT_FUNDING_RATE,
-                    baseTokenRate: BASE_TOKEN_FUNDING_RATE,
+                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE,
                     tradingFeePPM: TRADING_FEE_PPM
                 },
                 deployer,
@@ -3966,8 +3966,8 @@ describe('BancorNetwork Financial Verification', () => {
             .tradeBySourceAmount(bnt.address, baseToken.address, wei, 1, MAX_UINT256, users[userId].address);
     };
 
-    const enableTrading = async (bntRate: number, baseTokenRate: number) => {
-        await poolCollection.enableTrading(baseToken.address, bntRate, baseTokenRate);
+    const enableTrading = async (bntVirtualBalance: number, baseTokenVirtualBalance: number) => {
+        await poolCollection.enableTrading(baseToken.address, bntVirtualBalance, baseTokenVirtualBalance);
     };
 
     /* eslint-disable indent */
@@ -4135,8 +4135,8 @@ describe('BancorNetwork Financial Verification', () => {
                     break;
 
                 case 'enableTrading': {
-                    const { bntRate, baseTokenRate } = amount as any;
-                    await enableTrading(bntRate, baseTokenRate);
+                    const { bntVirtualBalance, baseTokenVirtualBalance } = amount as any;
+                    await enableTrading(bntVirtualBalance, baseTokenVirtualBalance);
 
                     break;
                 }

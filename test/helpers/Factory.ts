@@ -419,8 +419,8 @@ export interface PoolSpec {
     token?: TokenWithAddress;
     balance: BigNumberish;
     requestedLiquidity: BigNumberish;
-    bntRate: BigNumberish;
-    baseTokenRate: BigNumberish;
+    bntVirtualBalance: BigNumberish;
+    baseTokenVirtualBalance: BigNumberish;
     tradingFeePPM?: number;
 }
 
@@ -464,7 +464,7 @@ const setupPool = async (
     await depositToPool(provider, token, spec.balance, network);
 
     if (enableTrading) {
-        await poolCollection.enableTrading(token.address, spec.bntRate, spec.baseTokenRate);
+        await poolCollection.enableTrading(token.address, spec.bntVirtualBalance, spec.baseTokenVirtualBalance);
     }
 
     return { poolToken, token };
