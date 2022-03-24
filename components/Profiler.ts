@@ -2,33 +2,17 @@ import { getTransactionGas } from '../test/helpers/Utils';
 import { ContractTransaction } from 'ethers';
 import { tenderly } from 'hardhat';
 import { mean } from 'lodash';
-import prompt from 'prompt';
 
-export const { PROFILE: isProfiling, DEBUG: isDebugging } = process.env;
+export const { PROFILE: isProfiling } = process.env;
 
 export class Profiler {
     private summary: Record<string, number[]> = {};
 
-    constructor() {
-        if (isDebugging) {
-            prompt.start();
-        }
-    }
-
     async profile(description: string, tx: Promise<ContractTransaction>) {
-        if (isDebugging) {
-            await prompt.get([`${description}`]);
-        }
-
         const res = await tx;
 
         const gas = await getTransactionGas(res);
         console.log(`${description}: ${gas}`);
-
-        if (isDebugging) {
-            console.log(`   ${(await res.wait()).transactionHash}`);
-            await prompt.get(['Press any key to continue to the next test']);
-        }
 
         this.summary[description] ||= [];
 
@@ -38,7 +22,7 @@ export class Profiler {
     }
 
     static async persistArtifacts(contractName: string, address: string) {
-        if (!isProfiling || !isDebugging) {
+        if (!isProfiling) {
             return;
         }
 
