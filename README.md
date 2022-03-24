@@ -2,7 +2,7 @@
 
 [![NPM Package](https://img.shields.io/npm/v/@bancor/contracts-v3.svg)](https://www.npmjs.org/package/@bancor/contracts-v3)
 [![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.bancor.network/)
-[![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/workflow.yml/badge.svg)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/workflow.yml)
+[![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml/badge.svg)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml)
 
 ## Overview
 
