@@ -2,8 +2,7 @@
 pragma solidity 0.8.12;
 
 import { PPM_RESOLUTION as M } from "../utility/Constants.sol";
-import { Sint256, Uint512 } from "../utility/Types.sol";
-import { MathEx } from "../utility/MathEx.sol";
+import { Sint256, Uint512, MathEx } from "../utility/MathEx.sol";
 
 error PoolCollectionWithdrawalInputInvalid();
 

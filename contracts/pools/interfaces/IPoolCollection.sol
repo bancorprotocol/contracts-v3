@@ -4,7 +4,8 @@ pragma solidity 0.8.12;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
-import { Fraction, Fraction112, Sint256 } from "../../utility/Types.sol";
+import { Sint256 } from "../../utility/MathEx.sol";
+import { Fraction, Fraction112 } from "../../utility/FractionLibrary.sol";
 
 import { Token } from "../../token/Token.sol";
 
@@ -162,10 +163,7 @@ interface IPoolCollection is IVersioned {
      * @dev returns the amounts that would be returned if the position is currently withdrawn,
      * along with the breakdown of the base token and the BNT compensation
      */
-    function withdrawalAmounts(
-        Token pool,
-        uint256 poolTokenAmount
-    ) external view returns (WithdrawalAmounts memory);
+    function withdrawalAmounts(Token pool, uint256 poolTokenAmount) external view returns (WithdrawalAmounts memory);
 
     /**
      * @dev performs a trade by providing the source amount and returns the target amount and the associated fee

@@ -12,7 +12,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, InvalidStakedBalance } from "../utility/Utils.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction } from "../utility/Types.sol";
+import { Fraction } from "../utility/FractionLibrary.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";

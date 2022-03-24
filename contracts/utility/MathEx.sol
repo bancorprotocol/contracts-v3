@@ -2,10 +2,21 @@
 pragma solidity 0.8.12;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { Fraction, Uint512, Sint256 } from "./Types.sol";
+import { Fraction } from "./FractionLibrary.sol";
+
 import { PPM_RESOLUTION } from "./Constants.sol";
 
 uint256 constant ONE = 1 << 127;
+
+struct Uint512 {
+    uint256 hi; // 256 most significant bits
+    uint256 lo; // 256 least significant bits
+}
+
+struct Sint256 {
+    uint256 value;
+    bool isNeg;
+}
 
 /**
  * @dev this library provides a set of complex math operations

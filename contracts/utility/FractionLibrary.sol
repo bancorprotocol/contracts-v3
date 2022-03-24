@@ -1,8 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.12;
 
-import { Fraction, Fraction112 } from "./Types.sol";
 import { MathEx } from "./MathEx.sol";
+
+struct Fraction {
+    uint256 n; // numerator
+    uint256 d; // denominator
+}
+
+struct Fraction112 {
+    uint112 n; // numerator
+    uint112 d; // denominator
+}
 
 // solhint-disable-next-line func-visibility
 function zeroFraction() pure returns (Fraction memory) {

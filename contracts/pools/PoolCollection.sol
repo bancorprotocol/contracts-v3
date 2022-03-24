@@ -13,12 +13,11 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 
-import { Fraction, Fraction112, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
-import { FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
-import { MathEx } from "../utility/MathEx.sol";
+import { Fraction, Fraction112, FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
+import { Sint256, MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
