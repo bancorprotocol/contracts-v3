@@ -4,8 +4,6 @@ import { toPPM, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
-export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
-
 describeDeployment('1642682516-set-network-settings', toDeployTag(__filename), () => {
     let networkSettings: NetworkSettings;
 

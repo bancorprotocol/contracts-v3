@@ -8,7 +8,7 @@ import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1640637513-bnt', ContractName.BNT, async () => {
+describeDeployment('1640637513-bnt', ContractName.BNT, () => {
     let deployer: string;
     let foundationMultisig: string;
     let liquidityProtection: string;

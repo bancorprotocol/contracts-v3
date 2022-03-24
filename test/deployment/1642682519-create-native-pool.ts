@@ -5,7 +5,7 @@ import { toPPM, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
-describeDeployment('1642682519-create-native-pool', toDeployTag(__filename), async () => {
+describeDeployment('1642682519-create-native-pool', toDeployTag(__filename), () => {
     let networkSettings: NetworkSettings;
     let poolCollection: PoolCollection;
 
