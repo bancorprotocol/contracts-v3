@@ -24,7 +24,7 @@
   "scripts": {
     "build": "hardhat compile",
     "rebuild": "yarn clean && yarn build",
-    "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test --grep \"^((?!@stress|@profile).)*$\"",
+    "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
     "test:coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat coverage",
     "test:coverage:deploy": "yarn test:coverage --testfiles 'test/deployment/**/*.ts'",
     "test:ci": "CI=1 yarn test",
@@ -35,7 +35,7 @@
     "deploy:fork": "HARDHAT_NETWORK=tenderly yarn deploy",
     "run:fork": "HARDHAT_NETWORK=tenderly hardhat run",
     "dev": "hardhat node --no-deploy",
-    "profile": "PROFILE=1 yarn test --grep @profile",
+    "profile": "PROFILE=1 yarn test",
     "watch": "hardhat watch test",
     "size": "yarn rebuild && hardhat size-contracts",
     "verify": "hardhat verify",
@@ -50,7 +50,7 @@
     "clean": "rm -rf artifacts cache coverage typechain-types"
   },
   "dependencies": {
-    "hardhat": "2.9.1"
+    "hardhat": "2.9.2"
   },
   "devDependencies": {
     "@bancor/contracts-solidity": "^0.7.6",
@@ -70,9 +70,9 @@
     "@types/humanize-duration": "^3.27.1",
     "@types/lodash": "^4.14.180",
     "@types/mocha": "^9.1.0",
-    "@types/node": "^17.0.21",
-    "@typescript-eslint/eslint-plugin": "^5.15.0",
-    "@typescript-eslint/parser": "^5.15.0",
+    "@types/node": "^17.0.23",
+    "@typescript-eslint/eslint-plugin": "^5.16.0",
+    "@typescript-eslint/parser": "^5.16.0",
     "@uniswap/v2-core": "^1.0.1",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
     "chai": "^4.3.6",
@@ -88,10 +88,10 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-standard": "^5.0.0",
-    "ethereum-waffle": "^3.4.0",
+    "ethereum-waffle": "^3.4.4",
     "ethereumjs-util": "^7.1.4",
     "ethers": "^5.6.1",
-    "hardhat-contract-sizer": "^2.5.0",
+    "hardhat-contract-sizer": "^2.5.1",
     "hardhat-dependency-compiler": "^1.1.2",
     "hardhat-deploy": "lbeder/hardhat-deploy#aab398a",
     "hardhat-deploy-tenderly": "^0.1.1",
@@ -104,7 +104,7 @@
     "prettier": "^2.6.0",
     "prettier-package-json": "^2.6.3",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
-    "snyk": "^1.873.0",
+    "snyk": "^1.881.0",
     "solc": "0.8.12",
     "solhint": "^3.3.7",
     "solidity-coverage": "^0.7.20",
