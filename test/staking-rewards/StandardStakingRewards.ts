@@ -981,6 +981,7 @@ describe('StandardStakingRewards', () => {
                                 id
                             );
                             const prevProgramStake = await standardStakingRewards.programStake(id);
+                            const prevProviderStake = await standardStakingRewards.providerStake(provider.address, id);
                             const prevProviderTokenBalance = await poolToken.balanceOf(provider.address);
                             const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
                             const prevStandardStakingRewardsBalance = await poolToken.balanceOf(
@@ -1027,6 +1028,9 @@ describe('StandardStakingRewards', () => {
                             // ensure that the stake amounts have been updated
                             expect(await standardStakingRewards.programStake(id)).to.equal(
                                 prevProgramStake.add(amount)
+                            );
+                            expect(await standardStakingRewards.providerStake(provider.address, id)).to.equal(
+                                prevProviderStake.add(amount)
                             );
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
 
@@ -1195,6 +1199,7 @@ describe('StandardStakingRewards', () => {
                         ).to.include(id.toNumber());
 
                         const prevProgramStake = await standardStakingRewards.programStake(id);
+                        const prevProviderStake = await standardStakingRewards.providerStake(provider.address, id);
                         const prevProviderRewards = await standardStakingRewards.providerRewards(provider.address, id);
                         const prevProviderTokenBalance = await poolToken.balanceOf(provider.address);
                         const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
@@ -1241,6 +1246,9 @@ describe('StandardStakingRewards', () => {
 
                         // ensure that the stake amounts have been updated
                         expect(await standardStakingRewards.programStake(id)).to.equal(prevProgramStake.sub(amount));
+                        expect(await standardStakingRewards.providerStake(provider.address, id)).to.equal(
+                            prevProviderStake.sub(amount)
+                        );
                         expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.sub(amount));
 
                         expect(await poolToken.balanceOf(provider.address)).to.equal(
@@ -1551,7 +1559,7 @@ describe('StandardStakingRewards', () => {
                                 id
                             );
                             const prevProgramStake = await standardStakingRewards.programStake(id);
-
+                            const prevProviderStake = await standardStakingRewards.providerStake(provider.address, id);
                             const prevProviderTokenBalance = await getBalance(pool, provider.address);
                             const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
                             const prevStandardStakingRewardsBalance = await poolToken.balanceOf(
@@ -1612,6 +1620,9 @@ describe('StandardStakingRewards', () => {
                             // ensure that the stake amounts have been updated
                             expect(await standardStakingRewards.programStake(id)).to.equal(
                                 prevProgramStake.add(amount)
+                            );
+                            expect(await standardStakingRewards.providerStake(provider.address, id)).to.equal(
+                                prevProviderStake.add(amount)
                             );
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
                             expect(await getBalance(pool, provider.address)).to.equal(
