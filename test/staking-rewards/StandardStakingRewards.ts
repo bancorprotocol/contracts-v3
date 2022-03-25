@@ -858,31 +858,49 @@ describe('StandardStakingRewards', () => {
 
         describe('joining', () => {
             describe('basic tests', () => {
-                let poolToken: IPoolToken;
-                let rewardsToken: TokenWithAddress;
-
-                beforeEach(async () => {
-                    rewardsToken = await createTestToken();
-
-                    ({ poolToken } = await prepareSimplePool(
-                        new TokenData(TokenSymbol.TKN),
-                        new TokenData(TokenSymbol.TKN),
-                        rewardsToken,
-                        INITIAL_BALANCE,
-                        TOTAL_REWARDS
-                    ));
-                });
-
                 const testBasicTests = (permitted: boolean) => {
+                    let pool: TokenWithAddress;
+                    let poolToken: IPoolToken;
+                    let poolTokenAmount: BigNumber;
+                    let id: BigNumber;
+
+                    beforeEach(async () => {
+                        const tokenData = new TokenData(TokenSymbol.TKN);
+                        const rewardsToken = await createToken(tokenData);
+
+                        ({ token: pool, poolToken } = await prepareSimplePool(
+                            tokenData,
+                            tokenData,
+                            rewardsToken,
+                            INITIAL_BALANCE,
+                            TOTAL_REWARDS
+                        ));
+
+                        await transfer(deployer, pool, provider, DEPOSIT_AMOUNT);
+                        await depositToPool(provider, pool, DEPOSIT_AMOUNT, network);
+                        poolTokenAmount = await poolToken.balanceOf(provider.address);
+
+                        id = await createProgram(
+                            standardStakingRewards,
+                            pool,
+                            rewardsToken,
+                            TOTAL_REWARDS,
+                            now,
+                            now + duration.weeks(12)
+                        );
+                    });
+
                     const join = async (id: BigNumberish, amount: BigNumberish) => {
                         if (!permitted) {
+                            await poolToken.connect(provider).approve(standardStakingRewards.address, amount);
+
                             return standardStakingRewards.connect(provider).join(id, amount);
                         }
 
                         const signature = await permitSignature(
                             provider,
                             poolToken.address,
-                            network,
+                            standardStakingRewards,
                             bnt,
                             amount,
                             MAX_UINT256
@@ -900,6 +918,32 @@ describe('StandardStakingRewards', () => {
                     it('should revert when attempting to join with an invalid amount', async () => {
                         await expect(join(1, 0)).to.be.revertedWith('ZeroValue');
                     });
+
+                    it('should join an existing program', async () => {
+                        const providerProgramIds = (
+                            await standardStakingRewards.providerProgramIds(provider.address)
+                        ).map((id) => id.toNumber());
+
+                        expect(providerProgramIds).not.to.include(id.toNumber());
+
+                        await join(id, poolTokenAmount);
+
+                        expect(
+                            (await standardStakingRewards.providerProgramIds(provider.address)).map((id) =>
+                                id.toNumber()
+                            )
+                        ).to.include(id.toNumber());
+                    });
+
+                    if (!permitted) {
+                        context('without approving the pool token', () => {
+                            it('should revert', async () => {
+                                await expect(
+                                    standardStakingRewards.connect(provider).join(id, poolTokenAmount)
+                                ).to.be.revertedWith(new TokenData(TokenSymbol.bnBNT).errors().exceedsAllowance);
+                            });
+                        });
+                    }
                 };
 
                 for (const permitted of [false, true]) {
@@ -955,14 +999,6 @@ describe('StandardStakingRewards', () => {
                             startTime,
                             endTime
                         );
-                    });
-
-                    context('without approving the pool token', () => {
-                        it('should revert', async () => {
-                            await expect(
-                                standardStakingRewards.connect(provider).join(id, poolTokenAmount)
-                            ).to.be.revertedWith(new TokenData(TokenSymbol.bnBNT).errors().exceedsAllowance);
-                        });
                     });
 
                     context('with pool token approval', () => {
@@ -1336,6 +1372,7 @@ describe('StandardStakingRewards', () => {
                 let pool: TokenWithAddress;
                 let nativePool: TokenWithAddress;
                 let rewardsToken: TokenWithAddress;
+                let tokenAmount: BigNumber;
 
                 let id: BigNumber;
                 let nativeId: BigNumber;
@@ -1353,6 +1390,9 @@ describe('StandardStakingRewards', () => {
                         INITIAL_BALANCE,
                         TOTAL_REWARDS
                     ));
+
+                    tokenAmount = DEPOSIT_AMOUNT.div(2);
+                    await transfer(deployer, pool, provider, DEPOSIT_AMOUNT);
 
                     id = await createProgram(
                         standardStakingRewards,
@@ -1394,15 +1434,14 @@ describe('StandardStakingRewards', () => {
                         if (!permitted) {
                             let { value } = overrides;
 
-                            if (!value) {
-                                value = BigNumber.from(0);
+                            const programs = await standardStakingRewards.programs([id]);
+                            const program = programs[0];
 
-                                const programs = await standardStakingRewards.programs([id]);
-                                const program = programs[0];
-
-                                if (program.pool === nativePool.address) {
-                                    value = BigNumber.from(amount);
-                                }
+                            if (program.pool === nativePool.address) {
+                                value ||= BigNumber.from(amount);
+                            } else {
+                                const token = await Contracts.TestERC20Token.attach(pool.address);
+                                await token.connect(provider).approve(standardStakingRewards.address, amount);
                             }
 
                             return standardStakingRewards.connect(provider).depositAndJoin(id, amount, { value });
@@ -1428,6 +1467,22 @@ describe('StandardStakingRewards', () => {
 
                     it('should revert when attempting to deposit and join with an invalid amount', async () => {
                         await expect(depositAndJoin(1, 0)).to.be.revertedWith('ZeroValue');
+                    });
+
+                    it('should deposit and join an existing program', async () => {
+                        const providerProgramIds = (
+                            await standardStakingRewards.providerProgramIds(provider.address)
+                        ).map((id) => id.toNumber());
+
+                        expect(providerProgramIds).not.to.include(id.toNumber());
+
+                        await depositAndJoin(id, tokenAmount);
+
+                        expect(
+                            (await standardStakingRewards.providerProgramIds(provider.address)).map((id) =>
+                                id.toNumber()
+                            )
+                        ).to.include(id.toNumber());
                     });
 
                     if (!permitted) {
@@ -1466,6 +1521,14 @@ describe('StandardStakingRewards', () => {
                         });
 
                         context('token pool', () => {
+                            context('without approving the token', () => {
+                                it('should revert', async () => {
+                                    await expect(
+                                        standardStakingRewards.connect(provider).depositAndJoin(id, tokenAmount)
+                                    ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsAllowance);
+                                });
+                            });
+
                             it('should revert when attempting to deposit and join with ETH into a non ETH pool', async () => {
                                 const amount = toWei(1);
 
@@ -1531,14 +1594,6 @@ describe('StandardStakingRewards', () => {
                         );
                     });
 
-                    context('without approving the token', () => {
-                        it('should revert', async () => {
-                            await expect(
-                                standardStakingRewards.connect(provider).depositAndJoin(id, tokenAmount)
-                            ).to.be.revertedWith(poolData.errors().exceedsAllowance);
-                        });
-                    });
-
                     context('with token approval', () => {
                         if (!poolData.isNative()) {
                             beforeEach(async () => {
@@ -1569,6 +1624,16 @@ describe('StandardStakingRewards', () => {
                                 rewardsToken,
                                 standardStakingRewards.address
                             );
+
+                            const providerProgramIds = (
+                                await standardStakingRewards.providerProgramIds(provider.address)
+                            ).map((id) => id.toNumber());
+
+                            if (prevProgramStake.isZero()) {
+                                expect(providerProgramIds).not.to.include(id.toNumber());
+                            } else {
+                                expect(providerProgramIds).to.include(id.toNumber());
+                            }
 
                             let expectedPoolTokenAmount;
                             if (poolData.isBNT()) {
@@ -1610,6 +1675,12 @@ describe('StandardStakingRewards', () => {
                                     expectedPoolTokenAmount,
                                     prevProviderRewards.stakedAmount
                                 );
+
+                            expect(
+                                (await standardStakingRewards.providerProgramIds(provider.address)).map((id) =>
+                                    id.toNumber()
+                                )
+                            ).to.include(id.toNumber());
 
                             const programRewards = await standardStakingRewards.programRewards(id);
                             const providerRewards = await standardStakingRewards.providerRewards(provider.address, id);
@@ -1883,6 +1954,7 @@ describe('StandardStakingRewards', () => {
 
         describe('claiming/staking', () => {
             const testBasicClaiming = async (programSpec: ProgramSpec, rewardsSpec: RewardsSpec) => {
+                // TODO:
                 describe('basic tests', () => {
                     let rewardsData: RewardsData;
                     let programData: ProgramData;
@@ -2187,7 +2259,7 @@ describe('StandardStakingRewards', () => {
 
                             programRewardsData.claimedRewards[provider.address] = programRewardsData.claimedRewards[
                                 provider.address
-                            ].sub(claimed[i]);
+                            ].add(claimed[i]);
                         }
 
                         let totalClaimed: BigNumber;
@@ -2264,7 +2336,8 @@ describe('StandardStakingRewards', () => {
                             const expectedProgramReward = getExpectedRewards(p, id);
                             const expectedProgramReward2 = getExpectedRewards(p, id2);
 
-                            expect(await standardStakingRewards.pendingRewards(p.address, [id, id2])).to.be.almostEqual(
+                            const pendingRewards = await standardStakingRewards.pendingRewards(p.address, ids);
+                            expect(pendingRewards).to.be.almostEqual(
                                 expectedProgramReward.add(expectedProgramReward2),
                                 {
                                     maxAbsoluteError: new Decimal(2),
@@ -2300,7 +2373,7 @@ describe('StandardStakingRewards', () => {
                             const { totalClaimed, claimed, poolTokenAmount, res } = await stakeOrClaim(
                                 stake,
                                 p,
-                                [id, id2],
+                                ids,
                                 maxAmount
                             );
                             const [claimedProgram, claimedProgram2] = claimed;
@@ -2333,20 +2406,26 @@ describe('StandardStakingRewards', () => {
 
                             // ensure that the program has been removed from provider's programs if it's no longer active
                             // and there are no pending rewards
-                            const pendingRewards = await standardStakingRewards.pendingRewards(p.address, [id]);
-                            const isProgramActive = await standardStakingRewards.isProgramActive(id);
-                            const providerProgramIds = (await standardStakingRewards.providerProgramIds(p.address)).map(
-                                (id) => id.toNumber()
-                            );
+                            for (const i of ids) {
+                                const pendingRewards = await standardStakingRewards.pendingRewards(p.address, [i]);
+                                const isProgramActive = await standardStakingRewards.isProgramActive(i);
+                                const providerProgramIds = (
+                                    await standardStakingRewards.providerProgramIds(p.address)
+                                ).map((id) => id.toNumber());
 
-                            if (!isProgramActive && pendingRewards.isZero()) {
-                                expect(providerProgramIds).to.not.include(id);
-                            } else {
-                                expect(providerProgramIds).to.include(id);
+                                if (!isProgramActive && pendingRewards.isZero()) {
+                                    expect(providerProgramIds).to.not.include(i);
+                                } else {
+                                    expect(providerProgramIds).to.include(i);
+                                }
                             }
 
                             if (stake) {
-                                expect(poolTokenAmount).not.to.equal(0);
+                                if (claimedProgram.add(claimedProgram2).eq(0)) {
+                                    expect(poolTokenAmount).to.equal(0);
+                                } else {
+                                    expect(poolTokenAmount).not.to.equal(0);
+                                }
                                 expect(await rewardsPoolData.poolToken.balanceOf(p.address)).to.equal(
                                     prevProviderRewardsPoolTokenBalance.add(poolTokenAmount)
                                 );
@@ -2402,15 +2481,6 @@ describe('StandardStakingRewards', () => {
                             expect(await getBalance(rewardsToken, standardStakingRewards)).to.equal(
                                 prevContractVaultBalance
                             );
-
-                            if (stake) {
-                                // update the stake calculations for testing
-                                if (programData.pool.address === rewardsToken.address) {
-                                    increaseStake(p, programData.id, claimedProgram);
-                                } else if (programData2.pool.address === rewardsToken.address) {
-                                    increaseStake(p, programData2.id, claimedProgram2);
-                                }
-                            }
                         }
                     };
 
@@ -2471,6 +2541,9 @@ describe('StandardStakingRewards', () => {
 
                         // ensure that claiming all remaining rewards, from an inactive programs, works properly
                         await testClaimRewards();
+
+                        // ensure that claiming, when no rewards are pending remaining rewards, still works properly
+                        await testClaimRewards();
                     });
 
                     it('should properly stake rewards', async () => {
@@ -2503,6 +2576,15 @@ describe('StandardStakingRewards', () => {
 
                         // ensure that staking partial rewards works properly
                         await testStakeRewards(toWei(1));
+
+                        // ensure that the program has finished
+                        await setTime(standardStakingRewards, rewardsData.endTime + duration.weeks(2));
+
+                        // ensure that staking all remaining rewards, from an inactive programs, works properly
+                        await testStakeRewards();
+
+                        // ensure that staking, when no rewards are pending remaining rewards, still works properly
+                        await testStakeRewards();
                     });
                 });
             };
