@@ -287,18 +287,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
 
-    modifier validRate(Fraction memory rate) {
-        _validRate(rate);
-
-        _;
-    }
-
-    function _validRate(Fraction memory rate) internal pure {
-        if (!rate.isPositive()) {
-            revert InvalidRate();
-        }
-    }
-
     /**
      * @inheritdoc IVersioned
      */
@@ -1584,5 +1572,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             MathEx
                 .weightedAverage(averageRate.fromFraction112(), spotRate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
                 .toFraction112();
+    }
+
+    /**
+     * @dev verifies if the provided rate is valid
+     */
+    function _validRate(Fraction memory rate) internal pure {
+        if (!rate.isPositive()) {
+            revert InvalidRate();
+        }
     }
 }
