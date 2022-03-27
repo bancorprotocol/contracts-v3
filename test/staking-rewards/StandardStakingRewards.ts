@@ -2554,6 +2554,14 @@ describe('StandardStakingRewards', () => {
                         testStakeOrClaimRewards(true, maxAmount);
 
                     it('should properly claim rewards', async () => {
+                        // pending rewards should be 0 before the beginning of the program
+                        await setTime(standardStakingRewards, rewardsData.startTime - duration.days(1));
+
+                        await testPendingRewards();
+                        await testClaimRewards();
+
+                        await setTime(standardStakingRewards, rewardsData.startTime);
+
                         // pending rewards should be 0 prior to joining
                         await testPendingRewards();
                         await testClaimRewards();
@@ -2611,6 +2619,15 @@ describe('StandardStakingRewards', () => {
                     });
 
                     it('should properly stake rewards', async () => {
+                        // pending rewards should be 0 before the beginning of the program
+                        await setTime(standardStakingRewards, rewardsData.startTime - duration.days(1));
+
+                        // pending rewards should be 0 prior to joining
+                        await testPendingRewards();
+                        await testStakeRewards();
+
+                        await setTime(standardStakingRewards, rewardsData.startTime);
+
                         // pending rewards should be 0 prior to joining
                         await testPendingRewards();
                         await testStakeRewards();
