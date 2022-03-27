@@ -1954,7 +1954,6 @@ describe('StandardStakingRewards', () => {
 
         describe('claiming/staking', () => {
             const testBasicClaiming = async (programSpec: ProgramSpec, rewardsSpec: RewardsSpec) => {
-                // TODO:
                 describe('basic tests', () => {
                     let rewardsData: RewardsData;
                     let programData: ProgramData;
@@ -2029,6 +2028,69 @@ describe('StandardStakingRewards', () => {
                             await expect(
                                 standardStakingRewards.connect(provider).stakeRewards([programData.id], MAX_UINT256)
                             ).to.be.revertedWith('ProgramDisabled');
+                        });
+                    });
+
+                    context('with staked tokens', () => {
+                        beforeEach(async () => {
+                            const amount = toWei(1);
+                            await programData.poolToken
+                                .connect(provider)
+                                .approve(standardStakingRewards.address, amount);
+                            return standardStakingRewards.connect(provider).join(programData.id, amount);
+                        });
+
+                        context('with staked tokens in a different rewards program', () => {
+                            let rewardsData2: RewardsData;
+                            let programData2: ProgramData;
+
+                            beforeEach(async () => {
+                                rewardsData2 = await setupRewardsData({
+                                    rewardsSymbol: TokenSymbol.TKN5,
+                                    totalRewards: toWei(100_00),
+                                    duration: duration.weeks(12)
+                                });
+
+                                programData2 = await setupProgram(
+                                    {
+                                        poolSymbol: TokenSymbol.TKN4,
+                                        initialBalance: toWei(100_000),
+                                        providerStakes: [toWei(10_000), toWei(20_000)]
+                                    },
+                                    rewardsData2
+                                );
+
+                                const amount = toWei(1);
+                                await programData2.poolToken
+                                    .connect(provider)
+                                    .approve(standardStakingRewards.address, amount);
+                                return standardStakingRewards.connect(provider).join(programData2.id, amount);
+                            });
+
+                            it('should revert if attempting to get pending rewards for programs with different reward tokens', async () => {
+                                await expect(
+                                    standardStakingRewards.pendingRewards(provider.address, [
+                                        programData.id,
+                                        programData2.id
+                                    ])
+                                ).to.be.revertedWith('RewardsTokenMismatch');
+                            });
+
+                            it('should revert if attempting to claim rewards for programs with different reward tokens', async () => {
+                                await expect(
+                                    standardStakingRewards
+                                        .connect(provider)
+                                        .claimRewards([programData.id, programData2.id], MAX_UINT256)
+                                ).to.be.revertedWith('RewardsTokenMismatch');
+                            });
+
+                            it('should revert if attempting to stake rewards for programs with different reward tokens', async () => {
+                                await expect(
+                                    standardStakingRewards
+                                        .connect(provider)
+                                        .stakeRewards([programData.id, programData2.id], MAX_UINT256)
+                                ).to.be.revertedWith('RewardsTokenMismatch');
+                            });
                         });
                     });
                 });
@@ -2408,12 +2470,13 @@ describe('StandardStakingRewards', () => {
                             // and there are no pending rewards
                             for (const i of ids) {
                                 const pendingRewards = await standardStakingRewards.pendingRewards(p.address, [i]);
+                                const providerStake = await standardStakingRewards.providerStake(p.address, i);
                                 const isProgramActive = await standardStakingRewards.isProgramActive(i);
                                 const providerProgramIds = (
                                     await standardStakingRewards.providerProgramIds(p.address)
                                 ).map((id) => id.toNumber());
 
-                                if (!isProgramActive && pendingRewards.isZero()) {
+                                if ((!isProgramActive && pendingRewards.isZero()) || providerStake.isZero()) {
                                     expect(providerProgramIds).to.not.include(i);
                                 } else {
                                     expect(providerProgramIds).to.include(i);
@@ -2493,6 +2556,7 @@ describe('StandardStakingRewards', () => {
                     it('should properly claim rewards', async () => {
                         // pending rewards should be 0 prior to joining
                         await testPendingRewards();
+                        await testClaimRewards();
 
                         // join with [30%, 50%] of the initial pool token amount
                         await joinPortion([toPPM(30), toPPM(50)]);
@@ -2547,6 +2611,10 @@ describe('StandardStakingRewards', () => {
                     });
 
                     it('should properly stake rewards', async () => {
+                        // pending rewards should be 0 prior to joining
+                        await testPendingRewards();
+                        await testStakeRewards();
+
                         // join with [20%, 40%] of the initial pool token amount
                         await joinPortion([toPPM(20), toPPM(40)]);
 
