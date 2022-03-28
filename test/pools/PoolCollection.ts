@@ -1909,7 +1909,7 @@ describe('PoolCollection', () => {
                 );
             });
 
-            it('BNT - mint for MV; TKN - transfer from EPV vault to provider', async () => {
+            it('BNT - mint for MV; TKN - transfer from EPV to provider', async () => {
                 await testWithdrawalPermutations(
                     new TokenData(TokenSymbol.TKN),
                     toWei(1),
