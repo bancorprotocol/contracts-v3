@@ -1893,19 +1893,36 @@ describe('PoolCollection', () => {
             await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, TradingLiquidityState.Update);
         };
 
-        it('quick withdrawal test', async () => {
-            await testWithdrawalPermutations(
-                new TokenData(TokenSymbol.TKN),
-                toWei(1),
-                toWei(1000),
-                toWei(1000),
-                toWei(1000),
-                toWei(1000),
-                toWei(1000),
-                toWei(1).div(10),
-                toPPM(1),
-                toPPM(1)
-            );
+        describe('quick withdrawal test', async () => {
+            it('BNT - renounce funding, burn from MV, mint for provider; TKN - transfer from MV and from EPV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1).div(10),
+                    toPPM(1),
+                    toPPM(1)
+                );
+            });
+
+            it('BNT - mint for MV; TKN - transfer from EPV vault to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(100),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1).div(10),
+                    toPPM(1),
+                    toPPM(1)
+                );
+            });
         });
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
