@@ -403,7 +403,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         _verifyProgramActive(p);
 
         // remove the program from the active programs list
-        _activeProgramIdByPool[p.pool] = 0;
+        delete _activeProgramIdByPool[p.pool];
 
         // reduce the unclaimed rewards for the token by the remaining rewards
         uint256 remainingRewards = _remainingRewards(p);

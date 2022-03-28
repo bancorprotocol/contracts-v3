@@ -2,8 +2,7 @@
 pragma solidity 0.8.12;
 
 import { PPM_RESOLUTION as M } from "../utility/Constants.sol";
-import { Sint256, Uint512 } from "../utility/Types.sol";
-import { MathEx } from "../utility/MathEx.sol";
+import { Sint256, Uint512, MathEx } from "../utility/MathEx.sol";
 
 error PoolCollectionWithdrawalInputInvalid();
 
@@ -91,14 +90,19 @@ library PoolCollectionWithdrawal {
         uint256 x /// <= e <= 2**128-1
     ) internal pure returns (Output memory output) {
         // given the restrictions above, everything below can be declared `unchecked`
-        validate(a <= type(uint128).max);
-        validate(b <= type(uint128).max);
-        validate(c <= type(uint128).max);
-        validate(e <= type(uint128).max);
-        validate(w <= type(uint128).max);
-        validate(m <= M);
-        validate(n <= M);
-        validate(x <= e);
+
+        if (
+            a > type(uint128).max ||
+            b > type(uint128).max ||
+            c > type(uint128).max ||
+            e > type(uint128).max ||
+            w > type(uint128).max ||
+            m > M ||
+            n > M ||
+            x > e
+        ) {
+            revert PoolCollectionWithdrawalInputInvalid();
+        }
 
         uint256 y = (x * (M - n)) / M;
 
@@ -326,14 +330,5 @@ library PoolCollectionWithdrawal {
         uint256 z
     ) private pure returns (uint256) {
         return a * b - MathEx.mulDivF(x, y, z);
-    }
-
-    /**
-     * @dev validates the input
-     */
-    function validate(bool valid) private pure {
-        if (!valid) {
-            revert PoolCollectionWithdrawalInputInvalid();
-        }
     }
 }

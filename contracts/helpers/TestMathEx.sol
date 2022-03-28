@@ -2,7 +2,7 @@
 pragma solidity 0.8.12;
 
 import { MathEx, Uint512 } from "../utility/MathEx.sol";
-import { Fraction } from "../utility/Types.sol";
+import { Fraction } from "../utility/FractionLibrary.sol";
 
 contract TestMathEx {
     function exp(Fraction memory f) external pure returns (Fraction memory) {

@@ -42,6 +42,7 @@ const mochaOptions = (): MochaOptions => {
     let timeout = 600000;
     let grep;
     let reporter;
+    let invert = false;
 
     if (isProfiling) {
         // if we're profiling, make sure to only run @profile tests without any timeout restriction, and silence most
@@ -54,7 +55,8 @@ const mochaOptions = (): MochaOptions => {
         grep = '';
     } else {
         // if we're running in dev, filter out stress and profile tests
-        grep = '^((?!@stress|@profile).)*$';
+        grep = '@profile|@stress';
+        invert = true;
     }
 
     return {
@@ -62,6 +64,7 @@ const mochaOptions = (): MochaOptions => {
         color: true,
         bail: true,
         grep,
+        invert,
         reporter
     };
 };

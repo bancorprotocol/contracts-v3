@@ -1,12 +1,26 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.12;
 
-import { Fraction, Fraction112 } from "../utility/Types.sol";
-import { FractionLibrary } from "../utility/FractionLibrary.sol";
+// prettier-ignore
+import {
+    Fraction,
+    Fraction112,
+    zeroFraction as _zeroFraction,
+    zeroFraction112 as _zeroFraction112,
+    FractionLibrary
+} from "../utility/FractionLibrary.sol";
 
 contract TestFractionLibrary {
     using FractionLibrary for Fraction;
     using FractionLibrary for Fraction112;
+
+    function zeroFraction() external pure returns (Fraction memory) {
+        return _zeroFraction();
+    }
+
+    function zeroFraction112() external pure returns (Fraction112 memory) {
+        return _zeroFraction112();
+    }
 
     function isValid256(Fraction memory fraction) external pure returns (bool) {
         return fraction.isValid();

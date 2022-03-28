@@ -8,7 +8,7 @@ import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction } from "../utility/Types.sol";
+import { Fraction } from "../utility/FractionLibrary.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
 import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";

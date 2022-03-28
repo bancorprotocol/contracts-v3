@@ -14,6 +14,16 @@ describe('FractionLibrary', () => {
         fractionLibrary = await Contracts.TestFractionLibrary.deploy();
     });
 
+    it('should return the zero fractions', async () => {
+        const zeroFraction = await fractionLibrary.zeroFraction();
+        expect(zeroFraction.n).to.equal(0);
+        expect(zeroFraction.d).to.equal(1);
+
+        const zeroFraction112 = await fractionLibrary.zeroFraction112();
+        expect(zeroFraction112.n).to.equal(0);
+        expect(zeroFraction112.d).to.equal(1);
+    });
+
     const isValid256 = (fraction: Fraction<BigNumber>, expected: boolean) => {
         it(`isValid256(${toString(fraction)}) should return ${expected}`, async () => {
             expect(await fractionLibrary.isValid256(fraction)).to.equal(expected);

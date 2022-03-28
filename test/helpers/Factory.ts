@@ -510,7 +510,10 @@ export const createToken = async (
 
         case TokenSymbol.TKN:
         case TokenSymbol.TKN1:
-        case TokenSymbol.TKN2: {
+        case TokenSymbol.TKN2:
+        case TokenSymbol.TKN3:
+        case TokenSymbol.TKN4:
+        case TokenSymbol.TKN5: {
             const token = await (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
                 tokenData.name(),
                 tokenData.symbol(),

@@ -291,18 +291,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     receive() external payable {}
 
-    modifier validTradeParams(
-        Token sourceToken,
-        Token targetToken,
-        uint256 amount,
-        uint256 limit,
-        uint256 deadline
-    ) {
-        _verifyTradeParams(sourceToken, targetToken, amount, limit, deadline);
-
-        _;
-    }
-
     /**
      * @inheritdoc IVersioned
      */

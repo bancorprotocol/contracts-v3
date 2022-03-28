@@ -11,7 +11,6 @@ error InvalidExternalAddress();
 error InvalidFee();
 error InvalidPool();
 error InvalidPoolCollection();
-error InvalidPortion();
 error InvalidStakedBalance();
 error InvalidToken();
 error InvalidType();
@@ -61,20 +60,6 @@ contract Utils {
     function _validAddress(address addr) internal pure {
         if (addr == address(0)) {
             revert InvalidAddress();
-        }
-    }
-
-    // ensures that the portion is valid
-    modifier validPortion(uint32 _portion) {
-        _validPortion(_portion);
-
-        _;
-    }
-
-    // error message binary size optimization
-    function _validPortion(uint32 _portion) internal pure {
-        if (_portion == 0 || _portion > PPM_RESOLUTION) {
-            revert InvalidPortion();
         }
     }
 

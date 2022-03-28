@@ -13,12 +13,11 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 
-import { Fraction, Fraction112, Sint256 } from "../utility/Types.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
-import { FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
-import { MathEx } from "../utility/MathEx.sol";
+import { Fraction, Fraction112, FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
+import { Sint256, MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -286,18 +285,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _poolMigrator = initPoolMigrator;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
-    }
-
-    modifier validRate(Fraction memory rate) {
-        _validRate(rate);
-
-        _;
-    }
-
-    function _validRate(Fraction memory rate) internal pure {
-        if (!rate.isPositive()) {
-            revert InvalidRate();
-        }
     }
 
     /**
@@ -1585,5 +1572,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             MathEx
                 .weightedAverage(averageRate.fromFraction112(), spotRate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
                 .toFraction112();
+    }
+
+    /**
+     * @dev verifies if the provided rate is valid
+     */
+    function _validRate(Fraction memory rate) internal pure {
+        if (!rate.isPositive()) {
+            revert InvalidRate();
+        }
     }
 }

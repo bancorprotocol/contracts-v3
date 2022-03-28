@@ -553,6 +553,17 @@ describe('AutoCompoundingStakingRewards', () => {
                         ).to.be.revertedWith('AccessDenied');
                     });
 
+                    it('should revert when attempting to enable / disable a non-existing program', async () => {
+                        const newToken = await createTestToken();
+
+                        await expect(
+                            autoCompoundingStakingRewards.enableProgram(newToken.address, true)
+                        ).to.be.revertedWith('ProgramDoesNotExist');
+                        await expect(
+                            autoCompoundingStakingRewards.enableProgram(newToken.address, false)
+                        ).to.be.revertedWith('ProgramDoesNotExist');
+                    });
+
                     it('should enable a program', async () => {
                         await autoCompoundingStakingRewards.enableProgram(token.address, false);
 
