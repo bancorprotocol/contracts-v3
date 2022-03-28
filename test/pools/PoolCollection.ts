@@ -1923,6 +1923,21 @@ describe('PoolCollection', () => {
                     toPPM(1)
                 );
             });
+
+            it('BNT - renounce funding, burn from MV; TKN - transfer from MV and from EPV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1).div(10),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toPPM(1),
+                    toPPM(1)
+                );
+            });
         });
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
