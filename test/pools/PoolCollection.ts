@@ -1830,7 +1830,15 @@ describe('PoolCollection', () => {
             });
         };
 
-        const testWithdrawalPermutations = (
+        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
+            for (const withdrawalFee of [0, 1]) {
+                context(`${symbol}, withdrawalFee=${withdrawalFee}%`, () => {
+                    testWithdrawal(new TokenData(symbol), toPPM(withdrawalFee));
+                });
+            }
+        }
+
+        const testWithdrawalPermutations = async (
             tokenData: TokenData,
             poolTokenAmount: BigNumber,
             poolTokenTotalSupply: BigNumber,
@@ -1842,60 +1850,95 @@ describe('PoolCollection', () => {
             tradingFeePPM: number,
             withdrawalFeePPM: number
         ) => {
-            beforeEach(async () => {
-                ({ network, bnt, networkSettings, masterVault, externalProtectionVault, bntPool, poolCollection } =
-                    await createSystem());
+            ({ network, bnt, networkSettings, masterVault, externalProtectionVault, bntPool, poolCollection } =
+                await createSystem());
 
-                token = await createToken(tokenData);
+            token = await createToken(tokenData);
 
-                poolToken = await createPool(token, network, networkSettings, poolCollection);
+            poolToken = await createPool(token, network, networkSettings, poolCollection);
 
-                await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
-                await networkSettings.setMinLiquidityForTrading(0);
-                await networkSettings.setFundingLimit(token.address, MAX_UINT256.div(2));
+            await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
+            await networkSettings.setMinLiquidityForTrading(0);
+            await networkSettings.setFundingLimit(token.address, MAX_UINT256.div(2));
 
-                const blockNumber = await latestBlockNumber();
+            const blockNumber = await latestBlockNumber();
 
-                await poolCollection.setTradingFeePPM(token.address, tradingFeePPM);
-                await poolCollection.setDepositLimit(token.address, MAX_UINT256);
-                await poolCollection.setTradingLiquidityT(token.address, {
-                    bntTradingLiquidity,
-                    baseTokenTradingLiquidity,
-                    stakedBalance
-                });
-                await poolCollection.requestFundingT(CONTEXT_ID, token.address, bntTradingLiquidity);
-                await poolCollection.mintPoolTokenT(token.address, provider.address, poolTokenTotalSupply);
-                await poolCollection.setBlockNumber(blockNumber);
-                await poolCollection.setAverageRateT(token.address, {
-                    blockNumber,
-                    rate: { n: bntTradingLiquidity, d: baseTokenTradingLiquidity }
-                });
-
-                await transfer(deployer, token, masterVault, balanceOfMasterVault);
-                await transfer(deployer, token, externalProtectionVault, balanceOfExternalProtectionVault);
-                await network.depositToPoolCollectionForT(
-                    poolCollection.address,
-                    CONTEXT_ID,
-                    provider.address,
-                    token.address,
-                    baseTokenTradingLiquidity
-                );
-
-                await poolCollection.enableTrading(token.address, bntTradingLiquidity, baseTokenTradingLiquidity);
+            await poolCollection.setTradingFeePPM(token.address, tradingFeePPM);
+            await poolCollection.setDepositLimit(token.address, MAX_UINT256);
+            await poolCollection.setTradingLiquidityT(token.address, {
+                bntTradingLiquidity,
+                baseTokenTradingLiquidity,
+                stakedBalance
+            });
+            await poolCollection.requestFundingT(CONTEXT_ID, token.address, bntTradingLiquidity);
+            await poolCollection.mintPoolTokenT(token.address, provider.address, poolTokenTotalSupply);
+            await poolCollection.setBlockNumber(blockNumber);
+            await poolCollection.setAverageRateT(token.address, {
+                blockNumber,
+                rate: { n: bntTradingLiquidity, d: baseTokenTradingLiquidity }
             });
 
-            it('@stress test', async () => {
-                await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, TradingLiquidityState.Update);
-            });
+            await transfer(deployer, token, masterVault, balanceOfMasterVault);
+            await transfer(deployer, token, externalProtectionVault, balanceOfExternalProtectionVault);
+            await network.depositToPoolCollectionForT(
+                poolCollection.address,
+                CONTEXT_ID,
+                provider.address,
+                token.address,
+                baseTokenTradingLiquidity
+            );
+
+            await poolCollection.enableTrading(token.address, bntTradingLiquidity, baseTokenTradingLiquidity);
+
+            await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, TradingLiquidityState.Update);
         };
 
-        for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
-            for (const withdrawalFee of [0, 1]) {
-                context(`${symbol}, withdrawalFee=${withdrawalFee}%`, () => {
-                    testWithdrawal(new TokenData(symbol), toPPM(withdrawalFee));
-                });
-            }
-        }
+        describe('quick withdrawal test', async () => {
+            it('BNT - renounce funding, burn from MV, mint for provider; TKN - transfer from MV and from EPV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1).div(10),
+                    toPPM(1),
+                    toPPM(1)
+                );
+            });
+
+            it('BNT - mint for MV; TKN - transfer from EPV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(100),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1).div(10),
+                    toPPM(1),
+                    toPPM(1)
+                );
+            });
+
+            it('BNT - renounce funding, burn from MV; TKN - transfer from MV and from EPV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1).div(10),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toPPM(1),
+                    toPPM(1)
+                );
+            });
+        });
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const poolTokenAmount of [1, 12_345]) {
@@ -1910,21 +1953,23 @@ describe('PoolCollection', () => {
                                     for (const balanceOfExternalProtectionVault of [0, 1_234_567]) {
                                         for (const tradingFee of [1]) {
                                             for (const withdrawalFee of [0.1]) {
-                                                context(
-                                                    [
-                                                        `${symbol}`,
-                                                        `poolTokenAmount=${poolTokenAmount}`,
-                                                        `poolTokenTotalSupply=${poolTokenTotalSupply}`,
-                                                        `bntTradingLiquidity=${bntTradingLiquidity}`,
-                                                        `baseTokenTradingLiquidity=${baseTokenTradingLiquidity}`,
-                                                        `stakedBalance=${stakedBalance}`,
-                                                        `balanceOfMasterVault=${balanceOfMasterVault}`,
-                                                        `balanceOfExternalProtectionVault=${balanceOfExternalProtectionVault}`,
-                                                        `tradingFee=${tradingFee}%`,
-                                                        `withdrawalFee=${withdrawalFee}%`
-                                                    ].join(', '),
-                                                    () => {
-                                                        testWithdrawalPermutations(
+                                                it(
+                                                    '@stress withdrawal test (' +
+                                                        [
+                                                            `${symbol}`,
+                                                            `poolTokenAmount=${poolTokenAmount}`,
+                                                            `poolTokenTotalSupply=${poolTokenTotalSupply}`,
+                                                            `bntTradingLiquidity=${bntTradingLiquidity}`,
+                                                            `baseTokenTradingLiquidity=${baseTokenTradingLiquidity}`,
+                                                            `stakedBalance=${stakedBalance}`,
+                                                            `balanceOfMasterVault=${balanceOfMasterVault}`,
+                                                            `balanceOfExternalProtectionVault=${balanceOfExternalProtectionVault}`,
+                                                            `tradingFee=${tradingFee}%`,
+                                                            `withdrawalFee=${withdrawalFee}%`
+                                                        ].join(', ') +
+                                                        ')',
+                                                    async () => {
+                                                        await testWithdrawalPermutations(
                                                             new TokenData(symbol),
                                                             toWei(poolTokenAmount),
                                                             toWei(poolTokenTotalSupply),
