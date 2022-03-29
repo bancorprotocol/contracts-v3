@@ -132,7 +132,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @inheritdoc IVersioned
      */
     function version() external pure returns (uint16) {
-        return 1;
+        return 2;
     }
 
     /**
