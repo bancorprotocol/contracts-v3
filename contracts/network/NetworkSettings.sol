@@ -17,6 +17,13 @@ import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/IN
 contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
+    uint32 private constant DEFAULT_FLASH_LOAN_FEE_PPM = 0; // 0%
+
+    struct FlashLoanFee {
+        bool initialized;
+        uint32 feePPM;
+    }
+
     // a set of tokens which are eligible for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
 
@@ -32,14 +39,17 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the withdrawal fee (in units of PPM)
     uint32 private _withdrawalFeePPM;
 
-    // the flash-loan fee (in units of PPM)
-    uint32 private _flashLoanFeePPM;
+    // the default flash-loan fee (in units of PPM)
+    uint32 private _defaultFlashLoanFeePPM;
+
+    // a mapping between pools and their flash-loan fees
+    mapping(Token => FlashLoanFee) private _flashLoanFees;
 
     // the settings of the Vortex
     VortexRewards private _vortexRewards;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 7] private __gap;
+    uint256[MAX_GAP - 8] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
@@ -72,11 +82,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     event WithdrawalFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
-     * @dev triggered when the flash-loan fee is updated
-     */
-    event FlashLoanFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
-
-    /**
      * @dev triggered when the settings of the Vortex are updated
      */
     event VortexBurnRewardUpdated(
@@ -85,6 +90,16 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         uint256 prevBurnRewardMaxAmount,
         uint256 newBurnRewardMaxAmount
     );
+
+    /**
+     * @dev triggered when the default flash-loan fee is updated
+     */
+    event DefaultFlashLoanFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+
+    /**
+     * @dev triggered when a specific pool's flash-loan fee is updated
+     */
+    event FlashLoanFeePPMUpdated(Token indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
      * @dev fully initializes the contract and its parents
@@ -107,7 +122,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev performs contract-specific initialization
      */
-    function __NetworkSettings_init_unchained() internal onlyInitializing {}
+    function __NetworkSettings_init_unchained() internal onlyInitializing {
+        _setDefaultFlashLoanFeePPM(DEFAULT_FLASH_LOAN_FEE_PPM);
+    }
 
     // solhint-enable func-name-mixedcase
 
@@ -275,26 +292,55 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function flashLoanFeePPM() external view returns (uint32) {
-        return _flashLoanFeePPM;
+    function defaultFlashLoanFeePPM() external view returns (uint32) {
+        return _defaultFlashLoanFeePPM;
     }
 
     /**
-     * @dev sets the flash-loan fee (in units of PPM)
+     * @dev sets the default flash-loan fee (in units of PPM)
      *
      * requirements:
      *
-     * - the caller must be the admin of the contract
+     * - the caller must be the owner of the contract
      */
-    function setFlashLoanFeePPM(uint32 newFlashLoanFeePPM) external onlyAdmin validFee(newFlashLoanFeePPM) {
-        uint32 prevFlashLoanFeePPM = _flashLoanFeePPM;
+    function setDefaultFlashLoanFeePPM(uint32 newDefaultFlashLoanFeePPM)
+        external
+        onlyAdmin
+        validFee(newDefaultFlashLoanFeePPM)
+    {
+        _setDefaultFlashLoanFeePPM(newDefaultFlashLoanFeePPM);
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function flashLoanFeePPM(Token pool) external view returns (uint32) {
+        FlashLoanFee memory flashLoanFee = _flashLoanFees[pool];
+
+        return flashLoanFee.initialized ? flashLoanFee.feePPM : _defaultFlashLoanFeePPM;
+    }
+
+    /**
+     * @dev sets the flash-loan fee of a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     * - the token must have been whitelisted
+     */
+    function setFlashLoanFeePPM(Token pool, uint32 newFlashLoanFeePPM) external onlyAdmin validFee(newFlashLoanFeePPM) {
+        if (!_isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
+
+        uint32 prevFlashLoanFeePPM = _flashLoanFees[pool].feePPM;
         if (prevFlashLoanFeePPM == newFlashLoanFeePPM) {
             return;
         }
 
-        _flashLoanFeePPM = newFlashLoanFeePPM;
+        _flashLoanFees[pool] = FlashLoanFee({ initialized: true, feePPM: newFlashLoanFeePPM });
 
-        emit FlashLoanFeePPMUpdated({ prevFeePPM: prevFlashLoanFeePPM, newFeePPM: newFlashLoanFeePPM });
+        emit FlashLoanFeePPMUpdated({ pool: pool, prevFeePPM: prevFlashLoanFeePPM, newFeePPM: newFlashLoanFeePPM });
     }
 
     /**
@@ -342,5 +388,22 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      */
     function _isTokenWhitelisted(Token token) private view returns (bool) {
         return _protectedTokenWhitelist.contains(address(token));
+    }
+
+    /**
+     * @dev sets the default flash-loan fee (in units of PPM)
+     */
+    function _setDefaultFlashLoanFeePPM(uint32 newDefaultFlashLoanFeePPM) private {
+        uint32 prevDefaultFlashLoanFeePPM = _defaultFlashLoanFeePPM;
+        if (prevDefaultFlashLoanFeePPM == newDefaultFlashLoanFeePPM) {
+            return;
+        }
+
+        _defaultFlashLoanFeePPM = newDefaultFlashLoanFeePPM;
+
+        emit DefaultFlashLoanFeePPMUpdated({
+            prevFeePPM: prevDefaultFlashLoanFeePPM,
+            newFeePPM: newDefaultFlashLoanFeePPM
+        });
     }
 }

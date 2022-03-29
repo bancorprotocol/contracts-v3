@@ -17,6 +17,7 @@ import Contracts, {
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
+    DEFAULT_FLASH_LOAN_FEE_PPM,
     DEFAULT_TRADING_FEE_PPM,
     EMA_AVERAGE_RATE_WEIGHT,
     EMA_SPOT_RATE_WEIGHT,
@@ -306,11 +307,17 @@ describe('PoolCollection', () => {
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(0, DEFAULT_TRADING_FEE_PPM);
+
+            // please note that currently the DefaultFlashLoanFeePPMUpdated event won't be emitted during construction
+            // since the default fee (0) equals to the value of an uninitialized uint32 storage variable (0)
+            await expect(poolCollection.deployTransaction)
+                .not.to.emit(poolCollection, 'DefaultFlashLoanFeePPMUpdated')
+                .withArgs(0, DEFAULT_FLASH_LOAN_FEE_PPM);
         });
     });
 
     describe('default trading fee', () => {
-        const newDefaultTradingFree = 100_000;
+        const newDefaultTradingFee = toPPM(10);
 
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
@@ -327,7 +334,7 @@ describe('PoolCollection', () => {
 
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
             await expect(
-                poolCollection.connect(nonOwner).setDefaultTradingFeePPM(newDefaultTradingFree)
+                poolCollection.connect(nonOwner).setDefaultTradingFeePPM(newDefaultTradingFee)
             ).to.be.revertedWith('AccessDenied');
         });
 
@@ -336,25 +343,25 @@ describe('PoolCollection', () => {
         });
 
         it('should ignore updating to the same default trading fee', async () => {
-            await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
+            await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFee);
 
-            const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
+            const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFee);
             await expect(res).not.to.emit(poolCollection, 'DefaultTradingFeePPMUpdated');
         });
 
         it('should be able to set and update the default trading fee', async () => {
-            const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFree);
+            const res = await poolCollection.setDefaultTradingFeePPM(newDefaultTradingFee);
             await expect(res)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
-                .withArgs(DEFAULT_TRADING_FEE_PPM, newDefaultTradingFree);
+                .withArgs(DEFAULT_TRADING_FEE_PPM, newDefaultTradingFee);
 
-            expect(await poolCollection.defaultTradingFeePPM()).to.equal(newDefaultTradingFree);
+            expect(await poolCollection.defaultTradingFeePPM()).to.equal(newDefaultTradingFee);
 
             // ensure that the new default trading fee is used during the creation of newer pools
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
             const pool = await poolCollection.poolData(reserveToken.address);
-            expect(pool.tradingFeePPM).to.equal(newDefaultTradingFree);
+            expect(pool.tradingFeePPM).to.equal(newDefaultTradingFee);
         });
     });
 

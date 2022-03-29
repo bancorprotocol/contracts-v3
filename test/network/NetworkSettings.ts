@@ -1,5 +1,5 @@
 import { NetworkSettings, TestERC20Token } from '../../components/Contracts';
-import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { DEFAULT_FLASH_LOAN_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem, createTestToken } from '../helpers/Factory';
@@ -47,7 +47,7 @@ describe('NetworkSettings', () => {
 
             expect(await networkSettings.networkFeePPM()).to.equal(0);
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
-            expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
+            expect(await networkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
 
             const vortexRewards = await networkSettings.vortexRewards();
             expect(vortexRewards.burnRewardPPM).to.equal(0);
@@ -247,40 +247,148 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('flash-loan fee', () => {
-        const newFlashLoanFee = toPPM(50);
+    describe('default flash-loan fee', () => {
+        const newDefaultFlashLoanFee = toPPM(10);
 
         beforeEach(async () => {
-            expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
+            ({ networkSettings } = await createSystem());
+
+            expect(await networkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
         });
 
-        it('should revert when a non-admin attempts to set the flash-loan fee', async () => {
-            await expect(networkSettings.connect(nonOwner).setFlashLoanFeePPM(newFlashLoanFee)).to.be.revertedWith(
-                'AccessDenied'
+        it('should revert when a non-admin attempts to set the default flash-loan fee', async () => {
+            await expect(
+                networkSettings.connect(nonOwner).setDefaultFlashLoanFeePPM(newDefaultFlashLoanFee)
+            ).to.be.revertedWith('AccessDenied');
+        });
+
+        it('should revert when setting the default flash-loan fee to an invalid value', async () => {
+            await expect(networkSettings.setDefaultFlashLoanFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith(
+                'InvalidFee'
             );
         });
 
-        it('should revert when setting the flash-loan fee to an invalid value', async () => {
-            await expect(networkSettings.setFlashLoanFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
+        it('should ignore updating to the same default flash-loan fee', async () => {
+            await networkSettings.setDefaultFlashLoanFeePPM(newDefaultFlashLoanFee);
+
+            const res = await networkSettings.setDefaultFlashLoanFeePPM(newDefaultFlashLoanFee);
+            await expect(res).not.to.emit(networkSettings, 'DefaultFlashLoanFeePPMUpdated');
         });
 
-        it('should ignore updating to the same flash-loan fee', async () => {
-            await networkSettings.setFlashLoanFeePPM(newFlashLoanFee);
+        it('should be able to set and update the default flash-loan fee', async () => {
+            const res = await networkSettings.setDefaultFlashLoanFeePPM(newDefaultFlashLoanFee);
+            await expect(res)
+                .to.emit(networkSettings, 'DefaultFlashLoanFeePPMUpdated')
+                .withArgs(DEFAULT_FLASH_LOAN_FEE_PPM, newDefaultFlashLoanFee);
 
-            const res = await networkSettings.setFlashLoanFeePPM(newFlashLoanFee);
-            await expect(res).not.to.emit(networkSettings, 'FlashLoanFeePPMUpdated');
+            expect(await networkSettings.defaultFlashLoanFeePPM()).to.equal(newDefaultFlashLoanFee);
+        });
+    });
+
+    describe.only('flash-loan fee', () => {
+        beforeEach(async () => {
+            ({ networkSettings } = await createSystem());
         });
 
-        it('should be able to set and update the flash-loan fee', async () => {
-            const res = await networkSettings.setFlashLoanFeePPM(newFlashLoanFee);
-            await expect(res).to.emit(networkSettings, 'FlashLoanFeePPMUpdated').withArgs(0, newFlashLoanFee);
+        describe('setting', () => {
+            const newFlashLoanFee = toPPM(5.5);
 
-            expect(await networkSettings.flashLoanFeePPM()).to.equal(newFlashLoanFee);
+            it('should revert when a non-admin attempts to set the flash-loan fee', async () => {
+                await expect(
+                    networkSettings.connect(nonOwner).setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee)
+                ).to.be.revertedWith('AccessDenied');
+            });
 
-            const res2 = await networkSettings.setFlashLoanFeePPM(0);
-            await expect(res2).to.emit(networkSettings, 'FlashLoanFeePPMUpdated').withArgs(newFlashLoanFee, 0);
+            it('should revert when attempting to set the flash-loan fee of a non-whitelisted token', async () => {
+                await expect(
+                    networkSettings.setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee)
+                ).to.be.revertedWith('NotWhitelisted');
+            });
 
-            expect(await networkSettings.flashLoanFeePPM()).to.equal(0);
+            context('whitelisted', () => {
+                beforeEach(async () => {
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                });
+
+                it('should revert when setting an invalid flash-loan fee', async () => {
+                    await expect(
+                        networkSettings.setFlashLoanFeePPM(reserveToken.address, PPM_RESOLUTION + 1)
+                    ).to.be.revertedWith('InvalidFee');
+                });
+
+                it('should ignore updating to the same flash-loan fee', async () => {
+                    await networkSettings.setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee);
+
+                    const res = await networkSettings.setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee);
+                    await expect(res).not.to.emit(networkSettings, 'FlashLoanFeePPMUpdated');
+                });
+
+                it('should allow setting and updating the flash-loan fee', async () => {
+                    const flashLoanFee = await networkSettings.flashLoanFeePPM(reserveToken.address);
+                    expect(flashLoanFee).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
+
+                    const res = await networkSettings.setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee);
+                    await expect(res)
+                        .to.emit(networkSettings, 'FlashLoanFeePPMUpdated')
+                        .withArgs(reserveToken.address, flashLoanFee, newFlashLoanFee);
+
+                    expect(await networkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(newFlashLoanFee);
+
+                    const newFlashLoanFee2 = toPPM(0);
+                    const res2 = await networkSettings.setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee2);
+                    await expect(res2)
+                        .to.emit(networkSettings, 'FlashLoanFeePPMUpdated')
+                        .withArgs(reserveToken.address, newFlashLoanFee, newFlashLoanFee2);
+
+                    expect(await networkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(newFlashLoanFee2);
+                });
+            });
+        });
+
+        describe('getting', () => {
+            it('should return the default fee', async () => {
+                expect(await networkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(
+                    DEFAULT_FLASH_LOAN_FEE_PPM
+                );
+            });
+
+            context('whitelisted', () => {
+                beforeEach(async () => {
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                });
+
+                it('should return the default fee', async () => {
+                    expect(await networkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(
+                        DEFAULT_FLASH_LOAN_FEE_PPM
+                    );
+                });
+
+                context('with a custom default fee setting', () => {
+                    const newDefaultFlashLoanFee = toPPM(50);
+
+                    beforeEach(async () => {
+                        await networkSettings.setDefaultFlashLoanFeePPM(newDefaultFlashLoanFee);
+                    });
+
+                    it('should return the custom default fee', async () => {
+                        expect(await networkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(
+                            newDefaultFlashLoanFee
+                        );
+                    });
+                });
+
+                context('with a custom fee setting', () => {
+                    const newFlashLoanFee = toPPM(30);
+
+                    beforeEach(async () => {
+                        await networkSettings.setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee);
+                    });
+
+                    it('should return the custom default fee', async () => {
+                        expect(await networkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(newFlashLoanFee);
+                    });
+                });
+            });
         });
     });
 

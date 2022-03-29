@@ -15,7 +15,7 @@ describeDeployment('1642682516-set-network-settings', toDeployTag(__filename), (
         expect(await networkSettings.minLiquidityForTrading()).to.equal(toWei(10_000));
         expect(await networkSettings.networkFeePPM()).to.equal(toPPM(15));
         expect(await networkSettings.withdrawalFeePPM()).to.equal(toPPM(0.25));
-        expect(await networkSettings.flashLoanFeePPM()).to.equal(toPPM(0.09));
+        expect(await networkSettings.defaultFlashLoanFeePPM()).to.equal(0);
 
         const vortexRewards = await networkSettings.vortexRewards();
         expect(vortexRewards.burnRewardPPM).to.equal(toPPM(10));

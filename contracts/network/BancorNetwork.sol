@@ -712,7 +712,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             revert NotWhitelisted();
         }
 
-        uint256 feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(), PPM_RESOLUTION);
+        uint256 feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(token), PPM_RESOLUTION);
 
         // save the current balance
         uint256 prevBalance = token.balanceOf(address(this));

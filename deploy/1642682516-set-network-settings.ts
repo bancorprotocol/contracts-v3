@@ -29,13 +29,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     await execute({
         name: ContractName.NetworkSettingsV1,
-        methodName: 'setFlashLoanFeePPM',
-        args: [toPPM(0.09)],
-        from: deployer
-    });
-
-    await execute({
-        name: ContractName.NetworkSettingsV1,
         methodName: 'setVortexRewards',
         args: [{ burnRewardPPM: toPPM(10), burnRewardMaxAmount: toWei(100) }],
         from: deployer
