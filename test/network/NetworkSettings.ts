@@ -35,7 +35,7 @@ describe('NetworkSettings', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await networkSettings.version()).to.equal(1);
+            expect(await networkSettings.version()).to.equal(2);
 
             await expectRoles(networkSettings, Roles.Upgradeable);
 
@@ -285,7 +285,7 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe.only('flash-loan fee', () => {
+    describe('flash-loan fee', () => {
         beforeEach(async () => {
             ({ networkSettings } = await createSystem());
         });
