@@ -192,9 +192,9 @@ interface SaveTypeOptions {
 const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
-    const src = path.join(path.resolve('./', config.typechain.outDir), `${contract}.ts`);
+    const src = path.join(path.resolve('./', config.typechain.outDir), 'factories', `${contract}__factory.ts`);
     const destDir = path.join(config.paths.deployments, getNetworkName());
-    const dest = path.join(destDir, `${name}.ts`);
+    const dest = path.join(destDir, `${name}__.ts`);
 
     // don't save types for legacy contracts
     if (Object.values(LegacyContractName).includes(name as LegacyContractName)) {
