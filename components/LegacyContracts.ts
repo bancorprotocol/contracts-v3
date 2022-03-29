@@ -1,47 +1,47 @@
 import { deployOrAttach } from './ContractBuilder';
-import {
-    BancorNetwork as LegacyBancorNetwork,
-    BancorNetwork__factory,
-    ConverterFactory__factory,
-    ConverterFactory,
-    ContractRegistry__factory,
-    ContractRegistry,
-    ConverterRegistry__factory,
-    ConverterRegistry,
-    ConverterRegistryData__factory,
-    ConverterRegistryData,
-    LiquidityProtectionSettings__factory,
-    LiquidityProtectionSettings,
-    LiquidityProtectionStats__factory,
-    LiquidityProtectionStats,
-    LiquidityProtectionStore__factory,
-    LiquidityProtectionStore,
-    LiquidityProtectionSystemStore__factory,
-    LiquidityProtectionSystemStore,
-    NetworkSettings__factory,
-    NetworkSettings as LegacyNetworkSettings,
-    TestCheckpointStore__factory,
-    TestCheckpointStore,
-    TestLiquidityProtection__factory,
-    TestLiquidityProtection,
-    TestStandardPoolConverter__factory,
-    TestStandardPoolConverter,
-    TestStandardPoolConverterFactory__factory,
-    TestStandardPoolConverterFactory,
-    TokenHolder__factory,
-    TokenHolder
-} from '@bancor/contracts-solidity';
 
 /* eslint-disable camelcase */
 import {
-    DSToken,
-    DSToken__factory,
-    DSToken as VBNT,
-    DSToken__factory as VBNT__factory,
+    BancorNetwork__factory,
+    ContractRegistry,
+    ContractRegistry__factory,
+    ConverterFactory,
+    ConverterFactory__factory,
+    ConverterRegistry,
+    ConverterRegistry__factory,
+    ConverterRegistryData,
+    ConverterRegistryData__factory,
+    BancorNetwork as LegacyBancorNetwork,
+    NetworkSettings as LegacyNetworkSettings,
+    LiquidityProtectionSettings,
+    LiquidityProtectionSettings__factory,
+    LiquidityProtectionStats,
+    LiquidityProtectionStats__factory,
+    LiquidityProtectionStore,
+    LiquidityProtectionStore__factory,
+    LiquidityProtectionSystemStore,
+    LiquidityProtectionSystemStore__factory,
+    NetworkSettings__factory,
+    TestCheckpointStore,
+    TestCheckpointStore__factory,
+    TestLiquidityProtection,
+    TestLiquidityProtection__factory,
+    TestStandardPoolConverter,
+    TestStandardPoolConverter__factory,
+    TestStandardPoolConverterFactory,
+    TestStandardPoolConverterFactory__factory,
+    TokenHolder,
+    TokenHolder__factory
+} from '@bancor/contracts-solidity';
+import {
     SmartToken as BNT,
     SmartToken__factory as BNT__factory,
+    DSToken,
+    DSToken__factory,
     TokenGovernance,
-    TokenGovernance__factory
+    TokenGovernance__factory,
+    DSToken as VBNT,
+    DSToken__factory as VBNT__factory
 } from '@bancor/token-governance';
 import { Signer } from 'ethers';
 
@@ -106,6 +106,8 @@ const getContracts = (signer?: Signer) => ({
         TestStandardPoolConverterFactory__factory,
         signer
     )
+
+    // NetworkSettingsV1: deployOrAttach('NetworkSettingsV1', NetworkSettingsV1, signer),
 });
 
 export type LegacyContractsType = ReturnType<typeof getContracts>;

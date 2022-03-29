@@ -1,6 +1,6 @@
 /* eslint-enable camelcase */
 import { Profiler } from './Profiler';
-import { Signer, ContractFactory } from 'ethers';
+import { ContractFactory, Signer } from 'ethers';
 import { ethers } from 'hardhat';
 
 export type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
