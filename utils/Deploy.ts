@@ -22,7 +22,7 @@ import {
     TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
-import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import { BancorNetworkV1, BNT, NetworkSettingsV1, TokenGovernance, VBNT } from '../components/LegacyContracts';
 import { ExternalContracts } from '../deployments/data';
 import { DeploymentNetwork } from './Constants';
 import { RoleIds } from './Roles';
@@ -57,14 +57,17 @@ enum LegacyContractName {
     BNT = 'BNT',
     BNTGovernance = 'BNTGovernance',
     VBNT = 'VBNT',
-    VBNTGovernance = 'VBNTGovernance'
+    VBNTGovernance = 'VBNTGovernance',
+
+    BancorNetworkV1 = 'BancorNetworkV1',
+    NetworkSettingsV1 = 'NetworkSettingsV1'
 }
 
 enum NewContractName {
     AutoCompoundingStakingRewardsV1 = 'AutoCompoundingStakingRewardsV1',
     BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
     BancorNetworkProxy = 'BancorNetworkProxy',
-    BancorNetworkV1 = 'BancorNetworkV1',
+    BancorNetworkV2 = 'BancorNetworkV2',
     BancorPortalV1 = 'BancorPortalV1',
     BancorV1MigrationV1 = 'BancorV1MigrationV1',
     BNTPoolTokenV1 = 'BNTPoolTokenV1',
@@ -75,7 +78,7 @@ enum NewContractName {
     MockUniswapV2FactoryV1 = 'MockUniswapV2FactoryV1',
     MockUniswapV2PairV1 = 'MockUniswapV2PairV1',
     MockUniswapV2Router02V1 = 'MockUniswapV2Router02V1',
-    NetworkSettingsV1 = 'NetworkSettingsV1',
+    NetworkSettingsV2 = 'NetworkSettingsV2',
     PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
     PoolMigratorV1 = 'PoolMigratorV1',
@@ -109,7 +112,10 @@ const DeployedLegacyContracts = {
     BNT: deployed<BNT>(ContractName.BNT),
     BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance),
     VBNT: deployed<VBNT>(ContractName.VBNT),
-    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance)
+    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance),
+
+    BancorNetworkV1: deployed<BancorNetworkV1>(ContractName.BancorNetworkV1),
+    NetworkSettingsV1: deployed<NetworkSettingsV1>(ContractName.NetworkSettingsV1)
 };
 
 const DeployedNewContracts = {
@@ -118,7 +124,7 @@ const DeployedNewContracts = {
     ),
     BancorNetworkInfoV1: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfoV1),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
-    BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
+    BancorNetworkV2: deployed<BancorNetwork>(ContractName.BancorNetworkV2),
     BancorPortalV1: deployed<BancorPortal>(ContractName.BancorPortalV1),
     BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
     BNTPoolTokenV1: deployed<PoolToken>(ContractName.BNTPoolTokenV1),
@@ -129,7 +135,7 @@ const DeployedNewContracts = {
     MockUniswapV2FactoryV1: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2FactoryV1),
     MockUniswapV2PairV1: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2PairV1),
     MockUniswapV2Router02V1: deployed<MockUniswapV2Router02>(ContractName.MockUniswapV2Router02V1),
-    NetworkSettingsV1: deployed<NetworkSettings>(ContractName.NetworkSettingsV1),
+    NetworkSettingsV2: deployed<NetworkSettings>(ContractName.NetworkSettingsV2),
     PendingWithdrawalsV1: deployed<PendingWithdrawals>(ContractName.PendingWithdrawalsV1),
     PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
     PoolMigratorV1: deployed<PoolMigrator>(ContractName.PoolMigratorV1),
