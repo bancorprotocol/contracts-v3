@@ -238,7 +238,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         _removeWithdrawalRequest(provider, id);
 
         // get the pool token value in reserve/pool tokens
-        uint256 currentReserveTokenAmount = _poolTokenUnderlying(request.reserveToken, request.poolTokenAmount);
+        uint256 currentReserveTokenAmount = _poolTokenToUnderlying(request.reserveToken, request.poolTokenAmount);
 
         // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
         // of the request
@@ -316,7 +316,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         uint256 id = _nextWithdrawalRequestId++;
 
         // get the pool token value in reserve/pool tokens
-        uint256 reserveTokenAmount = _poolTokenUnderlying(pool, poolTokenAmount);
+        uint256 reserveTokenAmount = _poolTokenToUnderlying(pool, poolTokenAmount);
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
             poolToken: poolToken,
@@ -344,7 +344,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @dev returns the pool token value in tokens
      */
-    function _poolTokenUnderlying(Token pool, uint256 poolTokenAmount) private view returns (uint256) {
+    function _poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) private view returns (uint256) {
         if (pool.isEqual(_bnt)) {
             return _bntPool.poolTokenToUnderlying(poolTokenAmount);
         }

@@ -3357,14 +3357,19 @@ describe('PoolCollection', () => {
                         tokenAmount
                     );
                     expect(poolTokenAmount).to.equal(
-                        BigNumber.from(tokenAmount).mul(poolTokenTotalSupply).div(stakedBalance)
+                        // ceil(tokenAmount * poolTokenTotalSupply / stakedBalance)
+                        BigNumber.from(tokenAmount)
+                            .mul(poolTokenTotalSupply)
+                            .add(stakedBalance)
+                            .sub(1)
+                            .div(stakedBalance)
                     );
 
                     const underlyingAmount = await poolCollection.poolTokenToUnderlying(
                         reserveToken.address,
                         poolTokenAmount
                     );
-                    expect(underlyingAmount).to.be.closeTo(BigNumber.from(tokenAmount), 1);
+                    expect(underlyingAmount).to.equal(tokenAmount);
                 });
 
                 for (const protocolPoolTokenAmount of [0, 100_000, toWei(50_000)]) {
@@ -3399,7 +3404,7 @@ describe('PoolCollection', () => {
 
                             expect(
                                 await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount)
-                            ).to.be.closeTo(prevUnderlying.add(tokenAmount), 1);
+                            ).to.equal(tokenAmount);
                         });
                     });
                 }
