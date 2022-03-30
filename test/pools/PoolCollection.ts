@@ -3404,7 +3404,7 @@ describe('PoolCollection', () => {
 
                             expect(
                                 await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount)
-                            ).to.equal(tokenAmount);
+                            ).to.be.closeTo(prevUnderlying.add(tokenAmount), 1);
                         });
                     });
                 }
