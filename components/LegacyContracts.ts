@@ -1,5 +1,10 @@
 /* eslint-disable camelcase */
-import { NetworkSettingsV1, NetworkSettingsV1__factory } from '../deployments/mainnet/types';
+import {
+    BancorNetworkV1,
+    BancorNetworkV1__factory,
+    NetworkSettingsV1,
+    NetworkSettingsV1__factory
+} from '../deployments/mainnet/types';
 import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork__factory,
@@ -69,13 +74,14 @@ export {
     VBNT
 };
 
-export { NetworkSettingsV1, NetworkSettingsV1__factory };
+export { BancorNetworkV1, BancorNetworkV1__factory, NetworkSettingsV1, NetworkSettingsV1__factory };
 
 /* eslint-enable camelcase */
 
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
+    // V2 contracts
     TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
     BNT: deployOrAttach('BNT', BNT__factory, signer),
     VBNT: deployOrAttach('VBNT', VBNT__factory, signer),
@@ -110,7 +116,7 @@ const getContracts = (signer?: Signer) => ({
     ),
 
     // V3 legacy contracts
-
+    BancorNetworkV1: deployOrAttach('BancorNetwork', BancorNetworkV1__factory, signer),
     NetworkSettingsV1: deployOrAttach('NetworkSettings', NetworkSettingsV1__factory, signer)
 });
 
