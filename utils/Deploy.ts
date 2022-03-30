@@ -75,9 +75,6 @@ enum NewContractName {
     ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
     ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
     MasterVaultV1 = 'MasterVaultV1',
-    MockUniswapV2FactoryV1 = 'MockUniswapV2FactoryV1',
-    MockUniswapV2PairV1 = 'MockUniswapV2PairV1',
-    MockUniswapV2Router02V1 = 'MockUniswapV2Router02V1',
     NetworkSettingsV2 = 'NetworkSettingsV2',
     PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
@@ -88,6 +85,9 @@ enum NewContractName {
 }
 
 enum TestContractName {
+    MockUniswapV2FactoryV1 = 'MockUniswapV2FactoryV1',
+    MockUniswapV2PairV1 = 'MockUniswapV2PairV1',
+    MockUniswapV2Router02V1 = 'MockUniswapV2Router02V1',
     TestToken1 = 'TestToken1',
     TestToken2 = 'TestToken2',
     TestToken3 = 'TestToken3',
@@ -132,9 +132,6 @@ const DeployedNewContracts = {
     ExternalProtectionVaultV1: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVaultV1),
     ExternalRewardsVaultV1: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVaultV1),
     MasterVaultV1: deployed<MasterVault>(ContractName.MasterVaultV1),
-    MockUniswapV2FactoryV1: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2FactoryV1),
-    MockUniswapV2PairV1: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2PairV1),
-    MockUniswapV2Router02V1: deployed<MockUniswapV2Router02>(ContractName.MockUniswapV2Router02V1),
     NetworkSettingsV2: deployed<NetworkSettings>(ContractName.NetworkSettingsV2),
     PendingWithdrawalsV1: deployed<PendingWithdrawals>(ContractName.PendingWithdrawalsV1),
     PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
@@ -145,6 +142,9 @@ const DeployedNewContracts = {
 };
 
 const DeployedTestContracts = {
+    MockUniswapV2FactoryV1: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2FactoryV1),
+    MockUniswapV2PairV1: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2PairV1),
+    MockUniswapV2Router02V1: deployed<MockUniswapV2Router02>(ContractName.MockUniswapV2Router02V1),
     TestToken1: deployed<TestERC20Token>(ContractName.TestToken1),
     TestToken2: deployed<TestERC20Token>(ContractName.TestToken2),
     TestToken3: deployed<TestERC20Token>(ContractName.TestToken3),
