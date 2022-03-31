@@ -814,8 +814,9 @@ describe('BancorNetwork', () => {
 
                     expect(await network.isPoolValid(reserveToken.address)).to.be.true;
                     expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
-                    expect(await network.liquidityPools()).to.have.members([reserveToken.address]);
                     expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
+
+                    expect(await network.liquidityPools()).to.deep.equal([reserveToken.address]);
                 });
 
                 it('should create pools', async () => {
