@@ -1101,11 +1101,12 @@ describe('BNTPool', () => {
 
                     const poolTokenAmount = await bntPool.underlyingToPoolToken(bntAmount);
                     expect(poolTokenAmount).to.equal(
-                        BigNumber.from(bntAmount).mul(poolTokenTotalSupply).div(stakedBalance)
+                        // ceil(bntAmount * poolTokenTotalSupply / stakedBalance)
+                        BigNumber.from(bntAmount).mul(poolTokenTotalSupply).add(stakedBalance).sub(1).div(stakedBalance)
                     );
 
                     const underlyingAmount = await bntPool.poolTokenToUnderlying(poolTokenAmount);
-                    expect(underlyingAmount).to.be.closeTo(BigNumber.from(bntAmount), 1);
+                    expect(underlyingAmount).to.equal(bntAmount);
                 });
 
                 it('should properly calculate pool token amount to burn in order to increase underlying value', async () => {
