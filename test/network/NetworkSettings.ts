@@ -84,7 +84,6 @@ describe('NetworkSettings', () => {
         it('should upgrade and preserve existing settings', async () => {
             const upgradedNetworkSettings = await upgradeProxy(networkSettings, Contracts.NetworkSettings);
 
-            console.log('upgradedNetworkSettings', upgradedNetworkSettings.address);
             expect(await upgradedNetworkSettings.networkFeePPM()).to.equal(networkFeePPM);
             expect(await upgradedNetworkSettings.withdrawalFeePPM()).to.equal(withdrawalFeePPM);
             expect(await upgradedNetworkSettings.minLiquidityForTrading()).to.equal(minLiquidityForTrading);
