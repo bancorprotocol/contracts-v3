@@ -11,7 +11,6 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
@@ -292,9 +291,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     receive() external payable {}
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.12;
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 
 contract TestUpgradeable is Upgradeable {
@@ -20,7 +21,7 @@ contract TestUpgradeable is Upgradeable {
 
     // solhint-enable func-name-mixedcase
 
-    function version() external pure returns (uint16) {
+    function version() public pure override(Upgradeable) returns (uint16) {
         return 1;
     }
 

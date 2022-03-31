@@ -1,5 +1,6 @@
 import Contracts, { TestUpgradeable } from '../../components/Contracts';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
+import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -9,6 +10,8 @@ describe('Upgradeable', () => {
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
+
+    shouldHaveGap('Upgradeable', '_upgradeCount');
 
     before(async () => {
         [deployer, nonOwner] = await ethers.getSigners();

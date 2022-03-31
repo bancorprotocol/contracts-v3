@@ -42,11 +42,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the default flash-loan fee (in units of PPM)
     uint32 private _defaultFlashLoanFeePPM;
 
-    // a mapping between pools and their flash-loan fees
-    mapping(Token => FlashLoanFee) private _flashLoanFees;
-
     // the settings of the Vortex
     VortexRewards private _vortexRewards;
+
+    // a mapping between pools and their flash-loan fees
+    mapping(Token => FlashLoanFee) private _flashLoanFees;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 8] private __gap;
@@ -129,9 +129,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 2;
     }
 
@@ -381,6 +381,15 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
             prevBurnRewardMaxAmount: prevVortexBurnRewardMaxAmount,
             newBurnRewardMaxAmount: rewards.burnRewardMaxAmount
         });
+    }
+
+    /**
+     * @dev performs post-upgrade initialization
+     */
+    function _onUpgrade(
+        bytes calldata /* data */
+    ) internal virtual override {
+        _setDefaultFlashLoanFeePPM(DEFAULT_FLASH_LOAN_FEE_PPM);
     }
 
     /**

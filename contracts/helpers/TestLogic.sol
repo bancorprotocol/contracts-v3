@@ -30,7 +30,7 @@ contract TestLogic is Upgradeable {
         return _initializedLogic;
     }
 
-    function version() external view override returns (uint16) {
+    function version() public view override returns (uint16) {
         return _version;
     }
 

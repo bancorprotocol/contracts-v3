@@ -241,9 +241,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     receive() external payable {}
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

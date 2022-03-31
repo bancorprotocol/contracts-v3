@@ -7,6 +7,9 @@ import { Token } from "../token/Token.sol";
 
 import { Vault } from "../vaults/Vault.sol";
 
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+
 contract TestVault is Vault {
     bool private _isAuthorizedWithdrawal;
     bool private _isPayable;
@@ -41,7 +44,7 @@ contract TestVault is Vault {
         _isPayable = state;
     }
 
-    function version() external pure override returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 
