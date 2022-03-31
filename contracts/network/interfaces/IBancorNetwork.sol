@@ -42,7 +42,7 @@ interface IBancorNetwork is IUpgradeable {
     /**
      * @dev returns the set of all valid pool collections
      */
-    function poolCollections() external view returns (IPoolCollection[] memory);
+    function poolCollections() external view returns (address[] memory);
 
     /**
      * @dev returns the most recent collection that was added to the pool collections set for a specific type
@@ -52,7 +52,7 @@ interface IBancorNetwork is IUpgradeable {
     /**
      * @dev returns the set of all liquidity pools
      */
-    function liquidityPools() external view returns (Token[] memory);
+    function liquidityPools() external view returns (address[] memory);
 
     /**
      * @dev returns the respective pool collection for the provided pool

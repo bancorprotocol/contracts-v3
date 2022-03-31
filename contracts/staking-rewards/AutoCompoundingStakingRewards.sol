@@ -172,11 +172,12 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
-        uint256 numPrograms = _programByPool.length();
+        address[] memory values = _programByPool.values();
+        uint256 numPrograms = values.length;
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i++) {
-            list[i] = _programs[Token(_programByPool.at(i))];
+            list[i] = _programs[Token(values[i])];
         }
 
         return list;

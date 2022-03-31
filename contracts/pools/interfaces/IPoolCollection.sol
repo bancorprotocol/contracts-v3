@@ -71,7 +71,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns all the pools which are managed by this pool collection
      */
-    function pools() external view returns (Token[] memory);
+    function pools() external view returns (address[] memory);
 
     /**
      * @dev returns the number of all the pools which are managed by this pool collection

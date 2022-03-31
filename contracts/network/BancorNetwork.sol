@@ -412,13 +412,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function poolCollections() external view returns (IPoolCollection[] memory) {
-        uint256 length = _poolCollections.length();
-        IPoolCollection[] memory list = new IPoolCollection[](length);
-        for (uint256 i = 0; i < length; i++) {
-            list[i] = IPoolCollection(_poolCollections.at(i));
-        }
-        return list;
+    function poolCollections() external view returns (address[] memory) {
+        return _poolCollections.values();
     }
 
     /**
@@ -431,13 +426,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function liquidityPools() external view returns (Token[] memory) {
-        uint256 length = _liquidityPools.length();
-        Token[] memory list = new Token[](length);
-        for (uint256 i = 0; i < length; i++) {
-            list[i] = Token(_liquidityPools.at(i));
-        }
-        return list;
+    function liquidityPools() external view returns (address[] memory) {
+        return _liquidityPools.values();
     }
 
     /**

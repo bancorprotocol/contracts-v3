@@ -311,13 +311,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @inheritdoc IPoolCollection
      */
-    function pools() external view returns (Token[] memory) {
-        uint256 length = _pools.length();
-        Token[] memory list = new Token[](length);
-        for (uint256 i = 0; i < length; i++) {
-            list[i] = Token(_pools.at(i));
-        }
-        return list;
+    function pools() external view returns (address[] memory) {
+        return _pools.values();
     }
 
     /**

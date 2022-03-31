@@ -121,13 +121,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function protectedTokenWhitelist() external view returns (Token[] memory) {
-        uint256 length = _protectedTokenWhitelist.length();
-        Token[] memory list = new Token[](length);
-        for (uint256 i = 0; i < length; i++) {
-            list[i] = Token(_protectedTokenWhitelist.at(i));
-        }
-        return list;
+    function protectedTokenWhitelist() external view returns (address[] memory) {
+        return _protectedTokenWhitelist.values();
     }
 
     /**

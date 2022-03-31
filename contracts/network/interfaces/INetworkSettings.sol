@@ -21,7 +21,7 @@ interface INetworkSettings is IUpgradeable {
     /**
      * @dev returns the protected tokens whitelist
      */
-    function protectedTokenWhitelist() external view returns (Token[] memory);
+    function protectedTokenWhitelist() external view returns (address[] memory);
 
     /**
      * @dev checks whether a given token is whitelisted
