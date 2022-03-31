@@ -17,6 +17,7 @@ error InvalidType();
 error NotEmpty();
 error NotPayable();
 error ZeroValue();
+error IllegalInput();
 
 /**
  * @dev common utilities

@@ -5,13 +5,11 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, DoesNotExist, IllegalInput } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
 
 import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
-
-error IllegalInput();
 
 /**
  * @dev Network Settings contract
@@ -139,12 +137,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function addTokenToWhitelist(Token token) external onlyAdmin validExternalAddress(address(token)) {
-        if (!_protectedTokenWhitelist.add(address(token))) {
-            revert AlreadyExists();
-        }
-
-        emit TokenAddedToWhitelist({ token: token });
+    function addTokenToWhitelist(Token token) external onlyAdmin {
+        _addTokenToWhitelist(token);
     }
 
     /**
@@ -158,15 +152,19 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         uint256 length = tokens.length;
 
         for (uint256 i = 0; i < length; i++) {
-            Token token = tokens[i];
-
-            _validExternalAddress(address(token));
-            if (!_protectedTokenWhitelist.add(address(token))) {
-                revert AlreadyExists();
-            }
-
-            emit TokenAddedToWhitelist({ token: token });
+            _addTokenToWhitelist(tokens[i]);
         }
+    }
+
+    /**
+     * @dev adds a token to the protected tokens whitelist
+     */
+    function _addTokenToWhitelist(Token token) private validExternalAddress(address(token)) {
+        if (!_protectedTokenWhitelist.add(address(token))) {
+            revert AlreadyExists();
+        }
+
+        emit TokenAddedToWhitelist({ token: token });
     }
 
     /**
@@ -177,6 +175,28 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the caller must be the admin of the contract
      */
     function removeTokenFromWhitelist(Token token) external onlyAdmin {
+        _removeTokenFromWhitelist(token);
+    }
+
+    /**
+     * @dev removes tokens from the protected tokens whitelist
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function removeTokensFromWhitelist(Token[] calldata tokens) external onlyAdmin {
+        uint256 length = tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            _removeTokenFromWhitelist(tokens[i]);
+        }
+    }
+
+    /**
+     * @dev removes a token from the protected tokens whitelist
+     */
+    function _removeTokenFromWhitelist(Token token) private {
         if (!_protectedTokenWhitelist.remove(address(token))) {
             revert DoesNotExist();
         }
@@ -206,19 +226,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the caller must be the admin of the contract
      * - the token must have been whitelisted
      */
-    function setFundingLimit(Token pool, uint256 amount) external onlyAdmin validAddress(address(pool)) {
-        if (!_isTokenWhitelisted(pool)) {
-            revert NotWhitelisted();
-        }
-
-        uint256 prevPoolFundingLimit = _poolFundingLimits[pool];
-        if (prevPoolFundingLimit == amount) {
-            return;
-        }
-
-        _poolFundingLimits[pool] = amount;
-
-        emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
+    function setFundingLimit(Token pool, uint256 amount) external onlyAdmin {
+        _setFundingLimit(pool, amount);
     }
 
     /**
@@ -236,20 +245,26 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         }
 
         for (uint256 i = 0; i < length; i++) {
-            Token pool = pools[i];
-            uint256 amount = amounts[i];
-
-            _validAddress(address(pool));
-            if (!_isTokenWhitelisted(pool)) {
-                revert NotWhitelisted();
-            }
-
-            uint256 prevPoolFundingLimit = _poolFundingLimits[pool];
-            if (prevPoolFundingLimit != amount) {
-                _poolFundingLimits[pool] = amount;
-                emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
-            }
+            _setFundingLimit(pools[i], amounts[i]);
         }
+    }
+
+    /**
+     * @dev updates the amount of BNT that the protocol can fund a specific pool
+     */
+    function _setFundingLimit(Token pool, uint256 amount) private validAddress(address(pool)) {
+        if (!_isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
+
+        uint256 prevPoolFundingLimit = _poolFundingLimits[pool];
+        if (prevPoolFundingLimit == amount) {
+            return;
+        }
+
+        _poolFundingLimits[pool] = amount;
+
+        emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
     }
 
     /**

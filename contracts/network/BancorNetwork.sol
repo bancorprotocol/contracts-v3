@@ -24,7 +24,9 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidType,
-    NotEmpty } from "../utility/Utils.sol";
+    NotEmpty,
+    IllegalInput
+} from "../utility/Utils.sol";
 
 import { ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
@@ -457,7 +459,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function createPool(uint16 poolType, Token token) external validAddress(address(token)) onlyAdmin nonReentrant {
+    function createPool(uint16 poolType, Token token) external onlyAdmin nonReentrant {
+        _createPool(poolType, token);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function createPools(uint16[] calldata poolTypes, Token[] calldata tokens) external onlyAdmin nonReentrant {
+        uint256 length = poolTypes.length;
+        if (length != tokens.length) {
+            revert IllegalInput();
+        }
+
+        for (uint256 i = 0; i < length; i++) {
+            _createPool(poolTypes[i], tokens[i]);
+        }
+    }
+
+    /**
+     * @dev creates a new pool
+     */
+    function _createPool(uint16 poolType, Token token) private validAddress(address(token)) {
         if (_isBNT(token)) {
             revert InvalidToken();
         }
