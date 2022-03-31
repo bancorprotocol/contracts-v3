@@ -11,6 +11,8 @@ import { Token } from "../token/Token.sol";
 
 import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 
+error IllegalInput();
+
 /**
  * @dev Network Settings contract
  */
@@ -146,6 +148,28 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
+     * @dev adds tokens to the protected tokens whitelist
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addTokensToWhitelist(Token[] calldata tokens) external onlyAdmin {
+        uint256 length = tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            Token token = tokens[i];
+
+            _validExternalAddress(address(token));
+            if (!_protectedTokenWhitelist.add(address(token))) {
+                revert AlreadyExists();
+            }
+
+            emit TokenAddedToWhitelist({ token: token });
+        }
+    }
+
+    /**
      * @dev removes a token from the protected tokens whitelist
      *
      * requirements:
@@ -195,6 +219,37 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         _poolFundingLimits[pool] = amount;
 
         emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
+    }
+
+    /**
+     * @dev updates the amounts of BNT that the protocol can fund specific pools
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     * - the tokens must have been whitelisted
+     */
+    function setFundingLimits(Token[] calldata pools, uint256[] calldata amounts) external onlyAdmin {
+        uint256 length = pools.length;
+        if (length != amounts.length) {
+            revert IllegalInput();
+        }
+
+        for (uint256 i = 0; i < length; i++) {
+            Token pool = pools[i];
+            uint256 amount = amounts[i];
+
+            _validAddress(address(pool));
+            if (!_isTokenWhitelisted(pool)) {
+                revert NotWhitelisted();
+            }
+
+            uint256 prevPoolFundingLimit = _poolFundingLimits[pool];
+            if (prevPoolFundingLimit != amount) {
+                _poolFundingLimits[pool] = amount;
+                emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
+            }
+        }
     }
 
     /**
