@@ -1,10 +1,10 @@
 import { ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682495-proxy-admin', ContractName.ProxyAdmin, () => {
+describeDeployment('1642682495-proxy-admin', DeploymentTag.ProxyAdmin, () => {
     let daoMultisig: string;
     let proxyAdmin: ProxyAdmin;
 

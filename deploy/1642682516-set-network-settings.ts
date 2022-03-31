@@ -7,28 +7,35 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     await execute({
-        name: ContractName.NetworkSettingsV1,
+        name: ContractName.NetworkSettings,
         methodName: 'setMinLiquidityForTrading',
         args: [toWei(10_000)],
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkSettingsV1,
+        name: ContractName.NetworkSettings,
         methodName: 'setNetworkFeePPM',
         args: [toPPM(15)],
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkSettingsV1,
+        name: ContractName.NetworkSettings,
         methodName: 'setWithdrawalFeePPM',
         args: [toPPM(0.25)],
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkSettingsV1,
+        name: ContractName.NetworkSettings,
+        methodName: 'setFlashLoanFeePPM',
+        args: [toPPM(0.09)],
+        from: deployer
+    });
+
+    await execute({
+        name: ContractName.NetworkSettings,
         methodName: 'setVortexRewards',
         args: [{ burnRewardPPM: toPPM(10), burnRewardMaxAmount: toWei(100) }],
         from: deployer
@@ -40,7 +47,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 const tag = toDeployTag(__filename);
 
 func.id = tag;
-func.dependencies = [ContractName.NetworkSettingsV1];
+func.dependencies = [DeploymentTag.NetworkSettingsV1];
 func.tags = [DeploymentTag.V3, tag];
 
 export default func;

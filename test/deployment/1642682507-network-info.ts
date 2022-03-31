@@ -1,32 +1,30 @@
 import {
-    BancorNetwork,
     BancorNetworkInfo,
     BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
     MasterVault,
-    NetworkSettings,
     PendingWithdrawals,
     PoolMigrator,
     PoolToken,
     ProxyAdmin
 } from '../../components/Contracts';
-import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { BancorNetworkV1, BNT, NetworkSettingsV1, TokenGovernance, VBNT } from '../../components/LegacyContracts';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, () => {
+describeDeployment('1642682507-network-info', DeploymentTag.BancorNetworkInfoV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
-    let network: BancorNetwork;
+    let network: BancorNetworkV1;
     let bnt: BNT;
     let vbnt: VBNT;
     let bntGovernance: TokenGovernance;
     let vbntGovernance: TokenGovernance;
-    let networkSettings: NetworkSettings;
+    let networkSettings: NetworkSettingsV1;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let externalRewardsVault: ExternalRewardsVault;
@@ -49,14 +47,14 @@ describeDeployment('1642682507-network-info', ContractName.BancorNetworkInfoV1, 
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-        masterVault = await DeployedContracts.MasterVaultV1.deployed();
-        externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-        bntPool = await DeployedContracts.BNTPoolV1.deployed();
-        bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-        poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
-        networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
+        masterVault = await DeployedContracts.MasterVault.deployed();
+        externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
+        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+        bntPool = await DeployedContracts.BNTPool.deployed();
+        bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+        poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+        networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
     });
 
     it('should deploy and configure the network info contract', async () => {

@@ -6,12 +6,12 @@ import {
     PoolCollection
 } from '../../components/Contracts';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
-describeDeployment('1642682508-pool-collection-type-1', ContractName.PoolCollectionType1V1, () => {
+describeDeployment('1642682508-pool-collection-type-1', DeploymentTag.PoolCollectionType1V1, () => {
     let network: BancorNetwork;
     let bntPool: BNTPool;
     let masterVault: MasterVault;
@@ -20,9 +20,9 @@ describeDeployment('1642682508-pool-collection-type-1', ContractName.PoolCollect
 
     beforeEach(async () => {
         network = await DeployedContracts.BancorNetworkV1.deployed();
-        bntPool = await DeployedContracts.BNTPoolV1.deployed();
-        masterVault = await DeployedContracts.MasterVaultV1.deployed();
-        externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
+        bntPool = await DeployedContracts.BNTPool.deployed();
+        masterVault = await DeployedContracts.MasterVault.deployed();
+        externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
     });
 

@@ -9,11 +9,11 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const network = await DeployedContracts.BancorNetworkV1.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
-    const bntPool = await DeployedContracts.BNTPoolV1.deployed();
-    const externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
+    const bntPool = await DeployedContracts.BNTPool.deployed();
+    const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
 
     const standardRewardsAddress = await deployProxy({
-        name: ContractName.StandardStakingRewardsV1,
+        name: ContractName.StandardStakingRewards,
         from: deployer,
         args: [
             network.address,
@@ -32,7 +32,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await grantRole({
-        name: ContractName.ExternalRewardsVaultV1,
+        name: ContractName.ExternalRewardsVault,
         id: Roles.Vault.ROLE_ASSET_MANAGER,
         member: standardRewardsAddress,
         from: deployer
@@ -41,15 +41,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.StandardStakingRewardsV1;
+func.id = DeploymentTag.StandardStakingRewardsV1;
 func.dependencies = [
     DeploymentTag.V2,
-    ContractName.ProxyAdmin,
-    ContractName.BancorNetworkV1,
-    ContractName.NetworkSettingsV1,
-    ContractName.BNTPoolV1,
-    ContractName.ExternalRewardsVaultV1
+    DeploymentTag.ProxyAdmin,
+    DeploymentTag.BancorNetworkV1,
+    DeploymentTag.NetworkSettingsV1,
+    DeploymentTag.BNTPoolV1,
+    DeploymentTag.ExternalRewardsVaultV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.StandardStakingRewardsV1];
+func.tags = [DeploymentTag.V3, DeploymentTag.StandardStakingRewardsV1];
 
 export default func;

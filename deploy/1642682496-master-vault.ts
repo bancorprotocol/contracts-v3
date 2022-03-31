@@ -9,7 +9,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
 
     await deployProxy({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.MasterVault,
         from: deployer,
         args: [bntGovernance.address, vbntGovernance.address]
     });
@@ -17,8 +17,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.MasterVaultV1;
-func.dependencies = [DeploymentTag.V2, ContractName.ProxyAdmin];
-func.tags = [DeploymentTag.V3, ContractName.MasterVaultV1];
+func.id = DeploymentTag.MasterVaultV1;
+func.dependencies = [DeploymentTag.V2, DeploymentTag.ProxyAdmin];
+func.tags = [DeploymentTag.V3, DeploymentTag.MasterVaultV1];
 
 export default func;

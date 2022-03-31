@@ -15,7 +15,7 @@ const TRADING_FEE = toPPM(0.2);
 const BNT_VIRTUAL_BALANCE = 1;
 const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
-const InitialDeposits = {
+const INITIAL_DEPOSITS = {
     [ContractName.TestToken1]: toWei(50_000),
     [ContractName.TestToken2]: toWei(500_000),
     [ContractName.TestToken3]: toWei(1_000_000),
@@ -49,21 +49,21 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         const testToken = await DeployedContracts[contractName].deployed();
 
         await execute({
-            name: ContractName.NetworkSettingsV1,
+            name: ContractName.NetworkSettings,
             methodName: 'addTokenToWhitelist',
             args: [testToken.address],
             from: deployer
         });
 
         await execute({
-            name: ContractName.BancorNetworkV1,
+            name: ContractName.BancorNetwork,
             methodName: 'createPool',
             args: [PoolType.Standard, testToken.address],
             from: deployer
         });
 
         await execute({
-            name: ContractName.NetworkSettingsV1,
+            name: ContractName.NetworkSettings,
             methodName: 'setFundingLimit',
             args: [testToken.address, FUNDING_LIMIT],
             from: deployer
@@ -83,17 +83,19 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             from: deployer
         });
 
+        const initialDeposit = (INITIAL_DEPOSITS as any)[contractName] as number;
+
         await execute({
             name: contractName,
             methodName: 'approve',
-            args: [network.address, InitialDeposits[contractName]],
+            args: [network.address, initialDeposit],
             from: deployer
         });
 
         await execute({
-            name: ContractName.BancorNetworkV1,
+            name: ContractName.BancorNetwork,
             methodName: 'deposit',
-            args: [testToken.address, InitialDeposits[contractName]],
+            args: [testToken.address, initialDeposit],
             from: deployer
         });
 
@@ -117,7 +119,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     }
 
     await execute({
-        name: ContractName.PendingWithdrawalsV1,
+        name: ContractName.PendingWithdrawals,
         methodName: 'setLockDuration',
         args: [duration.minutes(10)],
         from: deployer
@@ -131,10 +133,10 @@ const tag = toDeployTag(__filename);
 func.id = tag;
 func.skip = async () => isLive();
 func.dependencies = [
-    ContractName.NetworkSettingsV1,
+    DeploymentTag.NetworkSettingsV1,
     SetNetworkSettings.id!,
-    ContractName.BancorNetworkV1,
-    ContractName.PoolCollectionType1V1
+    DeploymentTag.BancorNetworkV1,
+    DeploymentTag.PoolCollectionType1V1
 ];
 func.tags = [DeploymentTag.V3, tag, ...TOKENS.map((t) => t.contractName)];
 

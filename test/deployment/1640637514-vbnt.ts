@@ -1,6 +1,6 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
 import { TokenGovernance, VBNT } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag, isMainnet } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
@@ -8,7 +8,7 @@ import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1640637514-vbnt', ContractName.VBNT, () => {
+describeDeployment('1640637514-vbnt', DeploymentTag.VBNT, () => {
     let deployer: string;
     let foundationMultisig: string;
     let liquidityProtection: string;

@@ -20,7 +20,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.ProxyAdmin;
-func.tags = [DeploymentTag.V3, ContractName.ProxyAdmin];
+func.id = DeploymentTag.ProxyAdmin;
+func.tags = [DeploymentTag.V3, DeploymentTag.ProxyAdmin];
 
 export default func;

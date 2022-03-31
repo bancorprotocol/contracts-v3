@@ -1,3 +1,4 @@
+import { NetworkSettingsV1__factory } from '../components/LegacyContracts';
 import { ContractName, DeploymentTag, deployProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -6,15 +7,17 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     await deployProxy({
-        name: ContractName.NetworkSettingsV1,
+        name: ContractName.NetworkSettings,
+        contractFactory: NetworkSettingsV1__factory, // eslint-disable-line camelcase
+        legacy: true,
         from: deployer
     });
 
     return true;
 };
 
-func.id = ContractName.NetworkSettingsV1;
-func.dependencies = [ContractName.ProxyAdmin];
-func.tags = [DeploymentTag.V3, ContractName.NetworkSettingsV1];
+func.id = DeploymentTag.NetworkSettingsV1;
+func.dependencies = [DeploymentTag.ProxyAdmin];
+func.tags = [DeploymentTag.V3, DeploymentTag.NetworkSettingsV1];
 
 export default func;

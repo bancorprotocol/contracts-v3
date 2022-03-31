@@ -1,12 +1,12 @@
 import { PoolToken } from '../../components/Contracts';
 import { BNT } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682500-bnt-pool-token', ContractName.BNTPoolTokenV1, () => {
+describeDeployment('1642682500-bnt-pool-token', DeploymentTag.BNTPoolTokenV1, () => {
     let deployer: string;
     let bnt: BNT;
     let bntPoolToken: PoolToken;
@@ -18,7 +18,7 @@ describeDeployment('1642682500-bnt-pool-token', ContractName.BNTPoolTokenV1, () 
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
-        bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
+        bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
     });
 
     it('should deploy and configure the BNT pool contract', async () => {

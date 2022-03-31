@@ -9,15 +9,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
-    const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
-    const externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-    const bntPool = await DeployedContracts.BNTPoolV1.deployed();
-    const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-    const poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
+    const masterVault = await DeployedContracts.MasterVault.deployed();
+    const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
+    const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+    const bntPool = await DeployedContracts.BNTPool.deployed();
+    const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+    const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
 
     await deployProxy({
-        name: ContractName.BancorNetworkInfoV1,
+        name: ContractName.BancorNetworkInfo,
         from: deployer,
         args: [
             network.address,
@@ -36,19 +36,19 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.BancorNetworkInfoV1;
+func.id = DeploymentTag.BancorNetworkInfoV1;
 func.dependencies = [
     DeploymentTag.V2,
-    ContractName.ProxyAdmin,
-    ContractName.BancorNetworkV1,
-    ContractName.NetworkSettingsV1,
-    ContractName.MasterVaultV1,
-    ContractName.ExternalProtectionVaultV1,
-    ContractName.ExternalRewardsVaultV1,
-    ContractName.BNTPoolV1,
-    ContractName.PendingWithdrawalsV1,
-    ContractName.PoolMigratorV1
+    DeploymentTag.ProxyAdmin,
+    DeploymentTag.BancorNetworkV1,
+    DeploymentTag.NetworkSettingsV1,
+    DeploymentTag.MasterVaultV1,
+    DeploymentTag.ExternalProtectionVaultV1,
+    DeploymentTag.ExternalRewardsVaultV1,
+    DeploymentTag.BNTPoolV1,
+    DeploymentTag.PendingWithdrawalsV1,
+    DeploymentTag.PoolMigratorV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.BancorNetworkInfoV1];
+func.tags = [DeploymentTag.V3, DeploymentTag.BancorNetworkInfoV1];
 
 export default func;

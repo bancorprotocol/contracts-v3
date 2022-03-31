@@ -12,7 +12,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     if (isMainnet()) {
         await deployProxy({
-            name: ContractName.BancorPortalV1,
+            name: ContractName.BancorPortal,
             from: deployer,
             args: [
                 network.address,
@@ -25,11 +25,11 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             ]
         });
     } else {
-        const uniswapV2RouterMock = await DeployedContracts.MockUniswapV2Router02V1.deployed();
-        const uniswapV2FactoryMock = await DeployedContracts.MockUniswapV2FactoryV1.deployed();
+        const uniswapV2RouterMock = await DeployedContracts.MockUniswapV2Router02.deployed();
+        const uniswapV2FactoryMock = await DeployedContracts.MockUniswapV2Factory.deployed();
 
         await deployProxy({
-            name: ContractName.BancorPortalV1,
+            name: ContractName.BancorPortal,
             from: deployer,
             args: [
                 network.address,
@@ -46,15 +46,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.BancorPortalV1;
+func.id = DeploymentTag.BancorPortalV1;
 func.dependencies = [
-    ContractName.ProxyAdmin,
-    ContractName.BancorNetworkV1,
-    ContractName.NetworkSettingsV1,
-    ContractName.BNT,
-    ContractName.MockUniswapV2FactoryV1,
-    ContractName.MockUniswapV2Router02V1
+    DeploymentTag.ProxyAdmin,
+    DeploymentTag.BancorNetworkV1,
+    DeploymentTag.NetworkSettingsV1,
+    DeploymentTag.BNT,
+    DeploymentTag.MockUniswapV2Factory,
+    DeploymentTag.MockUniswapV2Router02
 ];
-func.tags = [DeploymentTag.V3, ContractName.BancorPortalV1];
+func.tags = [DeploymentTag.V3, DeploymentTag.BancorPortalV1];
 
 export default func;

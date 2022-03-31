@@ -4,19 +4,19 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const CONTRACT_NAMES_TO_REVOKE = [
-    ContractName.AutoCompoundingStakingRewardsV1,
-    ContractName.BancorNetworkInfoV1,
-    ContractName.BancorNetworkV1,
-    ContractName.BancorPortalV1,
-    ContractName.BNTPoolV1,
-    ContractName.ExternalProtectionVaultV1,
-    ContractName.ExternalRewardsVaultV1,
-    ContractName.MasterVaultV1,
-    ContractName.NetworkSettingsV1,
-    ContractName.PendingWithdrawalsV1,
-    ContractName.PoolMigratorV1,
-    ContractName.PoolTokenFactoryV1,
-    ContractName.StandardStakingRewardsV1
+    ContractName.AutoCompoundingStakingRewards,
+    ContractName.BancorNetworkInfo,
+    ContractName.BancorNetwork,
+    ContractName.BancorPortal,
+    ContractName.BNTPool,
+    ContractName.ExternalProtectionVault,
+    ContractName.ExternalRewardsVault,
+    ContractName.MasterVault,
+    ContractName.NetworkSettings,
+    ContractName.PendingWithdrawals,
+    ContractName.PoolMigrator,
+    ContractName.PoolTokenFactory,
+    ContractName.StandardStakingRewards
 ];
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {

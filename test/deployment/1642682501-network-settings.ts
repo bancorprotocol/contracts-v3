@@ -1,14 +1,15 @@
-import { NetworkSettings, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { ProxyAdmin } from '../../components/Contracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContracts';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682501-network-settings', ContractName.NetworkSettingsV1, () => {
+describeDeployment('1642682501-network-settings', DeploymentTag.NetworkSettingsV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
-    let networkSettings: NetworkSettings;
+    let networkSettings: NetworkSettingsV1;
 
     before(async () => {
         ({ deployer } = await getNamedAccounts());

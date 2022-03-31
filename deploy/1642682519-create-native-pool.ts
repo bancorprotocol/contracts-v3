@@ -22,21 +22,21 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, ethWhale } = await getNamedAccounts();
 
     await execute({
-        name: ContractName.NetworkSettingsV1,
+        name: ContractName.NetworkSettings,
         methodName: 'addTokenToWhitelist',
         args: [NATIVE_TOKEN_ADDRESS],
         from: deployer
     });
 
     await execute({
-        name: ContractName.BancorNetworkV1,
+        name: ContractName.BancorNetwork,
         methodName: 'createPool',
         args: [PoolType.Standard, NATIVE_TOKEN_ADDRESS],
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkSettingsV1,
+        name: ContractName.NetworkSettings,
         methodName: 'setFundingLimit',
         args: [NATIVE_TOKEN_ADDRESS, FUNDING_LIMIT],
         from: deployer
@@ -58,7 +58,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     if (!isMainnet() || isMainnetFork()) {
         await execute({
-            name: ContractName.BancorNetworkV1,
+            name: ContractName.BancorNetwork,
             methodName: 'deposit',
             args: [NATIVE_TOKEN_ADDRESS, INITIAL_DEPOSIT],
             from: isMainnetFork() ? ethWhale : deployer,
@@ -81,9 +81,9 @@ const tag = toDeployTag(__filename);
 func.id = tag;
 func.dependencies = [
     SetNetworkSettings.id!,
-    ContractName.NetworkSettingsV1,
-    ContractName.BancorNetworkV1,
-    ContractName.PoolCollectionType1V1
+    DeploymentTag.NetworkSettingsV1,
+    DeploymentTag.BancorNetworkV1,
+    DeploymentTag.PoolCollectionType1V1
 ];
 func.tags = [DeploymentTag.V3, tag];
 

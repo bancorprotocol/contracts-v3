@@ -1,11 +1,11 @@
 import { AutoCompoundingStakingRewards, BNTPool, ExternalRewardsVault, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682509-auto-compounding-rewards', ContractName.AutoCompoundingStakingRewardsV1, () => {
+describeDeployment('1642682509-auto-compounding-rewards', DeploymentTag.AutoCompoundingStakingRewardsV1, () => {
     let proxyAdmin: ProxyAdmin;
     let deployer: string;
     let bntPool: BNTPool;
@@ -18,9 +18,9 @@ describeDeployment('1642682509-auto-compounding-rewards', ContractName.AutoCompo
 
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        bntPool = await DeployedContracts.BNTPoolV1.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-        autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewardsV1.deployed();
+        bntPool = await DeployedContracts.BNTPool.deployed();
+        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+        autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewards.deployed();
     });
 
     it('should deploy and configure the auto-compounding rewards contract', async () => {
