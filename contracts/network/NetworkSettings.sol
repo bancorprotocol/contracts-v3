@@ -236,7 +236,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * requirements:
      *
      * - the caller must be the admin of the contract
-     * - the tokens must have been whitelisted
+     * - each one of the tokens must have been whitelisted
      */
     function setFundingLimits(Token[] calldata pools, uint256[] calldata amounts) external onlyAdmin {
         uint256 length = pools.length;
