@@ -12,7 +12,7 @@ describeDeployment('1642682519-upgrade-network-settings-v2', DeploymentTag.Netwo
         networkSettings = await DeployedContracts.NetworkSettings.deployed();
     });
 
-    it('should configure the network settings contract', async () => {
+    it('should upgrade and configure the network settings contract', async () => {
         expect(await networkSettings.version()).to.equal(2);
 
         expect(await networkSettings.networkFeePPM()).to.equal(toPPM(15));
