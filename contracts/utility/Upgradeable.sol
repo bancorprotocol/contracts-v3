@@ -39,6 +39,8 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
      * @dev performs contract-specific initialization
      */
     function __Upgradeable_init_unchained() internal onlyInitializing {
+        _upgradeCount = 1;
+
         // set up administrative roles
         _setRoleAdmin(ROLE_ADMIN, ROLE_ADMIN);
 
@@ -77,10 +79,11 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
      * - this must can be called only once per-upgrade
      */
     function postUpgrade(bytes calldata data) external {
-        // if (_upgradeCount++ != version()) {
-        //     revert AlreadyUpgraded();
-        // }
-        // _onUpgrade(data);
+        if (++_upgradeCount != version()) {
+            revert AlreadyUpgraded();
+        }
+
+        _onUpgrade(data);
     }
 
     /**

@@ -329,8 +329,12 @@ export const deployProxy = async (options: DeployOptions, proxy: ProxyOptions = 
         proxy
     });
 
-export const upgradeProxy = async (options: DeployOptions) => {
-    const { name, contract, from, value, args, contractFactory } = options;
+interface UpgradeProxyOptions extends DeployOptions {
+    postUpgradeMethodName?: string;
+}
+
+export const upgradeProxy = async (options: UpgradeProxyOptions) => {
+    const { name, contract, from, value, args, contractFactory, postUpgradeMethodName } = options;
     const contractName = contract || name;
 
     await fundAccount(from);
@@ -346,7 +350,8 @@ export const upgradeProxy = async (options: DeployOptions) => {
     const proxyOptions = {
         proxyContract: PROXY_CONTRACT,
         owner: await proxyAdmin.owner(),
-        viaAdminContract: ContractName.ProxyAdmin
+        viaAdminContract: ContractName.ProxyAdmin,
+        methodName: postUpgradeMethodName
     };
 
     console.log(`upgrading proxy ${contractName} v${prevVersion} as ${name}`);

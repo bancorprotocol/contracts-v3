@@ -42,6 +42,7 @@ export interface NetworkSettingsInterface extends utils.Interface {
     "minLiquidityForTrading()": FunctionFragment;
     "networkFeePPM()": FunctionFragment;
     "poolFundingLimit(address)": FunctionFragment;
+    "postUpgrade(bytes)": FunctionFragment;
     "protectedTokenWhitelist()": FunctionFragment;
     "removeTokenFromWhitelist(address)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
@@ -110,6 +111,10 @@ export interface NetworkSettingsInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "poolFundingLimit",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "postUpgrade",
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "protectedTokenWhitelist",
@@ -207,6 +212,10 @@ export interface NetworkSettingsInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "poolFundingLimit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "postUpgrade",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -460,6 +469,11 @@ export interface NetworkSettings extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    postUpgrade(
+      data: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     protectedTokenWhitelist(overrides?: CallOverrides): Promise<[string[]]>;
 
     removeTokenFromWhitelist(
@@ -575,6 +589,11 @@ export interface NetworkSettings extends BaseContract {
 
   poolFundingLimit(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+  postUpgrade(
+    data: BytesLike,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   protectedTokenWhitelist(overrides?: CallOverrides): Promise<string[]>;
 
   removeTokenFromWhitelist(
@@ -688,6 +707,8 @@ export interface NetworkSettings extends BaseContract {
       pool: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    postUpgrade(data: BytesLike, overrides?: CallOverrides): Promise<void>;
 
     protectedTokenWhitelist(overrides?: CallOverrides): Promise<string[]>;
 
@@ -920,6 +941,11 @@ export interface NetworkSettings extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    postUpgrade(
+      data: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     protectedTokenWhitelist(overrides?: CallOverrides): Promise<BigNumber>;
 
     removeTokenFromWhitelist(
@@ -1042,6 +1068,11 @@ export interface NetworkSettings extends BaseContract {
     poolFundingLimit(
       pool: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    postUpgrade(
+      data: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     protectedTokenWhitelist(

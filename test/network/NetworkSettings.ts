@@ -1,8 +1,9 @@
-import { NetworkSettings, TestERC20Token } from '../../components/Contracts';
+import Contracts, { NetworkSettings, TestERC20Token } from '../../components/Contracts';
+import LegacyContracts, { NetworkSettingsV1 } from '../../components/LegacyContracts';
 import { DEFAULT_FLASH_LOAN_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createSystem, createTestToken } from '../helpers/Factory';
+import { createProxy, createSystem, createTestToken, upgradeProxy } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -27,7 +28,7 @@ describe('NetworkSettings', () => {
         reserveToken = await createTestToken();
     });
 
-    describe('construction', async () => {
+    describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
             await expect(networkSettings.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
@@ -55,7 +56,53 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('protected tokens whitelist', async () => {
+    describe('upgrade', () => {
+        const networkFeePPM = toPPM(33);
+        const withdrawalFeePPM = toPPM(1);
+        const minLiquidityForTrading = toWei(500_000);
+        const flashLoanPPM = toPPM(20);
+        const vortexRewards = {
+            burnRewardPPM: toPPM(10),
+            burnRewardMaxAmount: toWei(100)
+        };
+        const fundingLimit = toWei(100_000);
+
+        let networkSettings: NetworkSettingsV1;
+
+        beforeEach(async () => {
+            networkSettings = await createProxy(LegacyContracts.NetworkSettingsV1);
+
+            await networkSettings.setNetworkFeePPM(networkFeePPM);
+            await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
+            await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
+            await networkSettings.setFlashLoanFeePPM(flashLoanPPM);
+            await networkSettings.setVortexRewards(vortexRewards);
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+            await networkSettings.setFundingLimit(reserveToken.address, fundingLimit);
+        });
+
+        it('should upgrade and preserve existing settings', async () => {
+            const upgradedNetworkSettings = await upgradeProxy(networkSettings, Contracts.NetworkSettings);
+
+            console.log('upgradedNetworkSettings', upgradedNetworkSettings.address);
+            expect(await upgradedNetworkSettings.networkFeePPM()).to.equal(networkFeePPM);
+            expect(await upgradedNetworkSettings.withdrawalFeePPM()).to.equal(withdrawalFeePPM);
+            expect(await upgradedNetworkSettings.minLiquidityForTrading()).to.equal(minLiquidityForTrading);
+
+            const newVortexRewards = await upgradedNetworkSettings.vortexRewards();
+            expect(newVortexRewards.burnRewardPPM).to.equal(vortexRewards.burnRewardPPM);
+            expect(newVortexRewards.burnRewardMaxAmount).to.equal(vortexRewards.burnRewardMaxAmount);
+
+            expect(await upgradedNetworkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+            expect(await upgradedNetworkSettings.poolFundingLimit(reserveToken.address)).to.equal(fundingLimit);
+            expect(await upgradedNetworkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
+            expect(await upgradedNetworkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(
+                DEFAULT_FLASH_LOAN_FEE_PPM
+            );
+        });
+    });
+
+    describe('protected tokens whitelist', () => {
         beforeEach(async () => {
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
         });
