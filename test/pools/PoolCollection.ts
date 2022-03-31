@@ -1303,6 +1303,77 @@ describe('PoolCollection', () => {
                         });
                     });
 
+                    context('when the BNT liquidity for trading is zero', () => {
+                        it('should deposit without updating the trading liquidity', async () => {
+                            const availableFunding = await bntPool.currentPoolFunding(token.address);
+                            await networkSettings.setFundingLimit(token.address, availableFunding.mul(2));
+                            await networkSettings.setMinLiquidityForTrading(availableFunding.sub(1));
+                            await transfer(deployer, token, masterVault, availableFunding.add(1));
+
+                            await poolCollection.setTradingLiquidityT(token.address, {
+                                bntTradingLiquidity: 0,
+                                baseTokenTradingLiquidity: 0,
+                                stakedBalance: 1
+                            });
+
+                            await poolCollection.setAverageRateT(token.address, {
+                                blockNumber: await poolCollection.currentBlockNumber(),
+                                rate: {
+                                    n: 1,
+                                    d: 1
+                                }
+                            });
+
+                            const tokenAmount = toWei(1);
+
+                            const expectedPoolTokenAmount = await network.callStatic.depositToPoolCollectionForT(
+                                poolCollection.address,
+                                CONTEXT_ID,
+                                provider.address,
+                                token.address,
+                                tokenAmount
+                            );
+
+                            const { liquidity: prevLiquidity } = await poolCollection.poolData(token.address);
+
+                            const res = await network.depositToPoolCollectionForT(
+                                poolCollection.address,
+                                CONTEXT_ID,
+                                provider.address,
+                                token.address,
+                                tokenAmount
+                            );
+
+                            const { liquidity, averageRate } = await poolCollection.poolData(token.address);
+
+                            await expect(res).to.not.emit(poolCollection, 'TradingLiquidityUpdated');
+
+                            await expect(res)
+                                .to.emit(poolCollection, 'TokensDeposited')
+                                .withArgs(
+                                    CONTEXT_ID,
+                                    token.address,
+                                    provider.address,
+                                    tokenAmount,
+                                    expectedPoolTokenAmount
+                                );
+
+                            await testTradingLiquidityEvents(
+                                token,
+                                poolCollection,
+                                masterVault,
+                                bnt,
+                                prevLiquidity,
+                                liquidity,
+                                CONTEXT_ID,
+                                res
+                            );
+
+                            expect(averageRate.rate.n).to.equal(1);
+                            expect(averageRate.rate.d).to.equal(1);
+                        });
+                    });
+
                     context('when below the deposit limit', () => {
                         context(
                             'when the new BNT liquidity for trading is below the minimum liquidity for trading',
