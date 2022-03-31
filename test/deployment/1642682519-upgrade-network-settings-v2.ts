@@ -13,6 +13,8 @@ describeDeployment('1642682519-upgrade-network-settings-v2', DeploymentTag.Netwo
     });
 
     it('should configure the network settings contract', async () => {
+        expect(await networkSettings.version()).to.equal(2);
+
         expect(await networkSettings.networkFeePPM()).to.equal(toPPM(15));
         expect(await networkSettings.withdrawalFeePPM()).to.equal(toPPM(0.25));
         expect(await networkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
