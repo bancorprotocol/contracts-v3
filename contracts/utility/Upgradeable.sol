@@ -83,13 +83,13 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
             revert AlreadyUpgraded();
         }
 
-        _onUpgrade(data);
+        _postUpgrade(data);
     }
 
     /**
-     * @dev an optional on-upgrade callback that can be implemented by child contracts
+     * @dev an optional post-upgrade callback that can be implemented by child contracts
      */
-    function _onUpgrade(
+    function _postUpgrade(
         bytes calldata /* data */
     ) internal virtual {}
 

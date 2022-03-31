@@ -386,7 +386,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @dev performs post-upgrade initialization
      */
-    function _onUpgrade(
+    function _postUpgrade(
         bytes calldata /* data */
     ) internal virtual override {
         _setDefaultFlashLoanFeePPM(DEFAULT_FLASH_LOAN_FEE_PPM);
