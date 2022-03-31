@@ -408,7 +408,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
         Pool memory data = _poolData[pool];
 
-        return _poolTokenToUnderlying(data.poolToken.totalSupply(), poolTokenAmount, data.liquidity.stakedBalance);
+        return _poolTokenToUnderlying(poolTokenAmount, data.poolToken.totalSupply(), data.liquidity.stakedBalance);
     }
 
     /**
@@ -417,7 +417,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
         Pool memory data = _poolData[pool];
 
-        return _underlyingToPoolToken(data.poolToken.totalSupply(), tokenAmount, data.liquidity.stakedBalance);
+        return _underlyingToPoolToken(tokenAmount, data.poolToken.totalSupply(), data.liquidity.stakedBalance);
     }
 
     /**
@@ -581,7 +581,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // calculate the pool token amount to mint
         uint256 currentStakedBalance = data.liquidity.stakedBalance;
         uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
-        uint256 poolTokenAmount = _underlyingToPoolToken(prevPoolTokenTotalSupply, tokenAmount, currentStakedBalance);
+        uint256 poolTokenAmount = _underlyingToPoolToken(tokenAmount, prevPoolTokenTotalSupply, currentStakedBalance);
 
         // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
         uint256 newStakedBalance = currentStakedBalance + tokenAmount;
@@ -874,8 +874,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
 
         uint256 baseTokensWithdrawalAmount = _poolTokenToUnderlying(
-            poolTokenTotalSupply,
             poolTokenAmount,
+            poolTokenTotalSupply,
             data.liquidity.stakedBalance
         );
 
@@ -1052,8 +1052,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @dev calculates base tokens amount
      */
     function _poolTokenToUnderlying(
-        uint256 poolTokenSupply,
         uint256 poolTokenAmount,
+        uint256 poolTokenSupply,
         uint256 stakedBalance
     ) private pure returns (uint256) {
         if (poolTokenSupply == 0) {
@@ -1072,8 +1072,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @dev calculates pool tokens amount
      */
     function _underlyingToPoolToken(
-        uint256 poolTokenSupply,
         uint256 tokenAmount,
+        uint256 poolTokenSupply,
         uint256 stakedBalance
     ) private pure returns (uint256) {
         if (poolTokenSupply == 0) {
@@ -1085,7 +1085,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             return tokenAmount;
         }
 
-        return MathEx.mulDivF(tokenAmount, poolTokenSupply, stakedBalance);
+        return MathEx.mulDivC(tokenAmount, poolTokenSupply, stakedBalance);
     }
 
     /**
