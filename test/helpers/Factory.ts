@@ -93,7 +93,7 @@ export const upgradeProxy = async <F extends ContractFactory>(
     await admin.upgradeAndCall(
         proxy.address,
         logicContract.address,
-        logicContract.interface.encodeFunctionData('postUpgrade', args?.upgradeCallData || [[]])
+        logicContract.interface.encodeFunctionData('postUpgrade', [args?.upgradeCallData || []])
     );
 
     return factory.attach(proxy.address);

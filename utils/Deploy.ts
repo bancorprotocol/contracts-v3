@@ -25,7 +25,7 @@ import {
 } from '../components/Contracts';
 import { BancorNetworkV1, BNT, NetworkSettingsV1, TokenGovernance, VBNT } from '../components/LegacyContracts';
 import { ExternalContracts } from '../deployments/data';
-import { DeploymentNetwork } from './Constants';
+import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { BigNumber, Contract } from 'ethers';
@@ -273,6 +273,7 @@ interface DeployOptions extends BaseDeployOptions {
 
 const PROXY_CONTRACT = 'TransparentUpgradeableProxyImmutable';
 const INITIALIZE = 'initialize';
+const POST_UPGRADE = 'postUpgrade';
 
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractFactory, legacy, proxy } = options;
@@ -288,9 +289,9 @@ export const deploy = async (options: DeployOptions) => {
 
         proxyOptions = {
             proxyContract: PROXY_CONTRACT,
-            execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } },
             owner: await proxyAdmin.owner(),
-            viaAdminContract: ContractName.ProxyAdmin
+            viaAdminContract: ContractName.ProxyAdmin,
+            execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
 
         console.log(`deploying proxy ${contractName} as ${name}`);
@@ -330,11 +331,11 @@ export const deployProxy = async (options: DeployOptions, proxy: ProxyOptions = 
     });
 
 interface UpgradeProxyOptions extends DeployOptions {
-    postUpgradeMethodName?: string;
+    upgradeArgs?: string;
 }
 
 export const upgradeProxy = async (options: UpgradeProxyOptions) => {
-    const { name, contract, from, value, args, contractFactory, postUpgradeMethodName } = options;
+    const { name, contract, from, value, args, upgradeArgs, contractFactory } = options;
     const contractName = contract || name;
 
     await fundAccount(from);
@@ -351,10 +352,10 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         proxyContract: PROXY_CONTRACT,
         owner: await proxyAdmin.owner(),
         viaAdminContract: ContractName.ProxyAdmin,
-        methodName: postUpgradeMethodName
+        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
     };
 
-    console.log(`upgrading proxy ${contractName} v${prevVersion} as ${name}`);
+    console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
 
     const res = await deployContract(name, {
         contract: contractFactory || contractName,
