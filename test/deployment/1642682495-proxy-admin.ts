@@ -5,11 +5,11 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describeDeployment('1642682495-proxy-admin', DeploymentTag.ProxyAdmin, () => {
-    let daoMultisig: string;
+    let deployer: string;
     let proxyAdmin: ProxyAdmin;
 
     before(async () => {
-        ({ daoMultisig } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -17,6 +17,6 @@ describeDeployment('1642682495-proxy-admin', DeploymentTag.ProxyAdmin, () => {
     });
 
     it('should deploy and configure the proxy admin contract', async () => {
-        expect(await proxyAdmin.owner()).to.equal(daoMultisig);
+        expect(await proxyAdmin.owner()).to.equal(deployer);
     });
 });
