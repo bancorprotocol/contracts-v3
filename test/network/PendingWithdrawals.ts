@@ -156,7 +156,7 @@ describe('PendingWithdrawals', () => {
                 await pendingWithdrawals.setTime(await latest());
             });
 
-            const poolTokenUnderlying = async (poolToken: PoolToken, amount: BigNumber) => {
+            const poolTokenToUnderlying = async (poolToken: PoolToken, amount: BigNumber) => {
                 let stakedBalance: BigNumber;
                 if (bntPoolToken.address === poolToken.address) {
                     stakedBalance = await bntPool.stakedBalance();
@@ -187,7 +187,7 @@ describe('PendingWithdrawals', () => {
                     const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
                     expect(id).to.equal(retId);
 
-                    const reserveTokenAmount = await poolTokenUnderlying(poolToken, amount);
+                    const reserveTokenAmount = await poolTokenToUnderlying(poolToken, amount);
 
                     await expect(res)
                         .to.emit(pendingWithdrawals, 'WithdrawalInitiated')
@@ -474,7 +474,7 @@ describe('PendingWithdrawals', () => {
                         );
                         const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
 
-                        const currentReserveTokenAmount = await poolTokenUnderlying(
+                        const currentReserveTokenAmount = await poolTokenToUnderlying(
                             poolToken,
                             withdrawalRequest.poolTokenAmount
                         );

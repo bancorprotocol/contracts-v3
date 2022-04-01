@@ -571,7 +571,7 @@ contract BNTPool is IBNTPool, Vault {
         uint256 poolTokenTotalSupply,
         uint256 currentStakedBalance
     ) private pure returns (uint256) {
-        return MathEx.mulDivF(bntAmount, poolTokenTotalSupply, currentStakedBalance);
+        return MathEx.mulDivC(bntAmount, poolTokenTotalSupply, currentStakedBalance);
     }
 
     /**
