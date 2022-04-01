@@ -1,4 +1,4 @@
-import { deploymentExists, isLive, isMainnetFork } from '../../utils/Deploy';
+import { deploymentTagExists, isLive, isMainnetFork } from '../../utils/Deploy';
 import { deployments, ethers, getNamedAccounts, network } from 'hardhat';
 import { Suite } from 'mocha';
 
@@ -56,10 +56,7 @@ export const describeDeployment = async (
     skip: () => boolean = () => false
 ): Promise<Suite | void> => {
     // if we're running against a mainnet fork, ensure to skip tests for already existing deployments
-    if (skip() || (isMainnetFork() && (await deploymentExists(tag)))) {
-        // TODO: how to handle proxy upgrades?
-        // TODO: checking deployment is not enough here at all. Maybe add a skip() "if mainnet"?
-        // TODO: maybe check .migrations.json and look for IDs there?
+    if (skip() || (isMainnetFork() && (await deploymentTagExists(tag)))) {
         return describe.skip(title, fn);
     }
 

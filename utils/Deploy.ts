@@ -520,7 +520,7 @@ const verifyTenderly = async (deployment: Deployment) => {
     }
 };
 
-export const deploymentExists = async (tag: string) => {
+export const deploymentTagExists = async (tag: string) => {
     const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
     const migrationsPath = path.resolve(
         __dirname,
