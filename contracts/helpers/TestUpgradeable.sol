@@ -26,4 +26,8 @@ contract TestUpgradeable is Upgradeable {
     }
 
     function restricted() external view onlyAdmin {}
+
+    function versionCount() external view returns (uint16) {
+        return _versionCount;
+    }
 }

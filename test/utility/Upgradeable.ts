@@ -11,7 +11,7 @@ describe('Upgradeable', () => {
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
-    shouldHaveGap('Upgradeable', '_upgradeCount');
+    shouldHaveGap('Upgradeable', '_versionCount');
 
     before(async () => {
         [deployer, nonOwner] = await ethers.getSigners();
@@ -28,6 +28,9 @@ describe('Upgradeable', () => {
     });
 
     it('should be properly initialized', async () => {
+        expect(await upgradeable.version()).to.equal(1);
+        expect(await upgradeable.versionCount()).to.equal(1);
+
         await expectRoles(upgradeable, Roles.Upgradeable);
 
         await expectRole(upgradeable, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
