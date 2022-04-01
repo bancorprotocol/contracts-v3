@@ -1,4 +1,4 @@
-import { BancorNetworkV1__factory } from '../components/LegacyContracts';
+import LegacyContracts from '../components/LegacyContracts';
 import { ContractName, DeployedContracts, DeploymentTag, deployProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -16,8 +16,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await deployProxy(
         {
             name: ContractName.BancorNetworkProxy,
-            contractFactory: BancorNetworkV1__factory, // eslint-disable-line camelcase
-            legacy: true,
+            contractArtifactData: LegacyContracts.BancorNetworkV1,
             from: deployer,
             args: [
                 bntGovernance.address,

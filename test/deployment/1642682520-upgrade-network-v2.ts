@@ -12,7 +12,7 @@ describeDeployment('1642682520-upgrade-network-v2', DeploymentTag.BancorNetworkV
         network = await DeployedContracts.BancorNetwork.deployed();
     });
 
-    it.only('should upgrade and configure the network contract', async () => {
+    it('should upgrade and configure the network contract', async () => {
         expect(await network.version()).to.equal(2);
 
         const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();

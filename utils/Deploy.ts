@@ -252,9 +252,14 @@ interface ProxyOptions {
     skipInitialization?: boolean;
 }
 
-interface ContractFactory {
+interface ArtifactData {
+    contractName: string;
     abi: ABI;
     bytecode: string;
+}
+
+interface ContractArtifactData {
+    metadata: ArtifactData;
 }
 
 interface BaseDeployOptions {
@@ -263,7 +268,7 @@ interface BaseDeployOptions {
     args?: any[];
     from: string;
     value?: BigNumber;
-    contractFactory?: ContractFactory;
+    contractArtifactData?: ContractArtifactData;
     legacy?: boolean;
 }
 
@@ -276,7 +281,7 @@ const INITIALIZE = 'initialize';
 const POST_UPGRADE = 'postUpgrade';
 
 export const deploy = async (options: DeployOptions) => {
-    const { name, contract, from, value, args, contractFactory, legacy, proxy } = options;
+    const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
     const contractName = contract || name;
 
@@ -300,7 +305,7 @@ export const deploy = async (options: DeployOptions) => {
     }
 
     const res = await deployContract(name, {
-        contract: contractFactory || contractName,
+        contract: contractArtifactData?.metadata || contractName,
         from,
         value,
         args,
@@ -309,10 +314,7 @@ export const deploy = async (options: DeployOptions) => {
     });
 
     const data = { name, contract: contractName };
-
-    if (!legacy) {
-        saveTypes(data);
-    }
+    saveTypes(data);
 
     await verifyTenderly({
         address: res.address,
@@ -335,7 +337,7 @@ interface UpgradeProxyOptions extends DeployOptions {
 }
 
 export const upgradeProxy = async (options: UpgradeProxyOptions) => {
-    const { name, contract, from, value, args, upgradeArgs, contractFactory } = options;
+    const { name, contract, from, value, args, upgradeArgs, contractArtifactData } = options;
     const contractName = contract || name;
 
     await fundAccount(from);
@@ -358,7 +360,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
     console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
 
     const res = await deployContract(name, {
-        contract: contractFactory || contractName,
+        contract: contractArtifactData?.metadata || contractName,
         from,
         value,
         args,
@@ -405,6 +407,8 @@ interface InitializeProxyOptions {
 export const initializeProxy = async (options: InitializeProxyOptions) => {
     const { name, proxyName, args, from } = options;
 
+    console.log(`initializing proxy ${name}`);
+
     await execute({
         name: proxyName,
         methodName: INITIALIZE,
@@ -417,6 +421,7 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
     await save({
         name,
         address,
+        proxy: true,
         skipVerification: true
     });
 
@@ -454,7 +459,7 @@ interface Deployment {
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address, skipVerification } = deployment;
+    const { name, contract, address, proxy, skipVerification } = deployment;
 
     const contractName = contract || name;
     const { abi } = await getExtendedArtifact(contractName);
@@ -464,6 +469,11 @@ export const save = async (deployment: Deployment) => {
 
     // save the deployment json data in the deployments folder
     await saveContract(name, { abi, address });
+
+    if (proxy) {
+        const { abi } = await getExtendedArtifact(PROXY_CONTRACT);
+        await saveContract(`${name}_Proxy`, { abi, address });
+    }
 
     if (skipVerification) {
         return;

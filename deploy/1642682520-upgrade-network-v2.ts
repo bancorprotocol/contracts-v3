@@ -1,4 +1,6 @@
 import { ContractName, DeployedContracts, DeploymentTag, upgradeProxy } from '../utils/Deploy';
+import CreateTestNetwork from './1642682517-create-test-network';
+import CreateNativePool from './1642682519-create-native-pool';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -29,7 +31,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 };
 
 func.id = DeploymentTag.BancorNetworkV2;
-func.dependencies = [DeploymentTag.BancorNetworkV1, DeploymentTag.NetworkSettingsV2];
+func.dependencies = [
+    DeploymentTag.BancorNetworkV1,
+    DeploymentTag.NetworkSettingsV2,
+    DeploymentTag.PoolCollectionType1V1,
+    CreateTestNetwork.id!,
+    CreateNativePool.id!
+];
 func.tags = [DeploymentTag.V3, DeploymentTag.BancorNetworkV2];
 
 export default func;

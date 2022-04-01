@@ -1,4 +1,4 @@
-import { NetworkSettingsV1__factory } from '../components/LegacyContracts';
+import LegacyContracts from '../components/LegacyContracts';
 import { ContractName, DeploymentTag, deployProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -8,8 +8,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     await deployProxy({
         name: ContractName.NetworkSettings,
-        contractFactory: NetworkSettingsV1__factory, // eslint-disable-line camelcase
-        legacy: true,
+        contractArtifactData: LegacyContracts.NetworkSettingsV1,
         from: deployer
     });
 
