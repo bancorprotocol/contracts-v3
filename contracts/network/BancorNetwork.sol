@@ -24,8 +24,7 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidType,
-    NotEmpty,
-    IllegalInput
+    NotEmpty
 } from "../utility/Utils.sol";
 
 import { ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
@@ -466,14 +465,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function createPools(uint16[] calldata poolTypes, Token[] calldata tokens) external onlyAdmin nonReentrant {
-        uint256 length = poolTypes.length;
-        if (length != tokens.length) {
-            revert IllegalInput();
-        }
+    function createPools(uint16 poolType, Token[] calldata tokens) external onlyAdmin nonReentrant {
+        uint256 length = tokens.length;
 
         for (uint256 i = 0; i < length; i++) {
-            _createPool(poolTypes[i], tokens[i]);
+            _createPool(poolType, tokens[i]);
         }
     }
 

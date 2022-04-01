@@ -5,7 +5,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AlreadyExists, DoesNotExist, IllegalInput } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, DoesNotExist, InvalidInput } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
 
@@ -175,28 +175,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the caller must be the admin of the contract
      */
     function removeTokenFromWhitelist(Token token) external onlyAdmin {
-        _removeTokenFromWhitelist(token);
-    }
-
-    /**
-     * @dev removes tokens from the protected tokens whitelist
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function removeTokensFromWhitelist(Token[] calldata tokens) external onlyAdmin {
-        uint256 length = tokens.length;
-
-        for (uint256 i = 0; i < length; i++) {
-            _removeTokenFromWhitelist(tokens[i]);
-        }
-    }
-
-    /**
-     * @dev removes a token from the protected tokens whitelist
-     */
-    function _removeTokenFromWhitelist(Token token) private {
         if (!_protectedTokenWhitelist.remove(address(token))) {
             revert DoesNotExist();
         }
@@ -241,7 +219,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     function setFundingLimits(Token[] calldata pools, uint256[] calldata amounts) external onlyAdmin {
         uint256 length = pools.length;
         if (length != amounts.length) {
-            revert IllegalInput();
+            revert InvalidInput();
         }
 
         for (uint256 i = 0; i < length; i++) {

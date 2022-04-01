@@ -80,7 +80,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - none of the pools already exists
      */
-    function createPools(uint16[] calldata poolTypes, Token[] calldata tokens) external;
+    function createPools(uint16 poolType, Token[] calldata tokens) external;
 
     /**
      * @dev migrates a list of pools between pool collections

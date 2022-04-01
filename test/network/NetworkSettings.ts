@@ -156,44 +156,6 @@ describe('NetworkSettings', () => {
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
             });
-
-            it('should revert when a non-admin attempts to remove tokens', async () => {
-                await expect(
-                    networkSettings.connect(nonOwner).removeTokensFromWhitelist([reserveToken.address])
-                ).to.be.revertedWith('AccessDenied');
-            });
-
-            it('should revert when removing non-whitelisted tokens', async () => {
-                await expect(networkSettings.removeTokensFromWhitelist([ZERO_ADDRESS])).to.be.revertedWith(
-                    'DoesNotExist'
-                );
-
-                const reserveToken2 = await createTestToken();
-                await expect(networkSettings.removeTokensFromWhitelist([reserveToken2.address])).to.be.revertedWith(
-                    'DoesNotExist'
-                );
-
-                await expect(
-                    networkSettings.removeTokensFromWhitelist([reserveToken.address, reserveToken.address])
-                ).to.be.revertedWith('DoesNotExist');
-            });
-
-            it('should remove tokens', async () => {
-                const reserveToken2 = await createTestToken();
-                await networkSettings.addTokenToWhitelist(reserveToken2.address);
-                expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
-                expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.true;
-
-                const res = await networkSettings.removeTokensFromWhitelist([
-                    reserveToken.address,
-                    reserveToken2.address
-                ]);
-                await expect(res).to.emit(networkSettings, 'TokenRemovedFromWhitelist').withArgs(reserveToken.address);
-                await expect(res).to.emit(networkSettings, 'TokenRemovedFromWhitelist').withArgs(reserveToken2.address);
-
-                expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
-                expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.false;
-            });
         });
     });
 
