@@ -350,10 +350,6 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
     };
 
-    console.log('proxyAdmin', proxyAdmin.address);
-    console.log('owner', await proxyAdmin.owner());
-    console.log('from', from);
-
     console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
 
     const res = await deployContract(name, {
