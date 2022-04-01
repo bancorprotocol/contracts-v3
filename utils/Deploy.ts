@@ -304,15 +304,17 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    const data = { name, contract: contractName };
-    saveTypes(data);
+    if (!proxy || !proxy.skipInitialization) {
+        const data = { name, contract: contractName };
+        saveTypes(data);
 
-    await verifyTenderly({
-        address: res.address,
-        proxy: isProxy,
-        implementation: isProxy ? res.implementation : undefined,
-        ...data
-    });
+        await verifyTenderly({
+            address: res.address,
+            proxy: isProxy,
+            implementation: isProxy ? res.implementation : undefined,
+            ...data
+        });
+    }
 
     return res.address;
 };
@@ -347,6 +349,10 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         viaAdminContract: ContractName.ProxyAdmin,
         execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
     };
+
+    console.log('proxyAdmin', proxyAdmin.address);
+    console.log('owner', await proxyAdmin.owner());
+    console.log('from', from);
 
     console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
 
