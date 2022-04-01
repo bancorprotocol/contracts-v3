@@ -74,7 +74,7 @@ export {
     VBNT
 };
 
-export { BancorNetworkV1, BancorNetworkV1__factory, NetworkSettingsV1, NetworkSettingsV1__factory };
+export { BancorNetworkV1, NetworkSettingsV1 };
 
 /* eslint-enable camelcase */
 

@@ -1,4 +1,4 @@
-import LegacyContracts from '../components/LegacyContracts';
+import LegacyContractsArtifactData from '../components/LegacyContractsArtifactData';
 import { ContractName, DeployedContracts, DeploymentTag, deployProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -16,7 +16,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await deployProxy(
         {
             name: ContractName.BancorNetworkProxy,
-            contractArtifactData: LegacyContracts.BancorNetworkV1,
+            contractArtifactData: LegacyContractsArtifactData.BancorNetworkV1,
             from: deployer,
             args: [
                 bntGovernance.address,

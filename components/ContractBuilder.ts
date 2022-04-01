@@ -63,3 +63,8 @@ export const attachOnly = <F extends ContractFactory>(
         }
     };
 };
+
+export interface ArtifactData {
+    abi: ABI;
+    bytecode: string;
+}

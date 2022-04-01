@@ -1,3 +1,4 @@
+import { ArtifactData } from '../components/ContractBuilder';
 import {
     AutoCompoundingStakingRewards,
     BancorNetwork,
@@ -31,7 +32,7 @@ import { toWei } from './Types';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
-import { ABI, Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
+import { Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
 import { capitalize } from 'lodash';
 import path from 'path';
 
@@ -252,23 +253,13 @@ interface ProxyOptions {
     skipInitialization?: boolean;
 }
 
-interface ArtifactData {
-    contractName: string;
-    abi: ABI;
-    bytecode: string;
-}
-
-interface ContractArtifactData {
-    metadata: ArtifactData;
-}
-
 interface BaseDeployOptions {
     name: ContractName;
     contract?: string;
     args?: any[];
     from: string;
     value?: BigNumber;
-    contractArtifactData?: ContractArtifactData;
+    contractArtifactData?: ArtifactData;
     legacy?: boolean;
 }
 
@@ -305,7 +296,7 @@ export const deploy = async (options: DeployOptions) => {
     }
 
     const res = await deployContract(name, {
-        contract: contractArtifactData?.metadata || contractName,
+        contract: contractArtifactData || contractName,
         from,
         value,
         args,
@@ -360,7 +351,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
     console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
 
     const res = await deployContract(name, {
-        contract: contractArtifactData?.metadata || contractName,
+        contract: contractArtifactData || contractName,
         from,
         value,
         args,
