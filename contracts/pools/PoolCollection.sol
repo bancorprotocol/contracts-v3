@@ -1508,8 +1508,20 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         _dispatchTradingLiquidityEvents(result.contextId, result.pool, prevLiquidity, newLiquidity);
 
-        // sync the reserve balances and process the network fee
-        data.liquidity = newLiquidity;
+        // update the BNT trading liquidity if needed
+        if (newLiquidity.bntTradingLiquidity != prevLiquidity.bntTradingLiquidity) {
+            data.liquidity.bntTradingLiquidity = newLiquidity.bntTradingLiquidity;
+        }
+
+        // update the base token trading liquidity if needed
+        if (newLiquidity.baseTokenTradingLiquidity != prevLiquidity.baseTokenTradingLiquidity) {
+            data.liquidity.baseTokenTradingLiquidity = newLiquidity.baseTokenTradingLiquidity;
+        }
+
+        // update the staked balance if needed
+        if (newLiquidity.stakedBalance != prevLiquidity.stakedBalance) {
+            data.liquidity.stakedBalance = newLiquidity.stakedBalance;
+        }
     }
 
     /**
