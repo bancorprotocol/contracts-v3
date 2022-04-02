@@ -1027,10 +1027,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @dev returns a memory reference to pool data
+     * @dev returns a storage reference to pool data
      */
-    function _poolMemory(Token pool) private view returns (Pool memory) {
-        Pool memory data = _poolData[pool];
+    function _poolStorage(Token pool) private view returns (Pool storage) {
+        Pool storage data = _poolData[pool];
         if (address(data.poolToken) == address(0)) {
             revert DoesNotExist();
         }
@@ -1039,10 +1039,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @dev returns a storage reference to pool data
+     * @dev returns a memory reference to pool data
      */
-    function _poolStorage(Token pool) private view returns (Pool storage) {
-        Pool storage data = _poolData[pool];
+    function _poolMemory(Token pool) private view returns (Pool memory) {
+        Pool memory data = _poolData[pool];
         if (address(data.poolToken) == address(0)) {
             revert DoesNotExist();
         }
