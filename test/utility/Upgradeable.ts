@@ -49,11 +49,16 @@ describe('Upgradeable', () => {
             });
 
             it('should allow executing the post-upgrade callback', async () => {
-                await expect(upgradeable.postUpgrade([])).not.to.be.revertedWith;
+                await expect(upgradeable.postUpgrade([])).not.to.be.reverted;
 
                 await upgradeable.setVersion((await upgradeable.version()) + 1);
 
-                await expect(upgradeable.postUpgrade([])).not.to.be.revertedWith;
+                await expect(upgradeable.postUpgrade([])).not.to.be.reverted;
+            });
+
+            it('should not allow executing the post-upgrade callback twice per-version', async () => {
+                await expect(upgradeable.postUpgrade([])).not.to.be.reverted;
+                await expect(upgradeable.postUpgrade([])).to.be.revertedWith('AlreadyUpgraded');
             });
         });
 
