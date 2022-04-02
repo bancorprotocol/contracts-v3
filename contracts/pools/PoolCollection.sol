@@ -1527,7 +1527,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev returns the liquidity in a given trade intermediate result
      */
-    function _resultLiquidity(TradeIntermediateResult memory result) private pure returns (PoolLiquidity memory liquidity) {
+    function _resultLiquidity(TradeIntermediateResult memory result)
+        private
+        pure
+        returns (PoolLiquidity memory liquidity)
+    {
         if (result.isSourceBNT) {
             liquidity.bntTradingLiquidity = result.sourceBalance;
             liquidity.baseTokenTradingLiquidity = result.targetBalance;
