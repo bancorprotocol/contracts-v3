@@ -6,15 +6,15 @@ import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 describe('Upgradeable', () => {
-    let upgradeable: TestUpgradeable;
+    let admin: SignerWithAddress;
+    let nonAdmin: SignerWithAddress;
 
-    let deployer: SignerWithAddress;
-    let nonOwner: SignerWithAddress;
+    let upgradeable: TestUpgradeable;
 
     shouldHaveGap('Upgradeable', '_versionCount');
 
     before(async () => {
-        [deployer, nonOwner] = await ethers.getSigners();
+        [admin, nonAdmin] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
@@ -23,20 +23,52 @@ describe('Upgradeable', () => {
         await upgradeable.initialize();
     });
 
-    it('should revert when attempting to reinitialize', async () => {
-        await expect(upgradeable.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+    describe('construction', () => {
+        it('should revert when attempting to reinitialize', async () => {
+            await expect(upgradeable.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+        });
+
+        it('should be properly initialized', async () => {
+            expect(await upgradeable.version()).to.equal(1);
+            expect(await upgradeable.versionCount()).to.equal(1);
+
+            await expectRoles(upgradeable, Roles.Upgradeable);
+
+            await expectRole(upgradeable, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [admin.address]);
+        });
+
+        it('should revert when a non-admin is attempting to call a restricted function', async () => {
+            await expect(upgradeable.connect(nonAdmin).restricted()).to.be.revertedWith('AccessDenied');
+        });
     });
 
-    it('should be properly initialized', async () => {
-        expect(await upgradeable.version()).to.equal(1);
-        expect(await upgradeable.versionCount()).to.equal(1);
+    describe('upgrade callbacks', () => {
+        context('incremented version', () => {
+            beforeEach(async () => {
+                await upgradeable.setVersion((await upgradeable.version()) + 1);
+            });
 
-        await expectRoles(upgradeable, Roles.Upgradeable);
+            it('should allow executing the post-upgrade callback', async () => {
+                await expect(upgradeable.postUpgrade([])).not.to.be.revertedWith;
 
-        await expectRole(upgradeable, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
-    });
+                await upgradeable.setVersion((await upgradeable.version()) + 1);
 
-    it('should revert when a non-owner is attempting to call a restricted function', async () => {
-        await expect(upgradeable.connect(nonOwner).restricted()).to.be.revertedWith('AccessDenied');
+                await expect(upgradeable.postUpgrade([])).not.to.be.revertedWith;
+            });
+        });
+
+        context('wrong version', () => {
+            for (const diff of [0, 10]) {
+                context(`diff ${diff}`, () => {
+                    beforeEach(async () => {
+                        await upgradeable.setVersion((await upgradeable.version()) + diff);
+                    });
+                });
+
+                it('should revert when attempting to execute the post-upgrade callback', async () => {
+                    await expect(upgradeable.postUpgrade([])).to.be.revertedWith('AlreadyUpgraded');
+                });
+            }
+        });
     });
 });
