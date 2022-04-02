@@ -149,6 +149,40 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
+     * @dev initiates liquidity withdrawal
+     *
+     * requirements:
+     *
+     * - the caller must have approved the contract to transfer the pool token amount on its behalf
+     */
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external returns (uint256);
+
+    /**
+     * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
+     *
+     * requirements:
+     *
+     * - the caller must have provided a valid and unused EIP712 typed signature
+     */
+    function initWithdrawalPermitted(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256);
+
+    /**
+     * @dev cancels a withdrawal request
+     *
+     * requirements:
+     *
+     * - the caller must have already initiated a withdrawal and received the specified id
+     */
+    function cancelWithdrawal(uint256 id) external;
+
+    /**
      * @dev withdraws liquidity and returns the withdrawn amount
      *
      * requirements:
@@ -247,40 +281,6 @@ interface IBancorNetwork is IUpgradeable {
     ) external;
 
     /**
-     * @dev initiates liquidity withdrawal
-     *
-     * requirements:
-     *
-     * - the caller must have approved the contract to transfer the pool token amount on its behalf
-     */
-    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external returns (uint256);
-
-    /**
-     * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function initWithdrawalPermitted(
-        IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
-
-    /**
-     * @dev cancels a withdrawal request
-     *
-     * requirements:
-     *
-     * - the caller must have already initiated a withdrawal and received the specified id
-     */
-    function cancelWithdrawal(uint256 id) external;
-
-    /**
      * @dev deposits liquidity during a migration
      */
     function migrateLiquidity(
@@ -296,7 +296,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
+     * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
      */
     function withdrawNetworkFees(address recipient) external;
 }

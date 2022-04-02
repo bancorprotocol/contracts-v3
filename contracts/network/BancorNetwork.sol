@@ -595,6 +595,56 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
+    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
+        external
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        whenNotPaused
+        nonReentrant
+        returns (uint256)
+    {
+        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function initWithdrawalPermitted(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    )
+        external
+        validAddress(address(poolToken))
+        greaterThanZero(poolTokenAmount)
+        whenNotPaused
+        nonReentrant
+        returns (uint256)
+    {
+        Token(address(poolToken)).permit(
+            msg.sender,
+            address(this),
+            poolTokenAmount,
+            deadline,
+            Signature({ v: v, r: r, s: s })
+        );
+
+        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function cancelWithdrawal(uint256 id) external whenNotPaused nonReentrant {
+        _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function withdraw(uint256 id) external whenNotPaused nonReentrant returns (uint256) {
         address provider = msg.sender;
         bytes32 contextId = _withdrawContextId(id, provider);
@@ -767,56 +817,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         emit FlashLoanCompleted({ token: token, borrower: msg.sender, amount: amount, feeAmount: feeAmount });
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
-        external
-        validAddress(address(poolToken))
-        greaterThanZero(poolTokenAmount)
-        whenNotPaused
-        nonReentrant
-        returns (uint256)
-    {
-        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function initWithdrawalPermitted(
-        IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
-        external
-        validAddress(address(poolToken))
-        greaterThanZero(poolTokenAmount)
-        whenNotPaused
-        nonReentrant
-        returns (uint256)
-    {
-        Token(address(poolToken)).permit(
-            msg.sender,
-            address(this),
-            poolTokenAmount,
-            deadline,
-            Signature({ v: v, r: r, s: s })
-        );
-
-        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function cancelWithdrawal(uint256 id) external whenNotPaused nonReentrant {
-        _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
     }
 
     /**
