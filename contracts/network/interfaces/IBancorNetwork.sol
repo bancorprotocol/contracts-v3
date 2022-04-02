@@ -69,9 +69,18 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the pool doesn't exist
+     * - the pool doesn't already exist
      */
     function createPool(uint16 poolType, Token token) external;
+
+    /**
+     * @dev creates new pools
+     *
+     * requirements:
+     *
+     * - none of the pools already exists
+     */
+    function createPools(uint16 poolType, Token[] calldata tokens) external;
 
     /**
      * @dev migrates a list of pools between pool collections
