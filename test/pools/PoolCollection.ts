@@ -17,7 +17,6 @@ import Contracts, {
 import { PoolLiquidityStructOutput } from '../../typechain-types/TestPoolCollection';
 import {
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
-    DEFAULT_FLASH_LOAN_FEE_PPM,
     DEFAULT_TRADING_FEE_PPM,
     EMA_AVERAGE_RATE_WEIGHT,
     EMA_SPOT_RATE_WEIGHT,
