@@ -307,12 +307,6 @@ describe('PoolCollection', () => {
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(0, DEFAULT_TRADING_FEE_PPM);
-
-            // please note that currently the DefaultFlashLoanFeePPMUpdated event won't be emitted during construction
-            // since the default fee (0) equals to the value of an uninitialized uint32 storage variable (0)
-            await expect(poolCollection.deployTransaction)
-                .not.to.emit(poolCollection, 'DefaultFlashLoanFeePPMUpdated')
-                .withArgs(0, DEFAULT_FLASH_LOAN_FEE_PPM);
         });
     });
 
