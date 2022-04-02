@@ -180,6 +180,24 @@ describe('NetworkSettings', () => {
             );
         });
 
+        it('should revert when a non-admin attempts to set multiple pool limits', async () => {
+            await expect(
+                networkSettings.connect(nonOwner).setFundingLimits([reserveToken.address], [poolFundingLimit])
+            ).to.be.revertedWith('AccessDenied');
+        });
+
+        it('should revert when setting multiple pool limits of an invalid address token', async () => {
+            await expect(networkSettings.setFundingLimits([ZERO_ADDRESS], [poolFundingLimit])).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should revert when setting multiple pool limits of a non-whitelisted token', async () => {
+            await expect(
+                networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit])
+            ).to.be.revertedWith('NotWhitelisted');
+        });
+
         context('whitelisted', () => {
             beforeEach(async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
@@ -190,6 +208,9 @@ describe('NetworkSettings', () => {
 
                 const res = await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
                 await expect(res).not.to.emit(networkSettings, 'FundingLimitUpdated');
+
+                const res2 = await networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit]);
+                await expect(res2).not.to.emit(networkSettings, 'FundingLimitUpdated');
             });
 
             it('should be able to set and update pool funding limit of a token', async () => {
@@ -208,6 +229,49 @@ describe('NetworkSettings', () => {
                     .withArgs(reserveToken.address, poolFundingLimit, 0);
 
                 expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
+            });
+
+            it('should be able to set and update pool funding limit of multiple tokens', async () => {
+                let reserveTokens: TestERC20Token[] = [];
+
+                for (let i = 0; i < 10; i++) {
+                    const reserveToken = await createTestToken();
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                    expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
+                    reserveTokens.push();
+                }
+
+                const tokens = reserveTokens.map((reserveToken) => reserveToken.address);
+                const amounts = reserveTokens.map((_, index) => poolFundingLimit.add(index));
+                const res = await networkSettings.setFundingLimits(tokens, amounts);
+
+                for (const [index, reserveToken] of reserveTokens.entries()) {
+                    await expect(res)
+                        .to.emit(networkSettings, 'FundingLimitUpdated')
+                        .withArgs(reserveToken.address, 0, amounts[index]);
+
+                    expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(amounts[index]);
+                }
+
+                const res2 = await networkSettings.setFundingLimit(reserveToken.address, 0);
+
+                for (const [index, reserveToken] of reserveTokens.entries()) {
+                    await expect(res2)
+                        .to.emit(networkSettings, 'FundingLimitUpdated')
+                        .withArgs(reserveToken.address, amounts[index], 0);
+
+                    expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
+                }
+            });
+
+            it('should revert when setting multiple pool limits with invalid input', async () => {
+                await expect(
+                    networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit, poolFundingLimit])
+                ).to.be.revertedWith('InvalidInput');
+
+                await expect(
+                    networkSettings.setFundingLimits([reserveToken.address, reserveToken.address], [poolFundingLimit])
+                ).to.be.revertedWith('InvalidInput');
             });
         });
     });
