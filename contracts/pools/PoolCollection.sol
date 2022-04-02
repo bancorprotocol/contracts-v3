@@ -858,11 +858,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev returns withdrawal amounts
      */
-    function _poolWithdrawalAmounts(Token pool, Pool memory data, uint256 poolTokenAmount)
-        internal
-        view
-        returns (InternalWithdrawalAmounts memory)
-    {
+    function _poolWithdrawalAmounts(
+        Token pool,
+        Pool memory data,
+        uint256 poolTokenAmount
+    ) internal view returns (InternalWithdrawalAmounts memory) {
         // the base token trading liquidity of a given pool can never be higher than the base token balance of the vault
         // whenever the base token trading liquidity is updated, it is set to at most the base token balance of the vault
         uint256 baseTokenExcessAmount = pool.balanceOf(address(_masterVault)) -
