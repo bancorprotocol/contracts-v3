@@ -1,10 +1,5 @@
-import {
-    BancorNetwork,
-    BNTPool,
-    ExternalProtectionVault,
-    MasterVault,
-    PoolCollection
-} from '../../components/Contracts';
+import { BNTPool, ExternalProtectionVault, MasterVault, PoolCollection } from '../../components/Contracts';
+import { BancorNetworkV1 } from '../../components/LegacyContracts';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
 import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
@@ -12,7 +7,7 @@ import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
 describeDeployment('1642682508-pool-collection-type-1', DeploymentTag.PoolCollectionType1V1, () => {
-    let network: BancorNetwork;
+    let network: BancorNetworkV1;
     let bntPool: BNTPool;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;

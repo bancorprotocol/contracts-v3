@@ -4,6 +4,7 @@ import Contracts, {
     IERC20,
     MasterVault,
     NetworkSettings,
+    PoolCollection,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
@@ -312,7 +313,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let bntPoolToken: PoolToken;
-        let poolCollection: TestPoolCollection;
+        let poolCollection: PoolCollection;
         let reserveToken: IERC20;
 
         beforeEach(async () => {
@@ -350,16 +351,15 @@ describe('BancorNetwork', () => {
 
             await bntPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
 
-            poolCollection = await createPoolCollection(
-                network,
-                bnt,
-                networkSettings,
-                masterVault,
-                bntPool,
-                externalProtectionVault,
-                poolTokenFactory,
-                poolMigrator,
-                1
+            poolCollection = await Contracts.PoolCollection.deploy(
+                network.address,
+                bnt.address,
+                networkSettings.address,
+                masterVault.address,
+                bntPool.address,
+                externalProtectionVault.address,
+                poolTokenFactory.address,
+                poolMigrator.address
             );
 
             await network.addPoolCollection(poolCollection.address);
