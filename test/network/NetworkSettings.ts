@@ -232,13 +232,13 @@ describe('NetworkSettings', () => {
             });
 
             it('should be able to set and update pool funding limit of multiple tokens', async () => {
-                let reserveTokens: TestERC20Token[] = [];
+                const reserveTokens: TestERC20Token[] = [];
 
                 for (let i = 0; i < 10; i++) {
                     const reserveToken = await createTestToken();
                     await networkSettings.addTokenToWhitelist(reserveToken.address);
                     expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
-                    reserveTokens.push();
+                    reserveTokens.push(reserveToken);
                 }
 
                 const tokens = reserveTokens.map((reserveToken) => reserveToken.address);
@@ -253,7 +253,7 @@ describe('NetworkSettings', () => {
                     expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(amounts[index]);
                 }
 
-                const res2 = await networkSettings.setFundingLimit(reserveToken.address, 0);
+                const res2 = await networkSettings.setFundingLimits(tokens, new Array(tokens.length).fill(0));
 
                 for (const [index, reserveToken] of reserveTokens.entries()) {
                     await expect(res2)
