@@ -750,13 +750,11 @@ describe('BancorNetwork', () => {
 
         const testCreatePool = (tokenData: TokenData) => {
             beforeEach(async () => {
-                ({ network, networkSettings, bnt, poolCollection } = await createSystem());
+                ({ network, networkSettings, poolCollection } = await createSystem());
 
-                if (tokenData.isBNT()) {
-                    reserveToken = bnt;
-                } else {
-                    reserveToken = await createToken(tokenData);
-                }
+                await network.addPoolCollection(poolCollection.address);
+
+                reserveToken = await createToken(tokenData);
 
                 poolType = await poolCollection.poolType();
             });
@@ -769,45 +767,93 @@ describe('BancorNetwork', () => {
                 await expect(network.createPool(12_345, reserveToken.address)).to.be.revertedWith('InvalidType');
             });
 
-            context('with an associated pool collection', () => {
+            it('should revert when attempting to create multiple pools for an invalid reserve token', async () => {
+                await expect(network.createPools(poolType, [ZERO_ADDRESS])).to.be.revertedWith('InvalidAddress');
+            });
+
+            it('should revert when attempting to create multiple pools for an unsupported type', async () => {
+                await expect(network.createPools(12_345, [reserveToken.address])).to.be.revertedWith('InvalidType');
+            });
+
+            it('should revert when a non-owner attempts to create a pool', async () => {
+                await expect(network.connect(nonOwner).createPool(poolType, reserveToken.address)).to.be.revertedWith(
+                    'AccessDenied'
+                );
+            });
+
+            it('should revert when a non-owner attempts create multiple pools', async () => {
+                await expect(
+                    network.connect(nonOwner).createPools(poolType, [reserveToken.address])
+                ).to.be.revertedWith('AccessDenied');
+            });
+
+            context('with a whitelisted token', () => {
                 beforeEach(async () => {
-                    await network.addPoolCollection(poolCollection.address);
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
                 });
 
-                it('should revert when a non-owner attempts to create a pool', async () => {
+                it('should create a pool', async () => {
+                    expect(await network.isPoolValid(reserveToken.address)).to.be.false;
+                    expect(await network.collectionByPool(reserveToken.address)).to.equal(ZERO_ADDRESS);
+                    expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
+
+                    expect(await network.liquidityPools()).to.be.empty;
+
+                    const res = await network.createPool(poolType, reserveToken.address);
+                    await expect(res)
+                        .to.emit(network, 'PoolAdded')
+                        .withArgs(reserveToken.address, poolCollection.address);
+
+                    expect(await network.isPoolValid(reserveToken.address)).to.be.true;
+                    expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
+                    expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
+
+                    expect(await network.liquidityPools()).to.deep.equal([reserveToken.address]);
+                });
+
+                it('should create multiple pools', async () => {
+                    const reserveToken2 = await createToken(new TokenData(TokenSymbol.TKN2));
+                    await networkSettings.addTokenToWhitelist(reserveToken2.address);
+                    const tokens = [reserveToken.address, reserveToken2.address];
+
+                    for (const token of tokens) {
+                        expect(await network.isPoolValid(token)).to.be.false;
+                        expect(await network.collectionByPool(token)).to.equal(ZERO_ADDRESS);
+                        expect(await poolCollection.isPoolValid(token)).to.be.false;
+                    }
+
+                    expect(await network.liquidityPools()).to.be.empty;
+
+                    const res = await network.createPools(poolType, tokens);
+
+                    for (const token of tokens) {
+                        await expect(res).to.emit(network, 'PoolAdded').withArgs(token, poolCollection.address);
+                        expect(await network.isPoolValid(token)).to.be.true;
+                        expect(await network.collectionByPool(token)).to.equal(poolCollection.address);
+                        expect(await poolCollection.isPoolValid(token)).to.be.true;
+                    }
+
+                    expect(await network.liquidityPools()).to.deep.equal(tokens);
+                });
+
+                it('should revert when attempting to create a pool for the same reserve token twice', async () => {
+                    await network.createPool(poolType, reserveToken.address);
+                    await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWith(
+                        'AlreadyExists'
+                    );
+                });
+
+                it('should revert when attempting to create multiple pools for the same reserve token in different transactions', async () => {
+                    await network.createPools(poolType, [reserveToken.address]);
+                    await expect(network.createPools(poolType, [reserveToken.address])).to.be.revertedWith(
+                        'AlreadyExists'
+                    );
+                });
+
+                it('should revert when attempting to create multiple pools for the same reserve token in the same transaction', async () => {
                     await expect(
-                        network.connect(nonOwner).createPool(poolType, reserveToken.address)
-                    ).to.be.revertedWith('AccessDenied');
-                });
-
-                context('with a whitelisted token', () => {
-                    beforeEach(async () => {
-                        await networkSettings.addTokenToWhitelist(reserveToken.address);
-                    });
-
-                    it('should create a pool', async () => {
-                        expect(await network.isPoolValid(reserveToken.address)).to.be.false;
-                        expect(await network.collectionByPool(reserveToken.address)).to.equal(ZERO_ADDRESS);
-                        expect(await network.liquidityPools()).to.be.empty;
-                        expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
-
-                        const res = await network.createPool(poolType, reserveToken.address);
-                        await expect(res)
-                            .to.emit(network, 'PoolAdded')
-                            .withArgs(reserveToken.address, poolCollection.address);
-
-                        expect(await network.isPoolValid(reserveToken.address)).to.be.true;
-                        expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
-                        expect(await network.liquidityPools()).to.have.members([reserveToken.address]);
-                        expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
-                    });
-
-                    it('should revert when attempting to create a pool for the same reserve token twice', async () => {
-                        await network.createPool(poolType, reserveToken.address);
-                        await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWith(
-                            'AlreadyExists'
-                        );
-                    });
+                        network.createPools(poolType, [reserveToken.address, reserveToken.address])
+                    ).to.be.revertedWith('AlreadyExists');
                 });
             });
         };
@@ -820,11 +866,19 @@ describe('BancorNetwork', () => {
 
         context(TokenSymbol.BNT, () => {
             beforeEach(async () => {
-                ({ network, bnt } = await createSystem());
+                ({ network, bnt, poolCollection } = await createSystem());
+
+                await network.addPoolCollection(poolCollection.address);
+
+                poolType = await poolCollection.poolType();
             });
 
             it('should revert when attempting to create a pool', async () => {
-                await expect(network.createPool(1, bnt.address)).to.be.revertedWith('InvalidToken');
+                await expect(network.createPool(poolType, bnt.address)).to.be.revertedWith('InvalidToken');
+            });
+
+            it('should revert when attempting to create multiple pools', async () => {
+                await expect(network.createPools(poolType, [bnt.address])).to.be.revertedWith('InvalidToken');
             });
         });
     });

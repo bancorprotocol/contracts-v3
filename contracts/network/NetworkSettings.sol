@@ -5,7 +5,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, DoesNotExist, InvalidInput } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
 
@@ -137,7 +137,29 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function addTokenToWhitelist(Token token) external onlyAdmin validExternalAddress(address(token)) {
+    function addTokenToWhitelist(Token token) external onlyAdmin {
+        _addTokenToWhitelist(token);
+    }
+
+    /**
+     * @dev adds tokens to the protected tokens whitelist
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addTokensToWhitelist(Token[] calldata tokens) external onlyAdmin {
+        uint256 length = tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            _addTokenToWhitelist(tokens[i]);
+        }
+    }
+
+    /**
+     * @dev adds a token to the protected tokens whitelist
+     */
+    function _addTokenToWhitelist(Token token) private validExternalAddress(address(token)) {
         if (!_protectedTokenWhitelist.add(address(token))) {
             revert AlreadyExists();
         }
@@ -175,14 +197,40 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev updates the amount of BNT that the protocol can fund a specific pool
+     * @dev updates the amount of BNT that the protocol can provide as funding for a specific pool
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      * - the token must have been whitelisted
      */
-    function setFundingLimit(Token pool, uint256 amount) external onlyAdmin validAddress(address(pool)) {
+    function setFundingLimit(Token pool, uint256 amount) external onlyAdmin {
+        _setFundingLimit(pool, amount);
+    }
+
+    /**
+     * @dev updates the amounts of BNT that the protocol can provide as funding for specific pools
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     * - each one of the tokens must have been whitelisted
+     */
+    function setFundingLimits(Token[] calldata pools, uint256[] calldata amounts) external onlyAdmin {
+        uint256 length = pools.length;
+        if (length != amounts.length) {
+            revert InvalidInput();
+        }
+
+        for (uint256 i = 0; i < length; i++) {
+            _setFundingLimit(pools[i], amounts[i]);
+        }
+    }
+
+    /**
+     * @dev updates the amount of BNT that the protocol can fund a specific pool
+     */
+    function _setFundingLimit(Token pool, uint256 amount) private validAddress(address(pool)) {
         if (!_isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
