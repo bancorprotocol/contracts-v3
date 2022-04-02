@@ -1,9 +1,17 @@
-import Contracts, { NetworkSettings, TestERC20Token } from '../../components/Contracts';
+import Contracts, { IERC20, NetworkSettings, TestERC20Token } from '../../components/Contracts';
 import LegacyContracts, { NetworkSettingsV1 } from '../../components/LegacyContracts';
 import { DEFAULT_FLASH_LOAN_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createProxy, createSystem, createTestToken, upgradeProxy } from '../helpers/Factory';
+import {
+    createProxy,
+    createSystem,
+    createTestToken,
+    createToken,
+    TokenWithAddress,
+    upgradeProxy
+} from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -12,6 +20,7 @@ import { ethers } from 'hardhat';
 describe('NetworkSettings', () => {
     let reserveToken: TestERC20Token;
     let networkSettings: NetworkSettings;
+    let bnt: IERC20;
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
@@ -23,12 +32,16 @@ describe('NetworkSettings', () => {
     });
 
     beforeEach(async () => {
-        ({ networkSettings } = await createSystem());
+        ({ networkSettings, bnt } = await createSystem());
 
         reserveToken = await createTestToken();
     });
 
     describe('construction', () => {
+        it('should revert when attempting to create with an invalid BNT token contract', async () => {
+            await expect(Contracts.NetworkSettings.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+        });
+
         it('should revert when attempting to reinitialize', async () => {
             await expect(networkSettings.initialize()).to.be.revertedWith(
                 'Initializable: contract is already initialized'
@@ -82,7 +95,9 @@ describe('NetworkSettings', () => {
         });
 
         it('should upgrade and preserve existing settings', async () => {
-            const upgradedNetworkSettings = await upgradeProxy(networkSettings, Contracts.NetworkSettings);
+            const upgradedNetworkSettings = await upgradeProxy(networkSettings, Contracts.NetworkSettings, {
+                ctorArgs: [bnt.address]
+            });
 
             expect(await upgradedNetworkSettings.networkFeePPM()).to.equal(networkFeePPM);
             expect(await upgradedNetworkSettings.withdrawalFeePPM()).to.equal(withdrawalFeePPM);
@@ -351,9 +366,17 @@ describe('NetworkSettings', () => {
                 ).to.be.revertedWith('NotWhitelisted');
             });
 
-            context('whitelisted', () => {
+            const testSetFlashLoan = (tokenData: TokenData) => {
+                let reserveToken: TokenWithAddress;
+
                 beforeEach(async () => {
-                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                    if (tokenData.isBNT()) {
+                        reserveToken = bnt;
+                    } else {
+                        reserveToken = await createToken(tokenData);
+
+                        await networkSettings.addTokenToWhitelist(reserveToken.address);
+                    }
                 });
 
                 it('should revert when setting an invalid flash-loan fee', async () => {
@@ -388,7 +411,13 @@ describe('NetworkSettings', () => {
 
                     expect(await networkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(newFlashLoanFee2);
                 });
-            });
+            };
+
+            for (const symbol of [TokenSymbol.BNT, TokenSymbol.TKN]) {
+                context(symbol, () => {
+                    testSetFlashLoan(new TokenData(symbol));
+                });
+            }
         });
 
         describe('getting', () => {

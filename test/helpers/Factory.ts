@@ -336,7 +336,7 @@ const createSystemFixture = async () => {
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const bntPoolToken = await createPoolToken(poolTokenFactory, bnt);
 
-    const networkSettings = await createProxy(Contracts.NetworkSettings);
+    const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [bnt.address] });
 
     const network = await createNetwork(
         bntGovernance,

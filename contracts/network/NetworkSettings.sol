@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.12;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
@@ -8,6 +9,7 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 
@@ -16,6 +18,7 @@ import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/IN
  */
 contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using TokenLibrary for Token;
 
     uint32 private constant DEFAULT_FLASH_LOAN_FEE_PPM = 0; // 0%
 
@@ -23,6 +26,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         bool initialized;
         uint32 feePPM;
     }
+
+    // the address of the BNT token
+    IERC20 private immutable _bnt;
 
     // a set of tokens which are eligible for protection
     EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelist;
@@ -100,6 +106,10 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when a specific pool's flash-loan fee is updated
      */
     event FlashLoanFeePPMUpdated(Token indexed pool, uint32 prevFeePPM, uint32 newFeePPM);
+
+    constructor(IERC20 initBnt) validAddress(address(initBnt)) {
+        _bnt = initBnt;
+    }
 
     /**
      * @dev fully initializes the contract and its parents
@@ -329,7 +339,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * - the token must have been whitelisted
      */
     function setFlashLoanFeePPM(Token pool, uint32 newFlashLoanFeePPM) external onlyAdmin validFee(newFlashLoanFeePPM) {
-        if (!_isTokenWhitelisted(pool)) {
+        if (!pool.isEqual(_bnt) && !_isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
 
