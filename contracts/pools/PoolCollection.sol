@@ -1349,7 +1349,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         result.limit = limit;
         result.tradingFeePPM = data.tradingFeePPM;
 
-        PoolLiquidity memory liquidity = data.liquidity;
+        PoolLiquidity storage liquidity = data.liquidity;
         if (result.isSourceBNT) {
             result.sourceBalance = liquidity.bntTradingLiquidity;
             result.targetBalance = liquidity.baseTokenTradingLiquidity;
@@ -1493,7 +1493,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function _performTrade(TradeIntermediateResult memory result) private {
         Pool storage data = _poolData[result.pool];
-        PoolLiquidity memory prevLiquidity = data.liquidity;
+
+        PoolLiquidity memory prevLiquidity = _resultLiquidity(result);
 
         // update the recent average rate
         _updateAverageRate(
@@ -1503,16 +1504,26 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         _processTrade(result);
 
-        // sync the reserve balances and process the network fee
-        PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: result.isSourceBNT ? result.sourceBalance : result.targetBalance,
-            baseTokenTradingLiquidity: result.isSourceBNT ? result.targetBalance : result.sourceBalance,
-            stakedBalance: result.stakedBalance
-        });
+        PoolLiquidity memory newLiquidity = _resultLiquidity(result);
 
         _dispatchTradingLiquidityEvents(result.contextId, result.pool, prevLiquidity, newLiquidity);
 
+        // sync the reserve balances and process the network fee
         data.liquidity = newLiquidity;
+    }
+
+    /**
+     * @dev returns the liquidity in a given trade intermediate result
+     */
+    function _resultLiquidity(TradeIntermediateResult memory result) private pure returns (PoolLiquidity memory liquidity) {
+        if (result.isSourceBNT) {
+            liquidity.bntTradingLiquidity = result.sourceBalance;
+            liquidity.baseTokenTradingLiquidity = result.targetBalance;
+        } else {
+            liquidity.baseTokenTradingLiquidity = result.sourceBalance;
+            liquidity.bntTradingLiquidity = result.targetBalance;
+        }
+        liquidity.stakedBalance = result.stakedBalance;
     }
 
     /**
