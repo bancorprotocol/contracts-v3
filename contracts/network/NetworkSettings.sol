@@ -197,7 +197,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev updates the amount of BNT that the protocol can fund a specific pool
+     * @dev updates the amount of BNT that the protocol can provide as funding for a specific pool
      *
      * requirements:
      *
@@ -209,7 +209,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev updates the amounts of BNT that the protocol can fund specific pools
+     * @dev updates the amounts of BNT that the protocol can provide as funding for specific pools
      *
      * requirements:
      *
