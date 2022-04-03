@@ -88,6 +88,44 @@ describe('NetworkSettings', () => {
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
             });
+
+            it('should revert when a non-admin attempts to add tokens', async () => {
+                await expect(
+                    networkSettings.connect(nonOwner).addTokensToWhitelist([reserveToken.address])
+                ).to.be.revertedWith('AccessDenied');
+            });
+
+            it('should revert when adding invalid addresses', async () => {
+                await expect(networkSettings.addTokensToWhitelist([ZERO_ADDRESS])).to.be.revertedWith(
+                    'InvalidExternalAddress'
+                );
+            });
+
+            it('should revert when adding already whitelisted tokens in the same transaction', async () => {
+                await expect(
+                    networkSettings.addTokensToWhitelist([reserveToken.address, reserveToken.address])
+                ).to.be.revertedWith('AlreadyExists');
+            });
+
+            it('should revert when adding already whitelisted tokens in different transactions', async () => {
+                await networkSettings.addTokensToWhitelist([reserveToken.address]);
+                await expect(networkSettings.addTokensToWhitelist([reserveToken.address])).to.be.revertedWith(
+                    'AlreadyExists'
+                );
+            });
+
+            it('should whitelist tokens', async () => {
+                const reserveToken2 = await createTestToken();
+                expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+                expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.false;
+
+                const res = await networkSettings.addTokensToWhitelist([reserveToken.address, reserveToken2.address]);
+                await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
+                await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken2.address);
+
+                expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+                expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.true;
+            });
         });
 
         describe('removing', () => {
@@ -142,6 +180,24 @@ describe('NetworkSettings', () => {
             );
         });
 
+        it('should revert when a non-admin attempts to set multiple pool limits', async () => {
+            await expect(
+                networkSettings.connect(nonOwner).setFundingLimits([reserveToken.address], [poolFundingLimit])
+            ).to.be.revertedWith('AccessDenied');
+        });
+
+        it('should revert when setting multiple pool limits of an invalid address token', async () => {
+            await expect(networkSettings.setFundingLimits([ZERO_ADDRESS], [poolFundingLimit])).to.be.revertedWith(
+                'InvalidAddress'
+            );
+        });
+
+        it('should revert when setting multiple pool limits of a non-whitelisted token', async () => {
+            await expect(
+                networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit])
+            ).to.be.revertedWith('NotWhitelisted');
+        });
+
         context('whitelisted', () => {
             beforeEach(async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
@@ -152,6 +208,9 @@ describe('NetworkSettings', () => {
 
                 const res = await networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit);
                 await expect(res).not.to.emit(networkSettings, 'FundingLimitUpdated');
+
+                const res2 = await networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit]);
+                await expect(res2).not.to.emit(networkSettings, 'FundingLimitUpdated');
             });
 
             it('should be able to set and update pool funding limit of a token', async () => {
@@ -171,6 +230,85 @@ describe('NetworkSettings', () => {
 
                 expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
             });
+
+            it('should be able to set and update pool funding limit of multiple tokens', async () => {
+                const reserveTokens: TestERC20Token[] = [];
+
+                for (let i = 0; i < 10; i++) {
+                    const reserveToken = await createTestToken();
+                    await networkSettings.addTokenToWhitelist(reserveToken.address);
+                    expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
+                    reserveTokens.push(reserveToken);
+                }
+
+                const tokens = reserveTokens.map((reserveToken) => reserveToken.address);
+                const amounts = reserveTokens.map((_, index) => poolFundingLimit.add(index));
+                const res = await networkSettings.setFundingLimits(tokens, amounts);
+
+                for (const [index, reserveToken] of reserveTokens.entries()) {
+                    await expect(res)
+                        .to.emit(networkSettings, 'FundingLimitUpdated')
+                        .withArgs(reserveToken.address, 0, amounts[index]);
+
+                    expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(amounts[index]);
+                }
+
+                const res2 = await networkSettings.setFundingLimits(tokens, new Array(tokens.length).fill(0));
+
+                for (const [index, reserveToken] of reserveTokens.entries()) {
+                    await expect(res2)
+                        .to.emit(networkSettings, 'FundingLimitUpdated')
+                        .withArgs(reserveToken.address, amounts[index], 0);
+
+                    expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(0);
+                }
+            });
+
+            it('should revert when setting multiple pool limits with invalid input', async () => {
+                await expect(
+                    networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit, poolFundingLimit])
+                ).to.be.revertedWith('InvalidInput');
+
+                await expect(
+                    networkSettings.setFundingLimits([reserveToken.address, reserveToken.address], [poolFundingLimit])
+                ).to.be.revertedWith('InvalidInput');
+            });
+        });
+    });
+
+    describe('protected tokens whitelist with funding limits', async () => {
+        const poolFundingLimit = toWei(123_456);
+
+        it('should revert when a non-admin attempts to add a token', async () => {
+            await expect(
+                networkSettings.connect(nonOwner).addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit)
+            ).to.be.revertedWith('AccessDenied');
+        });
+
+        it('should revert when adding an invalid address', async () => {
+            await expect(
+                networkSettings.addTokenToWhitelistWithLimit(ZERO_ADDRESS, poolFundingLimit)
+            ).to.be.revertedWith('InvalidExternalAddress');
+        });
+
+        it('should revert when adding an already whitelisted token', async () => {
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+            await expect(
+                networkSettings.addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit)
+            ).to.be.revertedWith('AlreadyExists');
+        });
+
+        it('should whitelist a token with funding limit', async () => {
+            expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+
+            const res = await networkSettings.addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit);
+            await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
+            await expect(res)
+                .to.emit(networkSettings, 'FundingLimitUpdated')
+                .withArgs(reserveToken.address, 0, poolFundingLimit);
+
+            expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+            expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(poolFundingLimit);
         });
     });
 
