@@ -255,7 +255,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev updates the amount of BNT that the protocol can fund a specific pool
+     * @dev updates the amount of BNT that the protocol can provide as funding for a specific pool
      */
     function _setFundingLimit(Token pool, uint256 amount) private validAddress(address(pool)) {
         if (!_isTokenWhitelisted(pool)) {
@@ -270,6 +270,19 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         _poolFundingLimits[pool] = amount;
 
         emit FundingLimitUpdated({ pool: pool, prevLimit: prevPoolFundingLimit, newLimit: amount });
+    }
+
+    /**
+     * @dev adds a token to the protected tokens whitelist,
+     * and sets the amount of BNT that the protocol can provide as funding for this pool
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addTokenToWhitelistWithLimit(Token token, uint256 amount) external onlyAdmin {
+        _addTokenToWhitelist(token);
+        _setFundingLimit(token, amount);
     }
 
     /**
