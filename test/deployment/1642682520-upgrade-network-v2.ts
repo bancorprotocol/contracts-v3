@@ -20,7 +20,7 @@ describeDeployment('1642682520-upgrade-network-v2', DeploymentTag.BancorNetworkV
         expect(await network.poolCollections()).to.include(poolCollection.address);
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
 
-        const pools = [NATIVE_TOKEN_ADDRESS];
+        const pools = [];
         for (const contractName of [
             ContractName.TestToken1,
             ContractName.TestToken2,
@@ -31,7 +31,9 @@ describeDeployment('1642682520-upgrade-network-v2', DeploymentTag.BancorNetworkV
             pools.push((await DeployedContracts[contractName].deployed()).address);
         }
 
-        expect(await network.liquidityPools()).to.have.members(pools);
+        pools.push(NATIVE_TOKEN_ADDRESS);
+
+        expect(await network.liquidityPools()).to.deep.equal(pools);
 
         for (const pool of pools) {
             expect(await network.collectionByPool(pool)).to.equal(poolCollection.address);
