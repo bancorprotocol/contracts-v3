@@ -497,7 +497,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // adjust the trading liquidity based on the base token vault balance and funding limits
         uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
-        _updateTradingLiquidity(bytes32(0), pool, data, data.liquidity, fundingRate, minLiquidityForTrading);
+        _updateTradingLiquidity(bytes32(0), pool, data, data.poolToken.totalSupply(), data.liquidity, fundingRate, minLiquidityForTrading);
 
         // verify that the BNT trading liquidity is equal or greater than the minimum liquidity for trading
         if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading) {
@@ -578,8 +578,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             revert DepositingDisabled();
         }
 
+        PoolLiquidity memory prevLiquidity = data.liquidity;
+
         // calculate the pool token amount to mint
-        uint256 currentStakedBalance = data.liquidity.stakedBalance;
+        uint256 currentStakedBalance = prevLiquidity.stakedBalance;
         uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
         uint256 poolTokenAmount = _underlyingToPoolToken(tokenAmount, prevPoolTokenTotalSupply, currentStakedBalance);
 
@@ -588,8 +590,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         if (newStakedBalance > data.depositLimit) {
             revert DepositLimitExceeded();
         }
-
-        PoolLiquidity memory prevLiquidity = data.liquidity;
 
         // update the staked balance with the full base token amount
         data.liquidity.stakedBalance = newStakedBalance;
@@ -602,7 +602,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             contextId,
             pool,
             data,
-            data.liquidity,
+            prevPoolTokenTotalSupply + poolTokenAmount,
+            PoolLiquidity({
+                bntTradingLiquidity: prevLiquidity.bntTradingLiquidity,
+                baseTokenTradingLiquidity: prevLiquidity.baseTokenTradingLiquidity,
+                stakedBalance: newStakedBalance
+            }),
             data.averageRate.rate.fromFraction112(),
             _networkSettings.minLiquidityForTrading()
         );
@@ -1149,6 +1154,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         bytes32 contextId,
         Token pool,
         Pool storage data,
+        uint256 poolTokenTotalSupply,
         PoolLiquidity memory liquidity,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
@@ -1210,7 +1216,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         data.liquidity = newLiquidity;
 
-        _dispatchTradingLiquidityEvents(contextId, pool, data.poolToken.totalSupply(), liquidity, newLiquidity);
+        _dispatchTradingLiquidityEvents(contextId, pool, poolTokenTotalSupply, liquidity, newLiquidity);
     }
 
     function _dispatchTradingLiquidityEvents(
