@@ -497,7 +497,15 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // adjust the trading liquidity based on the base token vault balance and funding limits
         uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
-        _updateTradingLiquidity(bytes32(0), pool, data, data.poolToken.totalSupply(), data.liquidity, fundingRate, minLiquidityForTrading);
+        _updateTradingLiquidity(
+            bytes32(0),
+            pool,
+            data,
+            data.poolToken.totalSupply(),
+            data.liquidity,
+            fundingRate,
+            minLiquidityForTrading
+        );
 
         // verify that the BNT trading liquidity is equal or greater than the minimum liquidity for trading
         if (data.liquidity.bntTradingLiquidity < minLiquidityForTrading) {
