@@ -28,7 +28,7 @@ import {
     TokenHolder
 } from '../../components/LegacyContracts';
 import LegacyContractsV3, { BancorNetworkV1 } from '../../components/LegacyContractsV3';
-import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
 import { MAX_UINT256, PoolType, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
