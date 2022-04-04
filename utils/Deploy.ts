@@ -194,8 +194,18 @@ const saveTypes = async (options: SaveTypeOptions) => {
     const contractSrcDir = path.dirname(sourceName);
 
     const typechainDir = path.resolve('./', config.typechain.outDir);
-    const srcDir = path.join(typechainDir, contractSrcDir);
-    const factoriesSrcDir = path.join(typechainDir, 'factories', contractSrcDir);
+
+    // for some reasons, the types of some contracts are stored in a "Contract.sol" dir, in which case we'd have to use
+    // it as the root source dir
+    let srcDir;
+    let factoriesSrcDir;
+    if (fs.existsSync(path.join(typechainDir, sourceName))) {
+        srcDir = path.join(typechainDir, sourceName);
+        factoriesSrcDir = path.join(typechainDir, 'factories', sourceName);
+    } else {
+        srcDir = path.join(typechainDir, contractSrcDir);
+        factoriesSrcDir = path.join(typechainDir, 'factories', contractSrcDir);
+    }
 
     const typesDir = path.join(config.paths.deployments, getNetworkName(), 'types');
     const destDir = path.join(typesDir, contractSrcDir);
