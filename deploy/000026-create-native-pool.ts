@@ -1,5 +1,5 @@
 import { PoolType } from '../utils/Constants';
-import { ContractName, execute, isMainnet, isMainnetFork, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, execute, isMainnet, isMainnetFork, setDeploymentMetadata } from '../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toPPM, toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -21,35 +21,35 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, ethWhale } = await getNamedAccounts();
 
     await execute({
-        name: ContractName.NetworkSettings,
+        name: ContractInstance.NetworkSettings,
         methodName: 'addTokenToWhitelist',
         args: [NATIVE_TOKEN_ADDRESS],
         from: deployer
     });
 
     await execute({
-        name: ContractName.BancorNetwork,
+        name: ContractInstance.BancorNetwork,
         methodName: 'createPool',
         args: [PoolType.Standard, NATIVE_TOKEN_ADDRESS],
         from: deployer
     });
 
     await execute({
-        name: ContractName.NetworkSettings,
+        name: ContractInstance.NetworkSettings,
         methodName: 'setFundingLimit',
         args: [NATIVE_TOKEN_ADDRESS, FUNDING_LIMIT],
         from: deployer
     });
 
     await execute({
-        name: ContractName.PoolCollectionType1V1,
+        name: ContractInstance.PoolCollectionType1V1,
         methodName: 'setDepositLimit',
         args: [NATIVE_TOKEN_ADDRESS, DEPOSIT_LIMIT],
         from: deployer
     });
 
     await execute({
-        name: ContractName.PoolCollectionType1V1,
+        name: ContractInstance.PoolCollectionType1V1,
         methodName: 'setTradingFeePPM',
         args: [NATIVE_TOKEN_ADDRESS, TRADING_FEE],
         from: deployer
@@ -57,7 +57,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     if (!isMainnet() || isMainnetFork()) {
         await execute({
-            name: ContractName.BancorNetwork,
+            name: ContractInstance.BancorNetwork,
             methodName: 'deposit',
             args: [NATIVE_TOKEN_ADDRESS, INITIAL_DEPOSIT],
             from: isMainnetFork() ? ethWhale : deployer,
@@ -65,7 +65,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         });
 
         await execute({
-            name: ContractName.PoolCollectionType1V1,
+            name: ContractInstance.PoolCollectionType1V1,
             methodName: 'enableTrading',
             args: [NATIVE_TOKEN_ADDRESS, BNT_VIRTUAL_BALANCE, NATIVE_TOKEN_VIRTUAL_RATE],
             from: deployer

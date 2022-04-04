@@ -1,4 +1,4 @@
-import { ContractName, DeployedContracts, deployProxy, isMainnet, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, DeployedContracts, deployProxy, isMainnet, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -12,7 +12,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     if (isMainnet()) {
         await deployProxy({
-            name: ContractName.BancorPortal,
+            name: ContractInstance.BancorPortal,
             from: deployer,
             args: [
                 network.address,
@@ -29,7 +29,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         const uniswapV2FactoryMock = await DeployedContracts.MockUniswapV2Factory.deployed();
 
         await deployProxy({
-            name: ContractName.BancorPortal,
+            name: ContractInstance.BancorPortal,
             from: deployer,
             args: [
                 network.address,

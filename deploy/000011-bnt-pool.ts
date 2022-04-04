@@ -1,5 +1,5 @@
 import {
-    ContractName,
+    ContractInstance,
     DeployedContracts,
     deployProxy,
     execute,
@@ -22,7 +22,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const bntPoolAddress = await deployProxy(
         {
-            name: ContractName.BNTPool,
+            name: ContractInstance.BNTPool,
             from: deployer,
             args: [
                 networkProxy.address,
@@ -39,41 +39,41 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     );
 
     await execute({
-        name: ContractName.BNTPoolToken,
+        name: ContractInstance.BNTPoolToken,
         methodName: 'transferOwnership',
         args: [bntPoolAddress],
         from: deployer
     });
 
     await execute({
-        name: ContractName.BNTPool,
+        name: ContractInstance.BNTPool,
         methodName: 'initialize',
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.BNTPool,
+        name: ContractInstance.BNTPool,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkProxy.address,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.BNTGovernance,
+        name: ContractInstance.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: bntPoolAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.VBNTGovernance,
+        name: ContractInstance.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: bntPoolAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.MasterVault,
+        name: ContractInstance.MasterVault,
         id: Roles.MasterVault.ROLE_BNT_MANAGER,
         member: bntPoolAddress,
         from: deployer

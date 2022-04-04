@@ -1,4 +1,4 @@
-import { ContractName, deploy, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, deploy, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -6,7 +6,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     await deploy({
-        name: ContractName.ProxyAdmin,
+        name: ContractInstance.ProxyAdmin,
         from: deployer
     });
 

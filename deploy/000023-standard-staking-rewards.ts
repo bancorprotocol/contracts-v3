@@ -1,4 +1,4 @@
-import { ContractName, DeployedContracts, deployProxy, grantRole, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, DeployedContracts, deployProxy, grantRole, setDeploymentMetadata } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -13,7 +13,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
 
     const standardRewardsAddress = await deployProxy({
-        name: ContractName.StandardStakingRewards,
+        name: ContractInstance.StandardStakingRewards,
         from: deployer,
         args: [
             network.address,
@@ -25,14 +25,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await grantRole({
-        name: ContractName.BNTGovernance,
+        name: ContractInstance.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: standardRewardsAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.ExternalRewardsVault,
+        name: ContractInstance.ExternalRewardsVault,
         id: Roles.Vault.ROLE_ASSET_MANAGER,
         member: standardRewardsAddress,
         from: deployer

@@ -1,4 +1,4 @@
-import { ContractName, DeployedContracts, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, DeployedContracts, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -17,7 +17,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
 
     await deployProxy({
-        name: ContractName.BancorNetworkInfo,
+        name: ContractInstance.BancorNetworkInfo,
         from: deployer,
         args: [
             network.address,

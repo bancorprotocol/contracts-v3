@@ -1,4 +1,4 @@
-import { ContractName, DeployedContracts, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, DeployedContracts, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -10,7 +10,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntPool = await DeployedContracts.BNTPool.deployed();
 
     await deployProxy({
-        name: ContractName.PendingWithdrawals,
+        name: ContractInstance.PendingWithdrawals,
         from: deployer,
         args: [networkProxy.address, bnt.address, bntPool.address]
     });

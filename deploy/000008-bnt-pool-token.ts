@@ -1,4 +1,4 @@
-import { ContractName, DeployedContracts, execute, save, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, DeployedContracts, execute, save, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -16,7 +16,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bnt = await DeployedContracts.BNT.deployed();
 
     const { events } = await execute({
-        name: ContractName.PoolTokenFactory,
+        name: ContractInstance.PoolTokenFactory,
         methodName: 'createPoolToken',
         args: [bnt.address],
         from: deployer
@@ -26,13 +26,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const poolTokenAddress = event.args.poolToken;
 
     await save({
-        name: ContractName.BNTPoolToken,
+        name: ContractInstance.BNTPoolToken,
         contract: 'PoolToken',
         address: poolTokenAddress
     });
 
     await execute({
-        name: ContractName.BNTPoolToken,
+        name: ContractInstance.BNTPoolToken,
         methodName: 'acceptOwnership',
         from: deployer
     });

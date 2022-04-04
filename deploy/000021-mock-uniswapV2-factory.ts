@@ -1,4 +1,4 @@
-import { ContractName, deploy, DeployedContracts, isMainnet, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, deploy, DeployedContracts, isMainnet, setDeploymentMetadata } from '../utils/Deploy';
 import { BigNumber } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -9,11 +9,11 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const uniswapPair = await DeployedContracts.MockUniswapV2Pair.deployed();
 
     await deploy({
-        name: ContractName.MockUniswapV2Factory,
+        name: ContractInstance.MockUniswapV2Factory,
         from: deployer,
         args: [
-            ContractName.MockUniswapV2Factory,
-            ContractName.MockUniswapV2Factory,
+            ContractInstance.MockUniswapV2Factory,
+            ContractInstance.MockUniswapV2Factory,
             BigNumber.from(100_000_000),
             uniswapPair.address
         ]

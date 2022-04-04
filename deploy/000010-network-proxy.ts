@@ -1,5 +1,5 @@
 import LegacyContractsV3ArtifactData from '../components/LegacyContractsV3ArtifactData';
-import { ContractName, DeployedContracts, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, DeployedContracts, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -15,7 +15,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     await deployProxy(
         {
-            name: ContractName.BancorNetworkProxy,
+            name: ContractInstance.BancorNetworkProxy,
             contractArtifactData: LegacyContractsV3ArtifactData.BancorNetworkV1,
             from: deployer,
             args: [

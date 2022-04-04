@@ -1,4 +1,4 @@
-import { ContractName, DeployedContracts, isTenderlyFork } from '../utils/Deploy';
+import { ContractInstance, DeployedContracts, isTenderlyFork } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { toWei } from '../utils/Types';
 import '@nomiclabs/hardhat-ethers';
@@ -35,11 +35,11 @@ const main = async () => {
         await vbntTokenGovernance.connect(deployer).mint(account, toWei(1000));
 
         for (const contractName of [
-            ContractName.TestToken1,
-            ContractName.TestToken2,
-            ContractName.TestToken3,
-            ContractName.TestToken4,
-            ContractName.TestToken5
+            ContractInstance.TestToken1,
+            ContractInstance.TestToken2,
+            ContractInstance.TestToken3,
+            ContractInstance.TestToken4,
+            ContractInstance.TestToken5
         ]) {
             const testToken = await DeployedContracts[contractName].deployed();
 

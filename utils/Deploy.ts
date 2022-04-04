@@ -51,18 +51,18 @@ interface EnvOptions {
 
 const { FORKING: isForking, TENDERLY_FORK_ID }: EnvOptions = process.env as any as EnvOptions;
 
-const deployed = <F extends Contract>(name: ContractName) => ({
+const deployed = <F extends Contract>(name: ContractInstance) => ({
     deployed: async () => ethers.getContract<F>(name)
 });
 
-enum LegacyContractName {
+enum LegacyContractInstance {
     BNT = 'BNT',
     BNTGovernance = 'BNTGovernance',
     VBNT = 'VBNT',
     VBNTGovernance = 'VBNTGovernance'
 }
 
-enum NewContractName {
+enum NewContractInstance {
     AutoCompoundingStakingRewards = 'AutoCompoundingStakingRewards',
     BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',
@@ -83,7 +83,7 @@ enum NewContractName {
     StandardStakingRewards = 'StandardStakingRewards'
 }
 
-enum TestContractName {
+enum TestContractInstance {
     MockUniswapV2Factory = 'MockUniswapV2Factory',
     MockUniswapV2Pair = 'MockUniswapV2Pair',
     MockUniswapV2Router02 = 'MockUniswapV2Router02',
@@ -94,54 +94,56 @@ enum TestContractName {
     TestToken5 = 'TestToken5'
 }
 
-export const ContractName = {
-    ...LegacyContractName,
-    ...NewContractName,
-    ...TestContractName
+export const ContractInstance = {
+    ...LegacyContractInstance,
+    ...NewContractInstance,
+    ...TestContractInstance
 };
 
-export type ContractName = LegacyContractName | NewContractName | TestContractName;
+export type ContractInstance = LegacyContractInstance | NewContractInstance | TestContractInstance;
 
 const DeployedLegacyContracts = {
-    BNT: deployed<BNT>(ContractName.BNT),
-    BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance),
-    VBNT: deployed<VBNT>(ContractName.VBNT),
-    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance),
+    BNT: deployed<BNT>(ContractInstance.BNT),
+    BNTGovernance: deployed<TokenGovernance>(ContractInstance.BNTGovernance),
+    VBNT: deployed<VBNT>(ContractInstance.VBNT),
+    VBNTGovernance: deployed<TokenGovernance>(ContractInstance.VBNTGovernance),
 
-    BancorNetworkV1: deployed<BancorNetworkV1>(ContractName.BancorNetwork),
-    NetworkSettingsV1: deployed<NetworkSettingsV1>(ContractName.NetworkSettings)
+    BancorNetworkV1: deployed<BancorNetworkV1>(ContractInstance.BancorNetwork),
+    NetworkSettingsV1: deployed<NetworkSettingsV1>(ContractInstance.NetworkSettings)
 };
 
 const DeployedNewContracts = {
-    AutoCompoundingStakingRewards: deployed<AutoCompoundingStakingRewards>(ContractName.AutoCompoundingStakingRewards),
-    BancorNetworkInfo: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfo),
-    BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
-    BancorNetwork: deployed<BancorNetwork>(ContractName.BancorNetwork),
-    BancorPortal: deployed<BancorPortal>(ContractName.BancorPortal),
-    BancorV1Migration: deployed<BancorV1Migration>(ContractName.BancorV1Migration),
-    BNTPoolToken: deployed<PoolToken>(ContractName.BNTPoolToken),
-    BNTPool: deployed<BNTPool>(ContractName.BNTPool),
-    ExternalProtectionVault: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVault),
-    ExternalRewardsVault: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVault),
-    MasterVault: deployed<MasterVault>(ContractName.MasterVault),
-    NetworkSettings: deployed<NetworkSettings>(ContractName.NetworkSettings),
-    PendingWithdrawals: deployed<PendingWithdrawals>(ContractName.PendingWithdrawals),
-    PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
-    PoolMigrator: deployed<PoolMigrator>(ContractName.PoolMigrator),
-    PoolTokenFactory: deployed<PoolTokenFactory>(ContractName.PoolTokenFactory),
-    ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin),
-    StandardStakingRewards: deployed<StandardStakingRewards>(ContractName.StandardStakingRewards)
+    AutoCompoundingStakingRewards: deployed<AutoCompoundingStakingRewards>(
+        ContractInstance.AutoCompoundingStakingRewards
+    ),
+    BancorNetworkInfo: deployed<BancorNetworkInfo>(ContractInstance.BancorNetworkInfo),
+    BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractInstance.BancorNetworkProxy),
+    BancorNetwork: deployed<BancorNetwork>(ContractInstance.BancorNetwork),
+    BancorPortal: deployed<BancorPortal>(ContractInstance.BancorPortal),
+    BancorV1Migration: deployed<BancorV1Migration>(ContractInstance.BancorV1Migration),
+    BNTPoolToken: deployed<PoolToken>(ContractInstance.BNTPoolToken),
+    BNTPool: deployed<BNTPool>(ContractInstance.BNTPool),
+    ExternalProtectionVault: deployed<ExternalProtectionVault>(ContractInstance.ExternalProtectionVault),
+    ExternalRewardsVault: deployed<ExternalRewardsVault>(ContractInstance.ExternalRewardsVault),
+    MasterVault: deployed<MasterVault>(ContractInstance.MasterVault),
+    NetworkSettings: deployed<NetworkSettings>(ContractInstance.NetworkSettings),
+    PendingWithdrawals: deployed<PendingWithdrawals>(ContractInstance.PendingWithdrawals),
+    PoolCollectionType1V1: deployed<PoolCollection>(ContractInstance.PoolCollectionType1V1),
+    PoolMigrator: deployed<PoolMigrator>(ContractInstance.PoolMigrator),
+    PoolTokenFactory: deployed<PoolTokenFactory>(ContractInstance.PoolTokenFactory),
+    ProxyAdmin: deployed<ProxyAdmin>(ContractInstance.ProxyAdmin),
+    StandardStakingRewards: deployed<StandardStakingRewards>(ContractInstance.StandardStakingRewards)
 };
 
 const DeployedTestContracts = {
-    MockUniswapV2Factory: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2Factory),
-    MockUniswapV2Pair: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2Pair),
-    MockUniswapV2Router02: deployed<MockUniswapV2Router02>(ContractName.MockUniswapV2Router02),
-    TestToken1: deployed<TestERC20Token>(ContractName.TestToken1),
-    TestToken2: deployed<TestERC20Token>(ContractName.TestToken2),
-    TestToken3: deployed<TestERC20Token>(ContractName.TestToken3),
-    TestToken4: deployed<TestERC20Token>(ContractName.TestToken4),
-    TestToken5: deployed<TestERC20Token>(ContractName.TestToken5)
+    MockUniswapV2Factory: deployed<MockUniswapV2Factory>(ContractInstance.MockUniswapV2Factory),
+    MockUniswapV2Pair: deployed<MockUniswapV2Pair>(ContractInstance.MockUniswapV2Pair),
+    MockUniswapV2Router02: deployed<MockUniswapV2Router02>(ContractInstance.MockUniswapV2Router02),
+    TestToken1: deployed<TestERC20Token>(ContractInstance.TestToken1),
+    TestToken2: deployed<TestERC20Token>(ContractInstance.TestToken2),
+    TestToken3: deployed<TestERC20Token>(ContractInstance.TestToken3),
+    TestToken4: deployed<TestERC20Token>(ContractInstance.TestToken4),
+    TestToken5: deployed<TestERC20Token>(ContractInstance.TestToken5)
 };
 
 export const DeployedContracts = {
@@ -180,7 +182,7 @@ export const fundAccount = async (account: string) => {
 };
 
 interface SaveTypeOptions {
-    name: ContractName;
+    name: ContractInstance;
     contract: string;
 }
 
@@ -215,7 +217,7 @@ interface ProxyOptions {
 }
 
 interface BaseDeployOptions {
-    name: ContractName;
+    name: ContractInstance;
     contract?: string;
     args?: any[];
     from: string;
@@ -247,7 +249,7 @@ export const deploy = async (options: DeployOptions) => {
         proxyOptions = {
             proxyContract: PROXY_CONTRACT,
             owner: await proxyAdmin.owner(),
-            viaAdminContract: ContractName.ProxyAdmin,
+            viaAdminContract: ContractInstance.ProxyAdmin,
             execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
 
@@ -307,7 +309,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
     const proxyOptions = {
         proxyContract: PROXY_CONTRACT,
         owner: await proxyAdmin.owner(),
-        viaAdminContract: ContractName.ProxyAdmin,
+        viaAdminContract: ContractInstance.ProxyAdmin,
         execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
     };
 
@@ -336,7 +338,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
 };
 
 interface ExecuteOptions {
-    name: ContractName;
+    name: ContractInstance;
     methodName: string;
     args?: any[];
     from: string;
@@ -352,8 +354,8 @@ export const execute = async (options: ExecuteOptions) => {
 };
 
 interface InitializeProxyOptions {
-    name: ContractName;
-    proxyName: ContractName;
+    name: ContractInstance;
+    proxyName: ContractInstance;
     args?: any[];
     from: string;
 }
@@ -383,7 +385,7 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
 };
 
 interface RolesOptions {
-    name: ContractName;
+    name: ContractInstance;
     id: typeof RoleIds[number];
     member: string;
     from: string;
@@ -404,7 +406,7 @@ export const grantRole = async (options: RolesOptions) => setRole(options, true)
 export const revokeRole = async (options: RolesOptions) => setRole(options, false);
 
 interface Deployment {
-    name: ContractName;
+    name: ContractInstance;
     contract?: string;
     address: Address;
     proxy?: boolean;

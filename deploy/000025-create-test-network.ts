@@ -1,5 +1,5 @@
 import { PoolType } from '../utils/Constants';
-import { ContractName, deploy, DeployedContracts, execute, isLive, setDeploymentMetadata } from '../utils/Deploy';
+import { ContractInstance, deploy, DeployedContracts, execute, isLive, setDeploymentMetadata } from '../utils/Deploy';
 import { duration } from '../utils/Time';
 import { TokenData, TokenSymbol } from '../utils/TokenData';
 import { toPPM, toWei } from '../utils/Types';
@@ -15,19 +15,19 @@ const BNT_VIRTUAL_BALANCE = 1;
 const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
 const INITIAL_DEPOSITS = {
-    [ContractName.TestToken1]: toWei(50_000),
-    [ContractName.TestToken2]: toWei(500_000),
-    [ContractName.TestToken3]: toWei(1_000_000),
-    [ContractName.TestToken4]: toWei(2_000_000),
-    [ContractName.TestToken5]: toWei(3_000_000)
+    [ContractInstance.TestToken1]: toWei(50_000),
+    [ContractInstance.TestToken2]: toWei(500_000),
+    [ContractInstance.TestToken3]: toWei(1_000_000),
+    [ContractInstance.TestToken4]: toWei(2_000_000),
+    [ContractInstance.TestToken5]: toWei(3_000_000)
 };
 
 const TOKENS = [
-    { symbol: TokenSymbol.TKN1, contractName: ContractName.TestToken1 },
-    { symbol: TokenSymbol.TKN2, contractName: ContractName.TestToken2 },
-    { symbol: TokenSymbol.TKN3, contractName: ContractName.TestToken3 },
-    { symbol: TokenSymbol.TKN4, contractName: ContractName.TestToken4, tradingDisabled: true },
-    { symbol: TokenSymbol.TKN5, contractName: ContractName.TestToken5, depositingDisabled: true }
+    { symbol: TokenSymbol.TKN1, contractName: ContractInstance.TestToken1 },
+    { symbol: TokenSymbol.TKN2, contractName: ContractInstance.TestToken2 },
+    { symbol: TokenSymbol.TKN3, contractName: ContractInstance.TestToken3 },
+    { symbol: TokenSymbol.TKN4, contractName: ContractInstance.TestToken4, tradingDisabled: true },
+    { symbol: TokenSymbol.TKN5, contractName: ContractInstance.TestToken5, depositingDisabled: true }
 ];
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
@@ -48,35 +48,35 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         const testToken = await DeployedContracts[contractName].deployed();
 
         await execute({
-            name: ContractName.NetworkSettings,
+            name: ContractInstance.NetworkSettings,
             methodName: 'addTokenToWhitelist',
             args: [testToken.address],
             from: deployer
         });
 
         await execute({
-            name: ContractName.BancorNetwork,
+            name: ContractInstance.BancorNetwork,
             methodName: 'createPool',
             args: [PoolType.Standard, testToken.address],
             from: deployer
         });
 
         await execute({
-            name: ContractName.NetworkSettings,
+            name: ContractInstance.NetworkSettings,
             methodName: 'setFundingLimit',
             args: [testToken.address, FUNDING_LIMIT],
             from: deployer
         });
 
         await execute({
-            name: ContractName.PoolCollectionType1V1,
+            name: ContractInstance.PoolCollectionType1V1,
             methodName: 'setDepositLimit',
             args: [testToken.address, DEPOSIT_LIMIT],
             from: deployer
         });
 
         await execute({
-            name: ContractName.PoolCollectionType1V1,
+            name: ContractInstance.PoolCollectionType1V1,
             methodName: 'setTradingFeePPM',
             args: [testToken.address, TRADING_FEE],
             from: deployer
@@ -92,7 +92,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         });
 
         await execute({
-            name: ContractName.BancorNetwork,
+            name: ContractInstance.BancorNetwork,
             methodName: 'deposit',
             args: [testToken.address, initialDeposit],
             from: deployer
@@ -100,7 +100,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
         if (!tradingDisabled) {
             await execute({
-                name: ContractName.PoolCollectionType1V1,
+                name: ContractInstance.PoolCollectionType1V1,
                 methodName: 'enableTrading',
                 args: [testToken.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE],
                 from: deployer
@@ -109,7 +109,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
         if (depositingDisabled) {
             await execute({
-                name: ContractName.PoolCollectionType1V1,
+                name: ContractInstance.PoolCollectionType1V1,
                 methodName: 'enableDepositing',
                 args: [testToken.address, false],
                 from: deployer
@@ -118,7 +118,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     }
 
     await execute({
-        name: ContractName.PendingWithdrawals,
+        name: ContractInstance.PendingWithdrawals,
         methodName: 'setLockDuration',
         args: [duration.minutes(10)],
         from: deployer

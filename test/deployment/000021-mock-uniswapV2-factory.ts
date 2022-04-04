@@ -1,5 +1,5 @@
 import { MockUniswapV2Factory } from '../../components/Contracts';
-import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
+import { ContractInstance, DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
@@ -13,7 +13,7 @@ describeDeployment(
         });
 
         it('should deploy and configure the uniswap v2 factory mock contract', async () => {
-            expect(await migration.name()).to.equal(ContractName.MockUniswapV2Factory);
+            expect(await migration.name()).to.equal(ContractInstance.MockUniswapV2Factory);
         });
     },
     () => isMainnet()
