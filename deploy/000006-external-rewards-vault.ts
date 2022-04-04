@@ -17,6 +17,4 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-setDeploymentMetadata(__filename, func);
-
-export default func;
+export default setDeploymentMetadata(__filename, func);

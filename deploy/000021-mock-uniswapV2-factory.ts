@@ -22,8 +22,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-setDeploymentMetadata(__filename, func);
-
 func.skip = async () => isMainnet();
 
-export default func;
+export default setDeploymentMetadata(__filename, func);

@@ -513,4 +513,6 @@ export const setDeploymentMetadata = (filename: string, func: DeployFunction) =>
     func.id = id;
     func.tags = [tag];
     func.dependencies = dependency ? [dependency] : undefined;
+
+    return func;
 };
