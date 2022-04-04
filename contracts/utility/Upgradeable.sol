@@ -79,9 +79,13 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
      * - this must can be called only once per-upgrade
      */
     function postUpgrade(bytes calldata data) external {
-        if (++_versionCount != version()) {
+        uint16 versionCount = _versionCount + 1;
+
+        if (versionCount != version()) {
             revert AlreadyUpgraded();
         }
+
+        _versionCount = versionCount;
 
         _postUpgrade(data);
     }
