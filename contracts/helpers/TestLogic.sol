@@ -10,6 +10,8 @@ contract TestLogic is Upgradeable {
 
     uint256[MAX_GAP - 1] private __gap;
 
+    event Upgraded(uint16 newVersion, uint256 arg1, bool arg2, string arg3);
+
     constructor(uint16 initVersion) {
         _version = initVersion;
     }
