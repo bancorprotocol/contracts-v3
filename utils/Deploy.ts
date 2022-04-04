@@ -33,8 +33,7 @@ import { toWei } from './Types';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
-import { Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
-import { capitalize } from 'lodash';
+import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
 import path from 'path';
 
 const {
@@ -102,45 +101,6 @@ export const ContractName = {
 };
 
 export type ContractName = LegacyContractName | NewContractName | TestContractName;
-
-enum LegacyDeploymentTag {
-    V2 = 'V2'
-}
-
-enum NewDeploymentTag {
-    AutoCompoundingStakingRewardsV1 = 'AutoCompoundingStakingRewardsV1',
-    BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
-    BancorNetworkProxy = 'BancorNetworkProxy',
-    BancorNetworkV1 = 'BancorNetworkV1',
-    BancorPortalV1 = 'BancorPortalV1',
-    BancorV1MigrationV1 = 'BancorV1MigrationV1',
-    BNTPoolTokenV1 = 'BNTPoolTokenV1',
-    BNTPoolV1 = 'BNTPoolV1',
-    ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
-    ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
-    MasterVaultV1 = 'MasterVaultV1',
-    NetworkSettingsV1 = 'NetworkSettingsV1',
-    PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
-    PoolCollectionType1V1 = 'PoolCollectionType1V1',
-    PoolMigratorV1 = 'PoolMigratorV1',
-    PoolTokenFactoryV1 = 'PoolTokenFactoryV1',
-    StandardStakingRewardsV1 = 'StandardStakingRewardsV1',
-    ProxyAdmin = 'ProxyAdmin',
-
-    V3 = 'V3',
-
-    BancorNetworkV2 = 'BancorNetworkV2',
-    NetworkSettingsV2 = 'NetworkSettingsV2'
-}
-
-export const DeploymentTag = {
-    ...LegacyContractName,
-    ...LegacyDeploymentTag,
-    ...NewDeploymentTag,
-    ...TestContractName
-};
-
-export type DeploymentTag = LegacyContractName | LegacyDeploymentTag | NewDeploymentTag | TestContractName;
 
 const DeployedLegacyContracts = {
     BNT: deployed<BNT>(ContractName.BNT),
@@ -534,10 +494,21 @@ export const deploymentTagExists = async (tag: string) => {
     return !!migrations[tag];
 };
 
-export const toDeployTag = (filename: string) =>
-    path
-        .basename(filename)
-        .split('.')[0]
-        .split('-')
-        .slice(1)
-        .reduce((res, c) => res + capitalize(c), '');
+export const deploymentMetadata = (filename: string) => {
+    const id = path.basename(filename).split('.')[0];
+    const order = Number(id.split('-')[0]);
+
+    return {
+        id,
+        tag: order.toString(),
+        dependency: order === 1 ? undefined : (order - 1).toString()
+    };
+};
+
+export const setDeploymentMetadata = (filename: string, func: DeployFunction) => {
+    const { id, tag, dependency } = deploymentMetadata(filename);
+
+    func.id = id;
+    func.tags = [tag];
+    func.dependencies = dependency ? [dependency] : undefined;
+};

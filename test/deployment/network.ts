@@ -16,7 +16,7 @@ import {
     StandardStakingRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { DeployedContracts, DeploymentTag, isMainnet } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { performTestDeployment } from '../helpers/Deploy';
 import { getNamedAccounts } from 'hardhat';
@@ -50,7 +50,7 @@ describe('network', () => {
     });
 
     beforeEach(async () => {
-        await performTestDeployment(DeploymentTag.V3);
+        await performTestDeployment('000101-transfer-proxy-admin-ownership');
 
         network = await DeployedContracts.BancorNetwork.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
