@@ -78,14 +78,14 @@ export const createProxy = async <F extends ContractFactory>(factory: ContractBu
     return factory.attach(proxy.address);
 };
 
-interface UpgradeProxyArguments extends ProxyArguments {
+interface ProxyUpgradeArgs extends ProxyArguments {
     upgradeCallData?: BytesLike;
 }
 
 export const upgradeProxy = async <F extends ContractFactory>(
     proxy: BaseContract,
     factory: ContractBuilder<F>,
-    args?: UpgradeProxyArguments
+    args?: ProxyUpgradeArgs
 ) => {
     const logicContract = await createLogic(factory, args?.ctorArgs);
     const admin = await proxyAdmin();
