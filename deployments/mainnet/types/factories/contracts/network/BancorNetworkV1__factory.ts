@@ -3,7 +3,7 @@
 /* eslint-disable */
 import { Signer, utils, Contract, ContractFactory, Overrides } from "ethers";
 import { Provider, TransactionRequest } from "@ethersproject/providers";
-import type { BancorNetwork, BancorNetworkInterface } from "../BancorNetworkV1";
+import type { BancorNetwork, BancorNetworkInterface } from "../../../contracts/network/BancorNetworkV1";
 
 const _abi = [
   {
