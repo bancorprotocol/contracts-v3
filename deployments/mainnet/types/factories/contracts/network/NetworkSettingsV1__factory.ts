@@ -6,7 +6,7 @@ import { Provider, TransactionRequest } from "@ethersproject/providers";
 import type {
   NetworkSettings,
   NetworkSettingsInterface,
-} from "../NetworkSettingsV1";
+} from "../../../contracts/network/NetworkSettingsV1";
 
 const _abi = [
   {
