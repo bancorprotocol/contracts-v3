@@ -372,7 +372,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      */
     function setDefaultFlashLoanFeePPM(uint32 newDefaultFlashLoanFeePPM)
         external
@@ -396,7 +396,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * requirements:
      *
-     * - the caller must be the owner of the contract
+     * - the caller must be the admin of the contract
      * - the token must have been whitelisted
      */
     function setFlashLoanFeePPM(Token pool, uint32 newFlashLoanFeePPM) external onlyAdmin validFee(newFlashLoanFeePPM) {
