@@ -43,17 +43,27 @@ describe('Upgradeable', () => {
     });
 
     describe('upgrade callbacks', () => {
-        context('incremented version', () => {
+        context('next version', () => {
             beforeEach(async () => {
                 await upgradeable.setVersion((await upgradeable.version()) + 1);
             });
 
             it('should allow executing the post-upgrade callback', async () => {
-                await expect(upgradeable.postUpgrade([])).not.to.be.reverted;
+                let version = await upgradeable.version();
 
-                await upgradeable.setVersion((await upgradeable.version()) + 1);
+                const res = upgradeable.postUpgrade([]);
 
-                await expect(upgradeable.postUpgrade([])).not.to.be.reverted;
+                expect(res)
+                    .to.emit(upgradeable, 'Upgraded')
+                    .withArgs(version - 1, version);
+
+                await upgradeable.setVersion(++version);
+
+                const res2 = upgradeable.postUpgrade([]);
+
+                expect(res2)
+                    .to.emit(upgradeable, 'Upgraded')
+                    .withArgs(version - 1, version);
             });
 
             it('should not allow executing the post-upgrade callback twice per-version', async () => {

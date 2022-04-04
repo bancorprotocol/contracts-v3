@@ -24,6 +24,8 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 1] private __gap;
 
+    event Upgraded(uint16 prevVersion, uint16 newVersion);
+
     // solhint-disable func-name-mixedcase
 
     /**
@@ -88,6 +90,8 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
         _versionCount = versionCount;
 
         _postUpgrade(data);
+
+        emit Upgraded(versionCount - 1, versionCount);
     }
 
     /**
