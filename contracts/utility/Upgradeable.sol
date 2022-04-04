@@ -11,7 +11,7 @@ import { AccessDenied } from "./Utils.sol";
  * @dev this contract provides common utilities for upgradeable contracts
  */
 abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeable {
-    error AlreadyUpgraded();
+    error AlreadyInitialized();
 
     // the admin role is used to allow a non-proxy admin to perform additional initialization/setup during contract
     // upgrades
@@ -82,7 +82,7 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
         uint16 versionCount = _versionCount + 1;
 
         if (versionCount != version()) {
-            revert AlreadyUpgraded();
+            revert AlreadyInitialized();
         }
 
         _versionCount = versionCount;

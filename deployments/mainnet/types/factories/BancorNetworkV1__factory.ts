@@ -54,7 +54,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "AlreadyUpgraded",
+    name: "AlreadyInitialized",
     type: "error",
   },
   {
