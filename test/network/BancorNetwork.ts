@@ -15,8 +15,7 @@ import Contracts, {
     TestPoolCollection,
     TestPoolMigrator
 } from '../../components/Contracts';
-import LegacyContracts, {
-    BancorNetworkV1,
+import {
     DSToken,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
@@ -28,6 +27,7 @@ import LegacyContracts, {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
+import LegacyContractsV3, { BancorNetworkV1 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
 import { MAX_UINT256, PoolType, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
@@ -331,7 +331,7 @@ describe('BancorNetwork', () => {
                 bntPoolToken
             } = await createSystem());
 
-            network = await createProxy(LegacyContracts.BancorNetworkV1, {
+            network = await createProxy(LegacyContractsV3.BancorNetworkV1, {
                 initArgs: [bntPool.address, pendingWithdrawals.address, poolMigrator.address],
                 ctorArgs: [
                     bntGovernance.address,

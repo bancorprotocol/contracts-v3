@@ -1,5 +1,5 @@
 import { BNTPool, ExternalProtectionVault, MasterVault, PoolCollection } from '../../components/Contracts';
-import { BancorNetworkV1 } from '../../components/LegacyContracts';
+import { BancorNetworkV1 } from '../../components/LegacyContractsV3';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
 import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';

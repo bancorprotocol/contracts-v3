@@ -24,7 +24,8 @@ import {
     TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
-import { BancorNetworkV1, BNT, NetworkSettingsV1, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import { BancorNetworkV1, NetworkSettingsV1 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';

@@ -1,5 +1,5 @@
 import { PendingWithdrawals, PoolCollection } from '../../components/Contracts';
-import { NetworkSettingsV1 } from '../../components/LegacyContracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { ContractName, DeployedContracts, isLive, toDeployTag } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';

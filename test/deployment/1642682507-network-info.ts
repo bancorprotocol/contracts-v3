@@ -9,7 +9,8 @@ import {
     PoolToken,
     ProxyAdmin
 } from '../../components/Contracts';
-import { BancorNetworkV1, BNT, NetworkSettingsV1, TokenGovernance, VBNT } from '../../components/LegacyContracts';
+import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
+import { BancorNetworkV1, NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';

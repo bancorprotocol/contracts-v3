@@ -1,5 +1,5 @@
 import { PoolCollection } from '../../components/Contracts';
-import { NetworkSettingsV1 } from '../../components/LegacyContracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DeployedContracts, isMainnet, isMainnetFork, toDeployTag } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';

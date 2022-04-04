@@ -1,4 +1,4 @@
-import { NetworkSettingsV1 } from '../../components/LegacyContracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DeployedContracts, toDeployTag } from '../../utils/Deploy';
 import { toPPM, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';

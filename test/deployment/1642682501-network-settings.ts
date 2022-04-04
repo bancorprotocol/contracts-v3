@@ -1,5 +1,5 @@
 import { ProxyAdmin } from '../../components/Contracts';
-import { NetworkSettingsV1 } from '../../components/LegacyContracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';

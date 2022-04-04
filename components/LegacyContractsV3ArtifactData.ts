@@ -3,7 +3,7 @@ import { ArtifactData } from './ContractBuilder';
 
 /* eslint-disable camelcase */
 
-const LegacyContractsArtifactData: Record<string, ArtifactData> = {
+const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
     BancorNetworkV1: {
         abi: BancorNetworkV1__factory.abi,
         bytecode: BancorNetworkV1__factory.bytecode
@@ -17,4 +17,4 @@ const LegacyContractsArtifactData: Record<string, ArtifactData> = {
 
 /* eslint-enable camelcase */
 
-export default LegacyContractsArtifactData;
+export default LegacyContractsV3ArtifactData;

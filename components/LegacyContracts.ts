@@ -1,10 +1,4 @@
 /* eslint-disable camelcase */
-import {
-    BancorNetworkV1,
-    BancorNetworkV1__factory,
-    NetworkSettingsV1,
-    NetworkSettingsV1__factory
-} from '../deployments/mainnet/types';
 import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork__factory,
@@ -74,8 +68,6 @@ export {
     VBNT
 };
 
-export { BancorNetworkV1, NetworkSettingsV1 };
-
 /* eslint-enable camelcase */
 
 const getContracts = (signer?: Signer) => ({
@@ -113,13 +105,7 @@ const getContracts = (signer?: Signer) => ({
         'TestStandardPoolConverterFactory',
         TestStandardPoolConverterFactory__factory,
         signer
-    ),
-
-    // V3 legacy contracts
-    BancorNetworkV1: deployOrAttach('BancorNetwork', BancorNetworkV1__factory, signer),
-    NetworkSettingsV1: deployOrAttach('NetworkSettings', NetworkSettingsV1__factory, signer)
+    )
 });
-
-export type LegacyContractsType = ReturnType<typeof getContracts>;
 
 export default getContracts();

@@ -1,5 +1,5 @@
 import Contracts, { IERC20, NetworkSettings, TestERC20Token } from '../../components/Contracts';
-import LegacyContracts, { NetworkSettingsV1 } from '../../components/LegacyContracts';
+import LegacyContractsV3, { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DEFAULT_FLASH_LOAN_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
@@ -83,7 +83,7 @@ describe('NetworkSettings', () => {
         let networkSettings: NetworkSettingsV1;
 
         beforeEach(async () => {
-            networkSettings = await createProxy(LegacyContracts.NetworkSettingsV1);
+            networkSettings = await createProxy(LegacyContractsV3.NetworkSettingsV1);
 
             await networkSettings.setNetworkFeePPM(networkFeePPM);
             await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);

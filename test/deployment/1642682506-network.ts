@@ -1,5 +1,5 @@
 import { ExternalProtectionVault, MasterVault, ProxyAdmin } from '../../components/Contracts';
-import { BancorNetworkV1 } from '../../components/LegacyContracts';
+import { BancorNetworkV1 } from '../../components/LegacyContractsV3';
 import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
