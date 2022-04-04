@@ -3,7 +3,7 @@ import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
-describeDeployment('1642682510-migration-v1', DeploymentTag.BancorV1MigrationV1, () => {
+describeDeployment('1642682510-v1-migration', DeploymentTag.BancorV1MigrationV1, () => {
     let migration: BancorV1Migration;
 
     beforeEach(async () => {
