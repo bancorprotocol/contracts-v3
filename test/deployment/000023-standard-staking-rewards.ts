@@ -1,5 +1,6 @@
 import {
     AccessControlEnumerable,
+    AutoCompoundingStakingRewards,
     BNTPool,
     ExternalRewardsVault,
     ProxyAdmin,
@@ -19,6 +20,7 @@ describeDeployment(__filename, () => {
     let bntPool: BNTPool;
     let externalRewardsVault: ExternalRewardsVault;
     let standardStakingRewards: StandardStakingRewards;
+    let autoCompoundingRewards: AutoCompoundingStakingRewards;
     let liquidityProtection: string;
     let stakingRewards: string;
 
@@ -31,6 +33,7 @@ describeDeployment(__filename, () => {
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+        autoCompoundingRewards = await DeployedContracts.AutoCompoundingStakingRewards.deployed();
         standardStakingRewards = await DeployedContracts.StandardStakingRewards.deployed();
     });
 
@@ -47,6 +50,9 @@ describeDeployment(__filename, () => {
                 ? [standardStakingRewards.address, bntPool.address, liquidityProtection, stakingRewards]
                 : [standardStakingRewards.address, bntPool.address]
         );
-        await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [standardStakingRewards.address]);
+        await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
+            autoCompoundingRewards.address,
+            standardStakingRewards.address
+        ]);
     });
 });
