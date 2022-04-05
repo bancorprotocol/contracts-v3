@@ -195,7 +195,7 @@ const saveTypes = async (options: SaveTypeOptions) => {
 
     const typechainDir = path.resolve('./', config.typechain.outDir);
 
-    // for some reasons, the types of some contracts are stored in a "Contract.sol" dir, in which case we'd have to use
+    // for some reason, the types of some contracts are stored in a "Contract.sol" dir, in which case we'd have to use
     // it as the root source dir
     let srcDir;
     let factoriesSrcDir;
