@@ -276,6 +276,42 @@ describe('NetworkSettings', () => {
         });
     });
 
+    describe('protected tokens whitelist with funding limits', async () => {
+        const poolFundingLimit = toWei(123_456);
+
+        it('should revert when a non-admin attempts to add a token', async () => {
+            await expect(
+                networkSettings.connect(nonOwner).addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit)
+            ).to.be.revertedWith('AccessDenied');
+        });
+
+        it('should revert when adding an invalid address', async () => {
+            await expect(
+                networkSettings.addTokenToWhitelistWithLimit(ZERO_ADDRESS, poolFundingLimit)
+            ).to.be.revertedWith('InvalidExternalAddress');
+        });
+
+        it('should revert when adding an already whitelisted token', async () => {
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+            await expect(
+                networkSettings.addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit)
+            ).to.be.revertedWith('AlreadyExists');
+        });
+
+        it('should whitelist a token with funding limit', async () => {
+            expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+
+            const res = await networkSettings.addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit);
+            await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
+            await expect(res)
+                .to.emit(networkSettings, 'FundingLimitUpdated')
+                .withArgs(reserveToken.address, 0, poolFundingLimit);
+
+            expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+            expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(poolFundingLimit);
+        });
+    });
+
     describe('min liquidity for trading', () => {
         const minLiquidityForTrading = toWei(1000);
 
