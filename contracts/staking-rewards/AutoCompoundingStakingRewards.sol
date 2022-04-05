@@ -361,18 +361,14 @@ contract AutoCompoundingStakingRewards is
         uint256 numOfPools = values.length;
         uint256 autoTriggerCount = _autoTriggerCount;
         uint256 nextTriggerIndex = _nextTriggerIndex;
+        uint256 count = Math.min(numOfPools, autoTriggerCount);
 
-        if (autoTriggerCount == 0) {
-            return;
-        }
-
-        for (uint256 i = 0; i < numOfPools; i++) {
+        for (uint256 i = 0; i < count; i++) {
             uint256 index = (nextTriggerIndex + i) % numOfPools;
-            if (_processRewards(Token(values[index])) && --autoTriggerCount == 0) {
-                _nextTriggerIndex = index + 1;
-                break;
-            }
+            _processRewards(Token(values[index]));
         }
+
+        _nextTriggerIndex = (nextTriggerIndex + count) % numOfPools;
     }
 
     /**
@@ -384,25 +380,24 @@ contract AutoCompoundingStakingRewards is
 
     /**
      * @dev processes the rewards of a given pool
-     * returns true if and only if rewards were distributed
      */
-    function _processRewards(Token pool) private returns (bool) {
+    function _processRewards(Token pool) private {
         ProgramData memory p = _programs[pool];
 
         uint32 currTime = _time();
 
         if (!p.isEnabled || currTime < p.startTime) {
-            return false;
+            return;
         }
 
         uint256 tokenAmountToDistribute = _tokenAmountToDistribute(p, currTime);
         if (tokenAmountToDistribute == 0) {
-            return false;
+            return;
         }
 
         uint256 poolTokenAmountToBurn = _poolTokenAmountToBurn(pool, p, tokenAmountToDistribute);
         if (poolTokenAmountToBurn == 0) {
-            return false;
+            return;
         }
 
         _verifyFunds(poolTokenAmountToBurn, p.poolToken, p.rewardsVault);
@@ -419,8 +414,6 @@ contract AutoCompoundingStakingRewards is
             poolTokenAmount: poolTokenAmountToBurn,
             remainingRewards: p.remainingRewards
         });
-
-        return true;
     }
 
     /**
