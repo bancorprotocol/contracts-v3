@@ -1,11 +1,11 @@
 import { PoolMigrator, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682505-pool-migrator', ContractName.PoolMigratorV1, () => {
+describeDeployment('1642682505-pool-migrator', DeploymentTag.PoolMigratorV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let poolMigrator: PoolMigrator;
@@ -16,7 +16,7 @@ describeDeployment('1642682505-pool-migrator', ContractName.PoolMigratorV1, () =
 
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
+        poolMigrator = await DeployedContracts.PoolMigrator.deployed();
     });
 
     it('should deploy and configure the pool migrator contract', async () => {

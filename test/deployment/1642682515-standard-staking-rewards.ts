@@ -6,13 +6,13 @@ import {
     StandardStakingRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag, isMainnet } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682515-standard-staking-rewards', ContractName.StandardStakingRewardsV1, () => {
+describeDeployment('1642682515-standard-staking-rewards', DeploymentTag.StandardStakingRewardsV1, () => {
     let proxyAdmin: ProxyAdmin;
     let deployer: string;
     let bntGovernance: TokenGovernance;
@@ -29,9 +29,9 @@ describeDeployment('1642682515-standard-staking-rewards', ContractName.StandardS
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
-        bntPool = await DeployedContracts.BNTPoolV1.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-        standardStakingRewards = await DeployedContracts.StandardStakingRewardsV1.deployed();
+        bntPool = await DeployedContracts.BNTPool.deployed();
+        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+        standardStakingRewards = await DeployedContracts.StandardStakingRewards.deployed();
     });
 
     it('should deploy and configure the standard rewards contract', async () => {

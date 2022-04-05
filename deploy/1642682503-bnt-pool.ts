@@ -9,13 +9,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
-    const bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettings.deployed();
+    const masterVault = await DeployedContracts.MasterVault.deployed();
+    const bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
 
     const bntPoolAddress = await deployProxy(
         {
-            name: ContractName.BNTPoolV1,
+            name: ContractName.BNTPool,
             from: deployer,
             args: [
                 networkProxy.address,
@@ -32,20 +32,20 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     );
 
     await execute({
-        name: ContractName.BNTPoolTokenV1,
+        name: ContractName.BNTPoolToken,
         methodName: 'transferOwnership',
         args: [bntPoolAddress],
         from: deployer
     });
 
     await execute({
-        name: ContractName.BNTPoolV1,
+        name: ContractName.BNTPool,
         methodName: 'initialize',
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.BNTPoolV1,
+        name: ContractName.BNTPool,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkProxy.address,
         from: deployer
@@ -66,7 +66,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await grantRole({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.MasterVault,
         id: Roles.MasterVault.ROLE_BNT_MANAGER,
         member: bntPoolAddress,
         from: deployer
@@ -75,15 +75,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.BNTPoolV1;
+func.id = DeploymentTag.BNTPoolV1;
 func.dependencies = [
     DeploymentTag.V2,
-    ContractName.ProxyAdmin,
-    ContractName.BancorNetworkProxy,
-    ContractName.NetworkSettingsV1,
-    ContractName.MasterVaultV1,
-    ContractName.BNTPoolTokenV1
+    DeploymentTag.ProxyAdmin,
+    DeploymentTag.BancorNetworkProxy,
+    DeploymentTag.NetworkSettingsV1,
+    DeploymentTag.MasterVaultV1,
+    DeploymentTag.BNTPoolTokenV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.BNTPoolV1];
+func.tags = [DeploymentTag.V3, DeploymentTag.BNTPoolV1];
 
 export default func;

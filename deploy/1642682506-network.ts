@@ -6,40 +6,40 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const bntPool = await DeployedContracts.BNTPoolV1.deployed();
-    const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-    const poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
+    const bntPool = await DeployedContracts.BNTPool.deployed();
+    const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+    const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
 
     const networkAddress = await initializeProxy({
-        name: ContractName.BancorNetworkV1,
+        name: ContractName.BancorNetwork,
         proxyName: ContractName.BancorNetworkProxy,
         args: [bntPool.address, pendingWithdrawals.address, poolMigrator.address],
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.MasterVault,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.MasterVaultV1,
+        name: ContractName.MasterVault,
         id: Roles.Vault.ROLE_ASSET_MANAGER,
         member: networkAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.ExternalProtectionVaultV1,
+        name: ContractName.ExternalProtectionVault,
         id: Roles.Upgradeable.ROLE_ADMIN,
         member: networkAddress,
         from: deployer
     });
 
     await grantRole({
-        name: ContractName.ExternalProtectionVaultV1,
+        name: ContractName.ExternalProtectionVault,
         id: Roles.Vault.ROLE_ASSET_MANAGER,
         member: networkAddress,
         from: deployer
@@ -48,14 +48,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.BancorNetworkV1;
+func.id = DeploymentTag.BancorNetworkV1;
 func.dependencies = [
     DeploymentTag.V2,
-    ContractName.ProxyAdmin,
-    ContractName.BancorNetworkProxy,
-    ContractName.PendingWithdrawalsV1,
-    ContractName.PoolMigratorV1
+    DeploymentTag.ProxyAdmin,
+    DeploymentTag.BancorNetworkProxy,
+    DeploymentTag.PendingWithdrawalsV1,
+    DeploymentTag.PoolMigratorV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.BancorNetworkV1];
+func.tags = [DeploymentTag.V3, DeploymentTag.BancorNetworkV1];
 
 export default func;

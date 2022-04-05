@@ -44,7 +44,7 @@
     "lint": "yarn lint:sol && yarn lint:ts",
     "lint:sol": "solhint --max-warnings 0 contracts/**/*.sol",
     "lint:ts": "yarn eslint components deploy test utils",
-    "format": "prettier --check --write contracts/**/*.sol test/**/*.ts utils/**/*.ts deploy/**/*.ts scripts/**/*.ts --config .prettierrc",
+    "format": "NODE_OPTIONS='--max-old-space-size=8192' prettier --check --write components/**/*.ts contracts/**/*.sol deploy/**/*.ts scripts/**/*.ts test/**/*.ts test/**/*.json utils/**/*.ts  --config .prettierrc",
     "snyk-protect": "snyk protect",
     "prepare": "yarn clean && yarn build && yarn snyk-protect && tsc && copyfiles -u 1 \"typechain/**/*.d.ts\" dist/typechain",
     "postinstall": "scripts/fix-github-hardhat-deploy.sh",

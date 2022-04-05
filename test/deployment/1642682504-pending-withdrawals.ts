@@ -1,12 +1,12 @@
 import { PendingWithdrawals, ProxyAdmin } from '../../components/Contracts';
 import { DEFAULT_LOCK_DURATION } from '../../utils/Constants';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682504-pending-withdrawals', ContractName.PendingWithdrawalsV1, () => {
+describeDeployment('1642682504-pending-withdrawals', DeploymentTag.PendingWithdrawalsV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let pendingWithdrawals: PendingWithdrawals;
@@ -17,7 +17,7 @@ describeDeployment('1642682504-pending-withdrawals', ContractName.PendingWithdra
 
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
     });
 
     it('should deploy and configure the pending withdrawals contract', async () => {

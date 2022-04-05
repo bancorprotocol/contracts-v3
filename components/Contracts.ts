@@ -34,8 +34,8 @@ import {
     TestOwned__factory,
     TestPendingWithdrawals__factory,
     TestPoolCollection__factory,
-    TestPoolMigrator__factory,
     TestPoolCollectionWithdrawal__factory,
+    TestPoolMigrator__factory,
     TestSafeERC20Ex__factory,
     TestStakingRewardsMath__factory,
     TestStandardStakingRewards__factory,
@@ -94,11 +94,7 @@ const getContracts = (signer?: Signer) => ({
     TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
     TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
-    TestPoolMigrator: deployOrAttach(
-        'TestPoolMigrator',
-        TestPoolMigrator__factory,
-        signer
-    ),
+    TestPoolMigrator: deployOrAttach('TestPoolMigrator', TestPoolMigrator__factory, signer),
     TestPoolCollectionWithdrawal: deployOrAttach(
         'TestPoolCollectionWithdrawal',
         TestPoolCollectionWithdrawal__factory,

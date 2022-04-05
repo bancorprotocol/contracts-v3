@@ -1,11 +1,11 @@
 import { BancorPortal, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682514-bancor-portal', ContractName.BancorPortalV1, () => {
+describeDeployment('1642682514-bancor-portal', DeploymentTag.BancorPortalV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let bancorPortal: BancorPortal;
@@ -16,7 +16,7 @@ describeDeployment('1642682514-bancor-portal', ContractName.BancorPortalV1, () =
 
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        bancorPortal = await DeployedContracts.BancorPortalV1.deployed();
+        bancorPortal = await DeployedContracts.BancorPortal.deployed();
     });
 
     it('should deploy and configure the bancor portal contract', async () => {

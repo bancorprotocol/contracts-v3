@@ -7,13 +7,13 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { ContractName, DeployedContracts, isMainnet } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag, isMainnet } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682503-bnt-pool', ContractName.BNTPoolV1, () => {
+describeDeployment('1642682503-bnt-pool', DeploymentTag.BNTPoolV1, () => {
     let deployer: string;
     let liquidityProtection: string;
     let stakingRewards: string;
@@ -34,9 +34,9 @@ describeDeployment('1642682503-bnt-pool', ContractName.BNTPoolV1, () => {
         networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
-        masterVault = await DeployedContracts.MasterVaultV1.deployed();
-        bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
-        bntPool = await DeployedContracts.BNTPoolV1.deployed();
+        masterVault = await DeployedContracts.MasterVault.deployed();
+        bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+        bntPool = await DeployedContracts.BNTPool.deployed();
     });
 
     it('should deploy and configure the BNT pool contract', async () => {

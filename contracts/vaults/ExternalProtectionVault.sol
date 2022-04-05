@@ -4,6 +4,7 @@ pragma solidity 0.8.12;
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
 
 import { Token } from "../token/Token.sol";
 
@@ -54,9 +55,9 @@ contract ExternalProtectionVault is IExternalProtectionVault, Vault {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure override returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

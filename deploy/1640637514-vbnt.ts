@@ -83,8 +83,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.VBNT;
+func.id = DeploymentTag.VBNT;
 func.skip = async () => isMainnet();
-func.tags = [DeploymentTag.V2, ContractName.VBNT, ContractName.VBNTGovernance];
+func.tags = [DeploymentTag.V2, DeploymentTag.VBNT, DeploymentTag.VBNTGovernance];
 
 export default func;

@@ -1,11 +1,11 @@
 import { ExternalRewardsVault, ProxyAdmin } from '../../components/Contracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-describeDeployment('1642682498-external-rewards-vault', ContractName.ExternalRewardsVaultV1, () => {
+describeDeployment('1642682498-external-rewards-vault', DeploymentTag.ExternalRewardsVaultV1, () => {
     let deployer: string;
     let proxyAdmin: ProxyAdmin;
     let externalRewardsVault: ExternalRewardsVault;
@@ -16,7 +16,7 @@ describeDeployment('1642682498-external-rewards-vault', ContractName.ExternalRew
 
     beforeEach(async () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
+        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
     });
 
     it('should deploy and configure the external rewards vault contract', async () => {

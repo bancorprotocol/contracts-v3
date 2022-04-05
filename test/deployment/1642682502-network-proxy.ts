@@ -1,10 +1,10 @@
 import Contracts, { ProxyAdmin, TransparentUpgradeableProxyImmutable } from '../../components/Contracts';
-import { ContractName, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, DeploymentTag } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
-describeDeployment('1642682502-network-proxy', ContractName.BancorNetworkProxy, () => {
+describeDeployment('1642682502-network-proxy', DeploymentTag.BancorNetworkProxy, () => {
     let proxyAdmin: ProxyAdmin;
     let networkProxy: TransparentUpgradeableProxyImmutable;
 

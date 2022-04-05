@@ -10,7 +10,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bnt = await DeployedContracts.BNT.deployed();
 
     await deploy({
-        name: ContractName.BancorV1MigrationV1,
+        name: ContractName.BancorV1Migration,
         from: deployer,
         args: [network.address, networkSettings.address, bnt.address]
     });
@@ -18,8 +18,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.BancorV1MigrationV1;
-func.dependencies = [DeploymentTag.V2, ContractName.BancorNetworkV1];
-func.tags = [DeploymentTag.V3, ContractName.BancorV1MigrationV1];
+func.id = DeploymentTag.BancorV1MigrationV1;
+func.dependencies = [DeploymentTag.V2, DeploymentTag.BancorNetworkV1];
+func.tags = [DeploymentTag.V3, DeploymentTag.BancorV1MigrationV1];
 
 export default func;

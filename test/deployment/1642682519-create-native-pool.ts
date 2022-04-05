@@ -1,4 +1,5 @@
-import { NetworkSettings, PoolCollection } from '../../components/Contracts';
+import { PoolCollection } from '../../components/Contracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DeployedContracts, isMainnet, isMainnetFork, toDeployTag } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
@@ -6,7 +7,7 @@ import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
 describeDeployment('1642682519-create-native-pool', toDeployTag(__filename), () => {
-    let networkSettings: NetworkSettings;
+    let networkSettings: NetworkSettingsV1;
     let poolCollection: PoolCollection;
 
     const CENTS = 100;

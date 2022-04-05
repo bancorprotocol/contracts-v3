@@ -8,7 +8,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const networkProxy = await DeployedContracts.BancorNetworkProxy.deployed();
 
     await deployProxy({
-        name: ContractName.PoolMigratorV1,
+        name: ContractName.PoolMigrator,
         from: deployer,
         args: [networkProxy.address]
     });
@@ -16,8 +16,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.PoolMigratorV1;
-func.dependencies = [DeploymentTag.V2, ContractName.ProxyAdmin, ContractName.BancorNetworkProxy];
-func.tags = [DeploymentTag.V3, ContractName.PoolMigratorV1];
+func.id = DeploymentTag.PoolMigratorV1;
+func.dependencies = [DeploymentTag.V2, DeploymentTag.ProxyAdmin, DeploymentTag.BancorNetworkProxy];
+func.tags = [DeploymentTag.V3, DeploymentTag.PoolMigratorV1];
 
 export default func;

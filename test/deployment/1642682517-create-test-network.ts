@@ -1,4 +1,5 @@
-import { NetworkSettings, PendingWithdrawals, PoolCollection } from '../../components/Contracts';
+import { PendingWithdrawals, PoolCollection } from '../../components/Contracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { ContractName, DeployedContracts, isLive, toDeployTag } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -11,7 +12,7 @@ describeDeployment(
     '1642682517-create-test-network',
     toDeployTag(__filename),
     () => {
-        let networkSettings: NetworkSettings;
+        let networkSettings: NetworkSettingsV1;
         let poolCollection: PoolCollection;
         let pendingWithdrawals: PendingWithdrawals;
 
@@ -25,7 +26,7 @@ describeDeployment(
         const BNT_VIRTUAL_BALANCE = 1;
         const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
-        const InitialDeposits = {
+        const INITIAL_DEPOSITS = {
             [ContractName.TestToken1]: toWei(50_000),
             [ContractName.TestToken2]: toWei(500_000),
             [ContractName.TestToken3]: toWei(1_000_000),
@@ -48,7 +49,7 @@ describeDeployment(
         beforeEach(async () => {
             networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
             poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
-            pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
+            pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
         });
 
         it('should deploy and configure a test network', async () => {
@@ -56,11 +57,13 @@ describeDeployment(
                 const tokenData = new TokenData(symbol as TokenSymbol);
                 const testToken = await DeployedContracts[contractName].deployed();
 
+                const initialDeposit = (INITIAL_DEPOSITS as any)[contractName] as number;
+
                 expect(await testToken.name()).to.equal(tokenData.name());
                 expect(await testToken.symbol()).to.equal(tokenData.symbol());
                 expect(await testToken.decimals()).to.equal(tokenData.decimals());
                 expect(await testToken.totalSupply()).to.equal(INITIAL_SUPPLY);
-                expect(await testToken.balanceOf(deployer)).to.equal(INITIAL_SUPPLY.sub(InitialDeposits[contractName]));
+                expect(await testToken.balanceOf(deployer)).to.equal(INITIAL_SUPPLY.sub(initialDeposit));
 
                 expect(await networkSettings.isTokenWhitelisted(testToken.address)).to.be.true;
                 expect(await networkSettings.poolFundingLimit(testToken.address)).to.equal(FUNDING_LIMIT);
@@ -68,7 +71,7 @@ describeDeployment(
                 const data = await poolCollection.poolData(testToken.address);
                 expect(data.depositLimit).to.equal(DEPOSIT_LIMIT);
                 expect(data.tradingFeePPM).to.equal(TRADING_FEE);
-                expect(data.liquidity.stakedBalance).to.equal(InitialDeposits[contractName]);
+                expect(data.liquidity.stakedBalance).to.equal(initialDeposit);
                 expect(data.liquidity.baseTokenTradingLiquidity).to.equal(
                     data.liquidity.bntTradingLiquidity.mul(BASE_TOKEN_VIRTUAL_BALANCE).div(BNT_VIRTUAL_BALANCE)
                 );

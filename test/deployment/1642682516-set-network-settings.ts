@@ -1,11 +1,11 @@
-import { NetworkSettings } from '../../components/Contracts';
+import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DeployedContracts, toDeployTag } from '../../utils/Deploy';
 import { toPPM, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 
 describeDeployment('1642682516-set-network-settings', toDeployTag(__filename), () => {
-    let networkSettings: NetworkSettings;
+    let networkSettings: NetworkSettingsV1;
 
     beforeEach(async () => {
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();

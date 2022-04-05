@@ -1,4 +1,4 @@
-import { deploymentExists, isLive, isMainnetFork } from '../../utils/Deploy';
+import { deploymentTagExists, isLive, isMainnetFork } from '../../utils/Deploy';
 import { deployments, ethers, getNamedAccounts, network } from 'hardhat';
 import { Suite } from 'mocha';
 
@@ -56,7 +56,7 @@ export const describeDeployment = async (
     skip: () => boolean = () => false
 ): Promise<Suite | void> => {
     // if we're running against a mainnet fork, ensure to skip tests for already existing deployments
-    if (skip() || (isMainnetFork() && (await deploymentExists(tag)))) {
+    if (skip() || (isMainnetFork() && (await deploymentTagExists(tag)))) {
         return describe.skip(title, fn);
     }
 

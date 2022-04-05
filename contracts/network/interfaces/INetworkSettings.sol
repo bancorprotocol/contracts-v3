@@ -53,9 +53,14 @@ interface INetworkSettings is IUpgradeable {
     function withdrawalFeePPM() external view returns (uint32);
 
     /**
-     * @dev returns the flash-loan fee (in units of PPM)
+     * @dev returns the default flash-loan fee (in units of PPM)
      */
-    function flashLoanFeePPM() external view returns (uint32);
+    function defaultFlashLoanFeePPM() external view returns (uint32);
+
+    /**
+     * @dev returns the flash-loan fee (in units of PPM) of a pool
+     */
+    function flashLoanFeePPM(Token pool) external view returns (uint32);
 
     /**
      * @dev returns the vortex settings

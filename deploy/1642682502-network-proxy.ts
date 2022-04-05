@@ -1,3 +1,4 @@
+import LegacyContractsV3ArtifactData from '../components/LegacyContractsV3ArtifactData';
 import { ContractName, DeployedContracts, DeploymentTag, deployProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -7,15 +8,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const masterVault = await DeployedContracts.MasterVaultV1.deployed();
-    const externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
-    const bntPoolToken = await DeployedContracts.BNTPoolTokenV1.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettings.deployed();
+    const masterVault = await DeployedContracts.MasterVault.deployed();
+    const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
+    const bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
 
     await deployProxy(
         {
             name: ContractName.BancorNetworkProxy,
-            contract: ContractName.BancorNetworkV1,
+            contractArtifactData: LegacyContractsV3ArtifactData.BancorNetworkV1,
             from: deployer,
             args: [
                 bntGovernance.address,
@@ -34,15 +35,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.id = ContractName.BancorNetworkProxy;
+func.id = DeploymentTag.BancorNetworkProxy;
 func.dependencies = [
     DeploymentTag.V2,
-    ContractName.ProxyAdmin,
-    ContractName.NetworkSettingsV1,
-    ContractName.MasterVaultV1,
-    ContractName.ExternalProtectionVaultV1,
-    ContractName.BNTPoolTokenV1
+    DeploymentTag.ProxyAdmin,
+    DeploymentTag.NetworkSettingsV1,
+    DeploymentTag.MasterVaultV1,
+    DeploymentTag.ExternalProtectionVaultV1,
+    DeploymentTag.BNTPoolTokenV1
 ];
-func.tags = [DeploymentTag.V3, ContractName.BancorNetworkProxy];
+func.tags = [DeploymentTag.V3, DeploymentTag.BancorNetworkProxy];
 
 export default func;
