@@ -69,8 +69,8 @@ contract AutoCompoundingStakingRewards is
     // a mapping between pools and programs
     mapping(Token => ProgramData) private _programs;
 
-    // a map of all pools that have a rewards program associated with them
-    EnumerableSetUpgradeable.AddressSet private _programByPool;
+    // a set of all pools that have a rewards program associated with them
+    EnumerableSetUpgradeable.AddressSet private _pools;
 
     uint256 private _autoTriggerCount;
     uint256 private _nextTriggerIndex;
@@ -180,11 +180,11 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
-        uint256 numPrograms = _programByPool.length();
+        uint256 numPrograms = _pools.length();
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i++) {
-            list[i] = _programs[Token(_programByPool.at(i))];
+            list[i] = _programs[Token(_pools.at(i))];
         }
 
         return list;
@@ -194,7 +194,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function pools() external view returns (address[] memory) {
-        return _programByPool.values();
+        return _pools.values();
     }
 
     /**
@@ -290,7 +290,7 @@ contract AutoCompoundingStakingRewards is
 
         _programs[pool] = p;
 
-        assert(_programByPool.add(address(pool)));
+        assert(_pools.add(address(pool)));
 
         emit ProgramCreated({
             pool: pool,
@@ -314,7 +314,7 @@ contract AutoCompoundingStakingRewards is
 
         delete _programs[pool];
 
-        assert(_programByPool.remove(address(pool)));
+        assert(_pools.remove(address(pool)));
 
         emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }
@@ -357,7 +357,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function trigger() external nonReentrant {
-        address[] memory values = _programByPool.values();
+        address[] memory values = _pools.values();
         uint256 numOfPools = values.length;
         uint256 autoTriggerCount = _autoTriggerCount;
         uint256 nextTriggerIndex = _nextTriggerIndex;
