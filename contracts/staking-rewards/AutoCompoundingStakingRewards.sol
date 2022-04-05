@@ -70,7 +70,7 @@ contract AutoCompoundingStakingRewards is
     mapping(Token => ProgramData) private _programs;
 
     // a map of all pools that have a rewards program associated with them
-    EnumerableSetUpgradeable.AddressSet private _programByPool;
+    EnumerableSetUpgradeable.AddressSet private _pools;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 3] private __gap;
@@ -172,11 +172,11 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
-        uint256 numPrograms = _programByPool.length();
+        uint256 numPrograms = _pools.length();
 
         ProgramData[] memory list = new ProgramData[](numPrograms);
         for (uint256 i = 0; i < numPrograms; i++) {
-            list[i] = _programs[Token(_programByPool.at(i))];
+            list[i] = _programs[Token(_pools.at(i))];
         }
 
         return list;
@@ -186,7 +186,7 @@ contract AutoCompoundingStakingRewards is
      * @inheritdoc IAutoCompoundingStakingRewards
      */
     function pools() external view returns (address[] memory) {
-        return _programByPool.values();
+        return _pools.values();
     }
 
     /**
@@ -282,7 +282,7 @@ contract AutoCompoundingStakingRewards is
 
         _programs[pool] = p;
 
-        assert(_programByPool.add(address(pool)));
+        assert(_pools.add(address(pool)));
 
         emit ProgramCreated({
             pool: pool,
@@ -306,7 +306,7 @@ contract AutoCompoundingStakingRewards is
 
         delete _programs[pool];
 
-        assert(_programByPool.remove(address(pool)));
+        assert(_pools.remove(address(pool)));
 
         emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }
