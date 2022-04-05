@@ -1,6 +1,6 @@
 import { BancorNetwork } from '../../components/Contracts';
 import { PoolType } from '../../utils/Constants';
-import { ContractInstance, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
@@ -22,11 +22,11 @@ describeDeployment(__filename, () => {
 
         const pools = [];
         for (const contractName of [
-            ContractInstance.TestToken1,
-            ContractInstance.TestToken2,
-            ContractInstance.TestToken3,
-            ContractInstance.TestToken4,
-            ContractInstance.TestToken5
+            InstanceName.TestToken1,
+            InstanceName.TestToken2,
+            InstanceName.TestToken3,
+            InstanceName.TestToken4,
+            InstanceName.TestToken5
         ]) {
             pools.push((await DeployedContracts[contractName].deployed()).address);
         }

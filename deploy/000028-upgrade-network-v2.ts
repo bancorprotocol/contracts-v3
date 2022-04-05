@@ -1,4 +1,4 @@
-import { ContractInstance, DeployedContracts, setDeploymentMetadata, upgradeProxy } from '../utils/Deploy';
+import { DeployedContracts, InstanceName, setDeploymentMetadata, upgradeProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -13,7 +13,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
 
     await upgradeProxy({
-        name: ContractInstance.BancorNetwork,
+        name: InstanceName.BancorNetwork,
         args: [
             bntGovernance.address,
             vbntGovernance.address,

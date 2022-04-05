@@ -1,5 +1,5 @@
 import { AccessControlEnumerableUpgradeable } from '../../components/Contracts';
-import { ContractInstance, DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName } from '../../utils/Deploy';
 import { Roles } from '../helpers/AccessControl';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
@@ -15,19 +15,19 @@ describeDeployment(__filename, () => {
 
     it('should revoke deployer roles', async () => {
         for (const name of [
-            ContractInstance.AutoCompoundingStakingRewards,
-            ContractInstance.BancorNetworkInfo,
-            ContractInstance.BancorNetwork,
-            ContractInstance.BancorPortal,
-            ContractInstance.BNTPool,
-            ContractInstance.ExternalProtectionVault,
-            ContractInstance.ExternalRewardsVault,
-            ContractInstance.MasterVault,
-            ContractInstance.NetworkSettings,
-            ContractInstance.PendingWithdrawals,
-            ContractInstance.PoolMigrator,
-            ContractInstance.PoolTokenFactory,
-            ContractInstance.StandardStakingRewards
+            InstanceName.AutoCompoundingStakingRewards,
+            InstanceName.BancorNetworkInfo,
+            InstanceName.BancorNetwork,
+            InstanceName.BancorPortal,
+            InstanceName.BNTPool,
+            InstanceName.ExternalProtectionVault,
+            InstanceName.ExternalRewardsVault,
+            InstanceName.MasterVault,
+            InstanceName.NetworkSettings,
+            InstanceName.PendingWithdrawals,
+            InstanceName.PoolMigrator,
+            InstanceName.PoolTokenFactory,
+            InstanceName.StandardStakingRewards
         ]) {
             const contract = (await DeployedContracts[name].deployed()) as AccessControlEnumerableUpgradeable;
             expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, daoMultisig)).to.be.true;

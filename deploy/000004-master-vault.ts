@@ -1,4 +1,4 @@
-import { ContractInstance, DeployedContracts, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
+import { DeployedContracts, deployProxy, InstanceName, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -9,7 +9,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
 
     await deployProxy({
-        name: ContractInstance.MasterVault,
+        name: InstanceName.MasterVault,
         from: deployer,
         args: [bntGovernance.address, vbntGovernance.address]
     });

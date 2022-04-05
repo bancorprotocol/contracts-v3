@@ -1,4 +1,4 @@
-import { ContractInstance, grantRole, revokeRole, setDeploymentMetadata } from '../utils/Deploy';
+import { grantRole, InstanceName, revokeRole, setDeploymentMetadata } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -7,19 +7,19 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, daoMultisig } = await getNamedAccounts();
 
     for (const name of [
-        ContractInstance.AutoCompoundingStakingRewards,
-        ContractInstance.BancorNetworkInfo,
-        ContractInstance.BancorNetwork,
-        ContractInstance.BancorPortal,
-        ContractInstance.BNTPool,
-        ContractInstance.ExternalProtectionVault,
-        ContractInstance.ExternalRewardsVault,
-        ContractInstance.MasterVault,
-        ContractInstance.NetworkSettings,
-        ContractInstance.PendingWithdrawals,
-        ContractInstance.PoolMigrator,
-        ContractInstance.PoolTokenFactory,
-        ContractInstance.StandardStakingRewards
+        InstanceName.AutoCompoundingStakingRewards,
+        InstanceName.BancorNetworkInfo,
+        InstanceName.BancorNetwork,
+        InstanceName.BancorPortal,
+        InstanceName.BNTPool,
+        InstanceName.ExternalProtectionVault,
+        InstanceName.ExternalRewardsVault,
+        InstanceName.MasterVault,
+        InstanceName.NetworkSettings,
+        InstanceName.PendingWithdrawals,
+        InstanceName.PoolMigrator,
+        InstanceName.PoolTokenFactory,
+        InstanceName.StandardStakingRewards
     ]) {
         await grantRole({
             name,
