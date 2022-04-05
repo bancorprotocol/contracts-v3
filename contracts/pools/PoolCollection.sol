@@ -656,7 +656,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         greaterThanZero(poolTokenAmount)
         returns (WithdrawalAmounts memory)
     {
-        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, _poolMemory(pool), poolTokenAmount);
+        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, _poolStorage(pool), poolTokenAmount);
 
         return
             WithdrawalAmounts({
@@ -1031,18 +1031,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function _poolStorage(Token pool) private view returns (Pool storage) {
         Pool storage data = _poolData[pool];
-        if (address(data.poolToken) == address(0)) {
-            revert DoesNotExist();
-        }
-
-        return data;
-    }
-
-    /**
-     * @dev returns a memory reference to pool data
-     */
-    function _poolMemory(Token pool) private view returns (Pool memory) {
-        Pool memory data = _poolData[pool];
         if (address(data.poolToken) == address(0)) {
             revert DoesNotExist();
         }
