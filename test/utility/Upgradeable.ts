@@ -11,7 +11,7 @@ describe('Upgradeable', () => {
 
     let upgradeable: TestUpgradeable;
 
-    shouldHaveGap('Upgradeable', '_versionCount');
+    shouldHaveGap('Upgradeable', '_initializations');
 
     before(async () => {
         [admin, nonAdmin] = await ethers.getSigners();
@@ -30,7 +30,7 @@ describe('Upgradeable', () => {
 
         it('should be properly initialized', async () => {
             expect(await upgradeable.version()).to.equal(1);
-            expect(await upgradeable.versionCount()).to.equal(1);
+            expect(await upgradeable.initializations()).to.equal(1);
 
             await expectRoles(upgradeable, Roles.Upgradeable);
 
