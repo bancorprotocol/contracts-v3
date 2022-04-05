@@ -83,6 +83,20 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
     function enableProgram(Token pool, bool status) external;
 
     /**
+     * @dev sets the number of programs to process the rewards of, when auto-trigerred
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function setAutoTriggerCount(uint256 autoTriggerCount) external;
+
+    /**
+     * @dev processes program rewards for several pools
+     */
+    function trigger() external;
+
+    /**
      * @dev processes program rewards
      */
     function processRewards(Token pool) external;
