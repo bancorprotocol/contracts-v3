@@ -16,7 +16,7 @@ import {
     StandardStakingRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { DeployedContracts, deploymentMetadata, isMainnet } from '../../utils/Deploy';
+import { DeployedContracts, deploymentMetadata, getLatestDeploymentTag, isMainnet } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { performTestDeployment } from '../helpers/Deploy';
 import { getNamedAccounts } from 'hardhat';
@@ -50,7 +50,7 @@ describe('network', () => {
     });
 
     beforeEach(async () => {
-        const { tag } = deploymentMetadata('000030-transfer-proxy-admin-ownership');
+        const { tag } = deploymentMetadata(getLatestDeploymentTag());
 
         await performTestDeployment(tag);
 

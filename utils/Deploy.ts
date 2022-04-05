@@ -514,3 +514,8 @@ export const setDeploymentMetadata = (filename: string, func: DeployFunction) =>
 
     return func;
 };
+
+export const getLatestDeploymentTag = () => {
+    const files = fs.readdirSync(config.paths.deploy[0]).sort();
+    return Number(files[files.length - 1].split('-')[0]).toString();
+};
