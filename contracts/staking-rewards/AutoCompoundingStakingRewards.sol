@@ -69,7 +69,7 @@ contract AutoCompoundingStakingRewards is
     // a mapping between pools and programs
     mapping(Token => ProgramData) private _programs;
 
-    // a map of all pools that have a rewards program associated with them
+    // a set of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _pools;
 
     // upgrade forward-compatibility storage gap
