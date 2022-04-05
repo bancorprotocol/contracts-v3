@@ -33,12 +33,12 @@ contract TestUpgradeable is Upgradeable {
         _version = newVersion;
     }
 
-    function versionCount() external view returns (uint16) {
-        return _versionCount;
+    function initializations() external view returns (uint16) {
+        return _initializations;
     }
 
-    function setVersionCount(uint16 newVersionCount) external {
-        _versionCount = newVersionCount;
+    function setInitializations(uint16 newInitializations) external {
+        _initializations = newInitializations;
     }
 
     function restricted() external view onlyAdmin {}

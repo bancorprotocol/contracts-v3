@@ -19,7 +19,7 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
 
     uint32 internal constant MAX_GAP = 50;
 
-    uint16 internal _versionCount;
+    uint16 internal _initializations;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 1] private __gap;
@@ -39,7 +39,7 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
      * @dev performs contract-specific initialization
      */
     function __Upgradeable_init_unchained() internal onlyInitializing {
-        _versionCount = 1;
+        _initializations = 1;
 
         // set up administrative roles
         _setRoleAdmin(ROLE_ADMIN, ROLE_ADMIN);
@@ -79,13 +79,13 @@ abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeabl
      * - this must can be called only once per-upgrade
      */
     function postUpgrade(bytes calldata data) external {
-        uint16 versionCount = _versionCount + 1;
+        uint16 initializations = _initializations + 1;
 
-        if (versionCount != version()) {
+        if (initializations != version()) {
             revert AlreadyInitialized();
         }
 
-        _versionCount = versionCount;
+        _initializations = initializations;
 
         _postUpgrade(data);
     }
