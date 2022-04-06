@@ -20,7 +20,6 @@ const CENTS = 100;
 const BNT_TOKEN_PRICE_IN_CENTS = 2.7 * CENTS;
 
 const TRADING_FEE = toPPM(0.2);
-const MIN_LIQUIDITY_FOR_TRADING = toWei(10_000);
 
 enum BetaTokens {
     ETH = 'ETH',
@@ -57,9 +56,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     };
 
     const network = await DeployedContracts.BancorNetwork.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
 
     for (const [tokenSymbol, { address, whale }] of Object.entries(BETA_TOKENS)) {
         const isNativeToken = tokenSymbol === BetaTokens.ETH;
+
+        const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
 
         // since we currently aren't using real ERC20 tokens during local unit testing, we'd use the overrides mechanism
         // to ensure that these pools can be created (otherwise, the PoolTokenFactory contract will try to call either
@@ -121,7 +123,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         if (isMainnetFork()) {
             const bntVirtualPrice = tokenPriceInCents;
             const tokenVirtualPrice = BNT_TOKEN_PRICE_IN_CENTS;
-            const initialDeposit = MIN_LIQUIDITY_FOR_TRADING.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
+            const initialDeposit = minLiquidityForTrading.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
 
             if (!isNativeToken) {
                 const token = await Contracts.ERC20.attach(address);

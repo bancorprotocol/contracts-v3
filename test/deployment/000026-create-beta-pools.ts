@@ -18,7 +18,6 @@ describeDeployment(
         const BNT_TOKEN_PRICE_IN_CENTS = 2.7 * CENTS;
 
         const TRADING_FEE = toPPM(0.2);
-        const MIN_LIQUIDITY_FOR_TRADING = toWei(10_000);
 
         enum BetaTokens {
             ETH = 'ETH',
@@ -44,6 +43,8 @@ describeDeployment(
         it('should create beta pools', async () => {
             const { dai, link } = await getNamedAccounts();
 
+            const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
+
             const BETA_TOKENS = {
                 [BetaTokens.ETH]: NATIVE_TOKEN_ADDRESS,
                 [BetaTokens.DAI]: dai,
@@ -63,7 +64,7 @@ describeDeployment(
 
                 const bntVirtualPrice = tokenPriceInCents;
                 const tokenVirtualPrice = BNT_TOKEN_PRICE_IN_CENTS;
-                const initialDeposit = MIN_LIQUIDITY_FOR_TRADING.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
+                const initialDeposit = minLiquidityForTrading.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
 
                 expect(data.liquidity.stakedBalance).to.equal(initialDeposit);
                 expect(data.liquidity.baseTokenTradingLiquidity).to.equal(
