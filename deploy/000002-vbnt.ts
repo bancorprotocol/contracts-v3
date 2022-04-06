@@ -1,8 +1,8 @@
 import {
-    ContractInstance,
     deploy,
     execute,
     grantRole,
+    InstanceName,
     isMainnet,
     revokeRole,
     setDeploymentMetadata
@@ -20,69 +20,69 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const vbntData = new TokenData(TokenSymbol.VBNT);
     const vbnt = await deploy({
-        name: ContractInstance.VBNT,
+        name: InstanceName.VBNT,
         contract: 'DSToken',
         args: [vbntData.name(), vbntData.symbol(), vbntData.decimals()],
         from: deployer
     });
 
     const vbntGovernance = await deploy({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         contract: 'TokenGovernance',
         args: [vbnt],
         from: deployer
     });
 
     await grantRole({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_SUPERVISOR,
         member: foundationMultisig,
         from: deployer
     });
 
     await grantRole({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_GOVERNOR,
         member: deployer,
         from: deployer
     });
 
     await revokeRole({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_SUPERVISOR,
         member: deployer,
         from: deployer
     });
 
     await execute({
-        name: ContractInstance.VBNT,
+        name: InstanceName.VBNT,
         methodName: 'transferOwnership',
         args: [vbntGovernance],
         from: deployer
     });
 
     await execute({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         methodName: 'acceptTokenOwnership',
         from: foundationMultisig
     });
 
     await grantRole({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: deployer,
         from: deployer
     });
 
     await execute({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         methodName: 'mint',
         args: [deployer, INITIAL_SUPPLY],
         from: deployer
     });
 
     await revokeRole({
-        name: ContractInstance.VBNTGovernance,
+        name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: deployer,
         from: deployer

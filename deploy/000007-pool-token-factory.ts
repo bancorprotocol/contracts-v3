@@ -1,4 +1,4 @@
-import { ContractInstance, deployProxy, setDeploymentMetadata } from '../utils/Deploy';
+import { deployProxy, InstanceName, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -6,7 +6,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     await deployProxy({
-        name: ContractInstance.PoolTokenFactory,
+        name: InstanceName.PoolTokenFactory,
         from: deployer
     });
 

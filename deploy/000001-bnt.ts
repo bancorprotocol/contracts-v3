@@ -1,8 +1,8 @@
 import {
-    ContractInstance,
     deploy,
     execute,
     grantRole,
+    InstanceName,
     isMainnet,
     revokeRole,
     setDeploymentMetadata
@@ -20,69 +20,69 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const bntData = new TokenData(TokenSymbol.BNT);
     const bnt = await deploy({
-        name: ContractInstance.BNT,
+        name: InstanceName.BNT,
         contract: 'SmartToken',
         args: [bntData.name(), bntData.symbol(), bntData.decimals()],
         from: deployer
     });
 
     const bntGovernance = await deploy({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         contract: 'TokenGovernance',
         args: [bnt],
         from: deployer
     });
 
     await grantRole({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_SUPERVISOR,
         member: foundationMultisig,
         from: deployer
     });
 
     await grantRole({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_GOVERNOR,
         member: deployer,
         from: deployer
     });
 
     await revokeRole({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_SUPERVISOR,
         member: deployer,
         from: deployer
     });
 
     await execute({
-        name: ContractInstance.BNT,
+        name: InstanceName.BNT,
         methodName: 'transferOwnership',
         args: [bntGovernance],
         from: deployer
     });
 
     await execute({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         methodName: 'acceptTokenOwnership',
         from: foundationMultisig
     });
 
     await grantRole({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: deployer,
         from: deployer
     });
 
     await execute({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         methodName: 'mint',
         args: [deployer, INITIAL_SUPPLY],
         from: deployer
     });
 
     await revokeRole({
-        name: ContractInstance.BNTGovernance,
+        name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
         member: deployer,
         from: deployer

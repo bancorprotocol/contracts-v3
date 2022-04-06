@@ -1,6 +1,6 @@
 import { PendingWithdrawals, PoolCollection } from '../../components/Contracts';
 import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
-import { ContractInstance, DeployedContracts, isLive } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, isLive } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
@@ -26,19 +26,19 @@ describeDeployment(
         const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
         const INITIAL_DEPOSITS = {
-            [ContractInstance.TestToken1]: toWei(50_000),
-            [ContractInstance.TestToken2]: toWei(500_000),
-            [ContractInstance.TestToken3]: toWei(1_000_000),
-            [ContractInstance.TestToken4]: toWei(2_000_000),
-            [ContractInstance.TestToken5]: toWei(3_000_000)
+            [InstanceName.TestToken1]: toWei(50_000),
+            [InstanceName.TestToken2]: toWei(500_000),
+            [InstanceName.TestToken3]: toWei(1_000_000),
+            [InstanceName.TestToken4]: toWei(2_000_000),
+            [InstanceName.TestToken5]: toWei(3_000_000)
         };
 
         const TOKENS = [
-            { symbol: TokenSymbol.TKN1, contractName: ContractInstance.TestToken1 },
-            { symbol: TokenSymbol.TKN2, contractName: ContractInstance.TestToken2 },
-            { symbol: TokenSymbol.TKN3, contractName: ContractInstance.TestToken3 },
-            { symbol: TokenSymbol.TKN4, contractName: ContractInstance.TestToken4, tradingDisabled: true },
-            { symbol: TokenSymbol.TKN5, contractName: ContractInstance.TestToken5, depositingDisabled: true }
+            { symbol: TokenSymbol.TKN1, contractName: InstanceName.TestToken1 },
+            { symbol: TokenSymbol.TKN2, contractName: InstanceName.TestToken2 },
+            { symbol: TokenSymbol.TKN3, contractName: InstanceName.TestToken3 },
+            { symbol: TokenSymbol.TKN4, contractName: InstanceName.TestToken4, tradingDisabled: true },
+            { symbol: TokenSymbol.TKN5, contractName: InstanceName.TestToken5, depositingDisabled: true }
         ];
 
         before(async () => {

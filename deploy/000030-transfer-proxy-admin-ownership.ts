@@ -1,4 +1,4 @@
-import { ContractInstance, execute, setDeploymentMetadata } from '../utils/Deploy';
+import { execute, InstanceName, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -6,7 +6,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, daoMultisig } = await getNamedAccounts();
 
     await execute({
-        name: ContractInstance.ProxyAdmin,
+        name: InstanceName.ProxyAdmin,
         methodName: 'transferOwnership',
         args: [daoMultisig],
         from: deployer
