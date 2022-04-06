@@ -18,7 +18,7 @@ import Contracts, {
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
-import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
 import {
     ExponentialDecay,
     MAX_UINT256,

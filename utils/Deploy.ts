@@ -41,7 +41,8 @@ const {
     execute: executeTransaction,
     getNetworkName,
     save: saveContract,
-    getExtendedArtifact
+    getExtendedArtifact,
+    getArtifact
 } = deployments;
 
 interface EnvOptions {
@@ -187,17 +188,33 @@ interface SaveTypeOptions {
 const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
-    const srcDir = path.join(path.resolve('./', config.typechain.outDir));
-    const factoriesSrcDir = path.join(srcDir, 'factories');
-    const destDir = path.join(config.paths.deployments, getNetworkName(), 'types');
-    const factoriesDestDir = path.join(destDir, 'factories');
+    const { sourceName } = await getArtifact(contract);
+    const contractSrcDir = path.dirname(sourceName);
+
+    const typechainDir = path.resolve('./', config.typechain.outDir);
+
+    // for some reason, the types of some contracts are stored in a "Contract.sol" dir, in which case we'd have to use
+    // it as the root source dir
+    let srcDir;
+    let factoriesSrcDir;
+    if (fs.existsSync(path.join(typechainDir, sourceName))) {
+        srcDir = path.join(typechainDir, sourceName);
+        factoriesSrcDir = path.join(typechainDir, 'factories', sourceName);
+    } else {
+        srcDir = path.join(typechainDir, contractSrcDir);
+        factoriesSrcDir = path.join(typechainDir, 'factories', contractSrcDir);
+    }
+
+    const typesDir = path.join(config.paths.deployments, getNetworkName(), 'types');
+    const destDir = path.join(typesDir, contractSrcDir);
+    const factoriesDestDir = path.join(typesDir, 'factories', contractSrcDir);
 
     if (!fs.existsSync(destDir)) {
-        fs.mkdirSync(destDir);
+        fs.mkdirSync(destDir, { recursive: true });
     }
 
     if (!fs.existsSync(factoriesDestDir)) {
-        fs.mkdirSync(factoriesDestDir);
+        fs.mkdirSync(factoriesDestDir, { recursive: true });
     }
 
     // save the factory typechain
