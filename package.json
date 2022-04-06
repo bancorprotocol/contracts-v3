@@ -51,7 +51,7 @@
     "clean": "rm -rf artifacts cache coverage typechain-types"
   },
   "dependencies": {
-    "hardhat": "2.9.2"
+    "hardhat": "2.9.3"
   },
   "devDependencies": {
     "@bancor/contracts-solidity": "^0.7.6",
@@ -84,7 +84,7 @@
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-mocha": "^10.0.3",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.0.0",
@@ -105,8 +105,8 @@
     "prettier": "^2.6.2",
     "prettier-package-json": "^2.6.3",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
-    "snyk": "^1.894.0",
-    "solc": "0.8.12",
+    "snyk": "^1.896.0",
+    "solc": "0.8.13",
     "solhint": "^3.3.7",
     "solidity-coverage": "^0.7.20",
     "ts-node": "^10.7.0",

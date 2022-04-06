@@ -3814,7 +3814,7 @@ eslint-plugin-es@^3.0.0:
     eslint-utils "^2.0.0"
     regexpp "^3.0.0"
 
-eslint-plugin-import@^2.25.4:
+eslint-plugin-import@^2.26.0:
   version "2.26.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-import/-/eslint-plugin-import-2.26.0.tgz#f812dc47be4f2b72b478a021605a59fc6fe8b88b"
   integrity sha512-hYfi3FXaM8WPLf4S1cikh/r4IxnO6zrhZbEGz2b660EJRbuxgpDS5gkCuYgGWg2xxh2rBuIr4Pvhve/7c31koA==
@@ -5467,10 +5467,10 @@ hardhat@2.8.3:
     uuid "^8.3.2"
     ws "^7.4.6"
 
-hardhat@2.9.2:
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.9.2.tgz#123f3fed6810ef8637b127b73ca44bb9c9efc249"
-  integrity sha512-elTcUK1EdFverWinybQ+DoJzsM6sgiHUYs0ZYNNXMfESty6ESHiFSwkfJsC88/q09vmIz6YVaMh73BYnYd+feQ==
+hardhat@2.9.3:
+  version "2.9.3"
+  resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.9.3.tgz#4759dc3c468c7d15f34334ca1be7d59b04e47b1e"
+  integrity sha512-7Vw99RbYbMZ15UzegOR/nqIYIqddZXvLwJGaX5sX4G5bydILnbjmDU6g3jMKJSiArEixS3vHAEaOs5CW1JQ3hg==
   dependencies:
     "@ethereumjs/block" "^3.6.0"
     "@ethereumjs/blockchain" "^5.5.0"
@@ -8933,7 +8933,7 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-snyk@^1.894.0:
+snyk@^1.896.0:
   version "1.896.0"
   resolved "https://registry.yarnpkg.com/snyk/-/snyk-1.896.0.tgz#7f2d6a4cb89bbadf270fba1bb91b88733eb6dbd7"
   integrity sha512-Mf0opgb8ClBDtNQqKsSRnnbIgWk8qg5BYyKElkVtmzG8IJ2uGvLF6fhT9vKQPS4K1DcglDZ9Peystj5ghYh5fw==
@@ -8953,10 +8953,10 @@ solc@0.7.3:
     semver "^5.5.0"
     tmp "0.0.33"
 
-solc@0.8.12:
-  version "0.8.12"
-  resolved "https://registry.yarnpkg.com/solc/-/solc-0.8.12.tgz#3002ed3092ee2f7672f1a2ab80c0d8df8df3ef2b"
-  integrity sha512-TU3anAhKWBQ/WrerJ9EcHrNwGOA1y5vIk5Flz7dBNamLDkX9VQTIwcKd3FiZsT0Ew8rSU7RTmJyGNHRGzP5TBA==
+solc@0.8.13:
+  version "0.8.13"
+  resolved "https://registry.yarnpkg.com/solc/-/solc-0.8.13.tgz#bafc7fcc11a627e2281e489076b80497123bb704"
+  integrity sha512-C0yTN+rjEOGO6uVOXI8+EKa75SFMuZpQ2tryex4QxWIg0HRWZvCHKfVPuLZ5wx06Sb6GBp6uQA5yqQyXZnXOJw==
   dependencies:
     command-exists "^1.2.8"
     commander "^8.1.0"
