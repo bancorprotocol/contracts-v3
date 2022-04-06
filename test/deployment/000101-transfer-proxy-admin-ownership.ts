@@ -16,7 +16,7 @@ describeDeployment(__filename, () => {
         proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
     });
 
-    it('should transfer the ownership of the proxy admin contract', async () => {
+    it.only('should transfer the ownership of the proxy admin contract', async () => {
         expect(await proxyAdmin.owner()).to.equal(daoMultisig);
     });
 });

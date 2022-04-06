@@ -13,7 +13,7 @@ describeDeployment(__filename, () => {
         ({ deployer, daoMultisig } = await getNamedAccounts());
     });
 
-    it('should revoke deployer roles', async () => {
+    it.only('should revoke deployer roles', async () => {
         for (const name of [
             InstanceName.AutoCompoundingStakingRewards,
             InstanceName.BancorNetworkInfo,
