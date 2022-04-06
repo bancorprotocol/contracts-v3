@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { Upgradeable } from "../utility/Upgradeable.sol";
 
 contract TestLogic is Upgradeable {
     bool private _initializedLogic;
-    uint16 private _version;
+    uint256 private _data;
+    uint16 private immutable _version;
 
     uint256[MAX_GAP - 1] private __gap;
+
+    event Upgraded(uint16 newVersion, uint256 arg1, bool arg2, string arg3);
+
+    constructor(uint16 initVersion) {
+        _version = initVersion;
+    }
 
     function initialize() external initializer {
         __TestLogic_init();
@@ -21,7 +28,8 @@ contract TestLogic is Upgradeable {
 
     function __TestLogic_init_unchained() internal onlyInitializing {
         _initializedLogic = true;
-        _version = 1;
+
+        _data = 100;
     }
 
     // solhint-enable func-name-mixedcase
@@ -30,11 +38,15 @@ contract TestLogic is Upgradeable {
         return _initializedLogic;
     }
 
-    function version() external view override returns (uint16) {
+    function version() public view override returns (uint16) {
         return _version;
     }
 
-    function setVersion(uint16 newVersion) external {
-        _version = newVersion;
+    function data() external view returns (uint256) {
+        return _data;
+    }
+
+    function setData(uint16 newData) external {
+        _data = newData;
     }
 }

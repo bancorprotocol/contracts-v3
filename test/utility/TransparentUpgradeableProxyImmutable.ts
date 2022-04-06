@@ -9,6 +9,7 @@ describe('TransparentUpgradeableProxyImmutable', () => {
     let nonAdmin: SignerWithAddress;
 
     const VERSION = 1;
+    const DATA = 100;
 
     before(async () => {
         [, admin, nonAdmin] = await ethers.getSigners();
@@ -18,7 +19,7 @@ describe('TransparentUpgradeableProxyImmutable', () => {
         let logic: TestLogic;
 
         beforeEach(async () => {
-            logic = await Contracts.TestLogic.deploy();
+            logic = await Contracts.TestLogic.deploy(VERSION);
         });
 
         it('should revert when attempting to create with an invalid logic contract', async () => {
@@ -39,12 +40,14 @@ describe('TransparentUpgradeableProxyImmutable', () => {
 
         it('should be properly initialized', async () => {
             const proxy = await Contracts.TransparentUpgradeableProxyImmutable.deploy(logic.address, admin.address, []);
+
             const contract = await Contracts.TestLogic.attach(proxy.address);
 
             expect(await proxy.connect(admin).callStatic.implementation()).to.equal(logic.address);
             expect(await proxy.connect(admin).callStatic.admin()).to.equal(admin.address);
             expect(await contract.connect(nonAdmin).initialized()).to.be.false;
-            expect(await contract.connect(nonAdmin).version()).to.equal(0);
+            expect(await contract.connect(nonAdmin).version()).to.equal(VERSION);
+            expect(await contract.connect(nonAdmin).data()).to.equal(0);
 
             const proxy2 = await Contracts.TransparentUpgradeableProxyImmutable.deploy(
                 logic.address,
@@ -57,6 +60,7 @@ describe('TransparentUpgradeableProxyImmutable', () => {
             expect(await proxy2.connect(admin).callStatic.admin()).to.equal(admin.address);
             expect(await contract2.connect(nonAdmin).initialized()).to.be.true;
             expect(await contract2.connect(nonAdmin).version()).to.equal(VERSION);
+            expect(await contract2.connect(nonAdmin).data()).to.equal(DATA);
         });
     });
 
@@ -66,7 +70,7 @@ describe('TransparentUpgradeableProxyImmutable', () => {
         let contract: TestLogic;
 
         beforeEach(async () => {
-            logic = await Contracts.TestLogic.deploy();
+            logic = await Contracts.TestLogic.deploy(VERSION);
             proxy = await Contracts.TransparentUpgradeableProxyImmutable.deploy(
                 logic.address,
                 admin.address,
@@ -89,7 +93,7 @@ describe('TransparentUpgradeableProxyImmutable', () => {
             let newLogic: TestLogic;
 
             beforeEach(async () => {
-                newLogic = await Contracts.TestLogic.deploy();
+                newLogic = await Contracts.TestLogic.deploy(VERSION);
             });
 
             it('should revert when a non-admin attempts to upgrade the proxy', async () => {
@@ -128,18 +132,17 @@ describe('TransparentUpgradeableProxyImmutable', () => {
                 expect(await contract.connect(nonAdmin).initialized()).to.be.true;
                 expect(await contract.connect(nonAdmin).version()).to.equal(VERSION);
 
+                const newData = DATA + 1000;
                 const newVersion = VERSION + 1;
-                const newLogic2 = await Contracts.TestLogic.deploy();
+                const newLogic2 = await Contracts.TestLogic.deploy(newVersion);
                 await proxy
                     .connect(admin)
-                    .upgradeToAndCall(
-                        newLogic2.address,
-                        newLogic.interface.encodeFunctionData('setVersion', [newVersion])
-                    );
+                    .upgradeToAndCall(newLogic2.address, newLogic.interface.encodeFunctionData('setData', [newData]));
 
                 expect(await proxy.connect(admin).callStatic.implementation()).to.equal(newLogic2.address);
                 expect(await contract.connect(nonAdmin).initialized()).to.be.true;
                 expect(await contract.connect(nonAdmin).version()).to.equal(newVersion);
+                expect(await contract.connect(nonAdmin).data()).to.equal(newData);
             });
         });
     });

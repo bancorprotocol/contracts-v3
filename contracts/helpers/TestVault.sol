@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { Token } from "../token/Token.sol";
 
 import { Vault } from "../vaults/Vault.sol";
+
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
 
 contract TestVault is Vault {
     bool private _isAuthorizedWithdrawal;
@@ -41,7 +44,7 @@ contract TestVault is Vault {
         _isPayable = state;
     }
 
-    function version() external pure override returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 
