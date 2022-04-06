@@ -21,7 +21,7 @@ describeDeployment(__filename, () => {
         expect(await network.poolCollections()).to.include(poolCollection.address);
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
 
-        let pools = [];
+        const pools = [];
         for (const instanceName of [
             InstanceName.TestToken1,
             InstanceName.TestToken2,
@@ -33,7 +33,7 @@ describeDeployment(__filename, () => {
         }
 
         const { dai, link } = await getNamedAccounts();
-        pools = [...pools, NATIVE_TOKEN_ADDRESS, dai, link];
+        pools.push(NATIVE_TOKEN_ADDRESS, dai, link);
 
         expect(await network.liquidityPools()).to.deep.equal(pools);
 
