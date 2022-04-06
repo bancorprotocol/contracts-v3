@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { MathEx, Uint512 } from "../utility/MathEx.sol";
 import { Fraction } from "../utility/FractionLibrary.sol";

@@ -16,7 +16,7 @@ import {
     StandardStakingRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { DeployedContracts, DeploymentTag, isMainnet } from '../../utils/Deploy';
+import { DeployedContracts, deploymentMetadata, getLatestDeploymentTag, isMainnet } from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { performTestDeployment } from '../helpers/Deploy';
 import { getNamedAccounts } from 'hardhat';
@@ -50,24 +50,26 @@ describe('network', () => {
     });
 
     beforeEach(async () => {
-        await performTestDeployment(DeploymentTag.V3);
+        const { tag } = deploymentMetadata(getLatestDeploymentTag());
 
-        network = await DeployedContracts.BancorNetworkV1.deployed();
+        await performTestDeployment(tag);
+
+        network = await DeployedContracts.BancorNetwork.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
-        networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-        masterVault = await DeployedContracts.MasterVaultV1.deployed();
-        externalProtectionVault = await DeployedContracts.ExternalProtectionVaultV1.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVaultV1.deployed();
-        bntPool = await DeployedContracts.BNTPoolV1.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-        poolTokenFactory = await DeployedContracts.PoolTokenFactoryV1.deployed();
-        poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
+        networkSettings = await DeployedContracts.NetworkSettings.deployed();
+        masterVault = await DeployedContracts.MasterVault.deployed();
+        externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
+        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+        bntPool = await DeployedContracts.BNTPool.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+        poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
+        poolMigrator = await DeployedContracts.PoolMigrator.deployed();
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
-        autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewardsV1.deployed();
-        standardStakingRewards = await DeployedContracts.StandardStakingRewardsV1.deployed();
-        networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
-        bancorPortal = await DeployedContracts.BancorPortalV1.deployed();
+        autoCompoundingStakingRewards = await DeployedContracts.AutoCompoundingStakingRewards.deployed();
+        standardStakingRewards = await DeployedContracts.StandardStakingRewards.deployed();
+        networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
+        bancorPortal = await DeployedContracts.BancorPortal.deployed();
     });
 
     it('should have the correct set of roles', async () => {

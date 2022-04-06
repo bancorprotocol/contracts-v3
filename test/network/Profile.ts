@@ -1061,7 +1061,7 @@ describe('Profile @profile', () => {
                     poolCollection
                 ));
 
-                await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
+                await networkSettings.setFlashLoanFeePPM(token.address, flashLoanFeePPM);
 
                 await transfer(deployer, token, recipient.address, FEE_AMOUNT);
                 await recipient.snapshot(token.address);

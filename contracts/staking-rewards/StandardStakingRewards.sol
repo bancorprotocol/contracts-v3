@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -241,9 +241,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     receive() external payable {}
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

@@ -3,6 +3,7 @@
         "target": "esnext",
         "lib": ["dom", "esnext"],
         "module": "commonjs",
+        "moduleResolution": "node",
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,
@@ -15,6 +16,15 @@
         },
         "outDir": "./dist"
     },
-    "include": ["./components", "./utils", "./test", "./deploy", "./scripts", "./typechain"],
-    "files": ["./hardhat.config.ts"]
+    "include": [
+        "./hardhat.config.ts",
+        "./typechain-types",
+        "./components",
+        "./utils",
+        "./test",
+        "./scripts",
+        "./deploy",
+        "./deployments/mainnet/types",
+
+    ]
 }
