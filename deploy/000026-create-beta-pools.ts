@@ -9,15 +9,14 @@ import {
     setDeploymentMetadata
 } from '../utils/Deploy';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
-import { toWei } from '../utils/Types';
+import { toCents, toWei } from '../utils/Types';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 // TODO: make sure to update the limits and the rates before running the script in production
-const CENTS = 100;
-const BNT_TOKEN_PRICE_IN_CENTS = 2.7 * CENTS;
+const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.7);
 
 enum BetaTokens {
     ETH = 'ETH',
@@ -26,13 +25,13 @@ enum BetaTokens {
 }
 
 const BETA_TOKEN_PRICES_IN_CENTS = {
-    [BetaTokens.ETH]: 3266 * CENTS,
-    [BetaTokens.DAI]: 1 * CENTS,
-    [BetaTokens.LINK]: 15.67 * CENTS
+    [BetaTokens.ETH]: toCents(3266),
+    [BetaTokens.DAI]: toCents(1),
+    [BetaTokens.LINK]: toCents(15.67)
 };
 
-const TKN_DEPOSIT_LIMIT_IN_CENTS = 171_000 * CENTS;
-const BNT_FUNDING_LIMIT_IN_CENTS = 156_000 * CENTS;
+const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_000);
+const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_000);
 const FUNDING_LIMIT = toWei(BNT_FUNDING_LIMIT_IN_CENTS).div(BNT_TOKEN_PRICE_IN_CENTS);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
