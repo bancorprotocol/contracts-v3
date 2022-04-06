@@ -1,47 +1,46 @@
+/* eslint-disable camelcase */
 import { deployOrAttach } from './ContractBuilder';
 import {
-    BancorNetwork as LegacyBancorNetwork,
     BancorNetwork__factory,
-    ConverterFactory__factory,
-    ConverterFactory,
-    ContractRegistry__factory,
     ContractRegistry,
-    ConverterRegistry__factory,
+    ContractRegistry__factory,
+    ConverterFactory,
+    ConverterFactory__factory,
     ConverterRegistry,
-    ConverterRegistryData__factory,
+    ConverterRegistry__factory,
     ConverterRegistryData,
-    LiquidityProtectionSettings__factory,
-    LiquidityProtectionSettings,
-    LiquidityProtectionStats__factory,
-    LiquidityProtectionStats,
-    LiquidityProtectionStore__factory,
-    LiquidityProtectionStore,
-    LiquidityProtectionSystemStore__factory,
-    LiquidityProtectionSystemStore,
-    NetworkSettings__factory,
+    ConverterRegistryData__factory,
+    BancorNetwork as LegacyBancorNetwork,
     NetworkSettings as LegacyNetworkSettings,
-    TestCheckpointStore__factory,
+    LiquidityProtectionSettings,
+    LiquidityProtectionSettings__factory,
+    LiquidityProtectionStats,
+    LiquidityProtectionStats__factory,
+    LiquidityProtectionStore,
+    LiquidityProtectionStore__factory,
+    LiquidityProtectionSystemStore,
+    LiquidityProtectionSystemStore__factory,
+    NetworkSettings__factory,
     TestCheckpointStore,
-    TestLiquidityProtection__factory,
+    TestCheckpointStore__factory,
     TestLiquidityProtection,
-    TestStandardPoolConverter__factory,
+    TestLiquidityProtection__factory,
     TestStandardPoolConverter,
-    TestStandardPoolConverterFactory__factory,
+    TestStandardPoolConverter__factory,
     TestStandardPoolConverterFactory,
-    TokenHolder__factory,
-    TokenHolder
+    TestStandardPoolConverterFactory__factory,
+    TokenHolder,
+    TokenHolder__factory
 } from '@bancor/contracts-solidity';
-
-/* eslint-disable camelcase */
 import {
-    DSToken,
-    DSToken__factory,
-    DSToken as VBNT,
-    DSToken__factory as VBNT__factory,
     SmartToken as BNT,
     SmartToken__factory as BNT__factory,
+    DSToken,
+    DSToken__factory,
     TokenGovernance,
-    TokenGovernance__factory
+    TokenGovernance__factory,
+    DSToken as VBNT,
+    DSToken__factory as VBNT__factory
 } from '@bancor/token-governance';
 import { Signer } from 'ethers';
 
@@ -74,6 +73,7 @@ export {
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
+    // V2 contracts
     TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
     BNT: deployOrAttach('BNT', BNT__factory, signer),
     VBNT: deployOrAttach('VBNT', VBNT__factory, signer),
@@ -107,7 +107,5 @@ const getContracts = (signer?: Signer) => ({
         signer
     )
 });
-
-export type LegacyContractsType = ReturnType<typeof getContracts>;
 
 export default getContracts();

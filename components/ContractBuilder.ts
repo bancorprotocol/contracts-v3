@@ -1,7 +1,7 @@
-/* eslint-enable camelcase */
 import { Profiler } from './Profiler';
-import { Signer, ContractFactory } from 'ethers';
+import { ContractFactory, Signer } from 'ethers';
 import { ethers } from 'hardhat';
+import { ABI } from 'hardhat-deploy/types';
 
 export type AsyncReturnType<T extends (...args: any) => any> = T extends (...args: any) => Promise<infer U>
     ? U
@@ -14,7 +14,7 @@ export type Contract<F extends ContractFactory> = AsyncReturnType<F['deploy']>;
 export interface ContractBuilder<F extends ContractFactory> {
     metadata: {
         contractName: string;
-        abi: unknown;
+        abi: ABI;
         bytecode: string;
     };
     deploy(...args: Parameters<F['deploy']>): Promise<Contract<F>>;
@@ -29,15 +29,13 @@ export type FactoryConstructor<F extends ContractFactory> = {
 
 export const deployOrAttach = <F extends ContractFactory>(
     contractName: string,
-    // @TODO: needs to replace with correctly typed params but it doesn't
-    // work properly for some reason https://github.com/microsoft/TypeScript/issues/31278
     FactoryConstructor: FactoryConstructor<F>,
     initialSigner?: Signer
 ): ContractBuilder<F> => {
     return {
         metadata: {
             contractName,
-            abi: FactoryConstructor.abi,
+            abi: FactoryConstructor.abi as ABI,
             bytecode: FactoryConstructor.bytecode
         },
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
@@ -65,3 +63,8 @@ export const attachOnly = <F extends ContractFactory>(
         }
     };
 };
+
+export interface ArtifactData {
+    abi: ABI;
+    bytecode: string;
+}

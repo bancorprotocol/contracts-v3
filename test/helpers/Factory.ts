@@ -1,4 +1,4 @@
-import { Contract, ContractBuilder } from '../../components/ContractBuilder';
+import { ContractBuilder } from '../../components/ContractBuilder';
 import Contracts, {
     BancorNetwork,
     BancorNetworkInfo,
@@ -27,7 +27,7 @@ import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenD
 import { Addressable, fromPPM, toWei } from '../../utils/Types';
 import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, BigNumberish, ContractFactory, utils, Wallet } from 'ethers';
+import { BaseContract, BigNumber, BigNumberish, BytesLike, ContractFactory, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const { formatBytes32String } = utils;
@@ -71,12 +71,30 @@ const createTransparentProxy = async (
     return Contracts.TransparentUpgradeableProxyImmutable.deploy(logicContract.address, admin.address, data);
 };
 
-export const createProxy = async <F extends ContractFactory>(
-    factory: ContractBuilder<F>,
-    args?: ProxyArguments
-): Promise<Contract<F>> => {
+export const createProxy = async <F extends ContractFactory>(factory: ContractBuilder<F>, args?: ProxyArguments) => {
     const logicContract = await createLogic(factory, args?.ctorArgs);
     const proxy = await createTransparentProxy(logicContract, args?.skipInitialization, args?.initArgs);
+
+    return factory.attach(proxy.address);
+};
+
+interface ProxyUpgradeArgs extends ProxyArguments {
+    upgradeCallData?: BytesLike;
+}
+
+export const upgradeProxy = async <F extends ContractFactory>(
+    proxy: BaseContract,
+    factory: ContractBuilder<F>,
+    args?: ProxyUpgradeArgs
+) => {
+    const logicContract = await createLogic(factory, args?.ctorArgs);
+    const admin = await proxyAdmin();
+
+    await admin.upgradeAndCall(
+        proxy.address,
+        logicContract.address,
+        logicContract.interface.encodeFunctionData('postUpgrade', [args?.upgradeCallData || []])
+    );
 
     return factory.attach(proxy.address);
 };
@@ -318,7 +336,7 @@ const createSystemFixture = async () => {
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const bntPoolToken = await createPoolToken(poolTokenFactory, bnt);
 
-    const networkSettings = await createProxy(Contracts.NetworkSettings);
+    const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [bnt.address] });
 
     const network = await createNetwork(
         bntGovernance,

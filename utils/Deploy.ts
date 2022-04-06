@@ -1,3 +1,4 @@
+import { ArtifactData } from '../components/ContractBuilder';
 import {
     AutoCompoundingStakingRewards,
     BancorNetwork,
@@ -7,6 +8,7 @@ import {
     BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
+    IVersioned,
     MasterVault,
     MockUniswapV2Factory,
     MockUniswapV2Pair,
@@ -23,15 +25,15 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import { BancorNetworkV1, NetworkSettingsV1 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
-import { DeploymentNetwork } from './Constants';
+import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
-import { Address, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
-import { capitalize } from 'lodash';
+import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
 import path from 'path';
 
 const {
@@ -49,42 +51,42 @@ interface EnvOptions {
 
 const { FORKING: isForking, TENDERLY_FORK_ID }: EnvOptions = process.env as any as EnvOptions;
 
-const deployed = <F extends Contract>(name: ContractName) => ({
+const deployed = <F extends Contract>(name: InstanceName) => ({
     deployed: async () => ethers.getContract<F>(name)
 });
 
-enum LegacyContractName {
+enum LegacyInstanceName {
     BNT = 'BNT',
     BNTGovernance = 'BNTGovernance',
     VBNT = 'VBNT',
     VBNTGovernance = 'VBNTGovernance'
 }
 
-enum NewContractName {
-    AutoCompoundingStakingRewardsV1 = 'AutoCompoundingStakingRewardsV1',
-    BancorNetworkInfoV1 = 'BancorNetworkInfoV1',
+enum NewInstanceName {
+    AutoCompoundingStakingRewards = 'AutoCompoundingStakingRewards',
+    BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',
-    BancorNetworkV1 = 'BancorNetworkV1',
-    BancorPortalV1 = 'BancorPortalV1',
-    BancorV1MigrationV1 = 'BancorV1MigrationV1',
-    BNTPoolTokenV1 = 'BNTPoolTokenV1',
-    BNTPoolV1 = 'BNTPoolV1',
-    ExternalProtectionVaultV1 = 'ExternalProtectionVaultV1',
-    ExternalRewardsVaultV1 = 'ExternalRewardsVaultV1',
-    MasterVaultV1 = 'MasterVaultV1',
-    MockUniswapV2FactoryV1 = 'MockUniswapV2FactoryV1',
-    MockUniswapV2PairV1 = 'MockUniswapV2PairV1',
-    MockUniswapV2Router02V1 = 'MockUniswapV2Router02V1',
-    NetworkSettingsV1 = 'NetworkSettingsV1',
-    PendingWithdrawalsV1 = 'PendingWithdrawalsV1',
+    BancorNetwork = 'BancorNetwork',
+    BancorPortal = 'BancorPortal',
+    BancorV1Migration = 'BancorV1Migration',
+    BNTPoolToken = 'BNTPoolToken',
+    BNTPool = 'BNTPool',
+    ExternalProtectionVault = 'ExternalProtectionVault',
+    ExternalRewardsVault = 'ExternalRewardsVault',
+    MasterVault = 'MasterVault',
+    NetworkSettings = 'NetworkSettings',
+    PendingWithdrawals = 'PendingWithdrawals',
     PoolCollectionType1V1 = 'PoolCollectionType1V1',
-    PoolMigratorV1 = 'PoolMigratorV1',
-    PoolTokenFactoryV1 = 'PoolTokenFactoryV1',
+    PoolMigrator = 'PoolMigrator',
+    PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
-    StandardStakingRewardsV1 = 'StandardStakingRewardsV1'
+    StandardStakingRewards = 'StandardStakingRewards'
 }
 
-enum TestContractName {
+enum TestInstanceName {
+    MockUniswapV2Factory = 'MockUniswapV2Factory',
+    MockUniswapV2Pair = 'MockUniswapV2Pair',
+    MockUniswapV2Router02 = 'MockUniswapV2Router02',
     TestToken1 = 'TestToken1',
     TestToken2 = 'TestToken2',
     TestToken3 = 'TestToken3',
@@ -92,58 +94,54 @@ enum TestContractName {
     TestToken5 = 'TestToken5'
 }
 
-export const ContractName = {
-    ...LegacyContractName,
-    ...NewContractName,
-    ...TestContractName
+export const InstanceName = {
+    ...LegacyInstanceName,
+    ...NewInstanceName,
+    ...TestInstanceName
 };
 
-export type ContractName = LegacyContractName | NewContractName | TestContractName;
-
-export enum DeploymentTag {
-    V2 = 'V2',
-    V3 = 'V3'
-}
+export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName;
 
 const DeployedLegacyContracts = {
-    BNT: deployed<BNT>(ContractName.BNT),
-    BNTGovernance: deployed<TokenGovernance>(ContractName.BNTGovernance),
-    VBNT: deployed<VBNT>(ContractName.VBNT),
-    VBNTGovernance: deployed<TokenGovernance>(ContractName.VBNTGovernance)
+    BNT: deployed<BNT>(InstanceName.BNT),
+    BNTGovernance: deployed<TokenGovernance>(InstanceName.BNTGovernance),
+    VBNT: deployed<VBNT>(InstanceName.VBNT),
+    VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
+
+    BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
+    NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings)
 };
 
 const DeployedNewContracts = {
-    AutoCompoundingStakingRewardsV1: deployed<AutoCompoundingStakingRewards>(
-        ContractName.AutoCompoundingStakingRewardsV1
-    ),
-    BancorNetworkInfoV1: deployed<BancorNetworkInfo>(ContractName.BancorNetworkInfoV1),
-    BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(ContractName.BancorNetworkProxy),
-    BancorNetworkV1: deployed<BancorNetwork>(ContractName.BancorNetworkV1),
-    BancorPortalV1: deployed<BancorPortal>(ContractName.BancorPortalV1),
-    BancorV1MigrationV1: deployed<BancorV1Migration>(ContractName.BancorV1MigrationV1),
-    BNTPoolTokenV1: deployed<PoolToken>(ContractName.BNTPoolTokenV1),
-    BNTPoolV1: deployed<BNTPool>(ContractName.BNTPoolV1),
-    ExternalProtectionVaultV1: deployed<ExternalProtectionVault>(ContractName.ExternalProtectionVaultV1),
-    ExternalRewardsVaultV1: deployed<ExternalRewardsVault>(ContractName.ExternalRewardsVaultV1),
-    MasterVaultV1: deployed<MasterVault>(ContractName.MasterVaultV1),
-    MockUniswapV2FactoryV1: deployed<MockUniswapV2Factory>(ContractName.MockUniswapV2FactoryV1),
-    MockUniswapV2PairV1: deployed<MockUniswapV2Pair>(ContractName.MockUniswapV2PairV1),
-    MockUniswapV2Router02V1: deployed<MockUniswapV2Router02>(ContractName.MockUniswapV2Router02V1),
-    NetworkSettingsV1: deployed<NetworkSettings>(ContractName.NetworkSettingsV1),
-    PendingWithdrawalsV1: deployed<PendingWithdrawals>(ContractName.PendingWithdrawalsV1),
-    PoolCollectionType1V1: deployed<PoolCollection>(ContractName.PoolCollectionType1V1),
-    PoolMigratorV1: deployed<PoolMigrator>(ContractName.PoolMigratorV1),
-    PoolTokenFactoryV1: deployed<PoolTokenFactory>(ContractName.PoolTokenFactoryV1),
-    ProxyAdmin: deployed<ProxyAdmin>(ContractName.ProxyAdmin),
-    StandardStakingRewardsV1: deployed<StandardStakingRewards>(ContractName.StandardStakingRewardsV1)
+    AutoCompoundingStakingRewards: deployed<AutoCompoundingStakingRewards>(InstanceName.AutoCompoundingStakingRewards),
+    BancorNetworkInfo: deployed<BancorNetworkInfo>(InstanceName.BancorNetworkInfo),
+    BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BancorNetworkProxy),
+    BancorNetwork: deployed<BancorNetwork>(InstanceName.BancorNetwork),
+    BancorPortal: deployed<BancorPortal>(InstanceName.BancorPortal),
+    BancorV1Migration: deployed<BancorV1Migration>(InstanceName.BancorV1Migration),
+    BNTPoolToken: deployed<PoolToken>(InstanceName.BNTPoolToken),
+    BNTPool: deployed<BNTPool>(InstanceName.BNTPool),
+    ExternalProtectionVault: deployed<ExternalProtectionVault>(InstanceName.ExternalProtectionVault),
+    ExternalRewardsVault: deployed<ExternalRewardsVault>(InstanceName.ExternalRewardsVault),
+    MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
+    NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
+    PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
+    PoolCollectionType1V1: deployed<PoolCollection>(InstanceName.PoolCollectionType1V1),
+    PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
+    PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
+    ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
+    StandardStakingRewards: deployed<StandardStakingRewards>(InstanceName.StandardStakingRewards)
 };
 
 const DeployedTestContracts = {
-    TestToken1: deployed<TestERC20Token>(ContractName.TestToken1),
-    TestToken2: deployed<TestERC20Token>(ContractName.TestToken2),
-    TestToken3: deployed<TestERC20Token>(ContractName.TestToken3),
-    TestToken4: deployed<TestERC20Token>(ContractName.TestToken4),
-    TestToken5: deployed<TestERC20Token>(ContractName.TestToken5)
+    MockUniswapV2Factory: deployed<MockUniswapV2Factory>(InstanceName.MockUniswapV2Factory),
+    MockUniswapV2Pair: deployed<MockUniswapV2Pair>(InstanceName.MockUniswapV2Pair),
+    MockUniswapV2Router02: deployed<MockUniswapV2Router02>(InstanceName.MockUniswapV2Router02),
+    TestToken1: deployed<TestERC20Token>(InstanceName.TestToken1),
+    TestToken2: deployed<TestERC20Token>(InstanceName.TestToken2),
+    TestToken3: deployed<TestERC20Token>(InstanceName.TestToken3),
+    TestToken4: deployed<TestERC20Token>(InstanceName.TestToken4),
+    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5)
 };
 
 export const DeployedContracts = {
@@ -181,57 +179,63 @@ export const fundAccount = async (account: string) => {
     });
 };
 
-// remove internal versioning (== a contract name ends in "V" and some number) from the name of the contract
-const normalizedContractName = (contractName: string) => contractName.replace(/V\d+$/, '');
-
 interface SaveTypeOptions {
-    name: ContractName;
+    name: InstanceName;
     contract: string;
 }
 
 const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
-    const src = path.join(path.resolve('./', config.typechain.outDir), `${contract}.ts`);
-    const destDir = path.join(config.paths.deployments, getNetworkName());
-    const dest = path.join(destDir, `${name}.ts`);
-
-    // don't save types for legacy contracts
-    if (Object.values(LegacyContractName).includes(name as LegacyContractName)) {
-        return;
-    }
-
-    // don't overwrite types for an existing deployment
-    if (fs.existsSync(dest)) {
-        return;
-    }
+    const srcDir = path.join(path.resolve('./', config.typechain.outDir));
+    const factoriesSrcDir = path.join(srcDir, 'factories');
+    const destDir = path.join(config.paths.deployments, getNetworkName(), 'types');
+    const factoriesDestDir = path.join(destDir, 'factories');
 
     if (!fs.existsSync(destDir)) {
         fs.mkdirSync(destDir);
     }
 
-    fs.copyFileSync(src, dest);
+    if (!fs.existsSync(factoriesDestDir)) {
+        fs.mkdirSync(factoriesDestDir);
+    }
+
+    // save the factory typechain
+    fs.copyFileSync(
+        path.join(factoriesSrcDir, `${contract}__factory.ts`),
+        path.join(factoriesDestDir, `${name}__factory.ts`)
+    );
+
+    // save the typechain of the contract itself
+    fs.copyFileSync(path.join(srcDir, `${contract}.ts`), path.join(destDir, `${name}.ts`));
 };
 
 interface ProxyOptions {
     skipInitialization?: boolean;
 }
 
-interface DeployOptions {
-    name: ContractName;
+interface BaseDeployOptions {
+    name: InstanceName;
     contract?: string;
     args?: any[];
     from: string;
     value?: BigNumber;
+    contractArtifactData?: ArtifactData;
+    legacy?: boolean;
+}
+
+interface DeployOptions extends BaseDeployOptions {
     proxy?: ProxyOptions;
 }
 
 const PROXY_CONTRACT = 'TransparentUpgradeableProxyImmutable';
 const INITIALIZE = 'initialize';
+const POST_UPGRADE = 'postUpgrade';
 
 export const deploy = async (options: DeployOptions) => {
-    const { name, contract, from, value, args, proxy } = options;
+    const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
+    const contractName = contract || name;
 
     await fundAccount(from);
 
@@ -242,15 +246,18 @@ export const deploy = async (options: DeployOptions) => {
 
         proxyOptions = {
             proxyContract: PROXY_CONTRACT,
-            execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } },
             owner: await proxyAdmin.owner(),
-            viaAdminContract: ContractName.ProxyAdmin
+            viaAdminContract: InstanceName.ProxyAdmin,
+            execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
+
+        console.log(`deploying proxy ${contractName} as ${name}`);
+    } else {
+        console.log(`deploying ${contractName} as ${name}`);
     }
 
-    const contractName = normalizedContractName(contract || name);
     const res = await deployContract(name, {
-        contract: contractName,
+        contract: contractArtifactData || contractName,
         from,
         value,
         args,
@@ -258,15 +265,17 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    const data = { name, contract: contractName };
-    await saveTypes(data);
+    if (!proxy || !proxy.skipInitialization) {
+        const data = { name, contract: contractName };
+        saveTypes(data);
 
-    await verifyTenderly({
-        address: res.address,
-        proxy: isProxy,
-        implementation: isProxy ? res.implementation : undefined,
-        ...data
-    });
+        await verifyTenderly({
+            address: res.address,
+            proxy: isProxy,
+            implementation: isProxy ? res.implementation : undefined,
+            ...data
+        });
+    }
 
     return res.address;
 };
@@ -277,8 +286,57 @@ export const deployProxy = async (options: DeployOptions, proxy: ProxyOptions = 
         proxy
     });
 
+interface UpgradeProxyOptions extends DeployOptions {
+    upgradeArgs?: string;
+}
+
+export const upgradeProxy = async (options: UpgradeProxyOptions) => {
+    const { name, contract, from, value, args, upgradeArgs, contractArtifactData } = options;
+    const contractName = contract || name;
+
+    await fundAccount(from);
+
+    const deployed = await DeployedContracts[name].deployed();
+    if (!deployed) {
+        throw new Error(`Proxy ${name} can't be found!`);
+    }
+
+    const prevVersion = await (deployed as IVersioned).version();
+
+    const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
+    const proxyOptions = {
+        proxyContract: PROXY_CONTRACT,
+        owner: await proxyAdmin.owner(),
+        viaAdminContract: InstanceName.ProxyAdmin,
+        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
+    };
+
+    console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
+
+    const res = await deployContract(name, {
+        contract: contractArtifactData || contractName,
+        from,
+        value,
+        args,
+        proxy: proxyOptions,
+        log: true
+    });
+
+    const data = { name, contract: contractName };
+    saveTypes(data);
+
+    await verifyTenderly({
+        address: res.address,
+        proxy: true,
+        implementation: res.implementation,
+        ...data
+    });
+
+    return res.address;
+};
+
 interface ExecuteOptions {
-    name: ContractName;
+    name: InstanceName;
     methodName: string;
     args?: any[];
     from: string;
@@ -294,14 +352,16 @@ export const execute = async (options: ExecuteOptions) => {
 };
 
 interface InitializeProxyOptions {
-    name: ContractName;
-    proxyName: ContractName;
+    name: InstanceName;
+    proxyName: InstanceName;
     args?: any[];
     from: string;
 }
 
 export const initializeProxy = async (options: InitializeProxyOptions) => {
     const { name, proxyName, args, from } = options;
+
+    console.log(`initializing proxy ${name}`);
 
     await execute({
         name: proxyName,
@@ -315,6 +375,7 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
     await save({
         name,
         address,
+        proxy: true,
         skipVerification: true
     });
 
@@ -322,7 +383,7 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
 };
 
 interface RolesOptions {
-    name: ContractName;
+    name: InstanceName;
     id: typeof RoleIds[number];
     member: string;
     from: string;
@@ -343,7 +404,7 @@ export const grantRole = async (options: RolesOptions) => setRole(options, true)
 export const revokeRole = async (options: RolesOptions) => setRole(options, false);
 
 interface Deployment {
-    name: ContractName;
+    name: InstanceName;
     contract?: string;
     address: Address;
     proxy?: boolean;
@@ -352,16 +413,21 @@ interface Deployment {
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address, skipVerification } = deployment;
+    const { name, contract, address, proxy, skipVerification } = deployment;
 
-    const contractName = normalizedContractName(contract || name);
+    const contractName = contract || name;
     const { abi } = await getExtendedArtifact(contractName);
 
     // save the typechain for future use
-    await saveTypes({ name, contract: contractName });
+    saveTypes({ name, contract: contractName });
 
     // save the deployment json data in the deployments folder
     await saveContract(name, { abi, address });
+
+    if (proxy) {
+        const { abi } = await getExtendedArtifact(PROXY_CONTRACT);
+        await saveContract(`${name}_Proxy`, { abi, address });
+    }
 
     if (skipVerification) {
         return;
@@ -400,7 +466,7 @@ const verifyTenderly = async (deployment: Deployment) => {
     }
 
     contracts.push({
-        name: normalizedContractName(contract || name),
+        name: contract || name,
         address: contractAddress
     });
 
@@ -411,7 +477,7 @@ const verifyTenderly = async (deployment: Deployment) => {
     }
 };
 
-export const deploymentExists = async (tag: string) => {
+export const deploymentTagExists = async (tag: string) => {
     const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
     const migrationsPath = path.resolve(
         __dirname,
@@ -428,10 +494,28 @@ export const deploymentExists = async (tag: string) => {
     return !!migrations[tag];
 };
 
-export const toDeployTag = (filename: string) =>
-    path
-        .basename(filename)
-        .split('.')[0]
-        .split('-')
-        .slice(1)
-        .reduce((res, c) => res + capitalize(c), '');
+export const deploymentMetadata = (filename: string) => {
+    const id = path.basename(filename).split('.')[0];
+    const order = Number(id.split('-')[0]);
+
+    return {
+        id,
+        tag: order.toString(),
+        dependency: order === 1 ? undefined : (order - 1).toString()
+    };
+};
+
+export const setDeploymentMetadata = (filename: string, func: DeployFunction) => {
+    const { id, tag, dependency } = deploymentMetadata(filename);
+
+    func.id = id;
+    func.tags = [tag];
+    func.dependencies = dependency ? [dependency] : undefined;
+
+    return func;
+};
+
+export const getLatestDeploymentTag = () => {
+    const files = fs.readdirSync(config.paths.deploy[0]).sort();
+    return Number(files[files.length - 1].split('-')[0]).toString();
+};

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -11,7 +11,6 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
@@ -293,10 +292,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     receive() external payable {}
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
-        return 1;
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
+        return 2;
     }
 
     /**
@@ -781,7 +780,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             revert NotWhitelisted();
         }
 
-        uint256 feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(), PPM_RESOLUTION);
+        uint256 feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(token), PPM_RESOLUTION);
 
         // save the current balance
         uint256 prevBalance = token.balanceOf(address(this));
