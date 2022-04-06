@@ -1,8 +1,9 @@
 import { PoolCollection } from '../../components/Contracts';
 import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
+import { DEFAULT_TRADING_FEE_PPM } from '../../utils/Constants';
 import { DeployedContracts, isMainnetFork } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { toPPM, toWei } from '../../utils/Types';
+import { toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
@@ -14,8 +15,6 @@ describeDeployment(__filename, () => {
     // TODO: make sure to update the limits and the rates before running the script in production
     const CENTS = 100;
     const BNT_TOKEN_PRICE_IN_CENTS = 2.7 * CENTS;
-
-    const TRADING_FEE = toPPM(0.2);
 
     enum BetaTokens {
         ETH = 'ETH',
@@ -38,7 +37,7 @@ describeDeployment(__filename, () => {
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
     });
 
-    it.only('should create beta pools', async () => {
+    it('should create beta pools', async () => {
         const { dai, link } = await getNamedAccounts();
 
         const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
@@ -58,7 +57,7 @@ describeDeployment(__filename, () => {
 
             const data = await poolCollection.poolData(address);
             expect(data.depositLimit).to.equal(depositLimit);
-            expect(data.tradingFeePPM).to.equal(TRADING_FEE);
+            expect(data.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
 
             if (isMainnetFork()) {
                 const bntVirtualPrice = tokenPriceInCents;

@@ -9,7 +9,7 @@ import {
     setDeploymentMetadata
 } from '../utils/Deploy';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
-import { toPPM, toWei } from '../utils/Types';
+import { toWei } from '../utils/Types';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -18,8 +18,6 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 // TODO: make sure to update the limits and the rates before running the script in production
 const CENTS = 100;
 const BNT_TOKEN_PRICE_IN_CENTS = 2.7 * CENTS;
-
-const TRADING_FEE = toPPM(0.2);
 
 enum BetaTokens {
     ETH = 'ETH',
@@ -110,13 +108,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             name: InstanceName.PoolCollectionType1V1,
             methodName: 'setDepositLimit',
             args: [address, depositLimit],
-            from: deployer
-        });
-
-        await execute({
-            name: InstanceName.PoolCollectionType1V1,
-            methodName: 'setTradingFeePPM',
-            args: [address, TRADING_FEE],
             from: deployer
         });
 
