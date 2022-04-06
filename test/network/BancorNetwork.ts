@@ -697,6 +697,12 @@ describe('BancorNetwork', () => {
                     ).to.be.revertedWith('DoesNotExist');
                 });
 
+                it('should revert when attempting to remove a pool collection and specifying it as the latest', async () => {
+                    await expect(
+                        network.removePoolCollection(poolCollection.address, poolCollection.address)
+                    ).to.be.revertedWith('InvalidPoolCollection');
+                });
+
                 it('should remove an existing pool collection', async () => {
                     expect(await network.poolCollections()).to.have.members([
                         poolCollection.address,
