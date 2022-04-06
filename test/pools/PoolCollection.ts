@@ -2730,6 +2730,8 @@ describe('PoolCollection', () => {
                                         )
                                     ).to.be.revertedWith('InsufficientLiquidity');
 
+                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
+                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         network.tradeByTargetPoolCollectionT(
                                             poolCollection.address,
@@ -2739,9 +2741,7 @@ describe('PoolCollection', () => {
                                             amount,
                                             MAX_SOURCE_AMOUNT
                                         )
-                                    ).to.be.revertedWith(
-                                        'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
-                                    );
+                                    ).to.be.reverted;
 
                                     await expect(
                                         poolCollection.tradeOutputAndFeeBySourceAmount(
@@ -2751,16 +2751,15 @@ describe('PoolCollection', () => {
                                         )
                                     ).to.be.revertedWith('InsufficientLiquidity');
 
+                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
+                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
                                         )
-                                        // eslint-disable-next-line max-len
-                                    ).to.be.revertedWith(
-                                        'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
-                                    );
+                                    ).to.be.reverted;
                                 });
                             });
 
@@ -2779,15 +2778,15 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should revert when attempting to query the source amount', async () => {
+                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
+                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             targetAmount
                                         )
-                                    ).to.be.revertedWith(
-                                        'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
-                                    );
+                                    ).to.be.reverted;
                                 });
 
                                 context('with a trading fee', () => {
@@ -2802,7 +2801,8 @@ describe('PoolCollection', () => {
                                         targetAmount = targetBalance
                                             .mul(PPM_RESOLUTION - tradingFeePPM)
                                             .div(PPM_RESOLUTION);
-                                        // Note that due to the integer-division, we expect:
+
+                                        // note that due to the integer-division, we expect:
                                         // - `targetAmount + feeAmount` to be slightly smaller than `targetBalance`
                                         // - `targetAmount + feeAmount + 1` to be equal to or larger than `targetBalance`
                                     });
@@ -2816,13 +2816,15 @@ describe('PoolCollection', () => {
                                     });
 
                                     it('should revert when attempting to query the source amount', async () => {
+                                        // TODO: test for the exact revert reason once the issue with ethers is fixed
+                                        // error: either division by zero or subtraction underflow
                                         await expect(
                                             poolCollection.tradeInputAndFeeByTargetAmount(
                                                 sourceToken.address,
                                                 targetToken.address,
                                                 targetAmount.add(1)
                                             )
-                                        ).to.be.revertedWith('reverted with panic code'); // either division by zero or subtraction underflow
+                                        ).to.be.reverted;
                                     });
                                 });
                             });
