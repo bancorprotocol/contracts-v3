@@ -34,11 +34,11 @@ describeDeployment(
         };
 
         const TOKENS = [
-            { symbol: TokenSymbol.TKN1, contractName: InstanceName.TestToken1 },
-            { symbol: TokenSymbol.TKN2, contractName: InstanceName.TestToken2 },
-            { symbol: TokenSymbol.TKN3, contractName: InstanceName.TestToken3 },
-            { symbol: TokenSymbol.TKN4, contractName: InstanceName.TestToken4, tradingDisabled: true },
-            { symbol: TokenSymbol.TKN5, contractName: InstanceName.TestToken5, depositingDisabled: true }
+            { symbol: TokenSymbol.TKN1, instanceName: InstanceName.TestToken1 },
+            { symbol: TokenSymbol.TKN2, instanceName: InstanceName.TestToken2 },
+            { symbol: TokenSymbol.TKN3, instanceName: InstanceName.TestToken3 },
+            { symbol: TokenSymbol.TKN4, instanceName: InstanceName.TestToken4, tradingDisabled: true },
+            { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true }
         ];
 
         before(async () => {
@@ -52,11 +52,11 @@ describeDeployment(
         });
 
         it('should deploy and configure a test network', async () => {
-            for (const { symbol, contractName, tradingDisabled, depositingDisabled } of TOKENS) {
+            for (const { symbol, instanceName, tradingDisabled, depositingDisabled } of TOKENS) {
                 const tokenData = new TokenData(symbol as TokenSymbol);
-                const testToken = await DeployedContracts[contractName].deployed();
+                const testToken = await DeployedContracts[instanceName].deployed();
 
-                const initialDeposit = (INITIAL_DEPOSITS as any)[contractName] as number;
+                const initialDeposit = (INITIAL_DEPOSITS as any)[instanceName] as number;
 
                 expect(await testToken.name()).to.equal(tokenData.name());
                 expect(await testToken.symbol()).to.equal(tokenData.symbol());

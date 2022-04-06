@@ -21,14 +21,14 @@ describeDeployment(__filename, () => {
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
 
         const pools = [];
-        for (const contractName of [
+        for (const instanceName of [
             InstanceName.TestToken1,
             InstanceName.TestToken2,
             InstanceName.TestToken3,
             InstanceName.TestToken4,
             InstanceName.TestToken5
         ]) {
-            pools.push((await DeployedContracts[contractName].deployed()).address);
+            pools.push((await DeployedContracts[instanceName].deployed()).address);
         }
 
         pools.push(NATIVE_TOKEN_ADDRESS);
