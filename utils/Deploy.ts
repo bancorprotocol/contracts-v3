@@ -188,6 +188,11 @@ interface SaveTypeOptions {
 const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
+    // don't attempt to save the types for legacy contracts
+    if (Object.keys(LegacyInstanceName).includes(name)) {
+        return;
+    }
+
     const { sourceName } = await getArtifact(contract);
     const contractSrcDir = path.dirname(sourceName);
 
