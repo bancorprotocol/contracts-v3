@@ -60,16 +60,18 @@ describeDeployment(__filename, () => {
             expect(data.depositLimit).to.equal(depositLimit);
             expect(data.tradingFeePPM).to.equal(TRADING_FEE);
 
-            const bntVirtualPrice = tokenPriceInCents;
-            const tokenVirtualPrice = BNT_TOKEN_PRICE_IN_CENTS;
-            const initialDeposit = minLiquidityForTrading.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
+            if (isMainnetFork()) {
+                const bntVirtualPrice = tokenPriceInCents;
+                const tokenVirtualPrice = BNT_TOKEN_PRICE_IN_CENTS;
+                const initialDeposit = minLiquidityForTrading.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
 
-            expect(data.liquidity.stakedBalance).to.equal(initialDeposit);
-            expect(data.liquidity.baseTokenTradingLiquidity).to.equal(
-                data.liquidity.bntTradingLiquidity.mul(tokenVirtualPrice).div(bntVirtualPrice)
-            );
+                expect(data.liquidity.stakedBalance).to.equal(initialDeposit);
+                expect(data.liquidity.baseTokenTradingLiquidity).to.equal(
+                    data.liquidity.bntTradingLiquidity.mul(tokenVirtualPrice).div(bntVirtualPrice)
+                );
 
-            expect(data.tradingEnabled).to.be.true;
+                expect(data.tradingEnabled).to.be.true;
+            }
         }
     });
 });
