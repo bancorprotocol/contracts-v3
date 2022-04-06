@@ -1,9 +1,10 @@
 import { BancorNetwork } from '../../components/Contracts';
 import { PoolType } from '../../utils/Constants';
-import { DeployedContracts, InstanceName } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, isMainnetFork } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
+import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
     let network: BancorNetwork;
@@ -20,7 +21,7 @@ describeDeployment(__filename, () => {
         expect(await network.poolCollections()).to.include(poolCollection.address);
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
 
-        const pools = [];
+        let pools = [];
         for (const instanceName of [
             InstanceName.TestToken1,
             InstanceName.TestToken2,
@@ -31,7 +32,10 @@ describeDeployment(__filename, () => {
             pools.push((await DeployedContracts[instanceName].deployed()).address);
         }
 
-        pools.push(NATIVE_TOKEN_ADDRESS);
+        if (isMainnetFork()) {
+            const { dai, link } = await getNamedAccounts();
+            pools = [...pools, NATIVE_TOKEN_ADDRESS, dai, link];
+        }
 
         expect(await network.liquidityPools()).to.deep.equal(pools);
 

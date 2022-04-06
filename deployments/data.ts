@@ -6,19 +6,23 @@ interface EnvOptions {
 
 const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
 
-const TestNamedAccounts = {
-    ethWhale: {
-        [DeploymentNetwork.Hardhat]: '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf',
-        [DeploymentNetwork.Tenderly]: '0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'
-    }
-};
-
 let counter = 0;
 const mainnet = (address: string, fallback?: string) => ({
     [DeploymentNetwork.Hardhat]: isForking ? address : fallback || counter++,
     [DeploymentNetwork.Mainnet]: address,
     [DeploymentNetwork.Tenderly]: address
 });
+
+const TestNamedAccounts = {
+    ethWhale: { ...mainnet('0xda9dfa130df4de4673b89022ee50ff26f6ea73cf', ZERO_ADDRESS) },
+    linkWhale: { ...mainnet('0xc6bed363b30df7f35b601a5547fe56cd31ec63da', ZERO_ADDRESS) },
+    daiWhale: { ...mainnet('0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503', ZERO_ADDRESS) }
+};
+
+const TokenNamedAccounts = {
+    dai: { ...mainnet('0x6b175474e89094c44da98b954eedeac495271d0f', ZERO_ADDRESS) },
+    link: { ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA', ZERO_ADDRESS) }
+};
 
 const LegacyNamedAccounts = {
     liquidityProtection: { ...mainnet('0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e', ZERO_ADDRESS) },
@@ -39,7 +43,9 @@ export const NamedAccounts = {
     deployer: { ...mainnet('0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E') },
     foundationMultisig: { ...mainnet('0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83') },
     daoMultisig: { ...mainnet('0x7e3692a6d8c34a762079fa9057aed87be7e67cb8') },
+
     ...LegacyNamedAccounts,
+    ...TokenNamedAccounts,
     ...TestNamedAccounts,
     ...UniswapNamedAccounts,
     ...SushiSwapNamedAccounts
