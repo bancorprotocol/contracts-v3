@@ -1,6 +1,6 @@
 import { BancorNetwork } from '../../components/Contracts';
 import { PoolType } from '../../utils/Constants';
-import { DeployedContracts, InstanceName, isMainnetFork } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
@@ -32,10 +32,8 @@ describeDeployment(__filename, () => {
             pools.push((await DeployedContracts[instanceName].deployed()).address);
         }
 
-        if (isMainnetFork()) {
-            const { dai, link } = await getNamedAccounts();
-            pools = [...pools, NATIVE_TOKEN_ADDRESS, dai, link];
-        }
+        const { dai, link } = await getNamedAccounts();
+        pools = [...pools, NATIVE_TOKEN_ADDRESS, dai, link];
 
         expect(await network.liquidityPools()).to.deep.equal(pools);
 
