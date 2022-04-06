@@ -60,13 +60,13 @@ describeDeployment(__filename, () => {
             expect(data.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
 
             if (isMainnetFork()) {
-                const bntVirtualPrice = tokenPriceInCents;
-                const tokenVirtualPrice = BNT_TOKEN_PRICE_IN_CENTS;
-                const initialDeposit = minLiquidityForTrading.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
+                const bntVirtualBalance = tokenPriceInCents;
+                const tokenVirtualBalance = BNT_TOKEN_PRICE_IN_CENTS;
+                const initialDeposit = minLiquidityForTrading.mul(tokenVirtualBalance).div(bntVirtualBalance).mul(3);
 
                 expect(data.liquidity.stakedBalance).to.equal(initialDeposit);
                 expect(data.liquidity.baseTokenTradingLiquidity).to.equal(
-                    data.liquidity.bntTradingLiquidity.mul(tokenVirtualPrice).div(bntVirtualPrice)
+                    data.liquidity.bntTradingLiquidity.mul(tokenVirtualBalance).div(bntVirtualBalance)
                 );
 
                 expect(data.tradingEnabled).to.be.true;

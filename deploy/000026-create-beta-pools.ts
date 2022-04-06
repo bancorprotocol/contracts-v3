@@ -112,9 +112,9 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         });
 
         if (isMainnetFork()) {
-            const bntVirtualPrice = tokenPriceInCents;
-            const tokenVirtualPrice = BNT_TOKEN_PRICE_IN_CENTS;
-            const initialDeposit = minLiquidityForTrading.mul(tokenVirtualPrice).div(bntVirtualPrice).mul(3);
+            const bntVirtualBalance = tokenPriceInCents;
+            const tokenVirtualBalance = BNT_TOKEN_PRICE_IN_CENTS;
+            const initialDeposit = minLiquidityForTrading.mul(tokenVirtualBalance).div(bntVirtualBalance).mul(3);
 
             if (!isNativeToken) {
                 const token = await Contracts.ERC20.attach(address);
@@ -132,7 +132,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             await execute({
                 name: InstanceName.PoolCollectionType1V1,
                 methodName: 'enableTrading',
-                args: [address, bntVirtualPrice, tokenVirtualPrice],
+                args: [address, bntVirtualBalance, tokenVirtualBalance],
                 from: deployer
             });
         }
