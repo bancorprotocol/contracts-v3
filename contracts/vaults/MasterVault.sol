@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -7,6 +7,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
@@ -65,9 +66,9 @@ contract MasterVault is IMasterVault, Vault {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure override returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

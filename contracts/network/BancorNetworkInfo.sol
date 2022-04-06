@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -161,9 +161,9 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     }
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

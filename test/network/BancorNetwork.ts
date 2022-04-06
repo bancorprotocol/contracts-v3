@@ -4,6 +4,7 @@ import Contracts, {
     IERC20,
     MasterVault,
     NetworkSettings,
+    PoolCollection,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
@@ -26,8 +27,9 @@ import {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
+import LegacyContractsV3, { BancorNetworkV1 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import { MAX_UINT256, PoolType, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
@@ -36,6 +38,7 @@ import {
     createBurnableToken,
     createPool,
     createPoolCollection,
+    createProxy,
     createSystem,
     createTestToken,
     createToken,
@@ -44,7 +47,8 @@ import {
     PoolSpec,
     setupFundedPool,
     specToString,
-    TokenWithAddress
+    TokenWithAddress,
+    upgradeProxy
 } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -279,7 +283,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(1);
+            expect(await network.version()).to.equal(2);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -292,6 +296,97 @@ describe('BancorNetwork', () => {
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
             expect(await network.isPoolValid(bnt.address)).to.be.true;
+        });
+    });
+
+    describe('upgrade', () => {
+        let network: BancorNetworkV1;
+
+        let networkSettings: NetworkSettings;
+        let bnt: IERC20;
+        let bntGovernance: TokenGovernance;
+        let vbntGovernance: TokenGovernance;
+        let bntPool: TestBNTPool;
+        let poolTokenFactory: PoolTokenFactory;
+        let poolMigrator: TestPoolMigrator;
+        let masterVault: MasterVault;
+        let externalProtectionVault: ExternalProtectionVault;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let bntPoolToken: PoolToken;
+        let poolCollection: PoolCollection;
+        let reserveToken: IERC20;
+
+        beforeEach(async () => {
+            ({
+                networkSettings,
+                bnt,
+                bntGovernance,
+                vbntGovernance,
+                bntPool,
+                poolTokenFactory,
+                poolMigrator,
+                masterVault,
+                externalProtectionVault,
+                pendingWithdrawals,
+                bntPoolToken
+            } = await createSystem());
+
+            network = await createProxy(LegacyContractsV3.BancorNetworkV1, {
+                initArgs: [bntPool.address, pendingWithdrawals.address, poolMigrator.address],
+                ctorArgs: [
+                    bntGovernance.address,
+                    vbntGovernance.address,
+                    networkSettings.address,
+                    masterVault.address,
+                    externalProtectionVault.address,
+                    bntPoolToken.address
+                ]
+            });
+
+            await masterVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+            await masterVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
+
+            await externalProtectionVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+            await externalProtectionVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
+
+            await bntPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+
+            poolCollection = await Contracts.PoolCollection.deploy(
+                network.address,
+                bnt.address,
+                networkSettings.address,
+                masterVault.address,
+                bntPool.address,
+                externalProtectionVault.address,
+                poolTokenFactory.address,
+                poolMigrator.address
+            );
+
+            await network.addPoolCollection(poolCollection.address);
+            reserveToken = await createTestToken();
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+            await network.createPool(await poolCollection.poolType(), reserveToken.address);
+        });
+
+        it('should upgrade and preserve existing settings', async () => {
+            const upgradedNetwork = await upgradeProxy(network, Contracts.TestBancorNetwork, {
+                ctorArgs: [
+                    bntGovernance.address,
+                    vbntGovernance.address,
+                    networkSettings.address,
+                    masterVault.address,
+                    externalProtectionVault.address,
+                    bntPoolToken.address
+                ]
+            });
+
+            expect(await upgradedNetwork.bntPool()).to.equal(bntPool.address);
+            expect(await upgradedNetwork.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
+
+            expect(await network.poolCollections()).to.include(poolCollection.address);
+            expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
+            expect(await network.liquidityPools()).to.have.members([reserveToken.address]);
+            expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
         });
     });
 
@@ -2943,7 +3038,7 @@ describe('BancorNetwork', () => {
                     poolCollection
                 ));
 
-                await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
+                await networkSettings.setFlashLoanFeePPM(token.address, flashLoanFeePPM);
 
                 await transfer(deployer, token, recipient.address, FEE_AMOUNT);
                 await recipient.snapshot(token.address);
