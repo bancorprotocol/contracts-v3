@@ -16,7 +16,7 @@ describeDeployment(__filename, () => {
     let vbntGovernance: TokenGovernance;
 
     const INITIAL_SUPPLY = toWei(1_000_000_000);
-    const vbntData = new TokenData(TokenSymbol.VBNT);
+    const vbntData = new TokenData(TokenSymbol.vBNT);
 
     before(async () => {
         ({ deployer, foundationMultisig, liquidityProtection } = await getNamedAccounts());

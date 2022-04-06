@@ -199,7 +199,7 @@ describe('Vault', () => {
                         token = bnt;
                         break;
 
-                    case TokenSymbol.VBNT:
+                    case TokenSymbol.vBNT:
                         token = vbnt;
                         break;
 
@@ -260,7 +260,7 @@ describe('Vault', () => {
             });
         };
 
-        for (const symbol of [TokenSymbol.BNT, TokenSymbol.VBNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
+        for (const symbol of [TokenSymbol.BNT, TokenSymbol.vBNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => testBurn(new TokenData(symbol)));
         }
     });
