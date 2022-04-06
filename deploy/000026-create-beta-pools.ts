@@ -1,7 +1,14 @@
 import Contracts from '../components/Contracts';
 import { PoolType } from '../utils/Constants';
-import { DeployedContracts, execute, InstanceName, isMainnetFork, setDeploymentMetadata } from '../utils/Deploy';
-import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
+import {
+    DeployedContracts,
+    execute,
+    InstanceName,
+    isHardhat,
+    isMainnetFork,
+    setDeploymentMetadata
+} from '../utils/Deploy';
+import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
 import { toPPM, toWei } from '../utils/Types';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
@@ -53,6 +60,25 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     for (const [tokenSymbol, { address, whale }] of Object.entries(BETA_TOKENS)) {
         const isNativeToken = tokenSymbol === BetaTokens.ETH;
+
+        // since we currently aren't using real ERC20 tokens during local unit testing, we'd use the overrides mechanism
+        // to ensure that these pools can be created (otherwise, the PoolTokenFactory contract will try to call either
+        // symbols() or decimals() and will revert)
+        if (!isNativeToken && isHardhat()) {
+            await execute({
+                name: InstanceName.PoolTokenFactory,
+                methodName: 'setTokenSymbolOverride',
+                args: [address, TokenSymbol.TKN],
+                from: deployer
+            });
+
+            await execute({
+                name: InstanceName.PoolTokenFactory,
+                methodName: 'setTokenDecimalsOverride',
+                args: [address, DEFAULT_DECIMALS],
+                from: deployer
+            });
+        }
 
         await execute({
             name: InstanceName.NetworkSettings,

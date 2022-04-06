@@ -20,8 +20,8 @@ const TestNamedAccounts = {
 };
 
 const TokenNamedAccounts = {
-    dai: { ...mainnet('0x6b175474e89094c44da98b954eedeac495271d0f', ZERO_ADDRESS) },
-    link: { ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA', ZERO_ADDRESS) }
+    dai: { ...mainnet('0x6b175474e89094c44da98b954eedeac495271d0f') },
+    link: { ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA') }
 };
 
 const LegacyNamedAccounts = {
