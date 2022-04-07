@@ -11,7 +11,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied } from "../utility/Utils.sol";
+import { Utils, AccessDenied, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
@@ -61,10 +61,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     error ArrayNotUnique();
     error EthAmountMismatch();
     error InsufficientFunds();
-    error InvalidParam();
     error PoolMismatch();
-    error ProgramAlreadyExists();
-    error ProgramDoesNotExist();
     error ProgramDisabled();
     error ProgramInactive();
     error RewardsTokenMismatch();
@@ -341,11 +338,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         // ensure that no program exists for the specific pool
         if (_isProgramActive(_programs[_latestProgramIdByPool[pool]])) {
-            revert ProgramAlreadyExists();
+            revert AlreadyExists();
         }
 
         IPoolToken poolToken;
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
@@ -357,7 +354,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         // ensure that the rewards were already deposited to the rewards vault
         uint256 unclaimedRewards = _unclaimedRewards[rewardsToken];
-        if (!_isBNT(rewardsToken)) {
+        if (!rewardsToken.isEqual(_bnt)) {
             if (rewardsToken.balanceOf(address(_externalRewardsVault)) < unclaimedRewards + totalRewards) {
                 revert InsufficientFunds();
             }
@@ -831,7 +828,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      */
     function _verifyProgramExists(ProgramData memory p) private pure {
         if (!_doesProgramExist(p)) {
-            revert ProgramDoesNotExist();
+            revert DoesNotExist();
         }
     }
 
@@ -941,18 +938,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      * @dev distributes reward
      */
     function _distributeRewards(address recipient, RewardData memory rewardData) private {
-        if (_isBNT(rewardData.rewardsToken)) {
+        if (rewardData.rewardsToken.isEqual(_bnt)) {
             _bntGovernance.mint(recipient, rewardData.amount);
         } else {
             _externalRewardsVault.withdrawFunds(rewardData.rewardsToken, payable(recipient), rewardData.amount);
         }
-    }
-
-    /**
-     * @dev returns whether the specified token is BNT
-     */
-    function _isBNT(Token token) private view returns (bool) {
-        return token.isEqual(_bnt);
     }
 
     /**

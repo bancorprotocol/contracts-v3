@@ -2675,7 +2675,7 @@ describe('BancorNetwork', () => {
                                     it('should revert when attempting to trade using same source and target tokens', async () => {
                                         await expect(
                                             tradeFunc(testAmount, { targetTokenAddress: sourceToken.address })
-                                        ).to.be.revertedWith('InvalidTokens');
+                                        ).to.be.revertedWith('InvalidToken');
                                     });
 
                                     it('should support a custom beneficiary', async () => {

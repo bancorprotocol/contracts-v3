@@ -8,7 +8,7 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied } from "../utility/Utils.sol";
+import { Utils, AccessDenied, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
@@ -47,9 +47,6 @@ contract AutoCompoundingStakingRewards is
     using TokenLibrary for Token;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    error ProgramDoesNotExist();
-    error ProgramAlreadyExists();
-    error InvalidParam();
     error InsufficientFunds();
 
     // the network contract
@@ -225,7 +222,7 @@ contract AutoCompoundingStakingRewards is
         uint32 endTime
     ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
-            revert ProgramAlreadyExists();
+            revert AlreadyExists();
         }
 
         IPoolToken poolToken;
@@ -285,7 +282,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
-            revert ProgramDoesNotExist();
+            revert DoesNotExist();
         }
 
         delete _programs[pool];
@@ -302,7 +299,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p = _programs[pool];
 
         if (!_doesProgramExist(p)) {
-            revert ProgramDoesNotExist();
+            revert DoesNotExist();
         }
 
         bool prevStatus = p.isEnabled;
