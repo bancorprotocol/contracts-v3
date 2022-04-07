@@ -229,7 +229,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         IPoolToken poolToken;
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
@@ -387,7 +387,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p,
         uint256 tokenAmountToDistribute
     ) private view returns (uint256) {
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             return _bntPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         }
 
@@ -407,17 +407,10 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @dev returns whether the specified token is BNT
-     */
-    function _isBNT(Token token) private view returns (bool) {
-        return token.isEqual(_bnt);
-    }
-
-    /**
      * @dev returns the rewards vault for a given pool
      */
     function _rewardsVault(Token pool) private view returns (IVault) {
-        return _isBNT(pool) ? IVault(_bntPool) : IVault(_externalRewardsVault);
+        return pool.isEqual(_bnt) ? IVault(_bntPool) : IVault(_externalRewardsVault);
     }
 
     /**
