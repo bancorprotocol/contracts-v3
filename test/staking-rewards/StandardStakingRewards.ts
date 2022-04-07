@@ -426,7 +426,7 @@ describe('StandardStakingRewards', () => {
                     );
                     expect(await standardStakingRewards.isProgramActive(id)).to.be.true;
                     expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
-                    expect(await standardStakingRewards.activeProgramId(pool.address)).to.equal(id);
+                    expect(await standardStakingRewards.currentProgramId(pool.address)).to.equal(id);
                     expect(await standardStakingRewards.unclaimedRewards(rewardsToken.address)).to.equal(
                         prevUnclaimedRewards.add(totalRewards)
                     );
