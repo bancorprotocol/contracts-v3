@@ -29,7 +29,7 @@ describeDeployment(__filename, () => {
         for (const pool of [bnt.address, NATIVE_TOKEN_ADDRESS, dai, link]) {
             const id = await standardStakingRewards.activeProgramId(pool);
 
-            // expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
+            expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
             expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
 
             const programs = await standardStakingRewards.programs([id]);
