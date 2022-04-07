@@ -48,7 +48,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "InvalidParam",
+    name: "InvalidInput",
     type: "error",
   },
   {
