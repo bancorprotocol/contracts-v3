@@ -18,11 +18,6 @@ struct Sint256 {
     bool isNeg;
 }
 
-function toUint128(uint256 x) pure returns (uint128) {
-    assert(x <= type(uint128).max);
-    return uint128(x);
-}
-
 /**
  * @dev this library provides a set of complex math operations
  */
@@ -159,6 +154,14 @@ library MathEx {
      */
     function toNeg256(uint256 n) internal pure returns (Sint256 memory) {
         return Sint256({ value: n, isNeg: true });
+    }
+
+    /**
+     * @dev returns a `uint128` representation of a `uint256` value if possible; reverts otherwise
+     */
+    function toUint128(uint256 x) internal pure returns (uint128) {
+        assert(x <= type(uint128).max);
+        return uint128(x);
     }
 
     /**
