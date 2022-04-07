@@ -20,7 +20,6 @@ struct ProgramData {
     IPoolToken poolToken;
     bool isEnabled;
     uint8 distributionType;
-    IVault rewardsVault;
     uint256 totalRewards;
     uint256 remainingRewards;
 }
@@ -56,7 +55,6 @@ interface IAutoCompoundingStakingRewards is IUpgradeable {
      */
     function createProgram(
         Token pool,
-        IVault rewardsVault,
         uint256 totalRewards,
         uint8 distributionType,
         uint32 startTime,

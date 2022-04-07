@@ -109,7 +109,7 @@ export const createAutoCompoundingStakingRewards = async (
     externalRewardsVault: ExternalRewardsVault
 ) => {
     const stakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-        ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address]
+        ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address, externalRewardsVault.address]
     });
 
     await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, stakingRewards.address);

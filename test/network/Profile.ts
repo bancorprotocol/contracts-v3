@@ -3,7 +3,6 @@ import Contracts, {
     ExternalRewardsVault,
     IERC20,
     IPoolToken,
-    IVault,
     MasterVault,
     NetworkSettings,
     PoolToken,
@@ -1238,7 +1237,6 @@ describe('Profile @profile', () => {
             totalRewards: BigNumberish
         ) => {
             let token: TokenWithAddress;
-            let rewardsVault: IVault;
 
             beforeEach(async () => {
                 ({ network, networkInfo, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } =
@@ -1247,8 +1245,6 @@ describe('Profile @profile', () => {
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                 ({ token } = await prepareSimplePool(tokenData, providerStake, totalRewards));
-
-                rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
 
                 autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
                     network,
@@ -1268,7 +1264,6 @@ describe('Profile @profile', () => {
 
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
-                            rewardsVault.address,
                             totalRewards,
                             distributionType,
                             startTime,
