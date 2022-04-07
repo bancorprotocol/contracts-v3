@@ -23,6 +23,7 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidType,
+    InvalidPoolCollection,
     NotEmpty
 } from "../utility/Utils.sol";
 
@@ -365,6 +366,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         onlyAdmin
         nonReentrant
     {
+        if (poolCollection == newLatestPoolCollection) {
+            revert InvalidPoolCollection();
+        }
+
         // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
         _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
 
