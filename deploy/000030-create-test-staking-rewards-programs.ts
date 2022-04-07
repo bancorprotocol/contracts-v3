@@ -52,7 +52,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         methodName: 'createProgram',
         args: [
             testToken5.address,
-            externalRewardsVault.address,
             TOTAL_REWARDS,
             StakingRewardsDistributionType.ExponentialDecay,
             now + PROGRAM_START_DELAY,
