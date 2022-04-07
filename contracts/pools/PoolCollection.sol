@@ -4,6 +4,7 @@ pragma solidity 0.8.13;
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
@@ -946,8 +947,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             amounts.poolTokenTotalSupply
         );
 
-        liquidity.baseTokenTradingLiquidity = MathEx.toUint128(amounts.newBaseTokenTradingLiquidity);
-        liquidity.bntTradingLiquidity = MathEx.toUint128(amounts.newBNTTradingLiquidity);
+        liquidity.baseTokenTradingLiquidity = SafeCast.toUint128(amounts.newBaseTokenTradingLiquidity);
+        liquidity.bntTradingLiquidity = SafeCast.toUint128(amounts.newBNTTradingLiquidity);
 
         if (amounts.bntProtocolHoldingsDelta.value > 0) {
             assert(amounts.bntProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
@@ -1203,8 +1204,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // update the liquidity data of the pool
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: MathEx.toUint128(action.newAmount),
-            baseTokenTradingLiquidity: MathEx.toUint128(baseTokenTradingLiquidity),
+            bntTradingLiquidity: SafeCast.toUint128(action.newAmount),
+            baseTokenTradingLiquidity: SafeCast.toUint128(baseTokenTradingLiquidity),
             stakedBalance: liquidity.stakedBalance
         });
 
@@ -1506,8 +1507,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // sync the reserve balances and process the network fee
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: MathEx.toUint128(result.isSourceBNT ? result.sourceBalance : result.targetBalance),
-            baseTokenTradingLiquidity: MathEx.toUint128(
+            bntTradingLiquidity: SafeCast.toUint128(result.isSourceBNT ? result.sourceBalance : result.targetBalance),
+            baseTokenTradingLiquidity: SafeCast.toUint128(
                 result.isSourceBNT ? result.targetBalance : result.sourceBalance
             ),
             stakedBalance: result.stakedBalance

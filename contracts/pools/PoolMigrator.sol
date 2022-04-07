@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { Pool, PoolLiquidity, IPoolCollection, AverageRate } from "./interfaces/IPoolCollection.sol";
@@ -9,7 +11,6 @@ import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Fraction } from "../utility/FractionLibrary.sol";
-import { MathEx } from "../utility/MathEx.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
 import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
@@ -153,8 +154,8 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
             averageRate: data.averageRate,
             depositLimit: data.depositLimit,
             liquidity: PoolLiquidity({
-                bntTradingLiquidity: MathEx.toUint128(data.liquidity.bntTradingLiquidity),
-                baseTokenTradingLiquidity: MathEx.toUint128(data.liquidity.baseTokenTradingLiquidity),
+                bntTradingLiquidity: SafeCast.toUint128(data.liquidity.bntTradingLiquidity),
+                baseTokenTradingLiquidity: SafeCast.toUint128(data.liquidity.baseTokenTradingLiquidity),
                 stakedBalance: data.liquidity.stakedBalance
             })
         });

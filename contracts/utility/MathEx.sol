@@ -157,14 +157,6 @@ library MathEx {
     }
 
     /**
-     * @dev returns a `uint128` representation of a `uint256` value if possible; reverts otherwise
-     */
-    function toUint128(uint256 x) internal pure returns (uint128) {
-        assert(x <= type(uint128).max);
-        return uint128(x);
-    }
-
-    /**
      * @dev returns the largest integer smaller than or equal to `x * y / z`
      */
     function mulDivF(
