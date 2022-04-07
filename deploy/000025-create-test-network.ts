@@ -23,11 +23,11 @@ const INITIAL_DEPOSITS = {
 };
 
 const TOKENS = [
-    { symbol: TokenSymbol.TKN1, contractName: InstanceName.TestToken1 },
-    { symbol: TokenSymbol.TKN2, contractName: InstanceName.TestToken2 },
-    { symbol: TokenSymbol.TKN3, contractName: InstanceName.TestToken3 },
-    { symbol: TokenSymbol.TKN4, contractName: InstanceName.TestToken4, tradingDisabled: true },
-    { symbol: TokenSymbol.TKN5, contractName: InstanceName.TestToken5, depositingDisabled: true }
+    { symbol: TokenSymbol.TKN1, instanceName: InstanceName.TestToken1 },
+    { symbol: TokenSymbol.TKN2, instanceName: InstanceName.TestToken2 },
+    { symbol: TokenSymbol.TKN3, instanceName: InstanceName.TestToken3 },
+    { symbol: TokenSymbol.TKN4, instanceName: InstanceName.TestToken4, tradingDisabled: true },
+    { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true }
 ];
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
@@ -35,17 +35,17 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
 
-    for (const { symbol, contractName, tradingDisabled, depositingDisabled } of TOKENS) {
+    for (const { symbol, instanceName, tradingDisabled, depositingDisabled } of TOKENS) {
         const tokenData = new TokenData(symbol);
 
         await deploy({
-            name: contractName,
+            name: instanceName,
             contract: 'TestERC20Token',
             args: [tokenData.name(), tokenData.symbol(), INITIAL_SUPPLY],
             from: deployer
         });
 
-        const testToken = await DeployedContracts[contractName].deployed();
+        const testToken = await DeployedContracts[instanceName].deployed();
 
         await execute({
             name: InstanceName.NetworkSettings,
@@ -82,10 +82,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             from: deployer
         });
 
-        const initialDeposit = (INITIAL_DEPOSITS as any)[contractName] as number;
+        const initialDeposit = (INITIAL_DEPOSITS as any)[instanceName] as number;
 
         await execute({
-            name: contractName,
+            name: instanceName,
             methodName: 'approve',
             args: [network.address, initialDeposit],
             from: deployer

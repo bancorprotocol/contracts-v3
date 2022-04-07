@@ -30,7 +30,7 @@
     "test:coverage:nightly": "NIGHTLY=1 yarn test:coverage",
     "test:ci": "CI=1 yarn test",
     "test:nightly": "NIGHTLY=1 CI=1 NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
-    "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 'test/deployment/**/*.ts'",
+    "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 --bail 'test/deployment/**/*.ts'",
     "test:deploy:fork": "FORKING=1 yarn test:deploy",
     "deploy": "hardhat deploy",
     "deploy:fork": "HARDHAT_NETWORK=tenderly yarn deploy",

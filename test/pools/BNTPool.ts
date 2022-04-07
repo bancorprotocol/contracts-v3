@@ -905,7 +905,7 @@ describe('BNTPool', () => {
 
                         await expect(
                             network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith(new TokenData(TokenSymbol.VBNT).errors().exceedsBalance);
+                        ).to.be.revertedWith(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
                     });
 
                     it('should revert when attempting to deposit without approving BNT', async () => {

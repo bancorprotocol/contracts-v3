@@ -1952,7 +1952,7 @@ describe('BancorNetwork', () => {
                 if (tokenData.isBNT()) {
                     it('should revert when attempting to withdraw without approving VBNT', async () => {
                         await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
-                            new TokenData(TokenSymbol.VBNT).errors().exceedsAllowance
+                            new TokenData(TokenSymbol.vBNT).errors().exceedsAllowance
                         );
                     });
                 }
@@ -1975,7 +1975,7 @@ describe('BancorNetwork', () => {
                                 .transfer(deployer.address, (await vbnt.balanceOf(provider.address)).sub(1));
 
                             await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
-                                new TokenData(TokenSymbol.VBNT).errors().exceedsBalance
+                                new TokenData(TokenSymbol.vBNT).errors().exceedsBalance
                             );
                         });
 

@@ -188,6 +188,11 @@ interface SaveTypeOptions {
 const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
+    // don't attempt to save the types for legacy contracts
+    if (Object.keys(LegacyInstanceName).includes(name)) {
+        return;
+    }
+
     const { sourceName } = await getArtifact(contract);
     const contractSrcDir = path.dirname(sourceName);
 
@@ -511,14 +516,33 @@ export const deploymentTagExists = async (tag: string) => {
     return !!migrations[tag];
 };
 
+const deploymentFileNameToTag = (filename: string) => Number(path.basename(filename).split('-')[0]).toString();
+
+export const getPreviousDeploymentTag = (tag: string) => {
+    const files = fs.readdirSync(config.paths.deploy[0]).sort();
+
+    const index = files.map((f) => deploymentFileNameToTag(f)).lastIndexOf(tag);
+    if (index === -1) {
+        throw new Error(`Unable to find deployment with tag ${tag}`);
+    }
+
+    return index === 0 ? undefined : deploymentFileNameToTag(files[index - 1]);
+};
+
+export const getLatestDeploymentTag = () => {
+    const files = fs.readdirSync(config.paths.deploy[0]).sort();
+    return Number(files[files.length - 1].split('-')[0]).toString();
+};
+
 export const deploymentMetadata = (filename: string) => {
     const id = path.basename(filename).split('.')[0];
-    const order = Number(id.split('-')[0]);
+    const tag = deploymentFileNameToTag(filename);
+    const prevTag = getPreviousDeploymentTag(tag);
 
     return {
         id,
-        tag: order.toString(),
-        dependency: order === 1 ? undefined : (order - 1).toString()
+        tag,
+        dependency: prevTag
     };
 };
 
@@ -530,9 +554,4 @@ export const setDeploymentMetadata = (filename: string, func: DeployFunction) =>
     func.dependencies = dependency ? [dependency] : undefined;
 
     return func;
-};
-
-export const getLatestDeploymentTag = () => {
-    const files = fs.readdirSync(config.paths.deploy[0]).sort();
-    return Number(files[files.length - 1].split('-')[0]).toString();
 };

@@ -18,7 +18,7 @@ const INITIAL_SUPPLY = toWei(1_000_000_000);
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, foundationMultisig } = await getNamedAccounts();
 
-    const vbntData = new TokenData(TokenSymbol.VBNT);
+    const vbntData = new TokenData(TokenSymbol.vBNT);
     const vbnt = await deploy({
         name: InstanceName.VBNT,
         contract: 'DSToken',
