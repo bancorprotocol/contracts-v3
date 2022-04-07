@@ -63,7 +63,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     error DeadlineExpired();
     error EthAmountMismatch();
     error InsufficientFlashLoanReturn();
-    error InvalidTokens();
 
     struct TradeParams {
         uint256 amount;
@@ -1103,7 +1102,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _validAddress(address(targetToken));
 
         if (sourceToken == targetToken) {
-            revert InvalidTokens();
+            revert InvalidToken();
         }
 
         _greaterThanZero(amount);

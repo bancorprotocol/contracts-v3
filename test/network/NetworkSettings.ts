@@ -328,11 +328,11 @@ describe('NetworkSettings', () => {
             it('should revert when setting multiple pool limits with invalid input', async () => {
                 await expect(
                     networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit, poolFundingLimit])
-                ).to.be.revertedWith('InvalidInput');
+                ).to.be.revertedWith('InvalidParam');
 
                 await expect(
                     networkSettings.setFundingLimits([reserveToken.address, reserveToken.address], [poolFundingLimit])
-                ).to.be.revertedWith('InvalidInput');
+                ).to.be.revertedWith('InvalidParam');
             });
         });
     });

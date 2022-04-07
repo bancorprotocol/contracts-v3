@@ -94,7 +94,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "InvalidTokens",
+    name: "InvalidToken",
     type: "error",
   },
   {

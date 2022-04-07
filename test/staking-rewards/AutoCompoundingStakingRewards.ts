@@ -305,7 +305,7 @@ describe('AutoCompoundingStakingRewards', () => {
                                 START_TIME,
                                 END_TIME
                             )
-                        ).to.revertedWith('ProgramAlreadyExists');
+                        ).to.revertedWith('AlreadyExists');
                     });
 
                     it('should revert when the staking rewards contract does not have access to the external rewards vault', async () => {
@@ -462,7 +462,7 @@ describe('AutoCompoundingStakingRewards', () => {
                     context('when a program does not exist', () => {
                         it('should revert', async () => {
                             await expect(autoCompoundingStakingRewards.terminateProgram(token.address)).to.revertedWith(
-                                'ProgramDoesNotExist'
+                                'DoesNotExist'
                             );
                         });
                     });
@@ -558,10 +558,10 @@ describe('AutoCompoundingStakingRewards', () => {
 
                         await expect(
                             autoCompoundingStakingRewards.enableProgram(newToken.address, true)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                        ).to.be.revertedWith('DoesNotExist');
                         await expect(
                             autoCompoundingStakingRewards.enableProgram(newToken.address, false)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                        ).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should enable a program', async () => {
