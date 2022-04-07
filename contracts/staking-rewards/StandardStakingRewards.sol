@@ -342,7 +342,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         }
 
         IPoolToken poolToken;
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
@@ -354,7 +354,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         // ensure that the rewards were already deposited to the rewards vault
         uint256 unclaimedRewards = _unclaimedRewards[rewardsToken];
-        if (!_isBNT(rewardsToken)) {
+        if (!rewardsToken.isEqual(_bnt)) {
             if (rewardsToken.balanceOf(address(_externalRewardsVault)) < unclaimedRewards + totalRewards) {
                 revert InsufficientFunds();
             }
@@ -938,18 +938,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      * @dev distributes reward
      */
     function _distributeRewards(address recipient, RewardData memory rewardData) private {
-        if (_isBNT(rewardData.rewardsToken)) {
+        if (rewardData.rewardsToken.isEqual(_bnt)) {
             _bntGovernance.mint(recipient, rewardData.amount);
         } else {
             _externalRewardsVault.withdrawFunds(rewardData.rewardsToken, payable(recipient), rewardData.amount);
         }
-    }
-
-    /**
-     * @dev returns whether the specified token is BNT
-     */
-    function _isBNT(Token token) private view returns (bool) {
-        return token.isEqual(_bnt);
     }
 
     /**

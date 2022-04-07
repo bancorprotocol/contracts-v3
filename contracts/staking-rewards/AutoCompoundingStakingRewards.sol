@@ -228,7 +228,7 @@ contract AutoCompoundingStakingRewards is
         }
 
         IPoolToken poolToken;
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             if (rewardsVault != _bntPool) {
                 revert InvalidParam();
             }
@@ -399,7 +399,7 @@ contract AutoCompoundingStakingRewards is
         ProgramData memory p,
         uint256 tokenAmountToDistribute
     ) private view returns (uint256) {
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             return _bntPool.poolTokenAmountToBurn(tokenAmountToDistribute);
         }
 
@@ -416,13 +416,6 @@ contract AutoCompoundingStakingRewards is
      */
     function _doesProgramExist(ProgramData memory p) private pure returns (bool) {
         return address(p.poolToken) != address(0);
-    }
-
-    /**
-     * @dev returns whether the specified token is BNT
-     */
-    function _isBNT(Token token) private view returns (bool) {
-        return token.isEqual(_bnt);
     }
 
     /**

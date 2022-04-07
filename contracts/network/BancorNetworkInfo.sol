@@ -239,7 +239,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      * @inheritdoc IBancorNetworkInfo
      */
     function poolToken(Token pool) external view returns (IPoolToken) {
-        return _isBNT(pool) ? _bntPoolToken : _poolCollection(pool).poolToken(pool);
+        return pool.isEqual(_bnt) ? _bntPoolToken : _poolCollection(pool).poolToken(pool);
     }
 
     /**
@@ -290,7 +290,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
         return
-            _isBNT(pool)
+            pool.isEqual(_bnt)
                 ? _bntPool.poolTokenToUnderlying(poolTokenAmount)
                 : _poolCollection(pool).poolTokenToUnderlying(pool, poolTokenAmount);
     }
@@ -300,7 +300,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      */
     function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
         return
-            _isBNT(pool)
+            pool.isEqual(_bnt)
                 ? _bntPool.underlyingToPoolToken(tokenAmount)
                 : _poolCollection(pool).underlyingToPoolToken(pool, tokenAmount);
     }
@@ -315,7 +315,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         greaterThanZero(poolTokenAmount)
         returns (WithdrawalAmounts memory)
     {
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
             return WithdrawalAmounts({ totalAmount: amount, baseTokenAmount: 0, bntAmount: amount });
         }
@@ -334,8 +334,8 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         uint256 amount,
         bool bySourceAmount
     ) private view returns (uint256) {
-        bool isSourceBNT = _isBNT(sourceToken);
-        bool isTargetBNT = _isBNT(targetToken);
+        bool isSourceBNT = sourceToken.isEqual(_bnt);
+        bool isTargetBNT = targetToken.isEqual(_bnt);
 
         // return the trade amount when trading BNT
         if (isSourceBNT || isTargetBNT) {
@@ -385,12 +385,5 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         }
 
         return poolCollection;
-    }
-
-    /**
-     * @dev returns whether the specified token is BNT
-     */
-    function _isBNT(Token token) private view returns (bool) {
-        return token.isEqual(_bnt);
     }
 }
