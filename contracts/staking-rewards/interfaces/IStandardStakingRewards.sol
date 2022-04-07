@@ -60,10 +60,9 @@ interface IStandardStakingRewards is IUpgradeable {
     function isProgramEnabled(uint256 id) external view returns (bool);
 
     /**
-     * @dev returns the ID of the current program of a given pool (or 0 if no program is currently active for the given
-     * pool)
+     * @dev returns the ID of the latest program for a given pool (or 0 if no program is currently set)
      */
-    function currentProgramId(Token pool) external view returns (uint256);
+    function latestProgramId(Token pool) external view returns (uint256);
 
     /**
      * @dev creates a program for a pool and returns its ID

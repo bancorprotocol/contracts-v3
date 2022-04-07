@@ -103,8 +103,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     // a mapping between program IDs and program data
     mapping(uint256 => ProgramData) internal _programs;
 
-    // a mapping between pools and their current programs
-    mapping(Token => uint256) private _currentProgramIdByPool;
+    // a mapping between pools and their latest programs
+    mapping(Token => uint256) private _latestProgramIdByPool;
 
     // a mapping between programs and their respective rewards data
     mapping(uint256 => Rewards) internal _programRewards;
@@ -312,8 +312,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function currentProgramId(Token pool) external view returns (uint256) {
-        return _currentProgramIdByPool[pool];
+    function latestProgramId(Token pool) external view returns (uint256) {
+        return _latestProgramIdByPool[pool];
     }
 
     /**
@@ -339,8 +339,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             revert InvalidParam();
         }
 
-        // ensure that no active program exists for the specific pool
-        if (_isProgramActive(_programs[_currentProgramIdByPool[pool]])) {
+        // ensure that no program exists for the specific pool
+        if (_isProgramActive(_programs[_latestProgramIdByPool[pool]])) {
             revert ProgramAlreadyExists();
         }
 
@@ -376,8 +376,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             rewardRate: totalRewards / (endTime - startTime)
         });
 
-        // set the program as the current programs of the pool
-        _currentProgramIdByPool[pool] = id;
+        // set the program as the latest program of the pool
+        _latestProgramIdByPool[pool] = id;
 
         // increase the unclaimed rewards for the token by the total rewards in the new program
         _unclaimedRewards[rewardsToken] = unclaimedRewards + totalRewards;
@@ -402,8 +402,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         _verifyProgramActive(p);
 
-        // unset the program as the current program of the pool
-        delete _currentProgramIdByPool[p.pool];
+        // unset the program from being the latest program of the pool
+        delete _latestProgramIdByPool[p.pool];
 
         // reduce the unclaimed rewards for the token by the remaining rewards
         uint256 remainingRewards = _remainingRewards(p);
@@ -809,7 +809,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             _doesProgramExist(p) &&
             p.startTime <= currTime &&
             currTime <= p.endTime &&
-            _currentProgramIdByPool[p.pool] == p.id;
+            _latestProgramIdByPool[p.pool] == p.id;
     }
 
     /**
