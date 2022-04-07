@@ -17,8 +17,8 @@ import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
 import { IPoolMigrator } from "./IPoolMigrator.sol";
 
 struct PoolLiquidity {
-    uint256 bntTradingLiquidity; // the BNT trading liquidity
-    uint256 baseTokenTradingLiquidity; // the base token trading liquidity
+    uint128 bntTradingLiquidity; // the BNT trading liquidity
+    uint128 baseTokenTradingLiquidity; // the base token trading liquidity
     uint256 stakedBalance; // the staked balance
 }
 

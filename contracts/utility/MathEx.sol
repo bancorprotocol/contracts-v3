@@ -18,6 +18,11 @@ struct Sint256 {
     bool isNeg;
 }
 
+function toUint128(uint256 x) pure returns (uint128) {
+    assert(x <= type(uint128).max);
+    return uint128(x);
+}
+
 /**
  * @dev this library provides a set of complex math operations
  */

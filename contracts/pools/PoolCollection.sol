@@ -17,7 +17,7 @@ import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
 import { Fraction, Fraction112, FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
-import { Sint256, MathEx } from "../utility/MathEx.sol";
+import { Sint256, MathEx, toUint128 } from "../utility/MathEx.sol";
 
 // prettier-ignore
 import {
@@ -946,8 +946,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             amounts.poolTokenTotalSupply
         );
 
-        liquidity.baseTokenTradingLiquidity = amounts.newBaseTokenTradingLiquidity;
-        liquidity.bntTradingLiquidity = amounts.newBNTTradingLiquidity;
+        liquidity.baseTokenTradingLiquidity = toUint128(amounts.newBaseTokenTradingLiquidity);
+        liquidity.bntTradingLiquidity = toUint128(amounts.newBNTTradingLiquidity);
 
         if (amounts.bntProtocolHoldingsDelta.value > 0) {
             assert(amounts.bntProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
@@ -1203,8 +1203,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // update the liquidity data of the pool
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: action.newAmount,
-            baseTokenTradingLiquidity: baseTokenTradingLiquidity,
+            bntTradingLiquidity: toUint128(action.newAmount),
+            baseTokenTradingLiquidity: toUint128(baseTokenTradingLiquidity),
             stakedBalance: liquidity.stakedBalance
         });
 
@@ -1506,8 +1506,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // sync the reserve balances and process the network fee
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: result.isSourceBNT ? result.sourceBalance : result.targetBalance,
-            baseTokenTradingLiquidity: result.isSourceBNT ? result.targetBalance : result.sourceBalance,
+            bntTradingLiquidity: toUint128(result.isSourceBNT ? result.sourceBalance : result.targetBalance),
+            baseTokenTradingLiquidity: toUint128(result.isSourceBNT ? result.targetBalance : result.sourceBalance),
             stakedBalance: result.stakedBalance
         });
 

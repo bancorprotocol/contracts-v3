@@ -12,6 +12,7 @@ import { Fraction } from "../utility/FractionLibrary.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
 import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
+import { toUint128 } from "../utility/MathEx.sol";
 
 interface IPoolCollectionBase {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
@@ -152,8 +153,8 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
             averageRate: data.averageRate,
             depositLimit: data.depositLimit,
             liquidity: PoolLiquidity({
-                bntTradingLiquidity: data.liquidity.bntTradingLiquidity,
-                baseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity,
+                bntTradingLiquidity: toUint128(data.liquidity.bntTradingLiquidity),
+                baseTokenTradingLiquidity: toUint128(data.liquidity.baseTokenTradingLiquidity),
                 stakedBalance: data.liquidity.stakedBalance
             })
         });
