@@ -6,10 +6,9 @@ import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
-import { ethers, getNamedAccounts } from 'hardhat';
+import { getNamedAccounts } from 'hardhat';
 
 // TODO: make sure to update the starting time of all beta programs
-const PROGRAM_START_DELAY = duration.hours(1);
 const PROGRAM_DURATION = duration.weeks(4);
 const TOTAL_REWARDS = toWei(40_000);
 
