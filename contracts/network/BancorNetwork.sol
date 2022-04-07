@@ -480,7 +480,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev creates a new pool
      */
     function _createPool(uint16 poolType, Token token) private validAddress(address(token)) {
-        if (_isBNT(token)) {
+        if (token.isEqual(_bnt)) {
             revert InvalidToken();
         }
 
@@ -780,7 +780,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         nonReentrant
     {
-        if (!_isBNT(token) && !_networkSettings.isTokenWhitelisted(token)) {
+        if (!token.isEqual(_bnt) && !_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
 
@@ -809,7 +809,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // notify the pool of accrued fees
-        if (_isBNT(token)) {
+        if (token.isEqual(_bnt)) {
             IBNTPool cachedBNTPool = _bntPool;
 
             cachedBNTPool.onFeesCollected(token, feeAmount, false);
@@ -836,7 +836,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             abi.encodePacked(msg.sender, _time(), token, provider, amount, availableAmount, originalAmount)
         );
 
-        if (_isBNT(token)) {
+        if (token.isEqual(_bnt)) {
             _depositBNTFor(contextId, provider, amount, msg.sender, true, originalAmount);
         } else {
             _depositBaseTokenFor(contextId, provider, token, amount, msg.sender, availableAmount);
@@ -960,7 +960,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, caller);
 
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             return _depositBNTFor(contextId, provider, tokenAmount, caller, false, 0);
         }
 
@@ -1154,9 +1154,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // perform either a single or double hop trade, based on the source and the target pool
         TradeAmountAndNetworkFee memory tradeResult;
-        if (_isBNT(sourceToken)) {
+        if (sourceToken.isEqual(_bnt)) {
             tradeResult = _tradeBNT(contextId, targetToken, true, params, trader);
-        } else if (_isBNT(targetToken)) {
+        } else if (targetToken.isEqual(_bnt)) {
             tradeResult = _tradeBNT(contextId, sourceToken, false, params, trader);
         } else {
             tradeResult = _tradeBaseTokens(contextId, sourceToken, targetToken, params, trader);
@@ -1353,13 +1353,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         return poolCollection;
-    }
-
-    /**
-     * @dev returns whether the specified token is the BNT
-     */
-    function _isBNT(Token token) private view returns (bool) {
-        return token.isEqual(_bnt);
     }
 
     /**
