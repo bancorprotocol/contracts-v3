@@ -487,7 +487,7 @@ describe('StandardStakingRewards', () => {
                                 startTime,
                                 endTime
                             )
-                        ).to.be.revertedWith('ProgramAlreadyExists');
+                        ).to.be.revertedWith('AlreadyExists');
                     });
 
                     context('when the active program was disabled', () => {
@@ -504,7 +504,7 @@ describe('StandardStakingRewards', () => {
                                     startTime,
                                     endTime
                                 )
-                            ).to.be.revertedWith('ProgramAlreadyExists');
+                            ).to.be.revertedWith('AlreadyExists');
                         });
                     });
 
@@ -616,7 +616,7 @@ describe('StandardStakingRewards', () => {
             });
 
             it('should revert when attempting to terminate a non-existing program', async () => {
-                await expect(standardStakingRewards.terminateProgram(1)).to.be.revertedWith('ProgramDoesNotExist');
+                await expect(standardStakingRewards.terminateProgram(1)).to.be.revertedWith('DoesNotExist');
             });
 
             context('with an active program', () => {
@@ -737,7 +737,7 @@ describe('StandardStakingRewards', () => {
             it('should revert when attempting to enable/disable a non-existing program', async () => {
                 for (const status of [true, false]) {
                     await expect(standardStakingRewards.enableProgram(1, status)).to.be.revertedWith(
-                        'ProgramDoesNotExist'
+                        'DoesNotExist'
                     );
                 }
             });
@@ -912,7 +912,7 @@ describe('StandardStakingRewards', () => {
                     };
 
                     it('should revert when attempting to join a non-existing program', async () => {
-                        await expect(join(0, 1)).to.be.revertedWith('ProgramDoesNotExist');
+                        await expect(join(0, 1)).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to join with an invalid amount', async () => {
@@ -1163,7 +1163,7 @@ describe('StandardStakingRewards', () => {
 
                 it('should revert when attempting to leave a non-existing program', async () => {
                     await expect(standardStakingRewards.connect(provider).leave(0, 1)).to.be.revertedWith(
-                        'ProgramDoesNotExist'
+                        'DoesNotExist'
                     );
                 });
 
@@ -1462,7 +1462,7 @@ describe('StandardStakingRewards', () => {
                     };
 
                     it('should revert when attempting to deposit and join a non-existing program', async () => {
-                        await expect(depositAndJoin(0, 1)).to.be.revertedWith('ProgramDoesNotExist');
+                        await expect(depositAndJoin(0, 1)).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to deposit and join with an invalid amount', async () => {
@@ -1972,21 +1972,21 @@ describe('StandardStakingRewards', () => {
                     it('should revert when attempting to claim rewards for non-existing programs', async () => {
                         await expect(
                             standardStakingRewards.connect(provider).claimRewards([10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                        ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
                             standardStakingRewards.connect(provider).claimRewards([programData.id, 10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                        ).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to stake rewards for non-existing programs', async () => {
                         await expect(
                             standardStakingRewards.connect(provider).stakeRewards([10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                        ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
                             standardStakingRewards.connect(provider).stakeRewards([programData.id, 10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                        ).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to claim rewards with duplicate ids', async () => {
