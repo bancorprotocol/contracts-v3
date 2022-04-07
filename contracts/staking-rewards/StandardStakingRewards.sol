@@ -11,7 +11,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied } from "../utility/Utils.sol";
+import { Utils, AccessDenied, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
@@ -61,10 +61,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     error ArrayNotUnique();
     error EthAmountMismatch();
     error InsufficientFunds();
-    error InvalidParam();
     error PoolMismatch();
-    error ProgramAlreadyExists();
-    error ProgramDoesNotExist();
     error ProgramDisabled();
     error ProgramInactive();
     error RewardsTokenMismatch();
@@ -341,7 +338,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
 
         // ensure that no active program exists for the specific pool
         if (_isProgramActive(_programs[_activeProgramIdByPool[pool]])) {
-            revert ProgramAlreadyExists();
+            revert AlreadyExists();
         }
 
         IPoolToken poolToken;
@@ -831,7 +828,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      */
     function _verifyProgramExists(ProgramData memory p) private pure {
         if (!_doesProgramExist(p)) {
-            revert ProgramDoesNotExist();
+            revert DoesNotExist();
         }
     }
 

@@ -16,7 +16,7 @@ import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { InvalidToken, Utils } from "../utility/Utils.sol";
+import { Utils, InvalidToken } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
@@ -31,8 +31,6 @@ import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
  */
 contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     using TokenLibrary for Token;
-
-    error InvalidTokens();
 
     // the address of the network
     IBancorNetwork private immutable _network;
@@ -156,7 +154,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
         _validAddress(address(targetToken));
 
         if (sourceToken == targetToken) {
-            revert InvalidTokens();
+            revert InvalidToken();
         }
     }
 

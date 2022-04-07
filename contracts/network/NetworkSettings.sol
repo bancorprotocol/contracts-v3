@@ -6,7 +6,7 @@ import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AlreadyExists, DoesNotExist, InvalidInput } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, DoesNotExist, InvalidParam } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
@@ -246,7 +246,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     function setFundingLimits(Token[] calldata pools, uint256[] calldata amounts) external onlyAdmin {
         uint256 length = pools.length;
         if (length != amounts.length) {
-            revert InvalidInput();
+            revert InvalidParam();
         }
 
         for (uint256 i = 0; i < length; i++) {
