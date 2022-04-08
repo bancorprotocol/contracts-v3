@@ -16,12 +16,13 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
 import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IBNTPool, ROLE_BNT_POOL_TOKEN_MANAGER } from "../pools/interfaces/IBNTPool.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IVault, ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
+import { IVault } from "../vaults/interfaces/IVault.sol";
+import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
 // prettier-ignore
 import {
@@ -63,6 +64,9 @@ contract AutoCompoundingStakingRewards is
     // the BNT pool token contract
     IPoolToken private immutable _bntPoolToken;
 
+    // the address of the external rewards vault
+    IExternalRewardsVault private immutable _externalRewardsVault;
+
     // a mapping between pools and programs
     mapping(Token => ProgramData) private _programs;
 
@@ -78,7 +82,6 @@ contract AutoCompoundingStakingRewards is
     event ProgramCreated(
         Token indexed pool,
         uint8 indexed distributionType,
-        IVault rewardsVault,
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
@@ -111,18 +114,21 @@ contract AutoCompoundingStakingRewards is
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         IERC20 initBNT,
-        IBNTPool initBNTPool
+        IBNTPool initBNTPool,
+        IExternalRewardsVault initExternalRewardsVault
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initBNT))
         validAddress(address(initBNTPool))
+        validAddress(address(initExternalRewardsVault))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
         _bnt = initBNT;
         _bntPool = initBNTPool;
         _bntPoolToken = initBNTPool.poolToken();
+        _externalRewardsVault = initExternalRewardsVault;
     }
 
     /**
@@ -210,41 +216,21 @@ contract AutoCompoundingStakingRewards is
      */
     function createProgram(
         Token pool,
-        IVault rewardsVault,
         uint256 totalRewards,
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    )
-        external
-        validAddress(address(pool))
-        validAddress(address(rewardsVault))
-        greaterThanZero(totalRewards)
-        onlyAdmin
-        nonReentrant
-    {
+    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert AlreadyExists();
         }
 
         IPoolToken poolToken;
         if (pool.isEqual(_bnt)) {
-            if (rewardsVault != _bntPool) {
-                revert InvalidParam();
-            }
-
-            if (!rewardsVault.hasRole(ROLE_BNT_POOL_TOKEN_MANAGER, address(this))) {
-                revert AccessDenied();
-            }
-
             poolToken = _bntPoolToken;
         } else {
             if (!_networkSettings.isTokenWhitelisted(pool)) {
                 revert NotWhitelisted();
-            }
-
-            if (!rewardsVault.hasRole(ROLE_ASSET_MANAGER, address(this))) {
-                revert AccessDenied();
             }
 
             poolToken = _network.collectionByPool(pool).poolToken(pool);
@@ -270,12 +256,11 @@ contract AutoCompoundingStakingRewards is
             poolToken: poolToken,
             isEnabled: true,
             distributionType: distributionType,
-            rewardsVault: rewardsVault,
             totalRewards: totalRewards,
             remainingRewards: totalRewards
         });
 
-        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, rewardsVault);
+        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, _rewardsVault(pool));
 
         _programs[pool] = p;
 
@@ -284,7 +269,6 @@ contract AutoCompoundingStakingRewards is
         emit ProgramCreated({
             pool: pool,
             distributionType: distributionType,
-            rewardsVault: rewardsVault,
             totalRewards: totalRewards,
             startTime: startTime,
             endTime: endTime
@@ -350,8 +334,9 @@ contract AutoCompoundingStakingRewards is
             return;
         }
 
-        _verifyFunds(poolTokenAmountToBurn, p.poolToken, p.rewardsVault);
-        p.rewardsVault.burn(Token(address(p.poolToken)), poolTokenAmountToBurn);
+        IVault rewardsVault = _rewardsVault(pool);
+        _verifyFunds(poolTokenAmountToBurn, p.poolToken, rewardsVault);
+        rewardsVault.burn(Token(address(p.poolToken)), poolTokenAmountToBurn);
 
         p.remainingRewards -= tokenAmountToDistribute;
         p.prevDistributionTimestamp = currTime;
@@ -407,7 +392,7 @@ contract AutoCompoundingStakingRewards is
             _network.collectionByPool(pool).poolTokenAmountToBurn(
                 pool,
                 tokenAmountToDistribute,
-                p.poolToken.balanceOf(address(p.rewardsVault))
+                p.poolToken.balanceOf(address(_externalRewardsVault))
             );
     }
 
@@ -416,6 +401,13 @@ contract AutoCompoundingStakingRewards is
      */
     function _doesProgramExist(ProgramData memory p) private pure returns (bool) {
         return address(p.poolToken) != address(0);
+    }
+
+    /**
+     * @dev returns the rewards vault for a given pool
+     */
+    function _rewardsVault(Token pool) private view returns (IVault) {
+        return pool.isEqual(_bnt) ? IVault(_bntPool) : IVault(_externalRewardsVault);
     }
 
     /**
