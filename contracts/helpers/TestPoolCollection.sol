@@ -67,7 +67,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         view
         returns (InternalWithdrawalAmounts memory)
     {
-        return _poolWithdrawalAmounts(pool, poolTokenAmount);
+        return _poolWithdrawalAmounts(pool, _poolData[pool], poolTokenAmount);
     }
 
     function mintPoolTokenT(
