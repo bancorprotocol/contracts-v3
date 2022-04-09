@@ -1170,7 +1170,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 targetAmount: lastHopTradeResult.targetAmount,
                 bntAmount: fromBNT ? lastHopTradeResult.sourceAmount : lastHopTradeResult.targetAmount,
                 targetFeeAmount: lastHopTradeResult.tradingFeeAmount,
-                bntFeeAmount: fromBNT ? lastHopTradeResult.networkFeeAmount : lastHopTradeResult.tradingFeeAmount,
+                bntFeeAmount: fromBNT ? 0 : lastHopTradeResult.tradingFeeAmount,
                 trader: traderInfo.trader
             });
         } else {

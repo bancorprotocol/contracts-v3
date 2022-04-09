@@ -2429,7 +2429,7 @@ describe('BancorNetwork', () => {
                         targetAmount,
                         sourceAmount,
                         hop2.tradingFeeAmount,
-                        hop2.networkFeeAmount,
+                        0,
                         traderAddress
                     );
             } else if (isTargetBNT) {
