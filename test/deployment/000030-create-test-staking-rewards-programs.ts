@@ -32,7 +32,7 @@ describeDeployment(__filename, () => {
     });
 
     it('should create test staking rewards programs', async () => {
-        const id = await standardStakingRewards.activeProgramId(testToken1.address);
+        const id = await standardStakingRewards.latestProgramId(testToken1.address);
         expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
         expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
 

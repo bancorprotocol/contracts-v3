@@ -27,7 +27,7 @@ describeDeployment(__filename, () => {
         const { dai, link } = await getNamedAccounts();
 
         for (const pool of [bnt.address, NATIVE_TOKEN_ADDRESS, dai, link]) {
-            const id = await standardStakingRewards.activeProgramId(pool);
+            const id = await standardStakingRewards.latestProgramId(pool);
 
             expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
             expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
