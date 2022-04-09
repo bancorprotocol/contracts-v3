@@ -406,7 +406,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IPoolCollection
      */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
-        Pool memory data = _poolData[pool];
+        Pool storage data = _poolData[pool];
 
         return _poolTokenToUnderlying(poolTokenAmount, data.poolToken.totalSupply(), data.liquidity.stakedBalance);
     }
@@ -415,7 +415,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IPoolCollection
      */
     function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
-        Pool memory data = _poolData[pool];
+        Pool storage data = _poolData[pool];
 
         return _underlyingToPoolToken(tokenAmount, data.poolToken.totalSupply(), data.liquidity.stakedBalance);
     }
@@ -432,7 +432,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             return 0;
         }
 
-        Pool memory data = _poolData[pool];
+        Pool storage data = _poolData[pool];
 
         uint256 poolTokenSupply = data.poolToken.totalSupply();
         uint256 val = tokenAmountToDistribute * poolTokenSupply;
