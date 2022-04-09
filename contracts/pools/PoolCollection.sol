@@ -378,7 +378,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IPoolCollection
      */
     function isPoolValid(Token pool) external view returns (bool) {
-        return _validPool(_poolData[pool]);
+        return address(_poolData[pool].poolToken) != address(0);
     }
 
     /**
@@ -635,11 +635,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         Token pool,
         uint256 poolTokenAmount
     ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
+        Pool storage data = _poolStorage(pool);
+
         // obtain the withdrawal amounts
-        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
+        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, data, poolTokenAmount);
 
         // execute the actual withdrawal
-        _executeWithdrawal(contextId, provider, pool, poolTokenAmount, amounts);
+        _executeWithdrawal(contextId, provider, pool, data, poolTokenAmount, amounts);
 
         return amounts.baseTokensToTransferFromMasterVault;
     }
@@ -654,7 +656,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         greaterThanZero(poolTokenAmount)
         returns (WithdrawalAmounts memory)
     {
-        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, poolTokenAmount);
+        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, _poolStorage(pool), poolTokenAmount);
 
         return
             WithdrawalAmounts({
@@ -856,16 +858,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev returns withdrawal amounts
      */
-    function _poolWithdrawalAmounts(Token pool, uint256 poolTokenAmount)
-        internal
-        view
-        returns (InternalWithdrawalAmounts memory)
-    {
-        Pool memory data = _poolData[pool];
-        if (!_validPool(data)) {
-            revert DoesNotExist();
-        }
-
+    function _poolWithdrawalAmounts(
+        Token pool,
+        Pool memory data,
+        uint256 poolTokenAmount
+    ) internal view returns (InternalWithdrawalAmounts memory) {
         // the base token trading liquidity of a given pool can never be higher than the base token balance of the vault
         // whenever the base token trading liquidity is updated, it is set to at most the base token balance of the vault
         uint256 baseTokenExcessAmount = pool.balanceOf(address(_masterVault)) -
@@ -925,10 +922,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         bytes32 contextId,
         address provider,
         Token pool,
+        Pool storage data,
         uint256 poolTokenAmount,
         InternalWithdrawalAmounts memory amounts
     ) private {
-        Pool storage data = _poolStorage(pool);
         PoolLiquidity storage liquidity = data.liquidity;
         PoolLiquidity memory prevLiquidity = liquidity;
         AverageRate memory averageRate = data.averageRate;
@@ -1034,18 +1031,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function _poolStorage(Token pool) private view returns (Pool storage) {
         Pool storage data = _poolData[pool];
-        if (!_validPool(data)) {
+        if (address(data.poolToken) == address(0)) {
             revert DoesNotExist();
         }
 
         return data;
-    }
-
-    /**
-     * @dev returns whether a pool is valid
-     */
-    function _validPool(Pool memory pool) private pure returns (bool) {
-        return address(pool.poolToken) != address(0);
     }
 
     /**
@@ -1328,10 +1318,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             revert DoesNotExist();
         }
 
-        Pool memory data = _poolData[result.pool];
-        if (!_validPool(data)) {
-            revert DoesNotExist();
-        }
+        Pool storage data = _poolStorage(result.pool);
 
         // verify that trading is enabled
         if (!data.tradingEnabled) {
