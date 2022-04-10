@@ -1,4 +1,4 @@
-﻿# Bancor Protocol Contracts v3.0 (Dawn)
+﻿# Bancor Protocol Contracts v3.0 (Dawn Release)
 
 [![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml/badge.svg)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml)
 
@@ -46,7 +46,7 @@ You can also run the test suite with additional stress tests via:
 ```sh
 yarn test:nightly
 ``` 
-This suite is called “nightly” since it’s scheduled to run every day at midnight against the release and production branches (see [ci.yml](.github/workflows/nightly.yml)).
+This suite is called “nightly” since it’s scheduled to run every day at midnight against the release and production branches (see [nightly.yml](.github/workflows/nightly.yml)).
 
 ### Deployment Tests
 You can run deployment unit-tests (which are also part of the full test suite) via:
