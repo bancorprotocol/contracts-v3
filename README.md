@@ -1,66 +1,134 @@
-﻿# Bancor Protocol Contracts v3.0.0 (beta)
+﻿![Bancor 3 Dawn](./docs/images/bancor3.png)
+# Bancor Protocol Contracts v3.0 (Dawn Release)
 
-[![NPM Package](https://img.shields.io/npm/v/@bancor/contracts-v3.svg)](https://www.npmjs.org/package/@bancor/contracts-v3)
-[![Docs](https://img.shields.io/badge/docs-%F0%9F%93%84-blue)](https://docs.bancor.network/)
-[![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml/badge.svg)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml)
+[![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml)
 
 ## Overview
+Bancor is a decentralized trading and yield protocol. Its network of on-chain automated market makers (AMMs) supports instant token-to-token trades, as well as single-sided liquidity provision, auto-compounding rewards and 100% [impermanent loss](https://www.youtube.com/watch?v=_m6Mowq3Ptk) protection for any listed asset.
 
-The solidity version of the Bancor smart contracts is composed of many different components that work together to create the Bancor Network deployment.
+The Dawn release includes the following features:
+- Token to token trades
+- Instant IL protection
+- Single-sided Liquidity Provision
+- Omnipool
+- Infinity Pools
+- Auto-compounding Rewards
+- Dual Rewards
+- Third Party IL Protection
+- Composable Pool Tokens
+- Tokenomics Redesign
+- Flash Loans
 
-The main contracts are the BancorNetwork contract (entry point to the system) and the different converter contracts (implementation of liquidity pools and their reserves).
+## Security
+The repository is part of the bug bounty program.
+See the details [here](./docs/bug-bounty.md).
 
-## Config
+The security policy is available [here](./SECURITY.md).
 
-In order to use some plugins, API keys or custom network with secret config we need a config.json file. You can check `hardhat.config.js` for more details.
+## Setup
+As a first step of contributing to the repo, you should install all the required dependencies via: 
 
-```json
-{
-    "keys": {
-        "etherscan": "XYZ"
-    },
-    "networks": {
-        "mainnet": {
-            "url": "https://eth-mainnet.alchemyapi.io/v2/supersecretkey"
-        }
-    }
-}
+```sh
+yarn install
 ```
 
-## Upgradeability
-
-All smart contract functions are public and all upgrades are opt-in. If significant improvements are made to the system a new version will be released. Token owners can choose between moving to the new system or staying in the old one. If possible, new versions will be backwards compatible and able to interact with the old versions.
-
-## Language
-
-The terms “reserves” and “connectors” have the same meaning throughout Bancor’s smart contract code and documentation. “Reserve ratio” and “connector weight” are also used interchangeably. “Connector balance” refers to the token inventories held in a liquidity pool's reserves.
-
-## Warning
-
-Bancor is a work in progress. Make sure you understand the risks before using it.
+You will also need to create and update the `.env` file if you’d like to interact or run the unit tests against mainnet forks (see [.env.example](./.env.example))
 
 ## Testing
+Testing the protocol is possible via multiple approaches:
 
-### Prerequisites
 
--   node 12.20.0
--   yarn 1.22.0
+### Unit Tests
+You can run the full test suite (takes about two hours) via:
 
-### Installation
+```sh
+yarn test
+```
 
--   `yarn install`
+You can also run the test suite with additional stress tests via:
 
-### Verification
+```sh
+yarn test:nightly
+``` 
+This suite is called “nightly” since it’s scheduled to run every day at midnight against the release and production branches (see [nightly.yml](.github/workflows/nightly.yml)).
 
--   Verifying all the contracts:
-    -   `yarn test` (quick testing)
-    -   `yarn test:ci` (full testing)
-    -   `yarn test:coverage` (full coverage)
+### Deployment Tests
+You can run deployment unit-tests (which are also part of the full test suite) via:
 
-### Profiling
+```sh
+yarn test:deploy
+``` 
 
--   `yarn profile`
+You can also run a specialized set of deployment tests against a mainnet fork via:
 
-For an interactive profiling, with Tenderly integration:
+```sh
+yarn test:deploy:fork
+```
 
--   `yarn profile:debug`
+This will automatically be skipped on an already deployed and configured deployment scripts and will only test the additional changeset resulting by running any new/pending deployment scripts and perform an e2e test against the up to date state. This is especially useful to verify that any future deployments and upgrades, suggested by the DAO, work correctly and preserve the integrity of the system.
+
+### Coverage Tests
+In order to audit the test coverage of the full test suite, run:
+
+```sh
+yarn test:coverage
+```
+
+It’s also possible to audit the test coverage of the deployment unit-tests only (which is especially useful when verifying that any future deployments and upgrades are properly covered and tested before the DAO can consider to execute them):
+
+```sh
+yarn test:coverage:deploy
+```
+
+
+Similarly to the regular test suite, it’s also possible to audit the test coverage of the stress test suite via:
+
+```sh
+yarn test:coverage:nightly
+```
+
+## Profiling
+You can profile the gas costs of all of the user-focused flows (provisioning or removing liquidity, trading, participating in auto-compounding staking rewards, migrating v2.1 positions, taking a flash-loan, etc.) via:
+
+```sh
+yarn profile
+```
+
+## Deployments
+The contracts have built-in support for deployments on different chains and mainnet forks, powered by the awesome [hardhat-deploy](https://github.com/wighawag/hardhat-deploy) framework (tip of the hat to @wighawag for the crazy effort him and the rest of the contributors have put into the project). 
+
+You can deploy the fully configured Bancor v3 protocol (the Dawn release) via:
+
+```sh
+yarn deploy
+```
+
+There’s also a special deployment mode which deploys the protocol to a mainnet fork, with additional goodies:
+
+Various additional test configurations, pools, tokens, and both standard and auto-compounding staking rewards programs are automatically deployed for testing purposes.
+Various timing configurations are shortened by default (in order to speed up any integrations or simulations).
+
+It can be run via:
+```sh
+yarn deploy:fork
+```
+
+### Local Deployment
+
+It’s also possible to test the deployment to a local persistent node for further testing or simulations via:
+
+```sh
+yarn deploy:local
+```
+
+Please note that the framework will look for a local RPC node running on port 8545 with chainId 31337. One way to achieve this is to run a local hardhat node via:
+
+```sh
+yarn dev
+```
+
+## Community
+- [Twitter](https://twitter.com/Bancor)
+- [Telegram](https://t.me/bancor)
+- [Discord](https://discord.gg/aMVTbrmgD7)
+- [Reddit](https://www.reddit.com/r/Bancor)
