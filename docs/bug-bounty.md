@@ -1,11 +1,11 @@
 ﻿# Bancor v3 Bug Bounty
 
 ## Overview
-The Bancor 3 Bug Bounty program aims to incentivize responsible disclosures of any bugs in the Bancor 3 smart contracts. Starting on April 13, 2022, this repository is subject to the Bounty Program.
+The Bancor 3 Bug Bounty program aims to incentivize responsible disclosures of any bugs in the Bancor 3 smart contracts. Starting with the official beta launch, this repository is subject to the Bounty Program.
 
 Rewards are allocated based on the severity of the bug disclosed and awarded up to USD 1 million. The scope, terms and rewards are at the sole discretion of Bprotocol Foundation.
 
-All vulnerabilities disclosed prior to the mainnet launch of Bancor 3 (scheduled for the middle of May 2022) will be eligible to receive higher rewards.
+All vulnerabilities disclosed prior to the official launch of Bancor 3 (scheduled for the middle of May 2022) will be eligible to receive higher rewards.
 
 ## Scope
 The list below is not limited to the following submissions but it gives an overview of the issues we care about:
