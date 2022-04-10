@@ -1,4 +1,4 @@
-﻿![Bancor 3 Dawn](./docs/images/bancor3.jpg)
+﻿![Bancor 3 Dawn](./docs/images/bancor3.png)
 # Bancor Protocol Contracts v3.0 (Dawn Release)
 
 [![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml)
