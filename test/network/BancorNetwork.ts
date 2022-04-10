@@ -2429,7 +2429,7 @@ describe('BancorNetwork', () => {
                         targetAmount,
                         sourceAmount,
                         hop2.tradingFeeAmount,
-                        hop2.networkFeeAmount,
+                        0,
                         traderAddress
                     );
             } else if (isTargetBNT) {
@@ -2456,14 +2456,14 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         sourceToken.address,
-                        bnt.address,
+                        targetToken.address,
                         sourceAmount,
-                        // when providing the source amount, the target amount represents how much BNT we have received,
-                        // while when providing the source target, it represents how many source tokens we were required
-                        // to trade
+                        targetAmount,
+                        // when providing the source amount, the source amount represents how much BNT we were required
+                        // to trade, while when providing the target amount, it represents how many target tokens we
+                        // have received by trading BNT for them
                         bySourceAmount ? hop1.amount : hop2.amount,
-                        bySourceAmount ? hop1.amount : hop2.amount,
-                        hop1.tradingFeeAmount,
+                        hop2.tradingFeeAmount,
                         hop1.tradingFeeAmount,
                         traderAddress
                     );
@@ -2471,23 +2471,6 @@ describe('BancorNetwork', () => {
                 expect(bntPoolStakedBalance).to.equal(
                     prevBNTPoolStakedBalance.add(hop1.tradingFeeAmount.sub(hop1.networkFeeAmount))
                 );
-
-                await expect(res)
-                    .to.emit(network, 'TokensTraded')
-                    .withArgs(
-                        contextId,
-                        bnt.address,
-                        targetToken.address,
-                        // when providing the source amount, the source amount represents how much BNT we were required
-                        // to trade, while when providing the target amount, it represents how many target tokens we
-                        // have received by trading BNT for them
-                        bySourceAmount ? hop1.amount : hop2.amount,
-                        targetAmount,
-                        bySourceAmount ? hop1.amount : hop2.amount,
-                        hop2.tradingFeeAmount,
-                        hop2.networkFeeAmount,
-                        traderAddress
-                    );
             }
 
             expect(await network.pendingNetworkFeeAmount()).to.equal(pendingNetworkFeeAmount);
