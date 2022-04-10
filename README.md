@@ -1,8 +1,8 @@
-﻿# Bancor Protocol Contracts v3.0 (Dawn Release)
+﻿![Bancor 3 Dawn](./docs/images/bancor3.jpg)
+# Bancor Protocol Contracts v3.0 (Dawn Release)
 
 [![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml)
 
-![Bancor 3 Dawn](./docs/images/bancor3.jpg)
 ## Overview
 Bancor is a decentralized trading and yield protocol. Its network of on-chain automated market makers (AMMs) supports instant token-to-token trades, as well as single-sided liquidity provision, auto-compounding rewards and 100% [impermanent loss](https://www.youtube.com/watch?v=_m6Mowq3Ptk) protection for any listed asset.
 
