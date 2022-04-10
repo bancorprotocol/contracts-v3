@@ -34,6 +34,7 @@
     "test:deploy:fork": "FORKING=1 yarn test:deploy",
     "deploy": "hardhat deploy",
     "deploy:fork": "HARDHAT_NETWORK=tenderly yarn deploy",
+    "deploy:local": "HARDHAT_NETWORK=localhost yarn deploy",
     "run:fork": "HARDHAT_NETWORK=tenderly hardhat run",
     "dev": "hardhat node --no-deploy",
     "profile": "PROFILE=1 yarn test",
