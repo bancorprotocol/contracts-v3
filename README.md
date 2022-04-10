@@ -2,18 +2,22 @@
 
 [![Build Status](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml/badge.svg)](https://github.com/bancorprotocol/contracts-v3/actions/workflows/ci.yml)
 
+![Bancor 3 Dawn](./docs/images/dawn.png)
 ## Overview
 Bancor is a decentralized trading and yield protocol. Its network of on-chain automated market makers (AMMs) supports instant token-to-token trades, as well as single-sided liquidity provision, auto-compounding rewards and 100% [impermanent loss](https://www.youtube.com/watch?v=_m6Mowq3Ptk) protection for any listed asset.
 
 The Dawn release includes the following features:
 - Token to token trades
-- Single-sided liquidity provision & single sided pool tokens
-- Impermanent loss protection (including support for 3rd party protection)
+- Instant IL protection
+- Single-sided Liquidity Provision
 - Omnipool
-- Infinity pools
-- Auto compounding and standard rewards (including support for 3rd party programs)
-- Flash loans
-- Migration from previous versions & 3rd party platforms
+- Infinity Pools
+- Auto-compounding Rewards
+- Dual Rewards
+- Third Party IL Protection
+- Composable Pool Tokens
+- Tokenomics Redesign
+- Flash Loans
 
 ## Security
 The repository is part of the bug bounty program.
