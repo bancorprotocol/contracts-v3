@@ -19,15 +19,15 @@ The list below is not limited to the following submissions but it gives an overv
 - Cryptographic flaws
 - Reentrancy
 - Logic errors (including user authentication errors)
-Solidity details not considered, including integer over-/under-flow, rounding errors, unhandled - exceptions)
-Trusting trust/dependency vulnerabilities, - including composability vulnerabilities)
+- Solidity details not considered, including integer over-/under-flow, rounding errors, unhandled - exceptions)
+- Trusting trust/dependency vulnerabilities, - including composability vulnerabilities)
 - Oracle failure/manipulation
-Novel governance attacks and economic/financial - attacks, including flash loan attacks
-Congestion and scalability, including running out of gas, block stuffing, susceptibility to - frontrunning
+- Novel governance attacks and economic/financial - attacks, including flash loan attacks
+- Congestion and scalability, including running out of gas, block stuffing, susceptibility to - frontrunning
 - Consensus failures
-Cryptography problems, e.g., signature malleability, susceptibility to replay attacks, - weak randomness and weak encryption
+- Cryptography problems, e.g., signature malleability, susceptibility to replay attacks, - weak randomness and weak encryption
 - Susceptibility to block timestamp manipulation
-Missing access controls / unprotected internal or - debugging interfaces
+- Missing access controls / unprotected internal or - debugging interfaces
 - Issues arising from whitelisted tokens
 
 ## Out of Scope & Rules
