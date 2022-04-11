@@ -292,7 +292,7 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable;
 
     /**
-     * @dev withdraws pending network fees
+     * @dev withdraws the pending network fee
      *
      * requirements:
      *
