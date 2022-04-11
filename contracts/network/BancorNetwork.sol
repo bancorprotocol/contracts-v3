@@ -322,6 +322,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
+     * @dev returns the pending network fees amount to be burned by the vortex
+     */
+    function pendingNetworkFeeAmount() external view returns (uint256) {
+        return _pendingNetworkFeeAmount;
+    }
+
+    /**
      * @dev adds new pool collection to the network
      *
      * requirements:
@@ -848,16 +855,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
     {
-        uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
-        if (pendingNetworkFeeAmount == 0) {
+        uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
+        if (currentPendingNetworkFeeAmount == 0) {
             return;
         }
 
         _pendingNetworkFeeAmount = 0;
 
-        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), pendingNetworkFeeAmount);
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), currentPendingNetworkFeeAmount);
 
-        emit NetworkFeesWithdrawn(msg.sender, recipient, pendingNetworkFeeAmount);
+        emit NetworkFeesWithdrawn(msg.sender, recipient, currentPendingNetworkFeeAmount);
     }
 
     /**
