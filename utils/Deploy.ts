@@ -92,7 +92,8 @@ enum TestInstanceName {
     TestToken2 = 'TestToken2',
     TestToken3 = 'TestToken3',
     TestToken4 = 'TestToken4',
-    TestToken5 = 'TestToken5'
+    TestToken5 = 'TestToken5',
+    TestToken6 = 'TestToken6'
 }
 
 export const InstanceName = {
@@ -142,7 +143,8 @@ const DeployedTestContracts = {
     TestToken2: deployed<TestERC20Token>(InstanceName.TestToken2),
     TestToken3: deployed<TestERC20Token>(InstanceName.TestToken3),
     TestToken4: deployed<TestERC20Token>(InstanceName.TestToken4),
-    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5)
+    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5),
+    TestToken6: deployed<TestERC20Token>(InstanceName.TestToken6)
 };
 
 export const DeployedContracts = {

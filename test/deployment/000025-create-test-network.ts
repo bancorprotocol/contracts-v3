@@ -30,7 +30,8 @@ describeDeployment(
             [InstanceName.TestToken2]: toWei(500_000),
             [InstanceName.TestToken3]: toWei(1_000_000),
             [InstanceName.TestToken4]: toWei(2_000_000),
-            [InstanceName.TestToken5]: toWei(3_000_000)
+            [InstanceName.TestToken5]: toWei(3_000_000),
+            [InstanceName.TestToken6]: toWei(100_000)
         };
 
         const TOKENS = [
@@ -38,7 +39,8 @@ describeDeployment(
             { symbol: TokenSymbol.TKN2, instanceName: InstanceName.TestToken2 },
             { symbol: TokenSymbol.TKN3, instanceName: InstanceName.TestToken3 },
             { symbol: TokenSymbol.TKN4, instanceName: InstanceName.TestToken4, tradingDisabled: true },
-            { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true }
+            { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true },
+            { symbol: TokenSymbol.TKN6, instanceName: InstanceName.TestToken6 }
         ];
 
         before(async () => {
