@@ -92,7 +92,7 @@ contract MasterVault is IMasterVault, Vault {
      * requirements:
      *
      * - BNT: the caller must have the ROLE_BNT_MANAGER or ROLE_ASSET_MANAGER role
-     * - other reserve token or ETH: the caller must have the ROLE_ASSET_MANAGER role
+     * - other reserve token or the native token: the caller must have the ROLE_ASSET_MANAGER role
      */
     function isAuthorizedWithdrawal(
         address caller,

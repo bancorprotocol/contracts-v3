@@ -139,7 +139,8 @@ interface IStandardStakingRewards is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network contract to transfer the tokens its behalf (ETH is handled separately)
+     * - the caller must have approved the network contract to transfer the tokens its behalf (except for in the
+     *   native token case)
      */
     function depositAndJoin(uint256 id, uint256 tokenAmount) external payable;
 

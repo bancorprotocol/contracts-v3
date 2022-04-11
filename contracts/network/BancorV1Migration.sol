@@ -76,7 +76,7 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     }
 
     /**
-     * @dev ETH receive callback
+     * @dev authorize the contract to receive the native token
      */
     receive() external payable {}
 
