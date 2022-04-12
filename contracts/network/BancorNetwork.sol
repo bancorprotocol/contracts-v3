@@ -141,7 +141,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(Token => IPoolCollection) private _collectionByPool;
 
-    // the pending network fees amount to be burned by the vortex
+    // the pending network fee amount to be burned by the vortex
     uint256 internal _pendingNetworkFeeAmount;
 
     // upgrade forward-compatibility storage gap
@@ -319,6 +319,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function roleNetworkFeeManager() external pure returns (bytes32) {
         return ROLE_NETWORK_FEE_MANAGER;
+    }
+
+    /**
+     * @dev returns the pending network fee amount to be burned by the vortex
+     */
+    function pendingNetworkFeeAmount() external view returns (uint256) {
+        return _pendingNetworkFeeAmount;
     }
 
     /**
@@ -848,16 +855,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
     {
-        uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
-        if (pendingNetworkFeeAmount == 0) {
+        uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
+        if (currentPendingNetworkFeeAmount == 0) {
             return;
         }
 
         _pendingNetworkFeeAmount = 0;
 
-        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), pendingNetworkFeeAmount);
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), currentPendingNetworkFeeAmount);
 
-        emit NetworkFeesWithdrawn(msg.sender, recipient, pendingNetworkFeeAmount);
+        emit NetworkFeesWithdrawn(msg.sender, recipient, currentPendingNetworkFeeAmount);
     }
 
     /**
@@ -1201,7 +1208,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             lastHopTradeResult.targetAmount
         );
 
-        // update the pending network fees amount to be burned by the vortex
+        // update the pending network fee amount to be burned by the vortex
         _pendingNetworkFeeAmount += networkFeeAmount;
     }
 
