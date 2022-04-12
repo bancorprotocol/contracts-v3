@@ -20,7 +20,7 @@ interface IVault is IUpgradeable {
     event FundsBurned(Token indexed token, address indexed caller, uint256 amount);
 
     /**
-     * @dev tells if the contracts accepts ETH deposits
+     * @dev tells whether the vault accepts native token deposits
      */
     function isPayable() external view returns (bool);
 

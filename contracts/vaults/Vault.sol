@@ -192,7 +192,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     function isPayable() public view virtual returns (bool);
 
     /**
-     * @dev authorize the contract to receive ETH
+     * @dev authorize the contract to receive the native token
      *
      * requirements:
      *

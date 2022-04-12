@@ -59,7 +59,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     error ArrayNotUnique();
-    error EthAmountMismatch();
+    error NativeTokenAmountMismatch();
     error InsufficientFunds();
     error PoolMismatch();
     error ProgramDisabled();
@@ -233,7 +233,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev ETH receive callback
+     * @dev authorize the contract to receive the native token
      */
     receive() external payable {}
 
@@ -668,23 +668,23 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         bool externalPayer = payer != address(this);
 
         if (pool.isNative()) {
-            // unless the payer is the contract itself (e.g., during the staking process), in which case ETH was already
-            // claimed and pending in the contract - verify and use the received ETH from the sender
+            // unless the payer is the contract itself (e.g., during the staking process), in which case the native token
+            // was already claimed and pending in the contract - verify and use the received native token from the sender
             if (externalPayer) {
                 if (msg.value < tokenAmount) {
-                    revert EthAmountMismatch();
+                    revert NativeTokenAmountMismatch();
                 }
             }
 
             poolTokenAmount = _network.depositFor{ value: tokenAmount }(provider, pool, tokenAmount);
 
-            // refund the caller for the remaining ETH
+            // refund the caller for the remaining native token amount
             if (externalPayer && msg.value > tokenAmount) {
                 payable(address(payer)).sendValue(msg.value - tokenAmount);
             }
         } else {
             if (msg.value > 0) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             // unless the payer is the contract itself (e.g., during the staking process), in which case the tokens were

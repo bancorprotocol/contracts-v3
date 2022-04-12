@@ -1495,11 +1495,11 @@ describe('StandardStakingRewards', () => {
                                     depositAndJoin(nativeId, amount, {
                                         value: amount.sub(missingAmount)
                                     })
-                                ).to.be.revertedWith('EthAmountMismatch');
+                                ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                 await expect(
                                     depositAndJoin(nativeId, amount, { value: BigNumber.from(0) })
-                                ).to.be.revertedWith('EthAmountMismatch');
+                                ).to.be.revertedWith('NativeTokenAmountMismatch');
                             });
 
                             it('should refund when attempting to deposit and join with less than what was actually sent', async () => {
@@ -1529,12 +1529,12 @@ describe('StandardStakingRewards', () => {
                                 });
                             });
 
-                            it('should revert when attempting to deposit and join with ETH into a non ETH pool', async () => {
+                            it('should revert when attempting to deposit and join with the native token into a non native token pool', async () => {
                                 const amount = toWei(1);
 
                                 await expect(
                                     depositAndJoin(id, amount, { value: BigNumber.from(1) })
-                                ).to.be.revertedWith('EthAmountMismatch');
+                                ).to.be.revertedWith('NativeTokenAmountMismatch');
                             });
                         });
                     }

@@ -61,7 +61,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using SafeERC20 for IPoolToken;
 
     error DeadlineExpired();
-    error EthAmountMismatch();
+    error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
 
     struct TradeParams {
@@ -1013,7 +1013,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // process deposit to the base token pool (taking into account the ETH pool)
+        // process deposit to the base token pool (includes the native token pool)
         return poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
@@ -1124,7 +1124,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
      */
     function _trade(
         TradeTokens memory tokens,
@@ -1201,7 +1202,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // transfer the tokens from the trader to the vault
         _depositToMasterVault(tokens.sourceToken, traderInfo.trader, firstHopTradeResult.sourceAmount);
 
-        // transfer the target tokens/ETH to the beneficiary
+        // transfer the target tokens/native token to the beneficiary
         _masterVault.withdrawFunds(
             tokens.targetToken,
             payable(traderInfo.beneficiary),
@@ -1333,20 +1334,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         if (token.isNative()) {
             if (msg.value < amount) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             payable(address(_masterVault)).sendValue(amount);
 
-            // refund the caller for the remaining ETH
+            // refund the caller for the remaining native token amount
             if (msg.value > amount) {
                 payable(address(caller)).sendValue(msg.value - amount);
             }
         } else {
             if (msg.value > 0) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             token.safeTransferFrom(caller, address(_masterVault), amount);
