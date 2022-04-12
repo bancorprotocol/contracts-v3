@@ -141,7 +141,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(Token => IPoolCollection) private _collectionByPool;
 
-    // the pending network fees amount to be burned by the vortex
+    // the pending network fee amount to be burned by the vortex
     uint256 internal _pendingNetworkFeeAmount;
 
     // upgrade forward-compatibility storage gap
@@ -322,7 +322,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns the pending network fees amount to be burned by the vortex
+     * @dev returns the pending network fee amount to be burned by the vortex
      */
     function pendingNetworkFeeAmount() external view returns (uint256) {
         return _pendingNetworkFeeAmount;
@@ -1208,7 +1208,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             lastHopTradeResult.targetAmount
         );
 
-        // update the pending network fees amount to be burned by the vortex
+        // update the pending network fee amount to be burned by the vortex
         _pendingNetworkFeeAmount += networkFeeAmount;
     }
 
