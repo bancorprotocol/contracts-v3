@@ -1,5 +1,6 @@
 import { PendingWithdrawals, PoolCollection } from '../../components/Contracts';
 import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
+import { MAX_UINT256 } from '../../utils/Constants';
 import { DeployedContracts, InstanceName, isLive } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -71,6 +72,14 @@ describeDeployment(
                 initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
                 depositLimit: toWei(5_000_000),
                 fundingLimit: toWei(10_000_000)
+            },
+            {
+                symbol: TokenSymbol.TKN7,
+                initialSupply: toWei(1_000_000_000),
+                instanceName: InstanceName.TestToken7,
+                initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
+                depositLimit: MAX_UINT256,
+                fundingLimit: MAX_UINT256
             }
         ];
 
@@ -85,7 +94,6 @@ describeDeployment(
         });
 
         it('should deploy and configure a test network', async () => {
-            for (const { symbol, instanceName, tradingDisabled, depositingDisabled } of TOKENS) {
             for (const {
                 symbol,
                 initialSupply,

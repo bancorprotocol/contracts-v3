@@ -1,4 +1,4 @@
-import { PoolType } from '../utils/Constants';
+import { MAX_UINT256, PoolType } from '../utils/Constants';
 import { deploy, DeployedContracts, execute, InstanceName, isLive, setDeploymentMetadata } from '../utils/Deploy';
 import { duration } from '../utils/Time';
 import { DEFAULT_DECIMALS, TokenData, TokenSymbol } from '../utils/TokenData';
@@ -60,6 +60,14 @@ const TOKENS = [
         initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
         depositLimit: toWei(5_000_000),
         fundingLimit: toWei(10_000_000)
+    },
+    {
+        symbol: TokenSymbol.TKN7,
+        initialSupply: toWei(1_000_000_000),
+        instanceName: InstanceName.TestToken7,
+        initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
+        depositLimit: MAX_UINT256,
+        fundingLimit: MAX_UINT256
     }
 ];
 
