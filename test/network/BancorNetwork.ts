@@ -4308,6 +4308,7 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario1');
         test('BancorNetworkSimpleFinancialScenario2');
         test('BancorNetworkSimpleFinancialScenario3');
+        test('BancorNetworkSimpleFinancialScenario4');
     });
 
     describe('@stress test', () => {

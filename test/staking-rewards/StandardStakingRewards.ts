@@ -736,9 +736,7 @@ describe('StandardStakingRewards', () => {
 
             it('should revert when attempting to enable/disable a non-existing program', async () => {
                 for (const status of [true, false]) {
-                    await expect(standardStakingRewards.enableProgram(1, status)).to.be.revertedWith(
-                        'DoesNotExist'
-                    );
+                    await expect(standardStakingRewards.enableProgram(1, status)).to.be.revertedWith('DoesNotExist');
                 }
             });
 

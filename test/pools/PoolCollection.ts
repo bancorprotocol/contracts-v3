@@ -3014,9 +3014,6 @@ describe('PoolCollection', () => {
                                             .mul(networkFeePPM)
                                             .div(PPM_RESOLUTION);
 
-                                        expectedTargetAmounts.tradingFeeAmount =
-                                            expectedTargetAmounts.tradingFeeAmount.sub(targetNetworkFeeAmount);
-
                                         if (isSourceBNT) {
                                             newBaseTokenTradingLiquidity =
                                                 newBaseTokenTradingLiquidity.sub(targetNetworkFeeAmount);
@@ -3095,7 +3092,9 @@ describe('PoolCollection', () => {
                                                 )
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
-                                                prevLiquidity.stakedBalance.add(expectedTargetAmounts.tradingFeeAmount)
+                                                prevLiquidity.stakedBalance
+                                                    .add(expectedTargetAmounts.tradingFeeAmount)
+                                                    .sub(expectedNetworkFees.targetNetworkFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
@@ -3182,9 +3181,6 @@ describe('PoolCollection', () => {
                                             .mul(networkFeePPM)
                                             .div(PPM_RESOLUTION);
 
-                                        expectedSourceAmounts.tradingFeeAmount =
-                                            expectedSourceAmounts.tradingFeeAmount.sub(targetNetworkFeeAmount);
-
                                         if (isSourceBNT) {
                                             newBaseTokenTradingLiquidity =
                                                 newBaseTokenTradingLiquidity.sub(targetNetworkFeeAmount);
@@ -3264,7 +3260,9 @@ describe('PoolCollection', () => {
                                                 )
                                             );
                                             expect(liquidity.stakedBalance).to.equal(
-                                                prevLiquidity.stakedBalance.add(expectedSourceAmounts.tradingFeeAmount)
+                                                prevLiquidity.stakedBalance
+                                                    .add(expectedSourceAmounts.tradingFeeAmount)
+                                                    .sub(expectedNetworkFees.targetNetworkFeeAmount)
                                             );
                                         } else {
                                             expect(liquidity.baseTokenTradingLiquidity).to.equal(
