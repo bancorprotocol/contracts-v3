@@ -25,7 +25,7 @@
     "build": "hardhat compile",
     "rebuild": "yarn clean && yarn build",
     "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
-    "test:coverage": "yarn build && NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat coverage",
+    "test:coverage": "yarn build && NODE_OPTIONS='--max-old-space-size=8192' hardhat coverage",
     "test:coverage:deploy": "yarn test:coverage --testfiles 'test/deployment/**/*.ts'",
     "test:coverage:nightly": "NIGHTLY=1 yarn test:coverage",
     "test:ci": "CI=1 yarn test",
