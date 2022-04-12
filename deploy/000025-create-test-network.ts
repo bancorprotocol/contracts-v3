@@ -20,7 +20,7 @@ const INITIAL_DEPOSITS = {
     [InstanceName.TestToken3]: toWei(1_000_000),
     [InstanceName.TestToken4]: toWei(2_000_000),
     [InstanceName.TestToken5]: toWei(3_000_000),
-    [InstanceName.TestToken6]: toWei(100_000)
+    [InstanceName.TestToken6]: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals())
 };
 
 const TOKENS = [
