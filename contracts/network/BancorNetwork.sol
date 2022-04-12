@@ -1247,7 +1247,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is BNT, notify the BNT pool on collected fees
+        // if the target token is BNT, notify the BNT pool on collected fees (which shouldn't include the network fee
+        // amount, so we have to deduct it explicitly from the full trading fee amount)
         if (!fromBNT) {
             _bntPool.onFeesCollected(
                 pool,
