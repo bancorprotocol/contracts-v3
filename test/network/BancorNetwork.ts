@@ -1531,6 +1531,7 @@ describe('BancorNetwork', () => {
                                                     );
                                                 });
                                             } else {
+                                                // eslint-disable-next-line max-len
                                                 it('should revert when attempting to deposit the native token into a non native token pool', async () => {
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(1) })
