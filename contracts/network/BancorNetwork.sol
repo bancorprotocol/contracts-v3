@@ -93,7 +93,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the emergency manager role is required to pause/unpause the network
     bytes32 private constant ROLE_EMERGENCY_STOPPER = keccak256("ROLE_EMERGENCY_STOPPER");
 
-    // the network fee manager role is required to pull the accumulated pending network fee
+    // the network fee manager role is required to pull the accumulated pending network fees
     bytes32 private constant ROLE_NETWORK_FEE_MANAGER = keccak256("ROLE_NETWORK_FEE_MANAGER");
 
     // the address of the BNT token
@@ -141,7 +141,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(Token => IPoolCollection) private _collectionByPool;
 
-    // the pending network fee amount to be burned by the vortex
+    // the pending network fees amount to be burned by the vortex
     uint256 internal _pendingNetworkFeeAmount;
 
     // upgrade forward-compatibility storage gap
@@ -322,7 +322,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns the pending network fee amount to be burned by the vortex
+     * @dev returns the pending network fees amount to be burned by the vortex
      */
     function pendingNetworkFeeAmount() external view returns (uint256) {
         return _pendingNetworkFeeAmount;
@@ -1208,7 +1208,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             lastHopTradeResult.targetAmount
         );
 
-        // update the pending network fee amount to be burned by the vortex
+        // update the pending network fees amount to be burned by the vortex
         _pendingNetworkFeeAmount += networkFeeAmount;
     }
 

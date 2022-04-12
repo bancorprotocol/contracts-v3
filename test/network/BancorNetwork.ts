@@ -3931,8 +3931,8 @@ describe('BancorNetwork', () => {
             await expect(network.connect(deployer).pause()).to.be.revertedWith('AccessDenied');
         });
 
-        context('without any pending network fee', () => {
-            it('should not withdraw any pending network fee', async () => {
+        context('without any pending network fees', () => {
+            it('should not withdraw any pending network fees', async () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
 
                 const res = await network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address);
@@ -3943,7 +3943,7 @@ describe('BancorNetwork', () => {
             });
         });
 
-        context('with pending network fee', () => {
+        context('with pending network fees', () => {
             beforeEach(async () => {
                 await tradeBySourceAmount(deployer, bnt, token, toWei(1000), 1, MAX_UINT256, deployer.address, network);
 
@@ -3962,7 +3962,7 @@ describe('BancorNetwork', () => {
                 );
             });
 
-            it('should withdraw all the p', async () => {
+            it('should withdraw all the pending network fees', async () => {
                 const recipient = nonOwner.address;
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
                 const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
@@ -3983,7 +3983,7 @@ describe('BancorNetwork', () => {
                     await network.connect(emergencyStopper).pause();
                 });
 
-                it('should revert when attempting to withdraw the pending network fee', async () => {
+                it('should revert when attempting to withdraw the pending network fees', async () => {
                     await expect(
                         network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address)
                     ).to.be.revertedWith('Pausable: paused');
