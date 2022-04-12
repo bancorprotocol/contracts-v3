@@ -17,30 +17,61 @@ describeDeployment(
 
         let deployer: string;
 
-        const INITIAL_SUPPLY = toWei(1_000_000_000);
-
-        const DEPOSIT_LIMIT = toWei(5_000_000);
-        const FUNDING_LIMIT = toWei(10_000_000);
         const TRADING_FEE = toPPM(0.2);
         const BNT_VIRTUAL_BALANCE = 1;
         const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
-        const INITIAL_DEPOSITS = {
-            [InstanceName.TestToken1]: toWei(50_000),
-            [InstanceName.TestToken2]: toWei(500_000),
-            [InstanceName.TestToken3]: toWei(1_000_000),
-            [InstanceName.TestToken4]: toWei(2_000_000),
-            [InstanceName.TestToken5]: toWei(3_000_000),
-            [InstanceName.TestToken6]: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals())
-        };
-
         const TOKENS = [
-            { symbol: TokenSymbol.TKN1, instanceName: InstanceName.TestToken1 },
-            { symbol: TokenSymbol.TKN2, instanceName: InstanceName.TestToken2 },
-            { symbol: TokenSymbol.TKN3, instanceName: InstanceName.TestToken3 },
-            { symbol: TokenSymbol.TKN4, instanceName: InstanceName.TestToken4, tradingDisabled: true },
-            { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true },
-            { symbol: TokenSymbol.TKN6, instanceName: InstanceName.TestToken6 }
+            {
+                symbol: TokenSymbol.TKN1,
+                initialSupply: toWei(1_000_000_000),
+                instanceName: InstanceName.TestToken1,
+                initialDeposit: toWei(50_000),
+                depositLimit: toWei(5_000_000),
+                fundingLimit: toWei(10_000_000)
+            },
+            {
+                symbol: TokenSymbol.TKN2,
+                initialSupply: toWei(1_000_000_000),
+                instanceName: InstanceName.TestToken2,
+                initialDeposit: toWei(500_000),
+                depositLimit: toWei(5_000_000),
+                fundingLimit: toWei(10_000_000)
+            },
+            {
+                symbol: TokenSymbol.TKN3,
+                initialSupply: toWei(1_000_000_000),
+                instanceName: InstanceName.TestToken3,
+                initialDeposit: toWei(1_000_000),
+                depositLimit: toWei(5_000_000),
+                fundingLimit: toWei(10_000_000)
+            },
+            {
+                symbol: TokenSymbol.TKN4,
+                initialSupply: toWei(1_000_000_000),
+                instanceName: InstanceName.TestToken4,
+                initialDeposit: toWei(2_000_000),
+                depositLimit: toWei(5_000_000),
+                fundingLimit: toWei(10_000_000),
+                tradingDisabled: true
+            },
+            {
+                symbol: TokenSymbol.TKN5,
+                initialSupply: toWei(1_000_000_000),
+                instanceName: InstanceName.TestToken5,
+                initialDeposit: toWei(3_000_000),
+                depositLimit: toWei(5_000_000),
+                fundingLimit: toWei(10_000_000),
+                depositingDisabled: true
+            },
+            {
+                symbol: TokenSymbol.TKN6,
+                initialSupply: toWei(1_000_000_000),
+                instanceName: InstanceName.TestToken6,
+                initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
+                depositLimit: toWei(5_000_000),
+                fundingLimit: toWei(10_000_000)
+            }
         ];
 
         before(async () => {
@@ -55,22 +86,30 @@ describeDeployment(
 
         it('should deploy and configure a test network', async () => {
             for (const { symbol, instanceName, tradingDisabled, depositingDisabled } of TOKENS) {
+            for (const {
+                symbol,
+                initialSupply,
+                instanceName,
+                initialDeposit,
+                depositLimit,
+                fundingLimit,
+                tradingDisabled,
+                depositingDisabled
+            } of TOKENS) {
                 const tokenData = new TokenData(symbol as TokenSymbol);
                 const testToken = await DeployedContracts[instanceName].deployed();
-
-                const initialDeposit = (INITIAL_DEPOSITS as any)[instanceName] as number;
 
                 expect(await testToken.name()).to.equal(tokenData.name());
                 expect(await testToken.symbol()).to.equal(tokenData.symbol());
                 expect(await testToken.decimals()).to.equal(tokenData.decimals());
-                expect(await testToken.totalSupply()).to.equal(INITIAL_SUPPLY);
-                expect(await testToken.balanceOf(deployer)).to.equal(INITIAL_SUPPLY.sub(initialDeposit));
+                expect(await testToken.totalSupply()).to.equal(initialSupply);
+                expect(await testToken.balanceOf(deployer)).to.equal(initialSupply.sub(initialDeposit));
 
                 expect(await networkSettings.isTokenWhitelisted(testToken.address)).to.be.true;
-                expect(await networkSettings.poolFundingLimit(testToken.address)).to.equal(FUNDING_LIMIT);
+                expect(await networkSettings.poolFundingLimit(testToken.address)).to.equal(fundingLimit);
 
                 const data = await poolCollection.poolData(testToken.address);
-                expect(data.depositLimit).to.equal(DEPOSIT_LIMIT);
+                expect(data.depositLimit).to.equal(depositLimit);
                 expect(data.tradingFeePPM).to.equal(TRADING_FEE);
                 expect(data.liquidity.stakedBalance).to.equal(initialDeposit);
                 expect(data.liquidity.baseTokenTradingLiquidity).to.equal(

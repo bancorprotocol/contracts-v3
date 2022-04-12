@@ -6,30 +6,61 @@ import { toPPM, toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-const INITIAL_SUPPLY = toWei(1_000_000_000);
-
-const DEPOSIT_LIMIT = toWei(5_000_000);
-const FUNDING_LIMIT = toWei(10_000_000);
 const TRADING_FEE = toPPM(0.2);
 const BNT_VIRTUAL_BALANCE = 1;
 const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
-const INITIAL_DEPOSITS = {
-    [InstanceName.TestToken1]: toWei(50_000),
-    [InstanceName.TestToken2]: toWei(500_000),
-    [InstanceName.TestToken3]: toWei(1_000_000),
-    [InstanceName.TestToken4]: toWei(2_000_000),
-    [InstanceName.TestToken5]: toWei(3_000_000),
-    [InstanceName.TestToken6]: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals())
-};
-
 const TOKENS = [
-    { symbol: TokenSymbol.TKN1, instanceName: InstanceName.TestToken1 },
-    { symbol: TokenSymbol.TKN2, instanceName: InstanceName.TestToken2 },
-    { symbol: TokenSymbol.TKN3, instanceName: InstanceName.TestToken3 },
-    { symbol: TokenSymbol.TKN4, instanceName: InstanceName.TestToken4, tradingDisabled: true },
-    { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true },
-    { symbol: TokenSymbol.TKN6, instanceName: InstanceName.TestToken6 }
+    {
+        symbol: TokenSymbol.TKN1,
+        initialSupply: toWei(1_000_000_000),
+        instanceName: InstanceName.TestToken1,
+        initialDeposit: toWei(50_000),
+        depositLimit: toWei(5_000_000),
+        fundingLimit: toWei(10_000_000)
+    },
+    {
+        symbol: TokenSymbol.TKN2,
+        initialSupply: toWei(1_000_000_000),
+        instanceName: InstanceName.TestToken2,
+        initialDeposit: toWei(500_000),
+        depositLimit: toWei(5_000_000),
+        fundingLimit: toWei(10_000_000)
+    },
+    {
+        symbol: TokenSymbol.TKN3,
+        initialSupply: toWei(1_000_000_000),
+        instanceName: InstanceName.TestToken3,
+        initialDeposit: toWei(1_000_000),
+        depositLimit: toWei(5_000_000),
+        fundingLimit: toWei(10_000_000)
+    },
+    {
+        symbol: TokenSymbol.TKN4,
+        initialSupply: toWei(1_000_000_000),
+        instanceName: InstanceName.TestToken4,
+        initialDeposit: toWei(2_000_000),
+        depositLimit: toWei(5_000_000),
+        fundingLimit: toWei(10_000_000),
+        tradingDisabled: true
+    },
+    {
+        symbol: TokenSymbol.TKN5,
+        initialSupply: toWei(1_000_000_000),
+        instanceName: InstanceName.TestToken5,
+        initialDeposit: toWei(3_000_000),
+        depositLimit: toWei(5_000_000),
+        fundingLimit: toWei(10_000_000),
+        depositingDisabled: true
+    },
+    {
+        symbol: TokenSymbol.TKN6,
+        initialSupply: toWei(1_000_000_000),
+        instanceName: InstanceName.TestToken6,
+        initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
+        depositLimit: toWei(5_000_000),
+        fundingLimit: toWei(10_000_000)
+    }
 ];
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
@@ -37,13 +68,22 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
 
-    for (const { symbol, instanceName, tradingDisabled, depositingDisabled } of TOKENS) {
+    for (const {
+        symbol,
+        initialSupply,
+        instanceName,
+        initialDeposit,
+        depositLimit,
+        fundingLimit,
+        tradingDisabled,
+        depositingDisabled
+    } of TOKENS) {
         const tokenData = new TokenData(symbol);
 
         await deploy({
             name: instanceName,
             contract: 'TestERC20Token',
-            args: [tokenData.name(), tokenData.symbol(), INITIAL_SUPPLY],
+            args: [tokenData.name(), tokenData.symbol(), initialSupply],
             from: deployer
         });
 
@@ -75,14 +115,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         await execute({
             name: InstanceName.NetworkSettings,
             methodName: 'setFundingLimit',
-            args: [testToken.address, FUNDING_LIMIT],
+            args: [testToken.address, fundingLimit],
             from: deployer
         });
 
         await execute({
             name: InstanceName.PoolCollectionType1V1,
             methodName: 'setDepositLimit',
-            args: [testToken.address, DEPOSIT_LIMIT],
+            args: [testToken.address, depositLimit],
             from: deployer
         });
 
@@ -92,8 +132,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             args: [testToken.address, TRADING_FEE],
             from: deployer
         });
-
-        const initialDeposit = (INITIAL_DEPOSITS as any)[instanceName] as number;
 
         await execute({
             name: instanceName,
