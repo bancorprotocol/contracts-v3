@@ -98,9 +98,9 @@ export const fromUint512 = (x: Uint512): BigNumber => {
 
 type ToWeiInput = Decimal | BigNumber | number;
 
-export const toWei = <T extends ToWeiInput>(v: T): BigNumber => {
+export const toWei = <T extends ToWeiInput>(v: T, decimals = DEFAULT_DECIMALS): BigNumber => {
     if (Decimal.isDecimal(v)) {
-        return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(DEFAULT_DECIMALS)).toFixed());
+        return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(decimals)).toFixed());
     }
 
     return BigNumber.from(v).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));

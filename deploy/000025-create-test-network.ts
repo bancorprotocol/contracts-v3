@@ -1,7 +1,7 @@
 import { PoolType } from '../utils/Constants';
 import { deploy, DeployedContracts, execute, InstanceName, isLive, setDeploymentMetadata } from '../utils/Deploy';
 import { duration } from '../utils/Time';
-import { TokenData, TokenSymbol } from '../utils/TokenData';
+import { DEFAULT_DECIMALS, TokenData, TokenSymbol } from '../utils/TokenData';
 import { toPPM, toWei } from '../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -19,7 +19,8 @@ const INITIAL_DEPOSITS = {
     [InstanceName.TestToken2]: toWei(500_000),
     [InstanceName.TestToken3]: toWei(1_000_000),
     [InstanceName.TestToken4]: toWei(2_000_000),
-    [InstanceName.TestToken5]: toWei(3_000_000)
+    [InstanceName.TestToken5]: toWei(3_000_000),
+    [InstanceName.TestToken6]: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals())
 };
 
 const TOKENS = [
@@ -27,7 +28,8 @@ const TOKENS = [
     { symbol: TokenSymbol.TKN2, instanceName: InstanceName.TestToken2 },
     { symbol: TokenSymbol.TKN3, instanceName: InstanceName.TestToken3 },
     { symbol: TokenSymbol.TKN4, instanceName: InstanceName.TestToken4, tradingDisabled: true },
-    { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true }
+    { symbol: TokenSymbol.TKN5, instanceName: InstanceName.TestToken5, depositingDisabled: true },
+    { symbol: TokenSymbol.TKN6, instanceName: InstanceName.TestToken6 }
 ];
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
@@ -44,6 +46,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             args: [tokenData.name(), tokenData.symbol(), INITIAL_SUPPLY],
             from: deployer
         });
+
+        if (tokenData.decimals() !== DEFAULT_DECIMALS) {
+            await execute({
+                name: instanceName,
+                methodName: 'updateDecimals',
+                args: [tokenData.decimals()],
+                from: deployer
+            });
+        }
 
         const testToken = await DeployedContracts[instanceName].deployed();
 
