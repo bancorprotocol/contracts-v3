@@ -28,7 +28,8 @@ describeDeployment(__filename, () => {
             InstanceName.TestToken3,
             InstanceName.TestToken4,
             InstanceName.TestToken5,
-            InstanceName.TestToken6
+            InstanceName.TestToken6,
+            InstanceName.TestToken7
         ]) {
             pools.push((await DeployedContracts[instanceName].deployed()).address);
         }
