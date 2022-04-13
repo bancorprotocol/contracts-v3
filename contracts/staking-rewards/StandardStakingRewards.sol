@@ -247,7 +247,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function programsIds() external view returns (uint256[] memory) {
+    function programIds() external view returns (uint256[] memory) {
         uint256 length = _nextProgramId - INITIAL_PROGRAM_ID;
         uint256[] memory ids = new uint256[](length);
         for (uint256 i = 0; i < length; i++) {
