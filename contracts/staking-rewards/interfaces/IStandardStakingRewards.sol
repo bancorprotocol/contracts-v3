@@ -27,7 +27,7 @@ interface IStandardStakingRewards is IUpgradeable {
     /**
      * @dev returns all program ids
      */
-    function programsIds() external view returns (uint256[] memory);
+    function programIds() external view returns (uint256[] memory);
 
     /**
      * @dev returns program data for each specified program id
