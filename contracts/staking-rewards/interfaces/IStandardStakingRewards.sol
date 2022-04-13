@@ -174,7 +174,7 @@ interface IStandardStakingRewards is IUpgradeable {
     /**
      * @dev claims rewards and returns the claimed reward amount
      */
-    function claimRewards(uint256[] calldata ids, uint256 maxAmount) external returns (uint256);
+    function claimRewards(uint256[] calldata ids) external returns (uint256);
 
     /**
      * @dev claims and stake rewards and returns the claimed reward amount and the received pool token amount
@@ -185,5 +185,5 @@ interface IStandardStakingRewards is IUpgradeable {
      *   token
      * - the rewards token must have been whitelisted with an existing pool
      */
-    function stakeRewards(uint256[] calldata ids, uint256 maxAmount) external returns (StakeAmounts memory);
+    function stakeRewards(uint256[] calldata ids) external returns (StakeAmounts memory);
 }
