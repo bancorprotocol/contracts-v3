@@ -13,7 +13,7 @@ import Contracts, {
 } from '../../components/Contracts';
 import { ExponentialDecay, StakingRewardsDistributionType, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { Addressable, toWei } from '../../utils/Types';
+import { Addressable, max, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
     createAutoCompoundingStakingRewards,
@@ -25,7 +25,7 @@ import {
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { max, transfer } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

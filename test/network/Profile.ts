@@ -27,7 +27,7 @@ import {
 } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, toPPM, toWei } from '../../utils/Types';
+import { fromPPM, max, toPPM, toWei } from '../../utils/Types';
 import {
     createAutoCompoundingStakingRewards,
     createPool,
@@ -43,7 +43,7 @@ import {
     TokenWithAddress
 } from '../helpers/Factory';
 import { duration, latest } from '../helpers/Time';
-import { createWallet, max, transfer } from '../helpers/Utils';
+import { createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';

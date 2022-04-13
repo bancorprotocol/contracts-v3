@@ -10,7 +10,7 @@ import {
 } from '../utils/Deploy';
 import { duration } from '../utils/Time';
 import { DEFAULT_DECIMALS, TokenData, TokenSymbol } from '../utils/TokenData';
-import { toPPM, toWei } from '../utils/Types';
+import { min, toPPM, toWei } from '../utils/Types';
 import { BigNumberish } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -38,8 +38,8 @@ const normalizeAmounts = (config: TokenPoolConfig) => {
         instanceName: config.instanceName,
         initialSupply: toWei(config.initialSupply, decimals),
         initialDeposit: toWei(config.initialDeposit, decimals),
-        depositLimit: config.depositLimit !== MAX_UINT256 ? toWei(config.depositLimit, decimals) : MAX_UINT256,
-        fundingLimit: config.fundingLimit !== MAX_UINT256 ? toWei(config.fundingLimit, decimals) : MAX_UINT256,
+        depositLimit: min(toWei(config.depositLimit, decimals), MAX_UINT256),
+        fundingLimit: min(toWei(config.fundingLimit, decimals), MAX_UINT256),
         tradingDisabled: config.tradingDisabled,
         depositingDisabled: config.depositingDisabled
     };

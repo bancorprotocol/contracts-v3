@@ -4,11 +4,15 @@ import { MAX_UINT256 } from '../../utils/Constants';
 import { DeployedContracts, InstanceName, isLive, TestTokenInstanceName } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toPPM, toWei } from '../../utils/Types';
+import { min, toPPM, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
 import { BigNumberish } from 'ethers';
 import { getNamedAccounts } from 'hardhat';
+
+const x = MAX_UINT256;
+console.log('AAA', x === MAX_UINT256);
+console.log('BBB', x.eq(MAX_UINT256));
 
 describeDeployment(
     __filename,
@@ -42,8 +46,8 @@ describeDeployment(
                 instanceName: config.instanceName,
                 initialSupply: toWei(config.initialSupply, decimals),
                 initialDeposit: toWei(config.initialDeposit, decimals),
-                depositLimit: config.depositLimit !== MAX_UINT256 ? toWei(config.depositLimit, decimals) : MAX_UINT256,
-                fundingLimit: config.fundingLimit !== MAX_UINT256 ? toWei(config.fundingLimit, decimals) : MAX_UINT256,
+                depositLimit: min(toWei(config.depositLimit, decimals), MAX_UINT256),
+                fundingLimit: min(toWei(config.fundingLimit, decimals), MAX_UINT256),
                 tradingDisabled: config.tradingDisabled,
                 depositingDisabled: config.depositingDisabled
             };

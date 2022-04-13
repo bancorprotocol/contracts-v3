@@ -1,7 +1,6 @@
 import Contracts, { TestMathEx } from '../../components/Contracts';
 import { Exponentiation } from '../../utils/Constants';
-import { Fraction, fromUint512, toPPM, toString, toUint512 } from '../../utils/Types';
-import { max } from '../helpers/Utils';
+import { Fraction, fromUint512, max, toPPM, toString, toUint512 } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';

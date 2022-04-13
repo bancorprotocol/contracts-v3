@@ -110,3 +110,9 @@ export const toPPM = (percent: number | undefined): number => (percent ? percent
 export const fromPPM = (ppm: number | undefined): number => (ppm ? ppm / (PPM_RESOLUTION / 100) : 0);
 
 export const toCents = (dollars: number) => dollars * 100;
+
+export const min = (a: BigNumberish, b: BigNumberish) =>
+    BigNumber.from(a).lt(b) ? BigNumber.from(a) : BigNumber.from(b);
+
+export const max = (a: BigNumberish, b: BigNumberish) =>
+    BigNumber.from(a).gt(b) ? BigNumber.from(a) : BigNumber.from(b);
