@@ -1108,7 +1108,7 @@ describe('PoolCollection', () => {
 
                     await expect(res)
                         .to.emit(poolCollection, 'TokensDeposited')
-                        .withArgs(CONTEXT_ID, token.address, provider.address, tokenAmount, expectedPoolTokenAmount);
+                        .withArgs(CONTEXT_ID, provider.address, token.address, tokenAmount, expectedPoolTokenAmount);
 
                     const poolData = await poolCollection.poolData(token.address);
                     const { liquidity } = poolData;
@@ -1352,8 +1352,8 @@ describe('PoolCollection', () => {
                                 .to.emit(poolCollection, 'TokensDeposited')
                                 .withArgs(
                                     CONTEXT_ID,
-                                    token.address,
                                     provider.address,
+                                    token.address,
                                     tokenAmount,
                                     expectedPoolTokenAmount
                                 );
@@ -1608,8 +1608,8 @@ describe('PoolCollection', () => {
                 .to.emit(poolCollection, 'TokensWithdrawn')
                 .withArgs(
                     CONTEXT_ID,
-                    token.address,
                     provider.address,
+                    token.address,
                     baseTokenAmount,
                     poolTokenAmount,
                     poolWithdrawalAmounts.baseTokensToTransferFromEPV,
