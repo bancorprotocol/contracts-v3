@@ -77,7 +77,7 @@ describeDeployment(
                 symbol: TokenSymbol.TKN7,
                 initialSupply: toWei(1_000_000_000),
                 instanceName: InstanceName.TestToken7,
-                initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
+                initialDeposit: toWei(1_000_000),
                 depositLimit: MAX_UINT256,
                 fundingLimit: MAX_UINT256
             }
