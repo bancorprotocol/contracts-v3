@@ -10,10 +10,6 @@ import { expect } from 'chai';
 import { BigNumberish } from 'ethers';
 import { getNamedAccounts } from 'hardhat';
 
-const x = MAX_UINT256;
-console.log('AAA', x === MAX_UINT256);
-console.log('BBB', x.eq(MAX_UINT256));
-
 describeDeployment(
     __filename,
     () => {
