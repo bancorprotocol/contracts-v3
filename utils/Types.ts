@@ -1,7 +1,7 @@
 import { MAX_UINT256, PPM_RESOLUTION } from './Constants';
 import { DEFAULT_DECIMALS } from './TokenData';
 import Decimal from 'decimal.js';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 
 export type Addressable = { address: string };
 
@@ -96,7 +96,7 @@ export const fromUint512 = (x: Uint512): BigNumber => {
     return x.hi.shl(256).or(x.lo);
 };
 
-type ToWeiInput = Decimal | BigNumber | number;
+type ToWeiInput = Decimal | BigNumberish;
 
 export const toWei = <T extends ToWeiInput>(v: T, decimals = DEFAULT_DECIMALS): BigNumber => {
     if (Decimal.isDecimal(v)) {

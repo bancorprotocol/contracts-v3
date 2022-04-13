@@ -1,12 +1,13 @@
 import { PendingWithdrawals, PoolCollection } from '../../components/Contracts';
 import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { MAX_UINT256 } from '../../utils/Constants';
-import { DeployedContracts, InstanceName, isLive } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, isLive, TestTokenInstanceName } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
+import { BigNumberish } from 'ethers';
 import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(
@@ -22,65 +23,91 @@ describeDeployment(
         const BNT_VIRTUAL_BALANCE = 1;
         const BASE_TOKEN_VIRTUAL_BALANCE = 2;
 
+        interface TokenPoolConfig {
+            symbol: TokenSymbol;
+            instanceName: TestTokenInstanceName;
+            initialSupply: BigNumberish;
+            initialDeposit: BigNumberish;
+            depositLimit: BigNumberish;
+            fundingLimit: BigNumberish;
+            tradingDisabled?: boolean;
+            depositingDisabled?: boolean;
+        }
+
+        const normalizeAmounts = (config: TokenPoolConfig) => {
+            const decimals = new TokenData(config.symbol).decimals();
+
+            return {
+                symbol: config.symbol,
+                instanceName: config.instanceName,
+                initialSupply: toWei(config.initialSupply, decimals),
+                initialDeposit: toWei(config.initialDeposit, decimals),
+                depositLimit: config.depositLimit !== MAX_UINT256 ? toWei(config.depositLimit, decimals) : MAX_UINT256,
+                fundingLimit: config.fundingLimit !== MAX_UINT256 ? toWei(config.fundingLimit, decimals) : MAX_UINT256,
+                tradingDisabled: config.tradingDisabled,
+                depositingDisabled: config.depositingDisabled
+            };
+        };
+
         const TOKENS = [
-            {
+            normalizeAmounts({
                 symbol: TokenSymbol.TKN1,
-                initialSupply: toWei(1_000_000_000),
+                initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken1,
-                initialDeposit: toWei(50_000),
-                depositLimit: toWei(5_000_000),
-                fundingLimit: toWei(10_000_000)
-            },
-            {
+                initialDeposit: 50_000,
+                depositLimit: 5_000_000,
+                fundingLimit: 10_000_000
+            }),
+            normalizeAmounts({
                 symbol: TokenSymbol.TKN2,
-                initialSupply: toWei(1_000_000_000),
+                initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken2,
-                initialDeposit: toWei(500_000),
-                depositLimit: toWei(5_000_000),
-                fundingLimit: toWei(10_000_000)
-            },
-            {
+                initialDeposit: 500_000,
+                depositLimit: 5_000_000,
+                fundingLimit: 10_000_000
+            }),
+            normalizeAmounts({
                 symbol: TokenSymbol.TKN3,
-                initialSupply: toWei(1_000_000_000),
+                initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken3,
-                initialDeposit: toWei(1_000_000),
-                depositLimit: toWei(5_000_000),
-                fundingLimit: toWei(10_000_000)
-            },
-            {
+                initialDeposit: 1_000_000,
+                depositLimit: 5_000_000,
+                fundingLimit: 10_000_000
+            }),
+            normalizeAmounts({
                 symbol: TokenSymbol.TKN4,
-                initialSupply: toWei(1_000_000_000),
+                initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken4,
-                initialDeposit: toWei(2_000_000),
-                depositLimit: toWei(5_000_000),
-                fundingLimit: toWei(10_000_000),
+                initialDeposit: 2_000_000,
+                depositLimit: 5_000_000,
+                fundingLimit: 10_000_000,
                 tradingDisabled: true
-            },
-            {
+            }),
+            normalizeAmounts({
                 symbol: TokenSymbol.TKN5,
-                initialSupply: toWei(1_000_000_000),
+                initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken5,
-                initialDeposit: toWei(3_000_000),
-                depositLimit: toWei(5_000_000),
-                fundingLimit: toWei(10_000_000),
+                initialDeposit: 3_000_000,
+                depositLimit: 5_000_000,
+                fundingLimit: 10_000_000,
                 depositingDisabled: true
-            },
-            {
+            }),
+            normalizeAmounts({
                 symbol: TokenSymbol.TKN6,
-                initialSupply: toWei(1_000_000_000),
+                initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken6,
-                initialDeposit: toWei(100_000, new TokenData(TokenSymbol.TKN6).decimals()),
-                depositLimit: toWei(5_000_000),
-                fundingLimit: toWei(10_000_000)
-            },
-            {
+                initialDeposit: 100_000,
+                depositLimit: 5_000_000,
+                fundingLimit: 10_000_000
+            }),
+            normalizeAmounts({
                 symbol: TokenSymbol.TKN7,
-                initialSupply: toWei(1_000_000_000),
+                initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken7,
-                initialDeposit: toWei(1_000_000),
+                initialDeposit: 1_000_000,
                 depositLimit: MAX_UINT256,
                 fundingLimit: MAX_UINT256
-            }
+            })
         ];
 
         before(async () => {
