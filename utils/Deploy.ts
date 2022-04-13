@@ -87,22 +87,27 @@ enum NewInstanceName {
 enum TestInstanceName {
     MockUniswapV2Factory = 'MockUniswapV2Factory',
     MockUniswapV2Pair = 'MockUniswapV2Pair',
-    MockUniswapV2Router02 = 'MockUniswapV2Router02',
+    MockUniswapV2Router02 = 'MockUniswapV2Router02'
+}
+
+export enum TestTokenInstanceName {
     TestToken1 = 'TestToken1',
     TestToken2 = 'TestToken2',
     TestToken3 = 'TestToken3',
     TestToken4 = 'TestToken4',
     TestToken5 = 'TestToken5',
-    TestToken6 = 'TestToken6'
+    TestToken6 = 'TestToken6',
+    TestToken7 = 'TestToken7'
 }
 
 export const InstanceName = {
     ...LegacyInstanceName,
     ...NewInstanceName,
-    ...TestInstanceName
+    ...TestInstanceName,
+    ...TestTokenInstanceName
 };
 
-export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName;
+export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName | TestTokenInstanceName;
 
 const DeployedLegacyContracts = {
     BNT: deployed<BNT>(InstanceName.BNT),
@@ -144,7 +149,8 @@ const DeployedTestContracts = {
     TestToken3: deployed<TestERC20Token>(InstanceName.TestToken3),
     TestToken4: deployed<TestERC20Token>(InstanceName.TestToken4),
     TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5),
-    TestToken6: deployed<TestERC20Token>(InstanceName.TestToken6)
+    TestToken6: deployed<TestERC20Token>(InstanceName.TestToken6),
+    TestToken7: deployed<TestERC20Token>(InstanceName.TestToken7)
 };
 
 export const DeployedContracts = {

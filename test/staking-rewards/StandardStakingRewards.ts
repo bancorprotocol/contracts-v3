@@ -14,7 +14,7 @@ import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toPPM, toWei } from '../../utils/Types';
+import { min, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
     createStandardStakingRewards,
@@ -27,7 +27,7 @@ import {
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createWallet, getBalance, getTransactionCost, min, transfer } from '../helpers/Utils';
+import { createWallet, getBalance, getTransactionCost, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';

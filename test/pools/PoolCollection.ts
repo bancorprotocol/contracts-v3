@@ -32,9 +32,9 @@ import {
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toPPM, toWei } from '../../utils/Types';
+import { max, min, toPPM, toWei } from '../../utils/Types';
 import { latestBlockNumber } from '..//helpers/BlockNumber';
-import { getBalance, max, min, transfer } from '..//helpers/Utils';
+import { getBalance, transfer } from '..//helpers/Utils';
 import {
     createPool,
     createPoolCollection,

@@ -14,7 +14,8 @@ export enum TokenSymbol {
     TKN3 = 'TKN3',
     TKN4 = 'TKN4',
     TKN5 = 'TKN5',
-    TKN6 = 'TKN6'
+    TKN6 = 'TKN6',
+    TKN7 = 'TKN7'
 }
 
 interface Errors {
@@ -89,6 +90,11 @@ const TOKEN_DATA = {
     [TokenSymbol.TKN6]: {
         name: 'Test Token 6',
         decimals: 4,
+        errors: DEFAULT_ERRORS
+    },
+    [TokenSymbol.TKN7]: {
+        name: 'Test Token 7',
+        decimals: DEFAULT_DECIMALS,
         errors: DEFAULT_ERRORS
     }
 };
