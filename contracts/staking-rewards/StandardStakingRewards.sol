@@ -406,6 +406,9 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 remainingRewards = _remainingRewards(p);
         _unclaimedRewards[p.rewardsToken] -= remainingRewards;
 
+        // stop rewards accumulation
+        _programs[id].endTime = _time();
+
         emit ProgramTerminated(p.pool, id, p.endTime, remainingRewards);
     }
 

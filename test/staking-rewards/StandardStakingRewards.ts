@@ -589,24 +589,33 @@ describe('StandardStakingRewards', () => {
 
         describe('termination', () => {
             let pool: TokenWithAddress;
+            let poolToken: IPoolToken;
+            let poolTokenAmount: BigNumber;
             let rewardsToken: TokenWithAddress;
 
             let nonAdmin: SignerWithAddress;
+            let provider: SignerWithAddress;
+
+            const DEPOSIT_AMOUNT = toWei(10_000);
 
             before(async () => {
-                [, nonAdmin] = await ethers.getSigners();
+                [, provider, nonAdmin] = await ethers.getSigners();
             });
 
             beforeEach(async () => {
                 rewardsToken = await createTestToken();
 
-                ({ token: pool } = await prepareSimplePool(
+                ({ token: pool, poolToken } = await prepareSimplePool(
                     new TokenData(TokenSymbol.TKN),
                     new TokenData(TokenSymbol.TKN),
                     rewardsToken,
                     INITIAL_BALANCE,
                     TOTAL_REWARDS
                 ));
+
+                await transfer(deployer, pool, provider, DEPOSIT_AMOUNT);
+                await depositToPool(provider, pool, DEPOSIT_AMOUNT, network);
+                poolTokenAmount = await poolToken.balanceOf(provider.address);
             });
 
             it('should revert when a non-admin is attempting to terminate a program', async () => {
@@ -626,6 +635,10 @@ describe('StandardStakingRewards', () => {
 
                 let id: BigNumber;
 
+                before(async () => {
+                    [, provider] = await ethers.getSigners();
+                });
+
                 beforeEach(async () => {
                     startTime = now;
                     endTime = now + duration.weeks(12);
@@ -639,10 +652,18 @@ describe('StandardStakingRewards', () => {
                         startTime,
                         endTime
                     );
+
+                    await poolToken.connect(provider).approve(standardStakingRewards.address, poolTokenAmount);
+                    await standardStakingRewards.connect(provider).join(id, poolTokenAmount);
+
+                    await increaseTime(standardStakingRewards, duration.seconds(1));
                 });
 
                 const testTerminate = async () => {
                     const prevUnclaimedRewards = await standardStakingRewards.unclaimedRewards(rewardsToken.address);
+                    const prevRewards = await standardStakingRewards.pendingRewards(provider.address, [id]);
+                    const prevPrograms = await standardStakingRewards.programs([id]);
+                    const prevProgram = prevPrograms[0];
 
                     const res = await standardStakingRewards.terminateProgram(id);
 
@@ -656,6 +677,17 @@ describe('StandardStakingRewards', () => {
                     expect(await standardStakingRewards.unclaimedRewards(rewardsToken.address)).to.equal(
                         prevUnclaimedRewards.sub(remainingRewards)
                     );
+
+                    const programs = await standardStakingRewards.programs([id]);
+                    const program = programs[0];
+
+                    expect(program.startTime).to.equal(prevProgram.startTime);
+                    expect(program.endTime).not.to.equal(prevProgram.endTime);
+                    expect(program.endTime).to.equal(await standardStakingRewards.currentTime());
+
+                    // ensure that pending rewards aren't being accrued for terminated programs
+                    await increaseTime(standardStakingRewards, duration.days(1));
+                    expect(await standardStakingRewards.pendingRewards(provider.address, [id])).to.equal(prevRewards);
                 };
 
                 it('should allow terminating the program', async () => {
@@ -767,6 +799,8 @@ describe('StandardStakingRewards', () => {
 
                     const res = await standardStakingRewards.enableProgram(id, false);
 
+                    const programs = await standardStakingRewards.programs([id]);
+                    const { endTime } = programs[0];
                     const remainingRewards = now >= endTime ? 0 : rewardRate.mul(endTime - now);
                     await expect(res)
                         .to.emit(standardStakingRewards, 'ProgramEnabled')
