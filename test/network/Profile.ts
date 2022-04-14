@@ -1537,14 +1537,14 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).claimRewards([id])
                     );
 
                     await increaseTime(standardStakingRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).claimRewards([id])
                     );
 
                     await profiler.profile(
@@ -1561,7 +1561,7 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).claimRewards([id])
                     );
                 });
 
@@ -1580,14 +1580,14 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).stakeRewards([id])
                     );
 
                     await increaseTime(standardStakingRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).stakeRewards([id])
                     );
 
                     await profiler.profile(
@@ -1604,7 +1604,7 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).stakeRewards([id])
                     );
                 });
             });
