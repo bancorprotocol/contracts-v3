@@ -83,7 +83,7 @@ const config: HardhatUserConfig = {
               }
             : {
                   accounts: {
-                      count: 10,
+                      count: 20,
                       accountsBalance: '10000000000000000000000000000000000000000000000'
                   },
                   allowUnlimitedContractSize: true,

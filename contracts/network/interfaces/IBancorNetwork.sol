@@ -96,7 +96,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the tokens on its behalf (ETH is handled separately)
+     * - the caller must have approved the network to transfer the tokens on its behalf (except for in the
+     *   native token case)
      */
     function depositFor(
         address provider,
@@ -109,7 +110,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the tokens on its behalf (ETH is handled separately)
+     * - the caller must have approved the network to transfer the tokens on its behalf (except for in the
+     *   native token case)
      */
     function deposit(Token pool, uint256 tokenAmount) external payable returns (uint256);
 
@@ -199,7 +201,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
      */
     function tradeBySourceAmount(
         Token sourceToken,
@@ -235,7 +238,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
      */
     function tradeByTargetAmount(
         Token sourceToken,

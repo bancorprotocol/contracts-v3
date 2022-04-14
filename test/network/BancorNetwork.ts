@@ -1509,11 +1509,11 @@ describe('BancorNetwork', () => {
                                                         deposit(amount, {
                                                             value: amount.sub(missingAmount)
                                                         })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(0) })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                                 });
 
                                                 it('should refund when attempting to deposit less than what was actually sent', async () => {
@@ -1531,10 +1531,11 @@ describe('BancorNetwork', () => {
                                                     );
                                                 });
                                             } else {
-                                                it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
+                                                // eslint-disable-next-line max-len
+                                                it('should revert when attempting to deposit the native token into a non native token pool', async () => {
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(1) })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                                 });
                                             }
                                         }
@@ -2558,11 +2559,11 @@ describe('BancorNetwork', () => {
                                         tradeDirectFunc(testAmount, {
                                             value: testAmount.sub(missingAmount)
                                         })
-                                    ).to.be.revertedWith('EthAmountMismatch');
+                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                     await expect(
                                         tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
-                                    ).to.be.revertedWith('EthAmountMismatch');
+                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                 });
 
                                 it('should refund when attempting to trade less than what was actually sent', async () => {
@@ -2591,9 +2592,9 @@ describe('BancorNetwork', () => {
                                     );
                                 });
                             } else {
-                                it('should revert when passing ETH with a non ETH trade', async () => {
+                                it('should revert when passing the native token with a non native token trade', async () => {
                                     await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
-                                        'EthAmountMismatch'
+                                        'NativeTokenAmountMismatch'
                                     );
                                 });
                             }
@@ -4307,6 +4308,7 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario1');
         test('BancorNetworkSimpleFinancialScenario2');
         test('BancorNetworkSimpleFinancialScenario3');
+        test('BancorNetworkSimpleFinancialScenario4');
     });
 
     describe('@stress test', () => {

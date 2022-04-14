@@ -160,7 +160,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     function __BancorPortal_init_unchained() internal onlyInitializing {}
 
     /**
-     * @dev ETH receive callback
+     * @dev authorize the contract to receive the native token
      */
     receive() external payable {}
 

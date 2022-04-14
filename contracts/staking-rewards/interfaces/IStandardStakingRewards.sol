@@ -27,7 +27,7 @@ interface IStandardStakingRewards is IUpgradeable {
     /**
      * @dev returns all program ids
      */
-    function programsIds() external view returns (uint256[] memory);
+    function programIds() external view returns (uint256[] memory);
 
     /**
      * @dev returns program data for each specified program id
@@ -139,7 +139,8 @@ interface IStandardStakingRewards is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network contract to transfer the tokens its behalf (ETH is handled separately)
+     * - the caller must have approved the network contract to transfer the tokens its behalf (except for in the
+     *   native token case)
      */
     function depositAndJoin(uint256 id, uint256 tokenAmount) external payable;
 
@@ -173,7 +174,7 @@ interface IStandardStakingRewards is IUpgradeable {
     /**
      * @dev claims rewards and returns the claimed reward amount
      */
-    function claimRewards(uint256[] calldata ids, uint256 maxAmount) external returns (uint256);
+    function claimRewards(uint256[] calldata ids) external returns (uint256);
 
     /**
      * @dev claims and stake rewards and returns the claimed reward amount and the received pool token amount
@@ -184,5 +185,5 @@ interface IStandardStakingRewards is IUpgradeable {
      *   token
      * - the rewards token must have been whitelisted with an existing pool
      */
-    function stakeRewards(uint256[] calldata ids, uint256 maxAmount) external returns (StakeAmounts memory);
+    function stakeRewards(uint256[] calldata ids) external returns (StakeAmounts memory);
 }

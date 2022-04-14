@@ -211,8 +211,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     event TokensDeposited(
         bytes32 indexed contextId,
-        Token indexed token,
         address indexed provider,
+        Token indexed token,
         uint256 tokenAmount,
         uint256 poolTokenAmount
     );
@@ -222,8 +222,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     event TokensWithdrawn(
         bytes32 indexed contextId,
-        Token indexed token,
         address indexed provider,
+        Token indexed token,
         uint256 tokenAmount,
         uint256 poolTokenAmount,
         uint256 externalProtectionBaseTokenAmount,
@@ -609,8 +609,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         emit TokensDeposited({
             contextId: contextId,
-            token: pool,
             provider: provider,
+            token: pool,
             tokenAmount: tokenAmount,
             poolTokenAmount: poolTokenAmount
         });
@@ -1000,8 +1000,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         emit TokensWithdrawn({
             contextId: contextId,
-            token: pool,
             provider: provider,
+            token: pool,
             tokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
@@ -1451,8 +1451,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // calculate the target network fee amount
         uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, networkFeePPM, PPM_RESOLUTION);
 
-        // update the trading fee amount and the target balance
-        result.tradingFeeAmount -= targetNetworkFeeAmount;
+        // update the target balance (but don't deduct it from the full trading fee amount)
         result.targetBalance -= targetNetworkFeeAmount;
 
         if (!result.isSourceBNT) {

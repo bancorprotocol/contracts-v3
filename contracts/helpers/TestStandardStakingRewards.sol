@@ -54,21 +54,15 @@ contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
         return _providerRewards[provider][id];
     }
 
-    function claimRewardsWithAmounts(uint256[] calldata ids, uint256 maxAmount) external returns (uint256[] memory) {
+    function claimRewardsWithAmounts(uint256[] calldata ids) external returns (uint256[] memory) {
         uint256[] memory amounts = new uint256[](ids.length);
 
-        for (uint256 i = 0; i < ids.length && maxAmount > 0; i++) {
+        for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
 
             ProgramData memory p = _programs[id];
 
-            ClaimData memory claimData = _claimRewards(msg.sender, p, maxAmount);
-
-            amounts[i] = claimData.amount;
-
-            if (maxAmount != type(uint256).max) {
-                maxAmount -= claimData.amount;
-            }
+            amounts[i] = _claimRewards(msg.sender, p);
         }
 
         return amounts;

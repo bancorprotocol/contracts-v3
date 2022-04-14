@@ -53,13 +53,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 amount;
     }
 
-    struct ClaimData {
-        uint256 amount;
-        uint256 remaining;
-    }
-
     error ArrayNotUnique();
-    error EthAmountMismatch();
+    error NativeTokenAmountMismatch();
     error InsufficientFunds();
     error PoolMismatch();
     error ProgramDisabled();
@@ -233,7 +228,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev ETH receive callback
+     * @dev authorize the contract to receive the native token
      */
     receive() external payable {}
 
@@ -247,7 +242,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function programsIds() external view returns (uint256[] memory) {
+    function programIds() external view returns (uint256[] memory) {
         uint256 length = _nextProgramId - INITIAL_PROGRAM_ID;
         uint256[] memory ids = new uint256[](length);
         for (uint256 i = 0; i < length; i++) {
@@ -541,13 +536,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function claimRewards(uint256[] calldata ids, uint256 maxAmount)
-        external
-        uniqueArray(ids)
-        nonReentrant
-        returns (uint256)
-    {
-        RewardData memory rewardData = _claimRewards(msg.sender, ids, maxAmount, false);
+    function claimRewards(uint256[] calldata ids) external uniqueArray(ids) nonReentrant returns (uint256) {
+        RewardData memory rewardData = _claimRewards(msg.sender, ids, false);
 
         if (rewardData.amount == 0) {
             return 0;
@@ -561,13 +551,8 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IStandardStakingRewards
      */
-    function stakeRewards(uint256[] calldata ids, uint256 maxAmount)
-        external
-        uniqueArray(ids)
-        nonReentrant
-        returns (StakeAmounts memory)
-    {
-        RewardData memory rewardData = _claimRewards(msg.sender, ids, maxAmount, true);
+    function stakeRewards(uint256[] calldata ids) external uniqueArray(ids) nonReentrant returns (StakeAmounts memory) {
+        RewardData memory rewardData = _claimRewards(msg.sender, ids, true);
 
         if (rewardData.amount == 0) {
             return StakeAmounts({ stakedRewardAmount: 0, poolTokenAmount: 0 });
@@ -668,23 +653,23 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         bool externalPayer = payer != address(this);
 
         if (pool.isNative()) {
-            // unless the payer is the contract itself (e.g., during the staking process), in which case ETH was already
-            // claimed and pending in the contract - verify and use the received ETH from the sender
+            // unless the payer is the contract itself (e.g., during the staking process), in which case the native token
+            // was already claimed and pending in the contract - verify and use the received native token from the sender
             if (externalPayer) {
                 if (msg.value < tokenAmount) {
-                    revert EthAmountMismatch();
+                    revert NativeTokenAmountMismatch();
                 }
             }
 
             poolTokenAmount = _network.depositFor{ value: tokenAmount }(provider, pool, tokenAmount);
 
-            // refund the caller for the remaining ETH
+            // refund the caller for the remaining native token amount
             if (externalPayer && msg.value > tokenAmount) {
                 payable(address(payer)).sendValue(msg.value - tokenAmount);
             }
         } else {
             if (msg.value > 0) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             // unless the payer is the contract itself (e.g., during the staking process), in which case the tokens were
@@ -723,7 +708,6 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     function _claimRewards(
         address provider,
         uint256[] calldata ids,
-        uint256 maxAmount,
         bool stake
     ) private returns (RewardData memory) {
         RewardData memory rewardData = RewardData({
@@ -732,7 +716,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
             amount: 0
         });
 
-        for (uint256 i = 0; i < ids.length && maxAmount > 0; i++) {
+        for (uint256 i = 0; i < ids.length; i++) {
             ProgramData memory p = _programs[ids[i]];
 
             _verifyProgramEnabled(p);
@@ -746,24 +730,19 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 revert RewardsTokenMismatch();
             }
 
-            ClaimData memory claimData = _claimRewards(provider, p, maxAmount);
-
-            rewardData.amount += claimData.amount;
-
-            if (maxAmount != type(uint256).max) {
-                maxAmount -= claimData.amount;
-            }
+            uint256 claimedAmount = _claimRewards(provider, p);
+            rewardData.amount += claimedAmount;
 
             // if the program is no longer active and there are no pending rewards - remove the program from the
             // provider's program list
-            if (!_isProgramActive(p) && claimData.remaining == 0) {
+            if (!_isProgramActive(p)) {
                 _programIdsByProvider[provider].remove(p.id);
             }
 
             if (stake) {
-                emit RewardsStaked({ pool: p.pool, programId: p.id, provider: provider, amount: claimData.amount });
+                emit RewardsStaked({ pool: p.pool, programId: p.id, provider: provider, amount: claimedAmount });
             } else {
-                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: claimData.amount });
+                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: claimedAmount });
             }
         }
 
@@ -776,24 +755,14 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @dev claims rewards and returns the received and the pending reward amounts
      */
-    function _claimRewards(
-        address provider,
-        ProgramData memory p,
-        uint256 maxAmount
-    ) internal returns (ClaimData memory) {
+    function _claimRewards(address provider, ProgramData memory p) internal returns (uint256) {
         ProviderRewards storage providerRewards = _snapshotRewards(p, provider);
 
         uint256 reward = providerRewards.pendingRewards;
 
-        if (maxAmount != type(uint256).max && reward > maxAmount) {
-            providerRewards.pendingRewards = reward - maxAmount;
-
-            return ClaimData({ amount: maxAmount, remaining: providerRewards.pendingRewards });
-        }
-
         providerRewards.pendingRewards = 0;
 
-        return ClaimData({ amount: reward, remaining: 0 });
+        return reward;
     }
 
     /**
