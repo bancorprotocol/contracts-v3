@@ -53,6 +53,11 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
         uint256 amount;
     }
 
+    struct ClaimData {
+        uint256 reward;
+        uint256 stakedAmount;
+    }
+
     error ArrayNotUnique();
     error NativeTokenAmountMismatch();
     error InsufficientFunds();
@@ -730,19 +735,19 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
                 revert RewardsTokenMismatch();
             }
 
-            uint256 claimedAmount = _claimRewards(provider, p);
-            rewardData.amount += claimedAmount;
+            ClaimData memory claimData = _claimRewards(provider, p);
+            rewardData.amount += claimData.reward;
 
-            // if the program is no longer active and there are no pending rewards - remove the program from the
-            // provider's program list
-            if (!_isProgramActive(p)) {
+            // if the program is no longer active, has no stake left, and there are no pending rewards - remove the
+            // program from the provider's program list
+            if (!_isProgramActive(p) && claimData.stakedAmount == 0) {
                 _programIdsByProvider[provider].remove(p.id);
             }
 
             if (stake) {
-                emit RewardsStaked({ pool: p.pool, programId: p.id, provider: provider, amount: claimedAmount });
+                emit RewardsStaked({ pool: p.pool, programId: p.id, provider: provider, amount: claimData.reward });
             } else {
-                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: claimedAmount });
+                emit RewardsClaimed({ pool: p.pool, programId: p.id, provider: provider, amount: claimData.reward });
             }
         }
 
@@ -755,14 +760,14 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @dev claims rewards and returns the received and the pending reward amounts
      */
-    function _claimRewards(address provider, ProgramData memory p) internal returns (uint256) {
+    function _claimRewards(address provider, ProgramData memory p) internal returns (ClaimData memory) {
         ProviderRewards storage providerRewards = _snapshotRewards(p, provider);
 
         uint256 reward = providerRewards.pendingRewards;
 
         providerRewards.pendingRewards = 0;
 
-        return reward;
+        return ClaimData({ reward: reward, stakedAmount: providerRewards.stakedAmount });
     }
 
     /**

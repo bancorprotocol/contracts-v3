@@ -62,7 +62,7 @@ contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
 
             ProgramData memory p = _programs[id];
 
-            amounts[i] = _claimRewards(msg.sender, p);
+            amounts[i] = _claimRewards(msg.sender, p).reward;
         }
 
         return amounts;
