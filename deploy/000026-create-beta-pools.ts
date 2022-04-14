@@ -5,6 +5,7 @@ import {
     execute,
     InstanceName,
     isHardhat,
+    isLocalhost,
     isMainnetFork,
     setDeploymentMetadata
 } from '../utils/Deploy';
@@ -63,7 +64,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         // since we currently aren't using real ERC20 tokens during local unit testing, we'd use the overrides mechanism
         // to ensure that these pools can be created (otherwise, the PoolTokenFactory contract will try to call either
         // symbols() or decimals() and will revert)
-        if (!isNativeToken && isHardhat()) {
+        if (!isNativeToken && (isHardhat() || isLocalhost())) {
             await execute({
                 name: InstanceName.PoolTokenFactory,
                 methodName: 'setTokenSymbolOverride',

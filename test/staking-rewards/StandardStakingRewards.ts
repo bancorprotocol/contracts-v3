@@ -27,7 +27,7 @@ import {
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createWallet, getBalance, getTransactionCost, min, transfer } from '../helpers/Utils';
+import { createWallet, getBalance, getTransactionCost, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -403,7 +403,7 @@ describe('StandardStakingRewards', () => {
                     const id = await standardStakingRewards.nextProgramId();
                     const prevUnclaimedRewards = await standardStakingRewards.unclaimedRewards(rewardsToken.address);
 
-                    expect((await standardStakingRewards.programsIds()).map((id) => id.toNumber())).not.to.include(
+                    expect((await standardStakingRewards.programIds()).map((id) => id.toNumber())).not.to.include(
                         id.toNumber()
                     );
                     expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
@@ -421,12 +421,12 @@ describe('StandardStakingRewards', () => {
                         .to.emit(standardStakingRewards, 'ProgramCreated')
                         .withArgs(pool.address, id, rewardsToken.address, totalRewards, startTime, endTime);
 
-                    expect((await standardStakingRewards.programsIds()).map((id) => id.toNumber())).to.include(
+                    expect((await standardStakingRewards.programIds()).map((id) => id.toNumber())).to.include(
                         id.toNumber()
                     );
                     expect(await standardStakingRewards.isProgramActive(id)).to.be.true;
                     expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
-                    expect(await standardStakingRewards.activeProgramId(pool.address)).to.equal(id);
+                    expect(await standardStakingRewards.latestProgramId(pool.address)).to.equal(id);
                     expect(await standardStakingRewards.unclaimedRewards(rewardsToken.address)).to.equal(
                         prevUnclaimedRewards.add(totalRewards)
                     );
@@ -487,7 +487,7 @@ describe('StandardStakingRewards', () => {
                                 startTime,
                                 endTime
                             )
-                        ).to.be.revertedWith('ProgramAlreadyExists');
+                        ).to.be.revertedWith('AlreadyExists');
                     });
 
                     context('when the active program was disabled', () => {
@@ -504,7 +504,7 @@ describe('StandardStakingRewards', () => {
                                     startTime,
                                     endTime
                                 )
-                            ).to.be.revertedWith('ProgramAlreadyExists');
+                            ).to.be.revertedWith('AlreadyExists');
                         });
                     });
 
@@ -616,7 +616,7 @@ describe('StandardStakingRewards', () => {
             });
 
             it('should revert when attempting to terminate a non-existing program', async () => {
-                await expect(standardStakingRewards.terminateProgram(1)).to.be.revertedWith('ProgramDoesNotExist');
+                await expect(standardStakingRewards.terminateProgram(1)).to.be.revertedWith('DoesNotExist');
             });
 
             context('with an active program', () => {
@@ -736,9 +736,7 @@ describe('StandardStakingRewards', () => {
 
             it('should revert when attempting to enable/disable a non-existing program', async () => {
                 for (const status of [true, false]) {
-                    await expect(standardStakingRewards.enableProgram(1, status)).to.be.revertedWith(
-                        'ProgramDoesNotExist'
-                    );
+                    await expect(standardStakingRewards.enableProgram(1, status)).to.be.revertedWith('DoesNotExist');
                 }
             });
 
@@ -912,7 +910,7 @@ describe('StandardStakingRewards', () => {
                     };
 
                     it('should revert when attempting to join a non-existing program', async () => {
-                        await expect(join(0, 1)).to.be.revertedWith('ProgramDoesNotExist');
+                        await expect(join(0, 1)).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to join with an invalid amount', async () => {
@@ -1163,7 +1161,7 @@ describe('StandardStakingRewards', () => {
 
                 it('should revert when attempting to leave a non-existing program', async () => {
                     await expect(standardStakingRewards.connect(provider).leave(0, 1)).to.be.revertedWith(
-                        'ProgramDoesNotExist'
+                        'DoesNotExist'
                     );
                 });
 
@@ -1318,7 +1316,7 @@ describe('StandardStakingRewards', () => {
                         beforeEach(async () => {
                             await increaseTime(standardStakingRewards, duration.days(1));
 
-                            await standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256);
+                            await standardStakingRewards.connect(provider).claimRewards([id]);
                         });
 
                         it('should leave', async () => {
@@ -1462,7 +1460,7 @@ describe('StandardStakingRewards', () => {
                     };
 
                     it('should revert when attempting to deposit and join a non-existing program', async () => {
-                        await expect(depositAndJoin(0, 1)).to.be.revertedWith('ProgramDoesNotExist');
+                        await expect(depositAndJoin(0, 1)).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to deposit and join with an invalid amount', async () => {
@@ -1495,11 +1493,11 @@ describe('StandardStakingRewards', () => {
                                     depositAndJoin(nativeId, amount, {
                                         value: amount.sub(missingAmount)
                                     })
-                                ).to.be.revertedWith('EthAmountMismatch');
+                                ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                 await expect(
                                     depositAndJoin(nativeId, amount, { value: BigNumber.from(0) })
-                                ).to.be.revertedWith('EthAmountMismatch');
+                                ).to.be.revertedWith('NativeTokenAmountMismatch');
                             });
 
                             it('should refund when attempting to deposit and join with less than what was actually sent', async () => {
@@ -1529,12 +1527,12 @@ describe('StandardStakingRewards', () => {
                                 });
                             });
 
-                            it('should revert when attempting to deposit and join with ETH into a non ETH pool', async () => {
+                            it('should revert when attempting to deposit and join with the native token into a non native token pool', async () => {
                                 const amount = toWei(1);
 
                                 await expect(
                                     depositAndJoin(id, amount, { value: BigNumber.from(1) })
-                                ).to.be.revertedWith('EthAmountMismatch');
+                                ).to.be.revertedWith('NativeTokenAmountMismatch');
                             });
                         });
                     }
@@ -1971,45 +1969,41 @@ describe('StandardStakingRewards', () => {
 
                     it('should revert when attempting to claim rewards for non-existing programs', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).claimRewards([10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                            standardStakingRewards.connect(provider).claimRewards([10_000])
+                        ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            standardStakingRewards.connect(provider).claimRewards([programData.id, 10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                            standardStakingRewards.connect(provider).claimRewards([programData.id, 10_000])
+                        ).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to stake rewards for non-existing programs', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).stakeRewards([10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                            standardStakingRewards.connect(provider).stakeRewards([10_000])
+                        ).to.be.revertedWith('DoesNotExist');
 
                         await expect(
-                            standardStakingRewards.connect(provider).stakeRewards([programData.id, 10_000], MAX_UINT256)
-                        ).to.be.revertedWith('ProgramDoesNotExist');
+                            standardStakingRewards.connect(provider).stakeRewards([programData.id, 10_000])
+                        ).to.be.revertedWith('DoesNotExist');
                     });
 
                     it('should revert when attempting to claim rewards with duplicate ids', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).claimRewards([10_000, 10_000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).claimRewards([10_000, 10_000])
                         ).to.be.revertedWith('ArrayNotUnique');
 
                         await expect(
-                            standardStakingRewards
-                                .connect(provider)
-                                .claimRewards([programData.id, programData.id], MAX_UINT256)
+                            standardStakingRewards.connect(provider).claimRewards([programData.id, programData.id])
                         ).to.be.revertedWith('ArrayNotUnique');
                     });
 
                     it('should revert when attempting to stake rewards with duplicate ids', async () => {
                         await expect(
-                            standardStakingRewards.connect(provider).stakeRewards([10_000, 10_000], MAX_UINT256)
+                            standardStakingRewards.connect(provider).stakeRewards([10_000, 10_000])
                         ).to.be.revertedWith('ArrayNotUnique');
 
                         await expect(
-                            standardStakingRewards
-                                .connect(provider)
-                                .stakeRewards([programData.id, programData.id], MAX_UINT256)
+                            standardStakingRewards.connect(provider).stakeRewards([programData.id, programData.id])
                         ).to.be.revertedWith('ArrayNotUnique');
                     });
 
@@ -2020,13 +2014,13 @@ describe('StandardStakingRewards', () => {
 
                         it('should revert', async () => {
                             await expect(
-                                standardStakingRewards.connect(provider).claimRewards([programData.id], MAX_UINT256)
+                                standardStakingRewards.connect(provider).claimRewards([programData.id])
                             ).to.be.revertedWith('ProgramDisabled');
                         });
 
                         it('should revert', async () => {
                             await expect(
-                                standardStakingRewards.connect(provider).stakeRewards([programData.id], MAX_UINT256)
+                                standardStakingRewards.connect(provider).stakeRewards([programData.id])
                             ).to.be.revertedWith('ProgramDisabled');
                         });
                     });
@@ -2080,7 +2074,7 @@ describe('StandardStakingRewards', () => {
                                 await expect(
                                     standardStakingRewards
                                         .connect(provider)
-                                        .claimRewards([programData.id, programData2.id], MAX_UINT256)
+                                        .claimRewards([programData.id, programData2.id])
                                 ).to.be.revertedWith('RewardsTokenMismatch');
                             });
 
@@ -2088,7 +2082,7 @@ describe('StandardStakingRewards', () => {
                                 await expect(
                                     standardStakingRewards
                                         .connect(provider)
-                                        .stakeRewards([programData.id, programData2.id], MAX_UINT256)
+                                        .stakeRewards([programData.id, programData2.id])
                                 ).to.be.revertedWith('RewardsTokenMismatch');
                             });
                         });
@@ -2304,17 +2298,12 @@ describe('StandardStakingRewards', () => {
                         }
                     };
 
-                    const stakeOrClaim = async (
-                        stake: boolean,
-                        provider: SignerWithAddress,
-                        ids: number[],
-                        maxAmount: BigNumberish
-                    ) => {
+                    const stakeOrClaim = async (stake: boolean, provider: SignerWithAddress, ids: number[]) => {
                         snapshotRewards();
 
                         const claimed = await standardStakingRewards
                             .connect(provider)
-                            .callStatic.claimRewardsWithAmounts(ids, maxAmount);
+                            .callStatic.claimRewardsWithAmounts(ids);
 
                         for (const [i, id] of ids.entries()) {
                             const programRewardsData = rewardsData.programRewardsData[id];
@@ -2331,17 +2320,15 @@ describe('StandardStakingRewards', () => {
                         if (stake) {
                             const stakeAmounts = await standardStakingRewards
                                 .connect(provider)
-                                .callStatic.stakeRewards(ids, maxAmount);
+                                .callStatic.stakeRewards(ids);
 
                             ({ poolTokenAmount, stakedRewardAmount: totalClaimed } = stakeAmounts);
 
-                            res = await standardStakingRewards.connect(provider).stakeRewards(ids, maxAmount);
+                            res = await standardStakingRewards.connect(provider).stakeRewards(ids);
                         } else {
-                            totalClaimed = await standardStakingRewards
-                                .connect(provider)
-                                .callStatic.claimRewards(ids, maxAmount);
+                            totalClaimed = await standardStakingRewards.connect(provider).callStatic.claimRewards(ids);
 
-                            res = await standardStakingRewards.connect(provider).claimRewards(ids, maxAmount);
+                            res = await standardStakingRewards.connect(provider).claimRewards(ids);
                         }
 
                         expect(claimed.reduce((res, c) => res.add(c), BigNumber.from(0))).to.equal(totalClaimed);
@@ -2389,7 +2376,7 @@ describe('StandardStakingRewards', () => {
                         }
                     };
 
-                    const testStakeOrClaimRewards = async (stake: boolean, maxAmount: BigNumberish = MAX_UINT256) => {
+                    const testStakeOrClaimRewards = async (stake: boolean) => {
                         snapshotRewards();
 
                         const [id, id2] = ids;
@@ -2407,10 +2394,7 @@ describe('StandardStakingRewards', () => {
                                 }
                             );
 
-                            const expectedProgramClaimedReward = min(expectedProgramReward, maxAmount);
-                            const expectedProgramClaimedReward2 = min(expectedProgramReward2, maxAmount);
-                            const expectedTotalClaimedReward =
-                                expectedProgramClaimedReward.add(expectedProgramClaimedReward2);
+                            const expectedTotalClaimedReward = expectedProgramReward.add(expectedProgramReward2);
 
                             const programData = programsData[id];
                             const programData2 = programsData[id2];
@@ -2432,12 +2416,7 @@ describe('StandardStakingRewards', () => {
                                 p.address
                             );
 
-                            const { totalClaimed, claimed, poolTokenAmount, res } = await stakeOrClaim(
-                                stake,
-                                p,
-                                ids,
-                                maxAmount
-                            );
+                            const { totalClaimed, claimed, poolTokenAmount, res } = await stakeOrClaim(stake, p, ids);
                             const [claimedProgram, claimedProgram2] = claimed;
 
                             let transactionCost = BigNumber.from(0);
@@ -2547,11 +2526,9 @@ describe('StandardStakingRewards', () => {
                         }
                     };
 
-                    const testClaimRewards = async (maxAmount: BigNumberish = MAX_UINT256) =>
-                        testStakeOrClaimRewards(false, maxAmount);
+                    const testClaimRewards = async () => testStakeOrClaimRewards(false);
 
-                    const testStakeRewards = async (maxAmount: BigNumberish = MAX_UINT256) =>
-                        testStakeOrClaimRewards(true, maxAmount);
+                    const testStakeRewards = async () => testStakeOrClaimRewards(true);
 
                     it('should properly claim rewards', async () => {
                         // pending rewards should be 0 before the beginning of the program
@@ -2602,12 +2579,6 @@ describe('StandardStakingRewards', () => {
                         // join with additional 5% of the initial pool token amount
                         await joinPortion([toPPM(5), toPPM(5)]);
 
-                        // increase the staking duration
-                        await increaseTime(standardStakingRewards, duration.minutes(60));
-
-                        // ensure that claiming partial rewards works properly
-                        await testClaimRewards(toWei(1));
-
                         // ensure that the program has finished
                         await setTime(standardStakingRewards, rewardsData.endTime + duration.weeks(2));
 
@@ -2655,12 +2626,6 @@ describe('StandardStakingRewards', () => {
 
                         // join with additional 20% of the initial pool token amount
                         await joinPortion([toPPM(20), toPPM(20)]);
-
-                        // increase the staking duration
-                        await increaseTime(standardStakingRewards, duration.weeks(1));
-
-                        // ensure that staking partial rewards works properly
-                        await testStakeRewards(toWei(1));
 
                         // ensure that the program has finished
                         await setTime(standardStakingRewards, rewardsData.endTime + duration.weeks(2));

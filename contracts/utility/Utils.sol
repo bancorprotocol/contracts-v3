@@ -14,7 +14,7 @@ error InvalidPoolCollection();
 error InvalidStakedBalance();
 error InvalidToken();
 error InvalidType();
-error InvalidInput();
+error InvalidParam();
 error NotEmpty();
 error NotPayable();
 error ZeroValue();

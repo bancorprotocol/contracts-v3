@@ -83,7 +83,7 @@ const config: HardhatUserConfig = {
               }
             : {
                   accounts: {
-                      count: 10,
+                      count: 20,
                       accountsBalance: '10000000000000000000000000000000000000000000000'
                   },
                   allowUnlimitedContractSize: true,
@@ -94,7 +94,7 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Localhost]: {
             chainId: 31337,
             url: 'http://127.0.0.1:8545',
-            saveDeployments: false,
+            saveDeployments: true,
             live: false
         },
         [DeploymentNetwork.Mainnet]: {

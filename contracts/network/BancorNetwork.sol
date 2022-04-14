@@ -61,9 +61,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using SafeERC20 for IPoolToken;
 
     error DeadlineExpired();
-    error EthAmountMismatch();
+    error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
-    error InvalidTokens();
 
     struct TradeParams {
         uint256 amount;
@@ -71,8 +70,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool bySourceAmount;
     }
 
-    struct TradeAmountAndNetworkFee {
-        uint256 amount;
+    struct TradeResult {
+        uint256 sourceAmount;
+        uint256 targetAmount;
+        uint256 tradingFeeAmount;
         uint256 networkFeeAmount;
     }
 
@@ -81,9 +82,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         Token targetToken;
     }
 
-    struct TradeAmounts {
-        uint256 sourceAmount;
-        uint256 targetAmount;
+    struct TraderInfo {
+        address trader;
+        address beneficiary;
     }
 
     // the migration manager role is required for migrating liquidity
@@ -140,7 +141,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(Token => IPoolCollection) private _collectionByPool;
 
-    // the pending network fees amount to be burned by the vortex
+    // the pending network fee amount to be burned by the vortex
     uint256 internal _pendingNetworkFeeAmount;
 
     // upgrade forward-compatibility storage gap
@@ -321,6 +322,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
+     * @dev returns the pending network fee amount to be burned by the vortex
+     */
+    function pendingNetworkFeeAmount() external view returns (uint256) {
+        return _pendingNetworkFeeAmount;
+    }
+
+    /**
      * @dev adds new pool collection to the network
      *
      * requirements:
@@ -481,7 +489,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev creates a new pool
      */
     function _createPool(uint16 poolType, Token token) private validAddress(address(token)) {
-        if (_isBNT(token)) {
+        if (token.isEqual(_bnt)) {
             revert InvalidToken();
         }
 
@@ -677,11 +685,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
 
         _trade(
-            sourceToken,
-            targetToken,
+            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
             TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-            msg.sender,
-            beneficiary,
+            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
             deadline
         );
     }
@@ -705,11 +711,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         sourceToken.permit(msg.sender, address(this), sourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _trade(
-            sourceToken,
-            targetToken,
+            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
             TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-            msg.sender,
-            beneficiary,
+            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
             deadline
         );
     }
@@ -728,11 +732,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
 
         _trade(
-            sourceToken,
-            targetToken,
+            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
             TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-            msg.sender,
-            beneficiary,
+            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
             deadline
         );
     }
@@ -756,11 +758,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         sourceToken.permit(msg.sender, address(this), maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _trade(
-            sourceToken,
-            targetToken,
+            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
             TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-            msg.sender,
-            beneficiary,
+            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
             deadline
         );
     }
@@ -781,7 +781,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         nonReentrant
     {
-        if (!_isBNT(token) && !_networkSettings.isTokenWhitelisted(token)) {
+        if (!token.isEqual(_bnt) && !_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
         }
 
@@ -810,7 +810,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // notify the pool of accrued fees
-        if (_isBNT(token)) {
+        if (token.isEqual(_bnt)) {
             IBNTPool cachedBNTPool = _bntPool;
 
             cachedBNTPool.onFeesCollected(token, feeAmount, false);
@@ -837,7 +837,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             abi.encodePacked(msg.sender, _time(), token, provider, amount, availableAmount, originalAmount)
         );
 
-        if (_isBNT(token)) {
+        if (token.isEqual(_bnt)) {
             _depositBNTFor(contextId, provider, amount, msg.sender, true, originalAmount);
         } else {
             _depositBaseTokenFor(contextId, provider, token, amount, msg.sender, availableAmount);
@@ -855,16 +855,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
     {
-        uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
-        if (pendingNetworkFeeAmount == 0) {
+        uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
+        if (currentPendingNetworkFeeAmount == 0) {
             return;
         }
 
         _pendingNetworkFeeAmount = 0;
 
-        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), pendingNetworkFeeAmount);
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), currentPendingNetworkFeeAmount);
 
-        emit NetworkFeesWithdrawn(msg.sender, recipient, pendingNetworkFeeAmount);
+        emit NetworkFeesWithdrawn(msg.sender, recipient, currentPendingNetworkFeeAmount);
     }
 
     /**
@@ -961,7 +961,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, caller);
 
-        if (_isBNT(pool)) {
+        if (pool.isEqual(_bnt)) {
             return _depositBNTFor(contextId, provider, tokenAmount, caller, false, 0);
         }
 
@@ -1013,7 +1013,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // process deposit to the base token pool (taking into account the ETH pool)
+        // process deposit to the base token pool (includes the native token pool)
         return poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
@@ -1103,7 +1103,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _validAddress(address(targetToken));
 
         if (sourceToken == targetToken) {
-            revert InvalidTokens();
+            revert InvalidToken();
         }
 
         _greaterThanZero(amount);
@@ -1124,57 +1124,93 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
      */
     function _trade(
-        Token sourceToken,
-        Token targetToken,
+        TradeTokens memory tokens,
         TradeParams memory params,
-        address trader,
-        address beneficiary,
+        TraderInfo memory traderInfo,
         uint256 deadline
     ) private {
         // ensure the beneficiary is set
-        if (beneficiary == address(0)) {
-            beneficiary = trader;
+        if (traderInfo.beneficiary == address(0)) {
+            traderInfo.beneficiary = traderInfo.trader;
         }
 
         bytes32 contextId = keccak256(
             abi.encodePacked(
-                trader,
+                traderInfo.trader,
                 _time(),
-                sourceToken,
-                targetToken,
+                tokens.sourceToken,
+                tokens.targetToken,
                 params.amount,
                 params.limit,
                 params.bySourceAmount,
                 deadline,
-                beneficiary
+                traderInfo.beneficiary
             )
         );
 
         // perform either a single or double hop trade, based on the source and the target pool
-        TradeAmountAndNetworkFee memory tradeResult;
-        if (_isBNT(sourceToken)) {
-            tradeResult = _tradeBNT(contextId, targetToken, true, params, trader);
-        } else if (_isBNT(targetToken)) {
-            tradeResult = _tradeBNT(contextId, sourceToken, false, params, trader);
+        bool fromBNT = tokens.sourceToken.isEqual(_bnt);
+        TradeResult memory firstHopTradeResult;
+        TradeResult memory lastHopTradeResult;
+        uint256 networkFeeAmount;
+
+        if (fromBNT || tokens.targetToken.isEqual(_bnt)) {
+            lastHopTradeResult = _tradeBNT(
+                contextId,
+                fromBNT ? tokens.targetToken : tokens.sourceToken,
+                fromBNT,
+                params
+            );
+
+            firstHopTradeResult = lastHopTradeResult;
+
+            networkFeeAmount = lastHopTradeResult.networkFeeAmount;
+
+            emit TokensTraded({
+                contextId: contextId,
+                sourceToken: tokens.sourceToken,
+                targetToken: tokens.targetToken,
+                sourceAmount: lastHopTradeResult.sourceAmount,
+                targetAmount: lastHopTradeResult.targetAmount,
+                bntAmount: fromBNT ? lastHopTradeResult.sourceAmount : lastHopTradeResult.targetAmount,
+                targetFeeAmount: lastHopTradeResult.tradingFeeAmount,
+                bntFeeAmount: fromBNT ? 0 : lastHopTradeResult.tradingFeeAmount,
+                trader: traderInfo.trader
+            });
         } else {
-            tradeResult = _tradeBaseTokens(contextId, sourceToken, targetToken, params, trader);
+            (firstHopTradeResult, lastHopTradeResult) = _tradeBaseTokens(contextId, tokens, params);
+
+            networkFeeAmount = firstHopTradeResult.networkFeeAmount + lastHopTradeResult.networkFeeAmount;
+
+            emit TokensTraded({
+                contextId: contextId,
+                sourceToken: tokens.sourceToken,
+                targetToken: tokens.targetToken,
+                sourceAmount: firstHopTradeResult.sourceAmount,
+                targetAmount: lastHopTradeResult.targetAmount,
+                bntAmount: firstHopTradeResult.targetAmount,
+                targetFeeAmount: lastHopTradeResult.tradingFeeAmount,
+                bntFeeAmount: firstHopTradeResult.tradingFeeAmount,
+                trader: traderInfo.trader
+            });
         }
 
         // transfer the tokens from the trader to the vault
-        _depositToMasterVault(sourceToken, trader, params.bySourceAmount ? params.amount : tradeResult.amount);
+        _depositToMasterVault(tokens.sourceToken, traderInfo.trader, firstHopTradeResult.sourceAmount);
 
-        // transfer the target tokens/ETH to the beneficiary
+        // transfer the target tokens/native token to the beneficiary
         _masterVault.withdrawFunds(
-            targetToken,
-            payable(beneficiary),
-            params.bySourceAmount ? tradeResult.amount : params.amount
+            tokens.targetToken,
+            payable(traderInfo.beneficiary),
+            lastHopTradeResult.targetAmount
         );
 
-        // update the pending network fees amount to be burned by the vortex
-        _pendingNetworkFeeAmount += tradeResult.networkFeeAmount;
+        // update the pending network fee amount to be burned by the vortex
+        _pendingNetworkFeeAmount += networkFeeAmount;
     }
 
     /**
@@ -1188,11 +1224,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _tradeBNT(
         bytes32 contextId,
         Token pool,
-        bool isSourceBNT,
-        TradeParams memory params,
-        address trader
-    ) private returns (TradeAmountAndNetworkFee memory) {
-        TradeTokens memory tokens = isSourceBNT
+        bool fromBNT,
+        TradeParams memory params
+    ) private returns (TradeResult memory) {
+        TradeTokens memory tokens = fromBNT
             ? TradeTokens({ sourceToken: Token(address(_bnt)), targetToken: pool })
             : TradeTokens({ sourceToken: pool, targetToken: Token(address(_bnt)) });
 
@@ -1212,8 +1247,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is BNT, notify the BNT pool on collected fees
-        if (!isSourceBNT) {
+        // if the target token is BNT, notify the BNT pool on collected fees (which shouldn't include the network fee
+        // amount, so we have to deduct it explicitly from the full trading fee amount)
+        if (!fromBNT) {
             _bntPool.onFeesCollected(
                 pool,
                 tradeAmountsAndFee.tradingFeeAmount - tradeAmountsAndFee.networkFeeAmount,
@@ -1221,25 +1257,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             );
         }
 
-        TradeAmounts memory tradeAmounts = params.bySourceAmount
-            ? TradeAmounts({ sourceAmount: params.amount, targetAmount: tradeAmountsAndFee.amount })
-            : TradeAmounts({ sourceAmount: tradeAmountsAndFee.amount, targetAmount: params.amount });
-
-        emit TokensTraded({
-            contextId: contextId,
-            sourceToken: tokens.sourceToken,
-            targetToken: tokens.targetToken,
-            sourceAmount: tradeAmounts.sourceAmount,
-            targetAmount: tradeAmounts.targetAmount,
-            bntAmount: isSourceBNT ? tradeAmounts.sourceAmount : tradeAmounts.targetAmount,
-            targetFeeAmount: tradeAmountsAndFee.tradingFeeAmount,
-            bntFeeAmount: isSourceBNT ? tradeAmountsAndFee.networkFeeAmount : tradeAmountsAndFee.tradingFeeAmount,
-            trader: trader
-        });
-
         return
-            TradeAmountAndNetworkFee({
-                amount: tradeAmountsAndFee.amount,
+            TradeResult({
+                sourceAmount: params.bySourceAmount ? params.amount : tradeAmountsAndFee.amount,
+                targetAmount: params.bySourceAmount ? tradeAmountsAndFee.amount : params.amount,
+                tradingFeeAmount: tradeAmountsAndFee.tradingFeeAmount,
                 networkFeeAmount: tradeAmountsAndFee.networkFeeAmount
             });
     }
@@ -1254,36 +1276,30 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function _tradeBaseTokens(
         bytes32 contextId,
-        Token sourceToken,
-        Token targetToken,
-        TradeParams memory params,
-        address trader
-    ) private returns (TradeAmountAndNetworkFee memory) {
+        TradeTokens memory tokens,
+        TradeParams memory params
+    ) private returns (TradeResult memory, TradeResult memory) {
         if (params.bySourceAmount) {
             uint256 sourceAmount = params.amount;
             uint256 minReturnAmount = params.limit;
 
             // trade source tokens to BNT (while accepting any return amount)
-            TradeAmountAndNetworkFee memory targetHop1 = _tradeBNT(
+            TradeResult memory targetHop1 = _tradeBNT(
                 contextId,
-                sourceToken,
+                tokens.sourceToken,
                 false,
-                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: 1 }),
-                trader
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: 1 })
             );
 
             // trade the received BNT target amount to target tokens (while respecting the minimum return amount)
-            TradeAmountAndNetworkFee memory targetHop2 = _tradeBNT(
+            TradeResult memory targetHop2 = _tradeBNT(
                 contextId,
-                targetToken,
+                tokens.targetToken,
                 true,
-                TradeParams({ bySourceAmount: true, amount: targetHop1.amount, limit: minReturnAmount }),
-                trader
+                TradeParams({ bySourceAmount: true, amount: targetHop1.targetAmount, limit: minReturnAmount })
             );
 
-            targetHop2.networkFeeAmount += targetHop1.networkFeeAmount;
-
-            return targetHop2;
+            return (targetHop1, targetHop2);
         }
 
         uint256 targetAmount = params.amount;
@@ -1291,26 +1307,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // trade any amount of BNT to get the requested target amount (we will use the actual traded amount to restrict
         // the trade from the source)
-        TradeAmountAndNetworkFee memory sourceHop1 = _tradeBNT(
+        TradeResult memory sourceHop2 = _tradeBNT(
             contextId,
-            targetToken,
+            tokens.targetToken,
             true,
-            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: type(uint256).max }),
-            trader
+            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: type(uint256).max })
         );
 
         // trade source tokens to the required amount of BNT (while respecting the maximum source amount)
-        TradeAmountAndNetworkFee memory sourceHop2 = _tradeBNT(
+        TradeResult memory sourceHop1 = _tradeBNT(
             contextId,
-            sourceToken,
+            tokens.sourceToken,
             false,
-            TradeParams({ bySourceAmount: false, amount: sourceHop1.amount, limit: maxSourceAmount }),
-            trader
+            TradeParams({ bySourceAmount: false, amount: sourceHop2.sourceAmount, limit: maxSourceAmount })
         );
 
-        sourceHop2.networkFeeAmount += sourceHop1.networkFeeAmount;
-
-        return sourceHop2;
+        return (sourceHop1, sourceHop2);
     }
 
     /**
@@ -1323,20 +1335,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         if (token.isNative()) {
             if (msg.value < amount) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             payable(address(_masterVault)).sendValue(amount);
 
-            // refund the caller for the remaining ETH
+            // refund the caller for the remaining native token amount
             if (msg.value > amount) {
                 payable(address(caller)).sendValue(msg.value - amount);
             }
         } else {
             if (msg.value > 0) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             token.safeTransferFrom(caller, address(_masterVault), amount);
@@ -1354,13 +1366,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         return poolCollection;
-    }
-
-    /**
-     * @dev returns whether the specified token is the BNT
-     */
-    function _isBNT(Token token) private view returns (bool) {
-        return token.isEqual(_bnt);
     }
 
     /**

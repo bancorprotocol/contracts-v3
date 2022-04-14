@@ -416,10 +416,10 @@ describe('BancorNetworkInfo', () => {
                 it('should revert when attempting to query using same source and target tokens', async () => {
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { targetTokenAddress: sourceToken.address })
-                    ).to.be.revertedWith('InvalidTokens');
+                    ).to.be.revertedWith('InvalidToken');
                     await expect(
                         tradeInputByTargetAmount(testAmount, { targetTokenAddress: sourceToken.address })
-                    ).to.be.revertedWith('InvalidTokens');
+                    ).to.be.revertedWith('InvalidToken');
                 });
 
                 it('should return correct amounts', async () => {

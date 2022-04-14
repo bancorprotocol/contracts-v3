@@ -13,11 +13,13 @@ artifacts
 typechain-types
 
 contracts/hardhat-dependency-compiler
-deployments/*
+deployments/localhost/*
+deployments/hardhat/*
+deployments/tenderly/solcInputs
 !deployments/data.ts
 !deployments/mainnet
 !deployments/tenderly
-deployments/tenderly/solcInputs
+!deployments/localhost/.chainId
 
 .coverage_artifacts
 .coverage_contracts
