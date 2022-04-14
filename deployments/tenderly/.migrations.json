@@ -1,15 +1,4 @@
 {
   "000001-bnt": 1640637513,
-  "000002-vbnt": 1640637514,
-  "000003-proxy-admin": 1649896254,
-  "000004-master-vault": 1649896267,
-  "000005-external-protection-vault": 1649896282,
-  "000006-external-rewards-vault": 1649896296,
-  "000007-pool-token-factory": 1649896310,
-  "000008-bnt-pool-token": 1649896318,
-  "000009-network-settings": 1649896330,
-  "000010-network-proxy": 1649896339,
-  "000011-bnt-pool": 1649896358,
-  "000012-pending-withdrawals": 1649896375,
-  "000013-pool-collection-upgrader": 1649896389
+  "000002-vbnt": 1640637514
 }
