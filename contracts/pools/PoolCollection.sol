@@ -944,6 +944,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             amounts.poolTokenTotalSupply
         );
 
+        // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         liquidity.baseTokenTradingLiquidity = SafeCast.toUint128(amounts.newBaseTokenTradingLiquidity);
         liquidity.bntTradingLiquidity = SafeCast.toUint128(amounts.newBNTTradingLiquidity);
 
@@ -1192,13 +1193,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // funding rate (please note that the effective funding rate is always the rate between BNT and the base token)
         uint256 baseTokenTradingLiquidity = MathEx.mulDivF(action.newAmount, fundingRate.d, fundingRate.n);
 
-        // update the liquidity data of the pool
+        // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
             bntTradingLiquidity: SafeCast.toUint128(action.newAmount),
             baseTokenTradingLiquidity: SafeCast.toUint128(baseTokenTradingLiquidity),
             stakedBalance: liquidity.stakedBalance
         });
 
+        // update the liquidity data of the pool
         data.liquidity = newLiquidity;
 
         _dispatchTradingLiquidityEvents(contextId, pool, data.poolToken.totalSupply(), liquidity, newLiquidity);
@@ -1491,7 +1493,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         _processTrade(result);
 
-        // sync the reserve balances and process the network fee
+        // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
             bntTradingLiquidity: SafeCast.toUint128(result.isSourceBNT ? result.sourceBalance : result.targetBalance),
             baseTokenTradingLiquidity: SafeCast.toUint128(
@@ -1502,6 +1504,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         _dispatchTradingLiquidityEvents(result.contextId, result.pool, prevLiquidity, newLiquidity);
 
+        // update the liquidity data of the pool
         data.liquidity = newLiquidity;
     }
 
