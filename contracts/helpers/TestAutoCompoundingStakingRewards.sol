@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Time } from "../utility/Time.sol";
 
-import { AutoCompoundingRewards } from "../staking-rewards/AutoCompoundingRewards.sol";
+import { AutoCompoundingRewards } from "../rewards/AutoCompoundingRewards.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 

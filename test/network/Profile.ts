@@ -56,7 +56,7 @@ describe('Profile @profile', () => {
     const profiler = new Profiler();
 
     let deployer: SignerWithAddress;
-    let stakingRewardsProvider: SignerWithAddress;
+    let rewardsProvider: SignerWithAddress;
 
     const BNT_VIRTUAL_BALANCE = 1;
     const BASE_TOKEN_VIRTUAL_BALANCE = 2;
@@ -68,7 +68,7 @@ describe('Profile @profile', () => {
     const MAX_SOURCE_AMOUNT = MAX_UINT256;
 
     before(async () => {
-        [deployer, stakingRewardsProvider] = await ethers.getSigners();
+        [deployer, rewardsProvider] = await ethers.getSigners();
     });
 
     after(async () => {
@@ -1217,13 +1217,13 @@ describe('Profile @profile', () => {
             // if we're rewarding BNT - no additional funding is needed
             if (!tokenData.isBNT()) {
                 // deposit pool tokens as staking rewards
-                await depositToPool(stakingRewardsProvider, token, totalRewards, network);
+                await depositToPool(rewardsProvider, token, totalRewards, network);
 
                 await transfer(
-                    stakingRewardsProvider,
+                    rewardsProvider,
                     poolToken,
                     externalRewardsVault,
-                    await poolToken.balanceOf(stakingRewardsProvider.address)
+                    await poolToken.balanceOf(rewardsProvider.address)
                 );
             }
 

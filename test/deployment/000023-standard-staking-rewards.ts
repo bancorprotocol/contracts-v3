@@ -22,10 +22,10 @@ describeDeployment(__filename, () => {
     let standardRewards: StandardRewards;
     let autoCompoundingRewards: AutoCompoundingRewards;
     let liquidityProtection: string;
-    let stakingRewards: string;
+    let legacyStakingRewards: string;
 
     before(async () => {
-        ({ deployer, liquidityProtection, stakingRewards } = await getNamedAccounts());
+        ({ deployer, liquidityProtection, legacyStakingRewards } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -47,7 +47,7 @@ describeDeployment(__filename, () => {
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             isMainnet()
-                ? [standardRewards.address, bntPool.address, liquidityProtection, stakingRewards]
+                ? [standardRewards.address, bntPool.address, liquidityProtection, legacyStakingRewards]
                 : [standardRewards.address, bntPool.address]
         );
         await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [

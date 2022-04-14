@@ -26,7 +26,7 @@ describe('network', () => {
     let foundationMultisig: string;
     let daoMultisig: string;
     let liquidityProtection: string;
-    let stakingRewards: string;
+    let legacyStakingRewards: string;
 
     let network: BancorNetwork;
     let bntGovernance: TokenGovernance;
@@ -46,7 +46,8 @@ describe('network', () => {
     let bancorPortal: BancorPortal;
 
     before(async () => {
-        ({ deployer, foundationMultisig, daoMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
+        ({ deployer, foundationMultisig, daoMultisig, liquidityProtection, legacyStakingRewards } =
+            await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -85,7 +86,7 @@ describe('network', () => {
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
             isMainnet()
-                ? [standardRewards.address, bntPool.address, liquidityProtection, stakingRewards]
+                ? [standardRewards.address, bntPool.address, liquidityProtection, legacyStakingRewards]
                 : [standardRewards.address, bntPool.address]
         );
 

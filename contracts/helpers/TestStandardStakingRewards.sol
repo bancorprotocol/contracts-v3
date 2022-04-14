@@ -7,8 +7,8 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { Time } from "../utility/Time.sol";
 
-import { ProgramData } from "../staking-rewards/interfaces/IStandardRewards.sol";
-import { StandardRewards } from "../staking-rewards/StandardRewards.sol";
+import { ProgramData } from "../rewards/interfaces/IStandardRewards.sol";
+import { StandardRewards } from "../rewards/StandardRewards.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";

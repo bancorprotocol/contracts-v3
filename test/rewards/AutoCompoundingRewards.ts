@@ -37,7 +37,7 @@ import humanizeDuration from 'humanize-duration';
 describe('AutoCompoundingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
-    let stakingRewardsProvider: SignerWithAddress;
+    let rewardsProvider: SignerWithAddress;
 
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
@@ -53,7 +53,7 @@ describe('AutoCompoundingRewards', () => {
     shouldHaveGap('AutoCompoundingRewards', '_programs');
 
     before(async () => {
-        [deployer, user, stakingRewardsProvider] = await ethers.getSigners();
+        [deployer, user, rewardsProvider] = await ethers.getSigners();
     });
 
     const prepareSimplePool = async (tokenData: TokenData, providerStake: BigNumberish, totalRewards: BigNumberish) => {
@@ -76,13 +76,13 @@ describe('AutoCompoundingRewards', () => {
         // if we're rewarding BNT - no additional funding is needed
         if (!tokenData.isBNT()) {
             // deposit pool tokens as staking rewards
-            await depositToPool(stakingRewardsProvider, token, totalRewards, network);
+            await depositToPool(rewardsProvider, token, totalRewards, network);
 
             await transfer(
-                stakingRewardsProvider,
+                rewardsProvider,
                 poolToken,
                 externalRewardsVault,
-                await poolToken.balanceOf(stakingRewardsProvider.address)
+                await poolToken.balanceOf(rewardsProvider.address)
             );
         }
 
