@@ -25,12 +25,12 @@ import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
 
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
-import { IStandardStakingRewards, ProgramData, StakeAmounts } from "./interfaces/IStandardStakingRewards.sol";
+import { IStandardRewards, ProgramData, StakeAmounts } from "./interfaces/IStandardRewards.sol";
 
 /**
- * @dev Standard Staking Rewards contract
+ * @dev Standard Rewards contract
  */
-contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgradeable, Utils, Time, Upgradeable {
+contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils, Time, Upgradeable {
     using Address for address payable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using TokenLibrary for Token;
@@ -200,7 +200,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __StandardStakingRewards_init();
+        __StandardRewards_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -208,17 +208,17 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     /**
      * @dev initializes the contract and its parents
      */
-    function __StandardStakingRewards_init() internal onlyInitializing {
+    function __StandardRewards_init() internal onlyInitializing {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
-        __StandardStakingRewards_init_unchained();
+        __StandardRewards_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __StandardStakingRewards_init_unchained() internal onlyInitializing {
+    function __StandardRewards_init_unchained() internal onlyInitializing {
         _nextProgramId = INITIAL_PROGRAM_ID;
     }
 
@@ -245,7 +245,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function programIds() external view returns (uint256[] memory) {
         uint256 length = _nextProgramId - INITIAL_PROGRAM_ID;
@@ -258,7 +258,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function programs(uint256[] calldata ids) external view uniqueArray(ids) returns (ProgramData[] memory) {
         uint256 length = ids.length;
@@ -272,49 +272,49 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function providerProgramIds(address provider) external view returns (uint256[] memory) {
         return _programIdsByProvider[provider].values();
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function programStake(uint256 id) external view returns (uint256) {
         return _programStakes[id];
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function providerStake(address provider, uint256 id) external view returns (uint256) {
         return _providerRewards[provider][id].stakedAmount;
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function isProgramActive(uint256 id) external view returns (bool) {
         return _isProgramActive(_programs[id]);
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function isProgramEnabled(uint256 id) external view returns (bool) {
         return _isProgramEnabled(_programs[id]);
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function latestProgramId(Token pool) external view returns (uint256) {
         return _latestProgramIdByPool[pool];
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function createProgram(
         Token pool,
@@ -392,7 +392,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function terminateProgram(uint256 id) external onlyAdmin {
         ProgramData memory p = _programs[id];
@@ -413,7 +413,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function enableProgram(uint256 id, bool status) external onlyAdmin {
         ProgramData storage p = _programs[id];
@@ -431,7 +431,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function join(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
@@ -442,7 +442,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function joinPermitted(
         uint256 id,
@@ -464,7 +464,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function leave(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
@@ -475,7 +475,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function depositAndJoin(uint256 id, uint256 tokenAmount)
         external
@@ -491,7 +491,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function depositAndJoinPermitted(
         uint256 id,
@@ -511,7 +511,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function pendingRewards(address provider, uint256[] calldata ids) external view uniqueArray(ids) returns (uint256) {
         uint256 reward = 0;
@@ -542,7 +542,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function claimRewards(uint256[] calldata ids) external uniqueArray(ids) nonReentrant returns (uint256) {
         RewardData memory rewardData = _claimRewards(msg.sender, ids, false);
@@ -557,7 +557,7 @@ contract StandardStakingRewards is IStandardStakingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IStandardStakingRewards
+     * @inheritdoc IStandardRewards
      */
     function stakeRewards(uint256[] calldata ids) external uniqueArray(ids) nonReentrant returns (StakeAmounts memory) {
         RewardData memory rewardData = _claimRewards(msg.sender, ids, true);

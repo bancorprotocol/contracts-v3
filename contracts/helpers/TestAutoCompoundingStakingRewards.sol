@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { Time } from "../utility/Time.sol";
 
-import { AutoCompoundingStakingRewards } from "../staking-rewards/AutoCompoundingStakingRewards.sol";
+import { AutoCompoundingRewards } from "../staking-rewards/AutoCompoundingRewards.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
@@ -15,14 +15,14 @@ import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVaul
 
 import { TestTime } from "./TestTime.sol";
 
-contract TestAutoCompoundingStakingRewards is AutoCompoundingStakingRewards, TestTime {
+contract TestAutoCompoundingRewards is AutoCompoundingRewards, TestTime {
     constructor(
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         IERC20 initBNT,
         IBNTPool initBNTPool,
         IExternalRewardsVault initExternalRewardsVault
-    ) AutoCompoundingStakingRewards(initNetwork, initNetworkSettings, initBNT, initBNTPool, initExternalRewardsVault) {}
+    ) AutoCompoundingRewards(initNetwork, initNetworkSettings, initBNT, initBNTPool, initExternalRewardsVault) {}
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();

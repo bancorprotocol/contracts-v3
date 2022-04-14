@@ -15,7 +15,7 @@ describeDeployment(__filename, () => {
 
     it('should revoke deployer roles', async () => {
         for (const name of [
-            InstanceName.AutoCompoundingStakingRewards,
+            InstanceName.AutoCompoundingRewards,
             InstanceName.BancorNetworkInfo,
             InstanceName.BancorNetwork,
             InstanceName.BancorPortal,
@@ -27,7 +27,7 @@ describeDeployment(__filename, () => {
             InstanceName.PendingWithdrawals,
             InstanceName.PoolMigrator,
             InstanceName.PoolTokenFactory,
-            InstanceName.StandardStakingRewards
+            InstanceName.StandardRewards
         ]) {
             const contract = (await DeployedContracts[name].deployed()) as AccessControlEnumerableUpgradeable;
             expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, daoMultisig)).to.be.true;

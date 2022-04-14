@@ -1,6 +1,6 @@
 import { ArtifactData } from '../components/ContractBuilder';
 import {
-    AutoCompoundingStakingRewards,
+    AutoCompoundingRewards,
     BancorNetwork,
     BancorNetworkInfo,
     BancorPortal,
@@ -20,7 +20,7 @@ import {
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
-    StandardStakingRewards,
+    StandardRewards,
     TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
@@ -64,7 +64,7 @@ enum LegacyInstanceName {
 }
 
 enum NewInstanceName {
-    AutoCompoundingStakingRewards = 'AutoCompoundingStakingRewards',
+    AutoCompoundingRewards = 'AutoCompoundingRewards',
     BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',
     BancorNetwork = 'BancorNetwork',
@@ -82,7 +82,7 @@ enum NewInstanceName {
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
-    StandardStakingRewards = 'StandardStakingRewards'
+    StandardRewards = 'StandardRewards'
 }
 
 enum TestInstanceName {
@@ -121,7 +121,7 @@ const DeployedLegacyContracts = {
 };
 
 const DeployedNewContracts = {
-    AutoCompoundingStakingRewards: deployed<AutoCompoundingStakingRewards>(InstanceName.AutoCompoundingStakingRewards),
+    AutoCompoundingRewards: deployed<AutoCompoundingRewards>(InstanceName.AutoCompoundingRewards),
     BancorNetworkInfo: deployed<BancorNetworkInfo>(InstanceName.BancorNetworkInfo),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BancorNetworkProxy),
     BancorNetwork: deployed<BancorNetwork>(InstanceName.BancorNetwork),
@@ -139,7 +139,7 @@ const DeployedNewContracts = {
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
-    StandardStakingRewards: deployed<StandardStakingRewards>(InstanceName.StandardStakingRewards)
+    StandardRewards: deployed<StandardRewards>(InstanceName.StandardRewards)
 };
 
 const DeployedTestContracts = {

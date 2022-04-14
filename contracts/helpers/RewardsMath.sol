@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
-import { StakingRewardsMath } from "../staking-rewards/StakingRewardsMath.sol";
+import { RewardsMath } from "../staking-rewards/RewardsMath.sol";
 
-contract TestStakingRewardsMath {
+contract TestRewardsMath {
     function calcFlatRewards(
         uint256 totalRewards,
         uint32 timeElapsed,
         uint32 programDuration
     ) external pure returns (uint256) {
-        return StakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
+        return RewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
     }
 
     function calcExpDecayRewards(uint256 totalRewards, uint32 timeElapsed) external pure returns (uint256) {
-        return StakingRewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
+        return RewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
     }
 }

@@ -7,8 +7,8 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { Time } from "../utility/Time.sol";
 
-import { ProgramData } from "../staking-rewards/interfaces/IStandardStakingRewards.sol";
-import { StandardStakingRewards } from "../staking-rewards/StandardStakingRewards.sol";
+import { ProgramData } from "../staking-rewards/interfaces/IStandardRewards.sol";
+import { StandardRewards } from "../staking-rewards/StandardRewards.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
@@ -21,22 +21,14 @@ import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVaul
 
 import { TestTime } from "./TestTime.sol";
 
-contract TestStandardStakingRewards is StandardStakingRewards, TestTime {
+contract TestStandardRewards is StandardRewards, TestTime {
     constructor(
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         ITokenGovernance initBNTGovernance,
         IBNTPool initBNTPool,
         IExternalRewardsVault initExternalRewardsVault
-    )
-        StandardStakingRewards(
-            initNetwork,
-            initNetworkSettings,
-            initBNTGovernance,
-            initBNTPool,
-            initExternalRewardsVault
-        )
-    {}
+    ) StandardRewards(initNetwork, initNetworkSettings, initBNTGovernance, initBNTPool, initExternalRewardsVault) {}
 
     function nextProgramId() external view returns (uint256) {
         return _nextProgramId;

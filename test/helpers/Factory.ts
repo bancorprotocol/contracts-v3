@@ -101,14 +101,14 @@ export const upgradeProxy = async <F extends ContractFactory>(
 
 const getDeployer = async () => (await ethers.getSigners())[0];
 
-export const createAutoCompoundingStakingRewards = async (
+export const createAutoCompoundingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bnt: IERC20,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const stakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+    const stakingRewards = await createProxy(Contracts.TestAutoCompoundingRewards, {
         ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address, externalRewardsVault.address]
     });
 
@@ -119,14 +119,14 @@ export const createAutoCompoundingStakingRewards = async (
     return stakingRewards;
 };
 
-export const createStandardStakingRewards = async (
+export const createStandardRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bntGovernance: TokenGovernance,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const stakingRewards = await createProxy(Contracts.TestStandardStakingRewards, {
+    const stakingRewards = await createProxy(Contracts.TestStandardRewards, {
         ctorArgs: [
             network.address,
             networkSettings.address,
