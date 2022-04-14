@@ -3,7 +3,6 @@ import Contracts, {
     ExternalRewardsVault,
     IERC20,
     IPoolToken,
-    IVault,
     MasterVault,
     NetworkSettings,
     PoolToken,
@@ -18,7 +17,7 @@ import Contracts, {
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
-import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
 import {
     ExponentialDecay,
     MAX_UINT256,
@@ -28,7 +27,7 @@ import {
 } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, toPPM, toWei } from '../../utils/Types';
+import { fromPPM, max, toPPM, toWei } from '../../utils/Types';
 import {
     createAutoCompoundingStakingRewards,
     createPool,
@@ -44,7 +43,7 @@ import {
     TokenWithAddress
 } from '../helpers/Factory';
 import { duration, latest } from '../helpers/Time';
-import { createWallet, max, transfer } from '../helpers/Utils';
+import { createWallet, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
 import { ethers } from 'hardhat';
@@ -1238,7 +1237,6 @@ describe('Profile @profile', () => {
             totalRewards: BigNumberish
         ) => {
             let token: TokenWithAddress;
-            let rewardsVault: IVault;
 
             beforeEach(async () => {
                 ({ network, networkInfo, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } =
@@ -1247,8 +1245,6 @@ describe('Profile @profile', () => {
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
                 ({ token } = await prepareSimplePool(tokenData, providerStake, totalRewards));
-
-                rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
 
                 autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
                     network,
@@ -1268,7 +1264,6 @@ describe('Profile @profile', () => {
 
                         await autoCompoundingStakingRewards.createProgram(
                             token.address,
-                            rewardsVault.address,
                             totalRewards,
                             distributionType,
                             startTime,
@@ -1542,14 +1537,14 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).claimRewards([id])
                     );
 
                     await increaseTime(standardStakingRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).claimRewards([id])
                     );
 
                     await profiler.profile(
@@ -1566,7 +1561,7 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).claimRewards([id])
                     );
                 });
 
@@ -1585,14 +1580,14 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).stakeRewards([id])
                     );
 
                     await increaseTime(standardStakingRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).stakeRewards([id])
                     );
 
                     await profiler.profile(
@@ -1609,7 +1604,7 @@ describe('Profile @profile', () => {
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id], MAX_UINT256)
+                        standardStakingRewards.connect(provider).stakeRewards([id])
                     );
                 });
             });

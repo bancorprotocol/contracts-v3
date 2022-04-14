@@ -6,14 +6,16 @@ export const NATIVE_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 export enum TokenSymbol {
     ETH = 'ETH',
     BNT = 'BNT',
-    VBNT = 'VBNT',
+    vBNT = 'vBNT',
     bnBNT = 'bnBNT',
     TKN = 'TKN',
     TKN1 = 'TKN1',
     TKN2 = 'TKN2',
     TKN3 = 'TKN3',
     TKN4 = 'TKN4',
-    TKN5 = 'TKN5'
+    TKN5 = 'TKN5',
+    TKN6 = 'TKN6',
+    TKN7 = 'TKN7'
 }
 
 interface Errors {
@@ -41,7 +43,7 @@ const TOKEN_DATA = {
             exceedsBalance: 'SafeERC20: low-level call failed'
         }
     },
-    [TokenSymbol.VBNT]: {
+    [TokenSymbol.vBNT]: {
         name: 'Bancor Governance Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
@@ -82,6 +84,16 @@ const TOKEN_DATA = {
     },
     [TokenSymbol.TKN5]: {
         name: 'Test Token 5',
+        decimals: DEFAULT_DECIMALS,
+        errors: DEFAULT_ERRORS
+    },
+    [TokenSymbol.TKN6]: {
+        name: 'Test Token 6',
+        decimals: 4,
+        errors: DEFAULT_ERRORS
+    },
+    [TokenSymbol.TKN7]: {
+        name: 'Test Token 7',
         decimals: DEFAULT_DECIMALS,
         errors: DEFAULT_ERRORS
     }

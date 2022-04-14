@@ -11,11 +11,11 @@ import Contracts, {
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toPPM, toWei } from '../../utils/Types';
+import { min, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { min, transfer } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, utils } from 'ethers';
@@ -905,7 +905,7 @@ describe('BNTPool', () => {
 
                         await expect(
                             network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
-                        ).to.be.revertedWith(new TokenData(TokenSymbol.VBNT).errors().exceedsBalance);
+                        ).to.be.revertedWith(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
                     });
 
                     it('should revert when attempting to deposit without approving BNT', async () => {

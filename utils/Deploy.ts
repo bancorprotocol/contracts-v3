@@ -41,7 +41,8 @@ const {
     execute: executeTransaction,
     getNetworkName,
     save: saveContract,
-    getExtendedArtifact
+    getExtendedArtifact,
+    getArtifact
 } = deployments;
 
 interface EnvOptions {
@@ -70,6 +71,7 @@ enum NewInstanceName {
     BancorPortal = 'BancorPortal',
     BancorV1Migration = 'BancorV1Migration',
     BNTPoolToken = 'BNTPoolToken',
+    BNTPoolProxy = 'BNTPoolProxy',
     BNTPool = 'BNTPool',
     ExternalProtectionVault = 'ExternalProtectionVault',
     ExternalRewardsVault = 'ExternalRewardsVault',
@@ -86,21 +88,27 @@ enum NewInstanceName {
 enum TestInstanceName {
     MockUniswapV2Factory = 'MockUniswapV2Factory',
     MockUniswapV2Pair = 'MockUniswapV2Pair',
-    MockUniswapV2Router02 = 'MockUniswapV2Router02',
+    MockUniswapV2Router02 = 'MockUniswapV2Router02'
+}
+
+export enum TestTokenInstanceName {
     TestToken1 = 'TestToken1',
     TestToken2 = 'TestToken2',
     TestToken3 = 'TestToken3',
     TestToken4 = 'TestToken4',
-    TestToken5 = 'TestToken5'
+    TestToken5 = 'TestToken5',
+    TestToken6 = 'TestToken6',
+    TestToken7 = 'TestToken7'
 }
 
 export const InstanceName = {
     ...LegacyInstanceName,
     ...NewInstanceName,
-    ...TestInstanceName
+    ...TestInstanceName,
+    ...TestTokenInstanceName
 };
 
-export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName;
+export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName | TestTokenInstanceName;
 
 const DeployedLegacyContracts = {
     BNT: deployed<BNT>(InstanceName.BNT),
@@ -120,6 +128,7 @@ const DeployedNewContracts = {
     BancorPortal: deployed<BancorPortal>(InstanceName.BancorPortal),
     BancorV1Migration: deployed<BancorV1Migration>(InstanceName.BancorV1Migration),
     BNTPoolToken: deployed<PoolToken>(InstanceName.BNTPoolToken),
+    BNTPoolProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BNTPoolProxy),
     BNTPool: deployed<BNTPool>(InstanceName.BNTPool),
     ExternalProtectionVault: deployed<ExternalProtectionVault>(InstanceName.ExternalProtectionVault),
     ExternalRewardsVault: deployed<ExternalRewardsVault>(InstanceName.ExternalRewardsVault),
@@ -141,7 +150,9 @@ const DeployedTestContracts = {
     TestToken2: deployed<TestERC20Token>(InstanceName.TestToken2),
     TestToken3: deployed<TestERC20Token>(InstanceName.TestToken3),
     TestToken4: deployed<TestERC20Token>(InstanceName.TestToken4),
-    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5)
+    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5),
+    TestToken6: deployed<TestERC20Token>(InstanceName.TestToken6),
+    TestToken7: deployed<TestERC20Token>(InstanceName.TestToken7)
 };
 
 export const DeployedContracts = {
@@ -151,6 +162,7 @@ export const DeployedContracts = {
 };
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
+export const isLocalhost = () => getNetworkName() === DeploymentNetwork.Localhost;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
@@ -187,17 +199,38 @@ interface SaveTypeOptions {
 const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
-    const srcDir = path.join(path.resolve('./', config.typechain.outDir));
-    const factoriesSrcDir = path.join(srcDir, 'factories');
-    const destDir = path.join(config.paths.deployments, getNetworkName(), 'types');
-    const factoriesDestDir = path.join(destDir, 'factories');
+    // don't attempt to save the types for legacy contracts
+    if (Object.keys(LegacyInstanceName).includes(name)) {
+        return;
+    }
+
+    const { sourceName } = await getArtifact(contract);
+    const contractSrcDir = path.dirname(sourceName);
+
+    const typechainDir = path.resolve('./', config.typechain.outDir);
+
+    // for some reason, the types of some contracts are stored in a "Contract.sol" dir, in which case we'd have to use
+    // it as the root source dir
+    let srcDir;
+    let factoriesSrcDir;
+    if (fs.existsSync(path.join(typechainDir, sourceName))) {
+        srcDir = path.join(typechainDir, sourceName);
+        factoriesSrcDir = path.join(typechainDir, 'factories', sourceName);
+    } else {
+        srcDir = path.join(typechainDir, contractSrcDir);
+        factoriesSrcDir = path.join(typechainDir, 'factories', contractSrcDir);
+    }
+
+    const typesDir = path.join(config.paths.deployments, getNetworkName(), 'types');
+    const destDir = path.join(typesDir, contractSrcDir);
+    const factoriesDestDir = path.join(typesDir, 'factories', contractSrcDir);
 
     if (!fs.existsSync(destDir)) {
-        fs.mkdirSync(destDir);
+        fs.mkdirSync(destDir, { recursive: true });
     }
 
     if (!fs.existsSync(factoriesDestDir)) {
-        fs.mkdirSync(factoriesDestDir);
+        fs.mkdirSync(factoriesDestDir, { recursive: true });
     }
 
     // save the factory typechain
@@ -494,14 +527,33 @@ export const deploymentTagExists = async (tag: string) => {
     return !!migrations[tag];
 };
 
+const deploymentFileNameToTag = (filename: string) => Number(path.basename(filename).split('-')[0]).toString();
+
+export const getPreviousDeploymentTag = (tag: string) => {
+    const files = fs.readdirSync(config.paths.deploy[0]).sort();
+
+    const index = files.map((f) => deploymentFileNameToTag(f)).lastIndexOf(tag);
+    if (index === -1) {
+        throw new Error(`Unable to find deployment with tag ${tag}`);
+    }
+
+    return index === 0 ? undefined : deploymentFileNameToTag(files[index - 1]);
+};
+
+export const getLatestDeploymentTag = () => {
+    const files = fs.readdirSync(config.paths.deploy[0]).sort();
+    return Number(files[files.length - 1].split('-')[0]).toString();
+};
+
 export const deploymentMetadata = (filename: string) => {
     const id = path.basename(filename).split('.')[0];
-    const order = Number(id.split('-')[0]);
+    const tag = deploymentFileNameToTag(filename);
+    const prevTag = getPreviousDeploymentTag(tag);
 
     return {
         id,
-        tag: order.toString(),
-        dependency: order === 1 ? undefined : (order - 1).toString()
+        tag,
+        dependency: prevTag
     };
 };
 
@@ -513,9 +565,4 @@ export const setDeploymentMetadata = (filename: string, func: DeployFunction) =>
     func.dependencies = dependency ? [dependency] : undefined;
 
     return func;
-};
-
-export const getLatestDeploymentTag = () => {
-    const files = fs.readdirSync(config.paths.deploy[0]).sort();
-    return Number(files[files.length - 1].split('-')[0]).toString();
 };
