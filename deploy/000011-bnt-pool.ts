@@ -3,6 +3,7 @@ import {
     deployProxy,
     execute,
     grantRole,
+    initializeProxy,
     InstanceName,
     setDeploymentMetadata
 } from '../utils/Deploy';
@@ -22,7 +23,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const bntPoolAddress = await deployProxy(
         {
-            name: InstanceName.BNTPool,
+            name: InstanceName.BNTPoolProxy,
+            contract: 'BNTPool',
             from: deployer,
             args: [
                 networkProxy.address,
@@ -45,9 +47,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    await execute({
+    await initializeProxy({
         name: InstanceName.BNTPool,
-        methodName: 'initialize',
+        proxyName: InstanceName.BNTPoolProxy,
+        args: [],
         from: deployer
     });
 
