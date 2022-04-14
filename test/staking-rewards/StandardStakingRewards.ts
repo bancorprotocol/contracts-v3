@@ -2416,6 +2416,10 @@ describe('StandardStakingRewards', () => {
                                 p.address
                             );
 
+                            const prevProviderProgramIds = (
+                                await standardStakingRewards.providerProgramIds(p.address)
+                            ).map((id) => id.toNumber());
+
                             const { totalClaimed, claimed, poolTokenAmount, res } = await stakeOrClaim(stake, p, ids);
                             const [claimedProgram, claimedProgram2] = claimed;
 
@@ -2445,8 +2449,8 @@ describe('StandardStakingRewards', () => {
                                 prevUnclaimedRewards.sub(totalClaimed)
                             );
 
-                            // ensure that the program has been removed from provider's programs if it's no longer active
-                            // and there are no pending rewards
+                            // ensure that the program has been removed from provider's programs if it's no longer
+                            // active, the provider has removed all of its stake, and there are no pending rewards
                             for (const i of ids) {
                                 const pendingRewards = await standardStakingRewards.pendingRewards(p.address, [i]);
                                 const providerStake = await standardStakingRewards.providerStake(p.address, i);
@@ -2455,10 +2459,12 @@ describe('StandardStakingRewards', () => {
                                     await standardStakingRewards.providerProgramIds(p.address)
                                 ).map((id) => id.toNumber());
 
-                                if ((!isProgramActive && pendingRewards.isZero()) || providerStake.isZero()) {
-                                    expect(providerProgramIds).to.not.include(i);
-                                } else {
-                                    expect(providerProgramIds).to.include(i);
+                                if (prevProviderProgramIds.includes(i)) {
+                                    if (!isProgramActive && pendingRewards.isZero() && providerStake.isZero()) {
+                                        expect(providerProgramIds).to.not.include(i);
+                                    } else {
+                                        expect(providerProgramIds).to.include(i);
+                                    }
                                 }
                             }
 
@@ -2527,7 +2533,6 @@ describe('StandardStakingRewards', () => {
                     };
 
                     const testClaimRewards = async () => testStakeOrClaimRewards(false);
-
                     const testStakeRewards = async () => testStakeOrClaimRewards(true);
 
                     it('should properly claim rewards', async () => {
