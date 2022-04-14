@@ -6,7 +6,7 @@
 
 ## Overview
 
-Bancor is a decentralized trading and yield protocol. Its network of on-chain automated market makers (AMMs) supports instant token-to-token trades, as well as single-sided liquidity provision, auto-compounding rewards and 100% [impermanent loss](https://www.youtube.com/watch?v=_m6Mowq3Ptk) protection for any listed asset.
+Bancor is a decentralized trading and yield protocol. Its network of on-chain automated market makers (AMMs) supports instant token-to-token trades, as well as single-sided liquidity provision, auto-compounding staking rewards and 100% [impermanent loss](https://www.youtube.com/watch?v=_m6Mowq3Ptk) protection for any listed asset.
 
 The Dawn release includes the following features:
 
@@ -97,7 +97,7 @@ yarn test:coverage:nightly
 
 ## Profiling
 
-You can profile the gas costs of all of the user-focused flows (provisioning or removing liquidity, trading, participating in auto-compounding rewards, migrating v2.1 positions, taking a flash-loan, etc.) via:
+You can profile the gas costs of all of the user-focused flows (provisioning or removing liquidity, trading, participating in auto-compounding staking rewards, migrating v2.1 positions, taking a flash-loan, etc.) via:
 
 ```sh
 yarn profile
@@ -115,7 +115,7 @@ yarn deploy
 
 There’s also a special deployment mode which deploys the protocol to a mainnet fork, with additional goodies:
 
-Various additional test configurations, pools, tokens, and both standard and auto-compounding rewards programs are automatically deployed for testing purposes.
+Various additional test configurations, pools, tokens, and both standard and auto-compounding staking rewards programs are automatically deployed for testing purposes.
 Various timing configurations are shortened by default (in order to speed up any integrations or simulations).
 
 It can be run via:
