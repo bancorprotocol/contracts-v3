@@ -1,5 +1,5 @@
 import Contracts from '../components/Contracts';
-import { StakingRewardsDistributionType } from '../utils/Constants';
+import { RewardsDistributionType } from '../utils/Constants';
 import { DeployedContracts, execute, InstanceName, isLive, setDeploymentMetadata } from '../utils/Deploy';
 import { duration } from '../utils/Time';
 import { toWei } from '../utils/Types';
@@ -29,7 +29,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await execute({
-        name: InstanceName.StandardStakingRewards,
+        name: InstanceName.StandardRewards,
         methodName: 'createProgram',
         args: [
             testToken1.address,
@@ -48,12 +48,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await poolToken.connect(await ethers.getSigner(deployer)).transfer(externalRewardsVault.address, poolTokensToBurn);
 
     await execute({
-        name: InstanceName.AutoCompoundingStakingRewards,
+        name: InstanceName.AutoCompoundingRewards,
         methodName: 'createProgram',
         args: [
             testToken5.address,
             TOTAL_REWARDS,
-            StakingRewardsDistributionType.ExponentialDecay,
+            RewardsDistributionType.ExponentialDecay,
             now + PROGRAM_START_DELAY,
             0
         ],

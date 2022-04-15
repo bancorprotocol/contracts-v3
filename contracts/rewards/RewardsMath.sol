@@ -7,7 +7,7 @@ import { MathEx } from "../utility/MathEx.sol";
 /**
  * @dev This library supports the calculation of staking rewards
  */
-library StakingRewardsMath {
+library RewardsMath {
     uint256 private constant LAMBDA_N = 142857142857143;
     uint256 private constant LAMBDA_D = 10000000000000000000000;
 

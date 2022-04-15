@@ -23,7 +23,7 @@ struct StakeAmounts {
     uint256 poolTokenAmount;
 }
 
-interface IStandardStakingRewards is IUpgradeable {
+interface IStandardRewards is IUpgradeable {
     /**
      * @dev returns all program ids
      */

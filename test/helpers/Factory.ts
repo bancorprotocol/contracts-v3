@@ -101,32 +101,32 @@ export const upgradeProxy = async <F extends ContractFactory>(
 
 const getDeployer = async () => (await ethers.getSigners())[0];
 
-export const createAutoCompoundingStakingRewards = async (
+export const createAutoCompoundingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bnt: IERC20,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const stakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
+    const rewards = await createProxy(Contracts.TestAutoCompoundingRewards, {
         ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address, externalRewardsVault.address]
     });
 
-    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, stakingRewards.address);
+    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, rewards.address);
 
-    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, rewards.address);
 
-    return stakingRewards;
+    return rewards;
 };
 
-export const createStandardStakingRewards = async (
+export const createStandardRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bntGovernance: TokenGovernance,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const stakingRewards = await createProxy(Contracts.TestStandardStakingRewards, {
+    const rewards = await createProxy(Contracts.TestStandardRewards, {
         ctorArgs: [
             network.address,
             networkSettings.address,
@@ -136,11 +136,11 @@ export const createStandardStakingRewards = async (
         ]
     });
 
-    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, stakingRewards.address);
+    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, rewards.address);
 
-    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, rewards.address);
 
-    return stakingRewards;
+    return rewards;
 };
 
 const createGovernedToken = async (

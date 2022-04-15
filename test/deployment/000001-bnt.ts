@@ -12,7 +12,7 @@ describeDeployment(__filename, () => {
     let deployer: string;
     let foundationMultisig: string;
     let liquidityProtection: string;
-    let stakingRewards: string;
+    let legacyStakingRewards: string;
     let bnt: BNT;
     let bntGovernance: TokenGovernance;
 
@@ -20,7 +20,7 @@ describeDeployment(__filename, () => {
     const bntData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
-        ({ deployer, foundationMultisig, liquidityProtection, stakingRewards } = await getNamedAccounts());
+        ({ deployer, foundationMultisig, liquidityProtection, legacyStakingRewards } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -50,7 +50,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection, stakingRewards] : []
+            isMainnet() ? [liquidityProtection, legacyStakingRewards] : []
         );
     });
 

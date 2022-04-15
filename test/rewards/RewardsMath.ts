@@ -1,4 +1,4 @@
-import Contracts, { TestStakingRewardsMath } from '../../components/Contracts';
+import Contracts, { TestRewardsMath } from '../../components/Contracts';
 import { ExponentialDecay } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { duration } from '../helpers/Time';
@@ -9,22 +9,22 @@ import { BigNumber, BigNumberish } from 'ethers';
 
 const { seconds, days, minutes, hours, years } = duration;
 
-describe('StakingRewardsMath', () => {
-    let stakingRewardsMath: TestStakingRewardsMath;
+describe('RewardsMath', () => {
+    let rewardsMath: TestRewardsMath;
 
     before(async () => {
-        stakingRewardsMath = await Contracts.TestStakingRewardsMath.deploy();
+        rewardsMath = await Contracts.TestRewardsMath.deploy();
     });
 
     describe('flat rewards', () => {
         const calcFlatReward = (totalRewards: BigNumberish, timeElapsed: number, programDuration: number) => {
             it(`calcFlatRewards(${totalRewards}, ${timeElapsed}, ${programDuration})`, async () => {
                 if (timeElapsed <= programDuration) {
-                    const actual = await stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
+                    const actual = await rewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
                     const expected = BigNumber.from(totalRewards).mul(timeElapsed).div(programDuration);
                     expect(actual).to.equal(expected);
                 } else {
-                    await expect(stakingRewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration)).to.be
+                    await expect(rewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration)).to.be
                         .reverted;
                     // TODO: test for the exact revert reason once the issue with ethers is fixed
                     // TODO: revertedWith('panic code 0x1 (Assertion error)')
@@ -50,7 +50,7 @@ describe('StakingRewardsMath', () => {
         const calcExpDecayRewards = (totalRewards: BigNumberish, timeElapsed: number) => {
             it(`calcExpDecayRewards(${totalRewards}, ${timeElapsed})`, async () => {
                 if (timeElapsed <= MAX_DURATION) {
-                    const actual = await stakingRewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
+                    const actual = await rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
                     const expected = new Decimal(totalRewards.toString()).mul(
                         new Decimal(1).sub(LAMBDA.neg().mul(timeElapsed).exp())
                     );
@@ -59,7 +59,7 @@ describe('StakingRewardsMath', () => {
                         relation: Relation.LesserOrEqual
                     });
                 } else {
-                    await expect(stakingRewardsMath.calcExpDecayRewards(totalRewards, timeElapsed)).to.revertedWith(
+                    await expect(rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed)).to.revertedWith(
                         'Overflow'
                     );
                 }

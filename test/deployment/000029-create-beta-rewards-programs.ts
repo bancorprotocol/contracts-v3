@@ -1,4 +1,4 @@
-import { BancorNetworkInfo, StandardStakingRewards } from '../../components/Contracts';
+import { BancorNetworkInfo, StandardRewards } from '../../components/Contracts';
 import { BNT } from '../../components/LegacyContracts';
 import { DeployedContracts } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
@@ -15,24 +15,24 @@ const TOTAL_REWARDS = toWei(40_000);
 describeDeployment(__filename, () => {
     let bnt: BNT;
     let networkInfo: BancorNetworkInfo;
-    let standardStakingRewards: StandardStakingRewards;
+    let standardRewards: StandardRewards;
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
-        standardStakingRewards = await DeployedContracts.StandardStakingRewards.deployed();
+        standardRewards = await DeployedContracts.StandardRewards.deployed();
     });
 
-    it('should create beta standard staking rewards programs', async () => {
+    it('should create beta standard rewards programs', async () => {
         const { dai, link } = await getNamedAccounts();
 
         for (const pool of [bnt.address, NATIVE_TOKEN_ADDRESS, dai, link]) {
-            const id = await standardStakingRewards.latestProgramId(pool);
+            const id = await standardRewards.latestProgramId(pool);
 
-            expect(await standardStakingRewards.isProgramActive(id)).to.be.false;
-            expect(await standardStakingRewards.isProgramEnabled(id)).to.be.true;
+            expect(await standardRewards.isProgramActive(id)).to.be.false;
+            expect(await standardRewards.isProgramEnabled(id)).to.be.true;
 
-            const programs = await standardStakingRewards.programs([id]);
+            const programs = await standardRewards.programs([id]);
             const program = programs[0];
 
             expect(program.id).to.equal(id);

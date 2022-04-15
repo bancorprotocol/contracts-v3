@@ -16,7 +16,7 @@ import { getNamedAccounts } from 'hardhat';
 describeDeployment(__filename, () => {
     let deployer: string;
     let liquidityProtection: string;
-    let stakingRewards: string;
+    let legacyStakingRewards: string;
     let proxyAdmin: ProxyAdmin;
     let bntGovernance: TokenGovernance;
     let vbntGovernance: TokenGovernance;
@@ -26,7 +26,7 @@ describeDeployment(__filename, () => {
     let bntPoolToken: PoolToken;
 
     before(async () => {
-        ({ deployer, liquidityProtection, stakingRewards } = await getNamedAccounts());
+        ({ deployer, liquidityProtection, legacyStakingRewards } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -54,7 +54,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [bntPool.address, liquidityProtection, stakingRewards] : [bntPool.address]
+            isMainnet() ? [bntPool.address, liquidityProtection, legacyStakingRewards] : [bntPool.address]
         );
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,

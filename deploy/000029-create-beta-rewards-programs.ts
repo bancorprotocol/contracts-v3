@@ -19,7 +19,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     for (const pool of [bnt.address, NATIVE_TOKEN_ADDRESS, dai, link]) {
         await execute({
-            name: InstanceName.StandardStakingRewards,
+            name: InstanceName.StandardRewards,
             methodName: 'createProgram',
             args: [
                 pool,

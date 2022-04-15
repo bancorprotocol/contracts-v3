@@ -24,7 +24,7 @@ struct ProgramData {
     uint256 remainingRewards;
 }
 
-interface IAutoCompoundingStakingRewards is IUpgradeable {
+interface IAutoCompoundingRewards is IUpgradeable {
     /**
      * @dev returns the program data of a pool
      */
