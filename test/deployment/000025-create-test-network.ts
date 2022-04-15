@@ -104,9 +104,9 @@ describeDeployment(
                 symbol: TokenSymbol.TKN7,
                 initialSupply: 1_000_000_000,
                 instanceName: InstanceName.TestToken7,
-                initialDeposit: 1_000_000,
+                initialDeposit: 50_000,
                 depositLimit: MAX_UINT256,
-                fundingLimit: MAX_UINT256
+                fundingLimit: 200_000
             })
         ];
 
