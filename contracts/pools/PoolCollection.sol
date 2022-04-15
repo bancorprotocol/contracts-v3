@@ -1085,18 +1085,16 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function _calcTargetBNTTradingLiquidity(
         uint256 tokenReserveAmount,
-        uint256 poolFundingLimit,
         uint256 availableFunding,
         PoolLiquidity memory liquidity,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private pure returns (TradingLiquidityAction memory) {
         // calculate the target BNT trading liquidity based on the smaller between the following:
-        // - pool funding limit (e.g., the total funding limit could have been reduced by the DAO)
         // - BNT liquidity required to match previously deposited based token liquidity
         // - maximum available BNT trading liquidity (current amount + available funding)
         uint256 targetBNTTradingLiquidity = Math.min(
-            Math.min(poolFundingLimit, MathEx.mulDivF(tokenReserveAmount, fundingRate.n, fundingRate.d)),
+            MathEx.mulDivF(tokenReserveAmount, fundingRate.n, fundingRate.d),
             liquidity.bntTradingLiquidity + availableFunding
         );
 
@@ -1165,7 +1163,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         TradingLiquidityAction memory action = _calcTargetBNTTradingLiquidity(
             tokenReserveAmount,
-            _networkSettings.poolFundingLimit(pool),
             _bntPool.availableFunding(pool),
             liquidity,
             fundingRate,
