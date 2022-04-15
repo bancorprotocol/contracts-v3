@@ -1175,11 +1175,6 @@ describe('PoolCollection', () => {
                                         targetBNTTradingLiquidity,
                                         prevLiquidity.bntTradingLiquidity.mul(LIQUIDITY_GROWTH_FACTOR)
                                     );
-                                } else {
-                                    targetBNTTradingLiquidity = max(
-                                        targetBNTTradingLiquidity,
-                                        prevLiquidity.bntTradingLiquidity.div(LIQUIDITY_GROWTH_FACTOR)
-                                    );
                                 }
 
                                 // ensure that the new BNT funding was updated

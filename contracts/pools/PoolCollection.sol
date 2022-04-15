@@ -1116,16 +1116,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
             targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
         } else if (targetBNTTradingLiquidity >= liquidity.bntTradingLiquidity) {
-            // if the target is above the current trading liquidity, limit it by factoring the current value up
+            // if the target is above the current trading liquidity, limit it by factoring the current value up. Please
+            // note that if the target is below the current trading liquidity - it will be reduced to it immediately
             targetBNTTradingLiquidity = Math.min(
                 targetBNTTradingLiquidity,
                 liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
-            );
-        } else {
-            // if the target is below the current trading liquidity, limit it by factoring the current value down
-            targetBNTTradingLiquidity = Math.max(
-                targetBNTTradingLiquidity,
-                liquidity.bntTradingLiquidity / LIQUIDITY_GROWTH_FACTOR
             );
         }
 
