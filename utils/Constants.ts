@@ -27,7 +27,7 @@ export enum TradingStatusUpdateReason {
     MinLiquidity = 2
 }
 
-export enum StakingRewardsDistributionType {
+export enum RewardsDistributionType {
     Flat = 0,
     ExponentialDecay = 1
 }

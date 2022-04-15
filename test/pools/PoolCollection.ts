@@ -1164,12 +1164,9 @@ describe('PoolCollection', () => {
                                 expect(prevLiquidity.bntTradingLiquidity).to.be.gte(0);
 
                                 let targetBNTTradingLiquidity = min(
-                                    min(
-                                        await networkSettings.poolFundingLimit(token.address),
-                                        prevLiquidity.baseTokenTradingLiquidity
-                                            .mul(prevAverageRate.rate.n)
-                                            .div(prevAverageRate.rate.d)
-                                    ),
+                                    prevLiquidity.baseTokenTradingLiquidity
+                                        .mul(prevAverageRate.rate.n)
+                                        .div(prevAverageRate.rate.d),
                                     prevLiquidity.bntTradingLiquidity.add(await bntPool.availableFunding(token.address))
                                 );
 
@@ -1177,11 +1174,6 @@ describe('PoolCollection', () => {
                                     targetBNTTradingLiquidity = min(
                                         targetBNTTradingLiquidity,
                                         prevLiquidity.bntTradingLiquidity.mul(LIQUIDITY_GROWTH_FACTOR)
-                                    );
-                                } else {
-                                    targetBNTTradingLiquidity = max(
-                                        targetBNTTradingLiquidity,
-                                        prevLiquidity.bntTradingLiquidity.div(LIQUIDITY_GROWTH_FACTOR)
                                     );
                                 }
 
@@ -1378,49 +1370,53 @@ describe('PoolCollection', () => {
                         context(
                             'when the new BNT liquidity for trading is below the minimum liquidity for trading',
                             () => {
-                                beforeEach(async () => {
-                                    // ensure that the calculation of the new liquidity will return at most 'minimum minus 1'
-                                    await networkSettings.setFundingLimit(
-                                        token.address,
-                                        MIN_LIQUIDITY_FOR_TRADING.sub(1)
-                                    );
-                                });
-
-                                it('should deposit and reset the trading liquidity when the pool is uninitialized', async () => {
-                                    await poolCollection.setAverageRateT(token.address, {
-                                        blockNumber: await poolCollection.currentBlockNumber(),
-                                        rate: { n: 0, d: 1 }
+                                context('pool is uninitialized', () => {
+                                    beforeEach(async () => {
+                                        await poolCollection.setAverageRateT(token.address, {
+                                            blockNumber: await poolCollection.currentBlockNumber(),
+                                            rate: { n: 0, d: 1 }
+                                        });
                                     });
 
-                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                    it('should deposit and reset the trading liquidity', async () => {
+                                        await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                    });
                                 });
 
-                                it('should deposit without resetting the trading liquidity when the pool is unstable', async () => {
-                                    const liquidity = await poolCollection.poolLiquidity(token.address);
+                                context('pool is unstable', () => {
+                                    beforeEach(async () => {
+                                        const liquidity = await poolCollection.poolLiquidity(token.address);
 
-                                    await poolCollection.setAverageRateT(token.address, {
-                                        blockNumber: await poolCollection.currentBlockNumber(),
-                                        rate: {
-                                            n: liquidity.baseTokenTradingLiquidity,
-                                            d: liquidity.bntTradingLiquidity
-                                        }
+                                        await poolCollection.setAverageRateT(token.address, {
+                                            blockNumber: await poolCollection.currentBlockNumber(),
+                                            rate: {
+                                                n: liquidity.baseTokenTradingLiquidity,
+                                                d: liquidity.bntTradingLiquidity
+                                            }
+                                        });
                                     });
 
-                                    await testMultipleDepositsFor(TradingLiquidityState.Ignore);
+                                    it('should deposit without resetting the trading liquidity', async () => {
+                                        await testMultipleDepositsFor(TradingLiquidityState.Ignore);
+                                    });
                                 });
 
-                                it('should deposit and reset the trading liquidity when the pool is stable', async () => {
-                                    const liquidity = await poolCollection.poolLiquidity(token.address);
+                                context('pool is stable', () => {
+                                    beforeEach(async () => {
+                                        const liquidity = await poolCollection.poolLiquidity(token.address);
 
-                                    await poolCollection.setAverageRateT(token.address, {
-                                        blockNumber: await poolCollection.currentBlockNumber(),
-                                        rate: {
-                                            n: liquidity.bntTradingLiquidity,
-                                            d: liquidity.baseTokenTradingLiquidity
-                                        }
+                                        await poolCollection.setAverageRateT(token.address, {
+                                            blockNumber: await poolCollection.currentBlockNumber(),
+                                            rate: {
+                                                n: liquidity.bntTradingLiquidity,
+                                                d: liquidity.baseTokenTradingLiquidity
+                                            }
+                                        });
                                     });
 
-                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                    it('should deposit and update the trading liquidity', async () => {
+                                        await testMultipleDepositsFor(TradingLiquidityState.Update);
+                                    });
                                 });
                             }
                         );
@@ -1483,8 +1479,8 @@ describe('PoolCollection', () => {
                                     );
                                 });
 
-                                it('should deposit and reset the trading liquidity', async () => {
-                                    await testMultipleDepositsFor(TradingLiquidityState.Reset);
+                                it('should deposit and update the trading liquidity', async () => {
+                                    await testMultipleDepositsFor(TradingLiquidityState.Update);
                                 });
                             });
 

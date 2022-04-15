@@ -6,14 +6,14 @@ import Contracts, {
     MasterVault,
     NetworkSettings,
     PoolToken,
-    TestAutoCompoundingStakingRewards,
+    TestAutoCompoundingRewards,
     TestBancorNetwork,
     TestBNTPool,
     TestERC20Token,
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestStandardStakingRewards
+    TestStandardRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
@@ -22,16 +22,16 @@ import {
     ExponentialDecay,
     MAX_UINT256,
     PPM_RESOLUTION,
-    StakingRewardsDistributionType,
+    RewardsDistributionType,
     ZERO_ADDRESS
 } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, max, toPPM, toWei } from '../../utils/Types';
 import {
-    createAutoCompoundingStakingRewards,
+    createAutoCompoundingRewards,
     createPool,
-    createStandardStakingRewards,
+    createStandardRewards,
     createSystem,
     createTestToken,
     createToken,
@@ -56,7 +56,7 @@ describe('Profile @profile', () => {
     const profiler = new Profiler();
 
     let deployer: SignerWithAddress;
-    let stakingRewardsProvider: SignerWithAddress;
+    let rewardsProvider: SignerWithAddress;
 
     const BNT_VIRTUAL_BALANCE = 1;
     const BASE_TOKEN_VIRTUAL_BALANCE = 2;
@@ -68,7 +68,7 @@ describe('Profile @profile', () => {
     const MAX_SOURCE_AMOUNT = MAX_UINT256;
 
     before(async () => {
-        [deployer, stakingRewardsProvider] = await ethers.getSigners();
+        [deployer, rewardsProvider] = await ethers.getSigners();
     });
 
     after(async () => {
@@ -1191,7 +1191,7 @@ describe('Profile @profile', () => {
         let poolCollection: TestPoolCollection;
         let externalRewardsVault: ExternalRewardsVault;
 
-        let autoCompoundingStakingRewards: TestAutoCompoundingStakingRewards;
+        let autoCompoundingRewards: TestAutoCompoundingRewards;
 
         const prepareSimplePool = async (
             tokenData: TokenData,
@@ -1217,13 +1217,13 @@ describe('Profile @profile', () => {
             // if we're rewarding BNT - no additional funding is needed
             if (!tokenData.isBNT()) {
                 // deposit pool tokens as staking rewards
-                await depositToPool(stakingRewardsProvider, token, totalRewards, network);
+                await depositToPool(rewardsProvider, token, totalRewards, network);
 
                 await transfer(
-                    stakingRewardsProvider,
+                    rewardsProvider,
                     poolToken,
                     externalRewardsVault,
-                    await poolToken.balanceOf(stakingRewardsProvider.address)
+                    await poolToken.balanceOf(rewardsProvider.address)
                 );
             }
 
@@ -1232,7 +1232,7 @@ describe('Profile @profile', () => {
 
         const testRewards = (
             tokenData: TokenData,
-            distributionType: StakingRewardsDistributionType,
+            distributionType: RewardsDistributionType,
             providerStake: BigNumberish,
             totalRewards: BigNumberish
         ) => {
@@ -1246,7 +1246,7 @@ describe('Profile @profile', () => {
 
                 ({ token } = await prepareSimplePool(tokenData, providerStake, totalRewards));
 
-                autoCompoundingStakingRewards = await createAutoCompoundingStakingRewards(
+                autoCompoundingRewards = await createAutoCompoundingRewards(
                     network,
                     networkSettings,
                     bnt,
@@ -1256,18 +1256,18 @@ describe('Profile @profile', () => {
             });
 
             const testProgram = (programDuration: number) => {
-                context(StakingRewardsDistributionType[distributionType], () => {
+                context(RewardsDistributionType[distributionType], () => {
                     let startTime: number;
 
                     beforeEach(async () => {
                         startTime = await latest();
 
-                        await autoCompoundingStakingRewards.createProgram(
+                        await autoCompoundingRewards.createProgram(
                             token.address,
                             totalRewards,
                             distributionType,
                             startTime,
-                            distributionType === StakingRewardsDistributionType.Flat ? startTime + programDuration : 0
+                            distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0
                         );
                     });
 
@@ -1277,15 +1277,15 @@ describe('Profile @profile', () => {
                             () => {
                                 it('should distribute rewards', async () => {
                                     for (let i = 0, time = startTime; i < totalSteps; i++, time += step) {
-                                        await autoCompoundingStakingRewards.setTime(time);
+                                        await autoCompoundingRewards.setTime(time);
 
                                         await profiler.profile(
                                             `${
-                                                distributionType === StakingRewardsDistributionType.Flat
+                                                distributionType === RewardsDistributionType.Flat
                                                     ? 'flat'
                                                     : 'exponential decay'
                                             } program / process ${tokenData.symbol()} rewards`,
-                                            autoCompoundingStakingRewards.processRewards(token.address)
+                                            autoCompoundingRewards.processRewards(token.address)
                                         );
                                     }
                                 });
@@ -1294,7 +1294,7 @@ describe('Profile @profile', () => {
                     };
 
                     switch (distributionType) {
-                        case StakingRewardsDistributionType.Flat:
+                        case RewardsDistributionType.Flat:
                             for (const percent of [6, 25]) {
                                 testMultipleDistributions(
                                     Math.floor((programDuration * percent) / 100),
@@ -1304,7 +1304,7 @@ describe('Profile @profile', () => {
 
                             break;
 
-                        case StakingRewardsDistributionType.ExponentialDecay:
+                        case RewardsDistributionType.ExponentialDecay:
                             for (const step of [duration.hours(1), duration.weeks(1)]) {
                                 for (const totalSteps of [5]) {
                                     testMultipleDistributions(step, totalSteps);
@@ -1320,7 +1320,7 @@ describe('Profile @profile', () => {
             };
 
             switch (distributionType) {
-                case StakingRewardsDistributionType.Flat:
+                case RewardsDistributionType.Flat:
                     for (const programDuration of [duration.weeks(12)]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['d'] })}`,
@@ -1332,7 +1332,7 @@ describe('Profile @profile', () => {
 
                     break;
 
-                case StakingRewardsDistributionType.ExponentialDecay:
+                case RewardsDistributionType.ExponentialDecay:
                     for (const programDuration of [ExponentialDecay.MAX_DURATION]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
@@ -1350,7 +1350,7 @@ describe('Profile @profile', () => {
         };
 
         const testRewardsMatrix = (providerStake: BigNumberish, totalReward: BigNumberish) => {
-            const distributionTypes = Object.values(StakingRewardsDistributionType).filter(
+            const distributionTypes = Object.values(RewardsDistributionType).filter(
                 (v) => typeof v === 'number'
             ) as number[];
 
@@ -1377,7 +1377,7 @@ describe('Profile @profile', () => {
         let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
         let externalRewardsVault: ExternalRewardsVault;
-        let standardStakingRewards: TestStandardStakingRewards;
+        let standardRewards: TestStandardRewards;
 
         let now: number;
 
@@ -1391,7 +1391,7 @@ describe('Profile @profile', () => {
             ({ network, networkInfo, networkSettings, bntGovernance, bntPool, externalRewardsVault, poolCollection } =
                 await createSystem());
 
-            standardStakingRewards = await createStandardStakingRewards(
+            standardRewards = await createStandardRewards(
                 network,
                 networkSettings,
                 bntGovernance,
@@ -1401,7 +1401,7 @@ describe('Profile @profile', () => {
 
             now = await latest();
 
-            await setTime(standardStakingRewards, now);
+            await setTime(standardRewards, now);
         });
 
         const prepareSimplePool = async (poolData: TokenData, initialBalance: BigNumberish) => {
@@ -1425,34 +1425,28 @@ describe('Profile @profile', () => {
         };
 
         const createProgram = async (
-            standardStakingRewards: TestStandardStakingRewards,
+            standardRewards: TestStandardRewards,
             pool: TokenWithAddress,
             rewardsToken: TokenWithAddress,
             totalRewards: BigNumberish,
             startTime: number,
             endTime: number
         ) => {
-            const id = await standardStakingRewards.nextProgramId();
+            const id = await standardRewards.nextProgramId();
 
-            await standardStakingRewards.createProgram(
-                pool.address,
-                rewardsToken.address,
-                totalRewards,
-                startTime,
-                endTime
-            );
+            await standardRewards.createProgram(pool.address, rewardsToken.address, totalRewards, startTime, endTime);
 
             return id;
         };
 
-        const setTime = async (standardStakingRewards: TestStandardStakingRewards, time: number) => {
-            await standardStakingRewards.setTime(time);
+        const setTime = async (standardRewards: TestStandardRewards, time: number) => {
+            await standardRewards.setTime(time);
 
             now = time;
         };
 
-        const increaseTime = async (standardStakingRewards: TestStandardStakingRewards, duration: number) =>
-            setTime(standardStakingRewards, now + duration);
+        const increaseTime = async (standardRewards: TestStandardRewards, duration: number) =>
+            setTime(standardRewards, now + duration);
 
         interface ProgramSpec {
             poolSymbol: TokenSymbol;
@@ -1481,7 +1475,7 @@ describe('Profile @profile', () => {
             const endTime = startTime + programSpec.duration;
 
             const id = await createProgram(
-                standardStakingRewards,
+                standardRewards,
                 pool,
                 rewardsToken,
                 programSpec.totalRewards,
@@ -1519,92 +1513,92 @@ describe('Profile @profile', () => {
                 beforeEach(async () => {
                     ({ id, providerPoolTokenAmount, poolToken } = await setupProgram(programSpec));
 
-                    await poolToken.connect(provider).approve(standardStakingRewards.address, providerPoolTokenAmount);
+                    await poolToken.connect(provider).approve(standardRewards.address, providerPoolTokenAmount);
                 });
 
                 it('should properly claim rewards', async () => {
                     await profiler.profile(
                         `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
                     );
 
-                    await increaseTime(standardStakingRewards, duration.days(1));
+                    await increaseTime(standardRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
                     );
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id])
+                        standardRewards.connect(provider).claimRewards([id])
                     );
 
-                    await increaseTime(standardStakingRewards, duration.days(1));
+                    await increaseTime(standardRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id])
+                        standardRewards.connect(provider).claimRewards([id])
                     );
 
                     await profiler.profile(
                         `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
                     );
 
-                    await increaseTime(standardStakingRewards, duration.days(1));
+                    await increaseTime(standardRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
                     );
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).claimRewards([id])
+                        standardRewards.connect(provider).claimRewards([id])
                     );
                 });
 
                 it('should properly stake rewards', async () => {
                     await profiler.profile(
                         `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
                     );
 
-                    await increaseTime(standardStakingRewards, duration.days(1));
+                    await increaseTime(standardRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / join ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).join(id, providerPoolTokenAmount.div(2))
                     );
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id])
+                        standardRewards.connect(provider).stakeRewards([id])
                     );
 
-                    await increaseTime(standardStakingRewards, duration.days(1));
+                    await increaseTime(standardRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id])
+                        standardRewards.connect(provider).stakeRewards([id])
                     );
 
                     await profiler.profile(
                         `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
                     );
 
-                    await increaseTime(standardStakingRewards, duration.days(1));
+                    await increaseTime(standardRewards, duration.days(1));
 
                     await profiler.profile(
                         `standard program / leave ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
+                        standardRewards.connect(provider).leave(id, providerPoolTokenAmount.div(2))
                     );
 
                     await profiler.profile(
                         `standard program / claim ${programSpec.poolSymbol} [${programSpec.poolSymbol} rewards]`,
-                        standardStakingRewards.connect(provider).stakeRewards([id])
+                        standardRewards.connect(provider).stakeRewards([id])
                     );
                 });
             });

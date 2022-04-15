@@ -13,7 +13,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
 
     const standardRewardsAddress = await deployProxy({
-        name: InstanceName.StandardStakingRewards,
+        name: InstanceName.StandardRewards,
         from: deployer,
         args: [
             network.address,

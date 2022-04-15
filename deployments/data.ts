@@ -31,7 +31,7 @@ const TokenNamedAccounts = {
 
 const LegacyNamedAccounts = {
     liquidityProtection: { ...mainnet('0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e', ZERO_ADDRESS) },
-    stakingRewards: { ...mainnet('0x318fEA7e45A7D3aC5999DA7e1055F5982eEB3E67', ZERO_ADDRESS) }
+    legacyStakingRewards: { ...mainnet('0x318fEA7e45A7D3aC5999DA7e1055F5982eEB3E67', ZERO_ADDRESS) }
 };
 
 const UniswapNamedAccounts = {

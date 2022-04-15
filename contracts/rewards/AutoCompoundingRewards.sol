@@ -26,24 +26,18 @@ import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVaul
 
 // prettier-ignore
 import {
-    IAutoCompoundingStakingRewards,
+    IAutoCompoundingRewards,
     ProgramData,
     FLAT_DISTRIBUTION,
     EXPONENTIAL_DECAY_DISTRIBUTION
-} from "./interfaces/IAutoCompoundingStakingRewards.sol";
+} from "./interfaces/IAutoCompoundingRewards.sol";
 
-import { StakingRewardsMath } from "./StakingRewardsMath.sol";
+import { RewardsMath } from "./RewardsMath.sol";
 
 /**
- * @dev Auto-compounding Staking Rewards contract
+ * @dev Auto-compounding Rewards contract
  */
-contract AutoCompoundingStakingRewards is
-    IAutoCompoundingStakingRewards,
-    ReentrancyGuardUpgradeable,
-    Utils,
-    Time,
-    Upgradeable
-{
+contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgradeable, Utils, Time, Upgradeable {
     using TokenLibrary for Token;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
@@ -135,7 +129,7 @@ contract AutoCompoundingStakingRewards is
      * @dev fully initializes the contract and its parents
      */
     function initialize() external initializer {
-        __AutoCompoundingStakingRewards_init();
+        __AutoCompoundingRewards_init();
     }
 
     // solhint-disable func-name-mixedcase
@@ -143,17 +137,17 @@ contract AutoCompoundingStakingRewards is
     /**
      * @dev initializes the contract and its parents
      */
-    function __AutoCompoundingStakingRewards_init() internal onlyInitializing {
+    function __AutoCompoundingRewards_init() internal onlyInitializing {
         __ReentrancyGuard_init();
         __Upgradeable_init();
 
-        __AutoCompoundingStakingRewards_init_unchained();
+        __AutoCompoundingRewards_init_unchained();
     }
 
     /**
      * @dev performs contract-specific initialization
      */
-    function __AutoCompoundingStakingRewards_init_unchained() internal onlyInitializing {}
+    function __AutoCompoundingRewards_init_unchained() internal onlyInitializing {}
 
     // solhint-enable func-name-mixedcase
 
@@ -165,14 +159,14 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function program(Token pool) external view returns (ProgramData memory) {
         return _programs[pool];
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function programs() external view returns (ProgramData[] memory) {
         uint256 numPrograms = _pools.length();
@@ -186,14 +180,14 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function pools() external view returns (address[] memory) {
         return _pools.values();
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function isProgramActive(Token pool) external view returns (bool) {
         ProgramData memory p = _programs[pool];
@@ -212,7 +206,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function createProgram(
         Token pool,
@@ -276,7 +270,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function terminateProgram(Token pool) external onlyAdmin {
         ProgramData memory p = _programs[pool];
@@ -293,7 +287,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function enableProgram(Token pool, bool status) external onlyAdmin {
         ProgramData memory p = _programs[pool];
@@ -313,7 +307,7 @@ contract AutoCompoundingStakingRewards is
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function processRewards(Token pool) external nonReentrant {
         ProgramData memory p = _programs[pool];
@@ -361,18 +355,14 @@ contract AutoCompoundingStakingRewards is
             uint32 currTimeElapsed = uint32(Math.min(currTime, p.endTime)) - p.startTime;
             uint32 prevTimeElapsed = uint32(Math.min(prevTime, p.endTime)) - p.startTime;
             return
-                StakingRewardsMath.calcFlatRewards(
-                    p.totalRewards,
-                    currTimeElapsed - prevTimeElapsed,
-                    p.endTime - p.startTime
-                );
+                RewardsMath.calcFlatRewards(p.totalRewards, currTimeElapsed - prevTimeElapsed, p.endTime - p.startTime);
         } else {
             // if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION)
             uint32 currTimeElapsed = currTime - p.startTime;
             uint32 prevTimeElapsed = prevTime - p.startTime;
             return
-                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed) -
-                StakingRewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
+                RewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed) -
+                RewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
         }
     }
 

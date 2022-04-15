@@ -31,3 +31,5 @@ scTopics
 
 .env
 tenderly.yaml
+
+scripts/test-network.ts

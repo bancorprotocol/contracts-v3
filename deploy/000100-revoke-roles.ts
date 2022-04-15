@@ -7,7 +7,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, daoMultisig } = await getNamedAccounts();
 
     for (const name of [
-        InstanceName.AutoCompoundingStakingRewards,
+        InstanceName.AutoCompoundingRewards,
         InstanceName.BancorNetworkInfo,
         InstanceName.BancorNetwork,
         InstanceName.BancorPortal,
@@ -19,7 +19,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         InstanceName.PendingWithdrawals,
         InstanceName.PoolMigrator,
         InstanceName.PoolTokenFactory,
-        InstanceName.StandardStakingRewards
+        InstanceName.StandardRewards
     ]) {
         await grantRole({
             name,
