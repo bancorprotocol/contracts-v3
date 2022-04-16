@@ -45,7 +45,8 @@ const SushiSwapNamedAccounts = {
 };
 
 export const NamedAccounts = {
-    deployer: { ...mainnet('0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E') },
+    deployer: { ...mainnet('0x0078566327A081B11F9D18e5FC6860Fe234b16Bb') },
+    deployerV2: { ...mainnet('0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E') },
     foundationMultisig: { ...mainnet('0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83') },
     daoMultisig: { ...mainnet('0x7e3692a6d8c34a762079fa9057aed87be7e67cb8') },
 

@@ -23,6 +23,7 @@ import { getNamedAccounts } from 'hardhat';
 
 describe('network', () => {
     let deployer: string;
+    let deployerV2: string;
     let foundationMultisig: string;
     let daoMultisig: string;
     let liquidityProtection: string;
@@ -46,7 +47,7 @@ describe('network', () => {
     let bancorPortal: BancorPortal;
 
     before(async () => {
-        ({ deployer, foundationMultisig, daoMultisig, liquidityProtection, legacyStakingRewards } =
+        ({ deployer, deployerV2, foundationMultisig, daoMultisig, liquidityProtection, legacyStakingRewards } =
             await getNamedAccounts());
     });
 
@@ -79,9 +80,11 @@ describe('network', () => {
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
-        await expectRoleMembers(bntGovernance as any as AccessControlEnumerable, Roles.TokenGovernance.ROLE_GOVERNOR, [
-            deployer
-        ]);
+        await expectRoleMembers(
+            bntGovernance as any as AccessControlEnumerable,
+            Roles.TokenGovernance.ROLE_GOVERNOR,
+            isMainnet() ? [deployerV2, deployer] : [deployer]
+        );
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
@@ -95,9 +98,11 @@ describe('network', () => {
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
-        await expectRoleMembers(vbntGovernance as any as AccessControlEnumerable, Roles.TokenGovernance.ROLE_GOVERNOR, [
-            deployer
-        ]);
+        await expectRoleMembers(
+            vbntGovernance as any as AccessControlEnumerable,
+            Roles.TokenGovernance.ROLE_GOVERNOR,
+            isMainnet() ? [deployerV2, deployer] : [deployer]
+        );
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,

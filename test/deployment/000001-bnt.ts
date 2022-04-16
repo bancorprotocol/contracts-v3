@@ -10,6 +10,7 @@ import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
     let deployer: string;
+    let deployerV2: string;
     let foundationMultisig: string;
     let liquidityProtection: string;
     let legacyStakingRewards: string;
@@ -20,7 +21,8 @@ describeDeployment(__filename, () => {
     const bntData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
-        ({ deployer, foundationMultisig, liquidityProtection, legacyStakingRewards } = await getNamedAccounts());
+        ({ deployer, deployerV2, foundationMultisig, liquidityProtection, legacyStakingRewards } =
+            await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -44,9 +46,11 @@ describeDeployment(__filename, () => {
             Roles.TokenGovernance.ROLE_SUPERVISOR,
             [foundationMultisig]
         );
-        await expectRoleMembers(bntGovernance as any as AccessControlEnumerable, Roles.TokenGovernance.ROLE_GOVERNOR, [
-            deployer
-        ]);
+        await expectRoleMembers(
+            bntGovernance as any as AccessControlEnumerable,
+            Roles.TokenGovernance.ROLE_GOVERNOR,
+            isMainnet() ? [deployerV2, deployer] : [deployer]
+        );
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
