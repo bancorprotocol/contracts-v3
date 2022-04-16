@@ -23,9 +23,8 @@ deployments/tenderly/solcInputs
 
 .coverage_artifacts
 .coverage_contracts
-coverage
-coverageEnv
-coverage.json
+/coverage
+/coverage.json
 allFiredEvents
 scTopics
 

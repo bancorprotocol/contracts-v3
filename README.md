@@ -77,6 +77,19 @@ This will automatically be skipped on an already deployed and configured deploym
 
 ### Coverage Tests
 
+#### Report
+
+You can find the recent coverage report <a href="./docs/coverage/index.html" target="_blank">here</a>.
+
+- 99.66% Statements 1464/1469
+- 96.91% Branches 471/486
+- 100% Functions 444/444
+- 99.11% Lines 1567/1581
+
+![Coverage Report](./docs/images/coverage.png)
+
+#### Instructions
+
 In order to audit the test coverage of the full test suite, run:
 
 ```sh

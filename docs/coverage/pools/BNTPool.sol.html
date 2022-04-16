@@ -1,0 +1,1838 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for pools/BNTPool.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">pools/</a> BNTPool.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>94/94</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">94.44% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>17/18</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>32/32</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">98.98% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>97/98</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+506
+507
+508
+509
+510
+511
+512
+513
+514
+515
+516
+517
+518
+519
+520
+521
+522
+523
+524
+525
+526
+527
+528
+529
+530
+531
+532
+533
+534
+535
+536
+537
+538
+539
+540
+541
+542
+543
+544
+545
+546
+547
+548
+549
+550
+551
+552
+553
+554
+555
+556
+557
+558
+559
+560
+561
+562
+563
+564
+565
+566
+567
+568
+569
+570
+571
+572
+573
+574
+575
+576
+577
+578
+579
+580
+581
+582
+583
+584
+585
+586
+587
+588
+589
+590
+591
+592</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">75×</span>
+<span class="cline-any cline-yes">75×</span>
+<span class="cline-any cline-yes">75×</span>
+<span class="cline-any cline-yes">75×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-yes">350×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">73230×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">73226×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">73230×</span>
+<span class="cline-any cline-yes">4×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6116×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4229×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2855×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2232×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">72479×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13526×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8810×</span>
+<span class="cline-any cline-yes">1×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8809×</span>
+<span class="cline-any cline-yes">8809×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8809×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">412×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4360×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25104×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25102×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25050×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">23977×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">23977×</span>
+<span class="cline-any cline-yes">256×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">23977×</span>
+<span class="cline-any cline-yes">23801×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20070×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17875×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5281×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4952×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4876×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4875×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4392×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3655×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71879×</span>
+<span class="cline-any cline-yes">71879×</span>
+<span class="cline-any cline-yes">71879×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71879×</span>
+<span class="cline-any cline-yes">11×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14426×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14426×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">57442×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71868×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">71231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1345×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1345×</span>
+<span class="cline-any cline-yes">1345×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1345×</span>
+<span class="cline-any cline-yes">1345×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1344×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1344×</span>
+<span class="cline-any cline-yes">1344×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1344×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1340×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1296×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1296×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12424×</span>
+<span class="cline-any cline-yes">3915×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8509×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8505×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8433×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">18814×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25116×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">83902×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5288×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5287×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4959×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4959×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+pragma solidity 0.8.13;
+&nbsp;
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+&nbsp;
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+&nbsp;
+import { Token } from "../token/Token.sol";
+&nbsp;
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils, InvalidStakedBalance } from "../utility/Utils.sol";
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
+import { Fraction } from "../utility/FractionLibrary.sol";
+import { MathEx } from "../utility/MathEx.sol";
+&nbsp;
+import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
+import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
+&nbsp;
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+&nbsp;
+// prettier-ignore
+import {
+    IBNTPool,
+    ROLE_BNT_POOL_TOKEN_MANAGER,
+    ROLE_BNT_MANAGER,
+    ROLE_VAULT_MANAGER,
+    ROLE_FUNDING_MANAGER
+} from "./interfaces/IBNTPool.sol";
+&nbsp;
+import { IPoolToken } from "./interfaces/IPoolToken.sol";
+import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
+&nbsp;
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
+&nbsp;
+import { Vault } from "../vaults/Vault.sol";
+import { IVault } from "../vaults/interfaces/IVault.sol";
+&nbsp;
+import { PoolToken } from "./PoolToken.sol";
+&nbsp;
+/**
+ * @dev BNT Pool contract
+ */
+contract BNTPool is IBNTPool, Vault {
+    using TokenLibrary for Token;
+&nbsp;
+    error FundingLimitExceeded();
+&nbsp;
+    struct InternalWithdrawalAmounts {
+        uint256 bntAmount;
+        uint256 withdrawalFeeAmount;
+    }
+&nbsp;
+    // the network contract
+    IBancorNetwork private immutable _network;
+&nbsp;
+    // the network settings contract
+    INetworkSettings private immutable _networkSettings;
+&nbsp;
+    // the master vault contract
+    IMasterVault private immutable _masterVault;
+&nbsp;
+    // the BNT pool token
+    IPoolToken internal immutable _poolToken;
+&nbsp;
+    // the total staked BNT balance in the network
+    uint256 private _stakedBalance;
+&nbsp;
+    // a mapping between pools and their current funding
+    mapping(Token =&gt; uint256) private _currentPoolFunding;
+&nbsp;
+    // upgrade forward-compatibility storage gap
+    uint256[MAX_GAP - 2] private __gap;
+&nbsp;
+    /**
+     * @dev triggered when liquidity is deposited
+     */
+    event TokensDeposited(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 bntAmount,
+        uint256 poolTokenAmount,
+        uint256 vbntAmount
+    );
+&nbsp;
+    /**
+     * @dev triggered when liquidity is withdrawn
+     */
+    event TokensWithdrawn(
+        bytes32 indexed contextId,
+        address indexed provider,
+        uint256 bntAmount,
+        uint256 poolTokenAmount,
+        uint256 vbntAmount,
+        uint256 withdrawalFeeAmount
+    );
+&nbsp;
+    /**
+     * @dev triggered when funding is requested
+     */
+    event FundingRequested(bytes32 indexed contextId, Token indexed pool, uint256 bntAmount, uint256 poolTokenAmount);
+&nbsp;
+    /**
+     * @dev triggered when funding is renounced
+     */
+    event FundingRenounced(bytes32 indexed contextId, Token indexed pool, uint256 bntAmount, uint256 poolTokenAmount);
+&nbsp;
+    /**
+     * @dev triggered when the total liquidity in the BNT pool is updated
+     */
+    event TotalLiquidityUpdated(
+        bytes32 indexed contextId,
+        uint256 liquidity,
+        uint256 stakedBalance,
+        uint256 poolTokenSupply
+    );
+&nbsp;
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(
+        IBancorNetwork initNetwork,
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance,
+        INetworkSettings initNetworkSettings,
+        IMasterVault initMasterVault,
+        IPoolToken initBNTPoolToken
+    )
+        Vault(initBNTGovernance, initVBNTGovernance)
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkSettings))
+        validAddress(address(initMasterVault))
+        validAddress(address(initBNTPoolToken))
+    {
+        _network = initNetwork;
+        _networkSettings = initNetworkSettings;
+        _masterVault = initMasterVault;
+        _poolToken = initBNTPoolToken;
+    }
+&nbsp;
+    /**
+     * @dev fully initializes the contract and its parents
+     */
+    function initialize() external initializer {
+        __BNTPool_init();
+    }
+&nbsp;
+    // solhint-disable func-name-mixedcase
+&nbsp;
+    /**
+     * @dev initializes the contract and its parents
+     */
+    function __BNTPool_init() internal onlyInitializing {
+        __Vault_init();
+&nbsp;
+        __BNTPool_init_unchained();
+    }
+&nbsp;
+    /**
+     * @dev performs contract-specific initialization
+     */
+    function __BNTPool_init_unchained() internal onlyInitializing {
+        _poolToken.acceptOwnership();
+&nbsp;
+        // set up administrative roles
+        _setRoleAdmin(ROLE_BNT_POOL_TOKEN_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_BNT_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_VAULT_MANAGER, ROLE_ADMIN);
+        _setRoleAdmin(ROLE_FUNDING_MANAGER, ROLE_ADMIN);
+    }
+&nbsp;
+    // solhint-enable func-name-mixedcase
+&nbsp;
+    modifier poolWhitelisted(Token pool) {
+        _poolWhitelisted(pool);
+&nbsp;
+        _;
+    }
+&nbsp;
+    /**
+     * @dev validates that the provided pool is whitelisted
+     */
+    function _poolWhitelisted(Token pool) internal view {
+        if (!_networkSettings.isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
+    }
+&nbsp;
+    /**
+     * @inheritdoc Upgradeable
+     */
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
+        return 1;
+    }
+&nbsp;
+    /**
+     * @inheritdoc Vault
+     */
+    function isPayable() public pure override(IVault, Vault) returns (bool) {
+        return false;
+    }
+&nbsp;
+    /**
+     * @dev returns the BNT pool token manager role
+     */
+    function roleBNTPoolTokenManager() external pure returns (bytes32) {
+        return ROLE_BNT_POOL_TOKEN_MANAGER;
+    }
+&nbsp;
+    /**
+     * @dev returns the BNT manager role
+     */
+    function roleBNTManager() external pure returns (bytes32) {
+        return ROLE_BNT_MANAGER;
+    }
+&nbsp;
+    /**
+     * @dev returns the vault manager role
+     */
+    function roleVaultManager() external pure returns (bytes32) {
+        return ROLE_VAULT_MANAGER;
+    }
+&nbsp;
+    /**
+     * @dev returns the funding manager role
+     */
+    function roleFundingManager() external pure returns (bytes32) {
+        return ROLE_FUNDING_MANAGER;
+    }
+&nbsp;
+    /**
+     * @dev returns whether the given caller is allowed access to the given token
+     *
+     * requirements:
+     *
+     * - the token must be the BNT pool token
+     * - the caller must have the ROLE_BNT_POOL_TOKEN_MANAGER role
+     */
+    function isAuthorizedWithdrawal(
+        address caller,
+        Token token,
+        address, /* target */
+        uint256 /* amount */
+    ) internal view override returns (bool) {
+        return token.isEqual(_poolToken) &amp;&amp; hasRole(ROLE_BNT_POOL_TOKEN_MANAGER, caller);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function poolToken() external view returns (IPoolToken) {
+        return _poolToken;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function stakedBalance() external view returns (uint256) {
+        return _stakedBalance;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function currentPoolFunding(Token pool) external view returns (uint256) {
+        return _currentPoolFunding[pool];
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function availableFunding(Token pool) external view returns (uint256) {
+        return MathEx.subMax0(_networkSettings.poolFundingLimit(pool), _currentPoolFunding[pool]);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function poolTokenToUnderlying(uint256 poolTokenAmount) external view returns (uint256) {
+        return _poolTokenToUnderlying(poolTokenAmount);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function underlyingToPoolToken(uint256 bntAmount) external view returns (uint256) {
+        return _underlyingToPoolToken(bntAmount);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function poolTokenAmountToBurn(uint256 bntAmountToDistribute) external view returns (uint256) {
+        if (bntAmountToDistribute == 0) {
+            return 0;
+        }
+&nbsp;
+        uint256 poolTokenSupply = _poolToken.totalSupply();
+        uint256 val = bntAmountToDistribute * poolTokenSupply;
+&nbsp;
+        return
+            MathEx.mulDivF(
+                val,
+                poolTokenSupply,
+                val + _stakedBalance * (poolTokenSupply - _poolToken.balanceOf(address(this)))
+            );
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function mint(address recipient, uint256 bntAmount)
+        external
+        onlyRoleMember(ROLE_BNT_MANAGER)
+        validAddress(recipient)
+        greaterThanZero(bntAmount)
+    {
+        _bntGovernance.mint(recipient, bntAmount);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function burnFromVault(uint256 bntAmount) external onlyRoleMember(ROLE_VAULT_MANAGER) greaterThanZero(bntAmount) {
+        _masterVault.burn(Token(address(_bnt)), bntAmount);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function depositFor(
+        bytes32 contextId,
+        address provider,
+        uint256 bntAmount,
+        bool isMigrating,
+        uint256 originalVBNTAmount
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(bntAmount) returns (uint256) {
+        // calculate the pool token amount to transfer
+        uint256 poolTokenAmount = _underlyingToPoolToken(bntAmount);
+&nbsp;
+        // transfer pool tokens from the protocol to the provider. Please note that it's not possible to deposit
+        // liquidity requiring the protocol to transfer the provider more protocol tokens than it holds
+        _poolToken.transfer(provider, poolTokenAmount);
+&nbsp;
+        // burn the previously received BNT
+        _bntGovernance.burn(bntAmount);
+&nbsp;
+        uint256 vbntAmount = poolTokenAmount;
+&nbsp;
+        // the provider should receive pool tokens and VBNT in equal amounts. since the provider might already have
+        // some VBNT during migration, the contract only mints the delta between the full amount and the amount the
+        // provider already has
+        if (isMigrating) {
+            vbntAmount = MathEx.subMax0(vbntAmount, originalVBNTAmount);
+        }
+&nbsp;
+        // mint VBNT to the provider
+        if (vbntAmount &gt; 0) {
+            _vbntGovernance.mint(provider, vbntAmount);
+        }
+&nbsp;
+        emit TokensDeposited({
+            contextId: contextId,
+            provider: provider,
+            bntAmount: bntAmount,
+            poolTokenAmount: poolTokenAmount,
+            vbntAmount: vbntAmount
+        });
+&nbsp;
+        return poolTokenAmount;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function withdraw(
+        bytes32 contextId,
+        address provider,
+        uint256 poolTokenAmount
+    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
+        InternalWithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
+&nbsp;
+        // get the pool tokens from the caller
+        _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
+&nbsp;
+        // burn the respective VBNT amount
+        _vbntGovernance.burn(poolTokenAmount);
+&nbsp;
+        // mint BNT to the provider
+        _bntGovernance.mint(provider, amounts.bntAmount);
+&nbsp;
+        emit TokensWithdrawn({
+            contextId: contextId,
+            provider: provider,
+            bntAmount: amounts.bntAmount,
+            poolTokenAmount: poolTokenAmount,
+            vbntAmount: poolTokenAmount,
+            withdrawalFeeAmount: amounts.withdrawalFeeAmount
+        });
+&nbsp;
+        return amounts.bntAmount;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function withdrawalAmount(uint256 poolTokenAmount)
+        external
+        view
+        greaterThanZero(poolTokenAmount)
+        returns (uint256)
+    {
+        InternalWithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
+&nbsp;
+        return amounts.bntAmount;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function requestFunding(
+        bytes32 contextId,
+        Token pool,
+        uint256 bntAmount
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(bntAmount) {
+        uint256 currentFunding = _currentPoolFunding[pool];
+        uint256 fundingLimit = _networkSettings.poolFundingLimit(pool);
+        uint256 newFunding = currentFunding + bntAmount;
+&nbsp;
+        // verify that the new funding amount doesn't exceed the limit
+        if (newFunding &gt; fundingLimit) {
+            revert FundingLimitExceeded();
+        }
+&nbsp;
+        // calculate the pool token amount to mint
+        uint256 currentStakedBalance = _stakedBalance;
+        uint256 poolTokenAmount;
+        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+        if (poolTokenTotalSupply == 0) {
+            // if this is the initial liquidity provision - use a one-to-one pool token to BNT rate
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (currentStakedBalance &gt; 0) {
+                revert InvalidStakedBalance();
+            }
+&nbsp;
+            poolTokenAmount = bntAmount;
+        } else {
+            poolTokenAmount = _underlyingToPoolToken(bntAmount, poolTokenTotalSupply, currentStakedBalance);
+        }
+&nbsp;
+        // update the staked balance
+        uint256 newStakedBalance = currentStakedBalance + bntAmount;
+        _stakedBalance = newStakedBalance;
+&nbsp;
+        // update the current funding amount
+        _currentPoolFunding[pool] = newFunding;
+&nbsp;
+        // mint pool tokens to the protocol
+        _poolToken.mint(address(this), poolTokenAmount);
+&nbsp;
+        // mint BNT to the vault
+        _bntGovernance.mint(address(_masterVault), bntAmount);
+&nbsp;
+        emit FundingRequested({
+            contextId: contextId,
+            pool: pool,
+            bntAmount: bntAmount,
+            poolTokenAmount: poolTokenAmount
+        });
+&nbsp;
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            liquidity: _bnt.balanceOf(address(_masterVault)),
+            stakedBalance: newStakedBalance,
+            poolTokenSupply: poolTokenTotalSupply + poolTokenAmount
+        });
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function renounceFunding(
+        bytes32 contextId,
+        Token pool,
+        uint256 bntAmount
+    ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(bntAmount) {
+        uint256 currentStakedBalance = _stakedBalance;
+&nbsp;
+        // calculate the renounced amount to deduct from both the staked balance and current pool funding
+        uint256 currentFunding = _currentPoolFunding[pool];
+        uint256 reduceFundingAmount = Math.min(currentFunding, bntAmount);
+&nbsp;
+        // calculate the pool token amount to burn
+        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+        uint256 poolTokenAmount = _underlyingToPoolToken(
+            reduceFundingAmount,
+            poolTokenTotalSupply,
+            currentStakedBalance
+        );
+&nbsp;
+        // update the current pool funding. Note that the given amount can be higher than the funding amount but the
+        // request shouldn't fail (and the funding amount cannot get negative)
+        _currentPoolFunding[pool] = currentFunding - reduceFundingAmount;
+&nbsp;
+        // update the staked balance
+        uint256 newStakedBalance = currentStakedBalance - reduceFundingAmount;
+        _stakedBalance = newStakedBalance;
+&nbsp;
+        // burn pool tokens from the protocol
+        _poolToken.burn(poolTokenAmount);
+&nbsp;
+        // burn all BNT from the master vault
+        _masterVault.burn(Token(address(_bnt)), bntAmount);
+&nbsp;
+        emit FundingRenounced({
+            contextId: contextId,
+            pool: pool,
+            bntAmount: bntAmount,
+            poolTokenAmount: poolTokenAmount
+        });
+&nbsp;
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            liquidity: _bnt.balanceOf(address(_masterVault)),
+            stakedBalance: newStakedBalance,
+            poolTokenSupply: poolTokenTotalSupply - poolTokenAmount
+        });
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBNTPool
+     */
+    function onFeesCollected(
+        Token pool,
+        uint256 feeAmount,
+        bool isTradeFee
+    ) external only(address(_network)) validAddress(address(pool)) {
+        if (feeAmount == 0) {
+            return;
+        }
+&nbsp;
+        // increase the staked balance by the given amount
+        _stakedBalance += feeAmount;
+&nbsp;
+        if (isTradeFee) {
+            // increase the current funding for the specified pool by the given amount
+            _currentPoolFunding[pool] += feeAmount;
+        }
+    }
+&nbsp;
+    /**
+     * @dev converts the specified pool token amount to the underlying BNT amount
+     */
+    function _poolTokenToUnderlying(uint256 poolTokenAmount) private view returns (uint256) {
+        return MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+    }
+&nbsp;
+    /**
+     * @dev converts the specified underlying BNT amount to pool token amount
+     */
+    function _underlyingToPoolToken(uint256 bntAmount) private view returns (uint256) {
+        return _underlyingToPoolToken(bntAmount, _poolToken.totalSupply(), _stakedBalance);
+    }
+&nbsp;
+    /**
+     * @dev converts the specified underlying BNT amount to pool token amount
+     */
+    function _underlyingToPoolToken(
+        uint256 bntAmount,
+        uint256 poolTokenTotalSupply,
+        uint256 currentStakedBalance
+    ) private pure returns (uint256) {
+        return MathEx.mulDivC(bntAmount, poolTokenTotalSupply, currentStakedBalance);
+    }
+&nbsp;
+    /**
+     * @dev returns withdrawal amounts
+     */
+    function _withdrawalAmounts(uint256 poolTokenAmount) internal view returns (InternalWithdrawalAmounts memory) {
+        // calculate BNT amount to transfer
+        uint256 bntAmount = _poolTokenToUnderlying(poolTokenAmount);
+&nbsp;
+        // deduct the exit fee from BNT amount
+        uint256 withdrawalFeeAmount = MathEx.mulDivF(bntAmount, _networkSettings.withdrawalFeePPM(), PPM_RESOLUTION);
+&nbsp;
+        bntAmount -= withdrawalFeeAmount;
+&nbsp;
+        return InternalWithdrawalAmounts({ bntAmount: bntAmount, withdrawalFeeAmount: withdrawalFeeAmount });
+    }
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Apr 15 2022 21:09:57 GMT-0400 (Eastern Daylight Time)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>

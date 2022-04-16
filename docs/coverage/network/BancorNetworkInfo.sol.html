@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Code coverage report for network/BancorNetworkInfo.sol</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='pad1'>
+    <h1>
+      <a href="../index.html">all files</a> / <a href="index.html">network/</a> BancorNetworkInfo.sol
+    </h1>
+    <div class='clearfix'>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Statements</span>
+        <span class='fraction'>68/68</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Branches</span>
+        <span class='fraction'>10/10</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Functions</span>
+        <span class='fraction'>28/28</span>
+      </div>
+      <div class='fl pad1y space-right2'>
+        <span class="strong">100% </span>
+        <span class="quiet">Lines</span>
+        <span class='fraction'>71/71</span>
+      </div>
+    </div>
+  </div>
+  <div class='status-line high'></div>
+<pre><table class="coverage">
+<tr><td class="line-count quiet">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">73×</span>
+<span class="cline-any cline-yes">72×</span>
+<span class="cline-any cline-yes">71×</span>
+<span class="cline-any cline-yes">70×</span>
+<span class="cline-any cline-yes">69×</span>
+<span class="cline-any cline-yes">68×</span>
+<span class="cline-any cline-yes">67×</span>
+<span class="cline-any cline-yes">66×</span>
+<span class="cline-any cline-yes">65×</span>
+<span class="cline-any cline-yes">64×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">63×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">592×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">520×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">592×</span>
+<span class="cline-any cline-yes">568×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">544×</span>
+<span class="cline-any cline-yes">24×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2807×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">640×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">48×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">448×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-yes">3×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13×</span>
+<span class="cline-any cline-yes">13×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">496×</span>
+<span class="cline-any cline-yes">496×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">496×</span>
+<span class="cline-any cline-yes">226×</span>
+<span class="cline-any cline-yes">226×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">213×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">270×</span>
+<span class="cline-any cline-yes">26×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">21×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">244×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">231×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">785×</span>
+<span class="cline-any cline-yes">785×</span>
+<span class="cline-any cline-yes">48×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">737×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+pragma solidity 0.8.13;
+&nbsp;
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+&nbsp;
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+&nbsp;
+import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
+import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
+import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
+&nbsp;
+import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
+import { IPoolCollection, WithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
+&nbsp;
+import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { Upgradeable } from "../utility/Upgradeable.sol";
+import { Utils, InvalidToken } from "../utility/Utils.sol";
+&nbsp;
+import { Token } from "../token/Token.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
+&nbsp;
+import { IBancorNetworkInfo } from "./interfaces/IBancorNetworkInfo.sol";
+import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
+import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
+import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
+&nbsp;
+/**
+ * @dev Bancor Network Information contract
+ */
+contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
+    using TokenLibrary for Token;
+&nbsp;
+    // the address of the network
+    IBancorNetwork private immutable _network;
+&nbsp;
+    // the address of the BNT token
+    IERC20 private immutable _bnt;
+&nbsp;
+    // the address of the BNT token governance
+    ITokenGovernance private immutable _bntGovernance;
+&nbsp;
+    // the address of the VBNT token
+    IERC20 private immutable _vbnt;
+&nbsp;
+    // the address of the VBNT token governance
+    ITokenGovernance private immutable _vbntGovernance;
+&nbsp;
+    // the network settings contract
+    INetworkSettings private immutable _networkSettings;
+&nbsp;
+    // the master vault contract
+    IMasterVault private immutable _masterVault;
+&nbsp;
+    // the address of the external protection vault
+    IExternalProtectionVault private immutable _externalProtectionVault;
+&nbsp;
+    // the address of the external rewards vault
+    IExternalRewardsVault private immutable _externalRewardsVault;
+&nbsp;
+    // the BNT pool contract
+    IBNTPool private immutable _bntPool;
+&nbsp;
+    // the BNT pool token
+    IPoolToken private immutable _bntPoolToken;
+&nbsp;
+    // the pending withdrawals contract
+    IPendingWithdrawals private immutable _pendingWithdrawals;
+&nbsp;
+    // the pool migrator contract
+    IPoolMigrator private immutable _poolMigrator;
+&nbsp;
+    // upgrade forward-compatibility storage gap
+    uint256[MAX_GAP - 0] private __gap;
+&nbsp;
+    /**
+     * @dev a "virtual" constructor that is only used to set immutable state variables
+     */
+    constructor(
+        IBancorNetwork initNetwork,
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance,
+        INetworkSettings initNetworkSettings,
+        IMasterVault initMasterVault,
+        IExternalProtectionVault initExternalProtectionVault,
+        IExternalRewardsVault initExternalRewardsVault,
+        IBNTPool initBNTPool,
+        IPendingWithdrawals initPendingWithdrawals,
+        IPoolMigrator initPoolMigrator
+    ) {
+        _validAddress(address(initNetwork));
+        _validAddress(address(initBNTGovernance));
+        _validAddress(address(initVBNTGovernance));
+        _validAddress(address(initNetworkSettings));
+        _validAddress(address(initMasterVault));
+        _validAddress(address(initExternalProtectionVault));
+        _validAddress(address(initExternalRewardsVault));
+        _validAddress(address(initBNTPool));
+        _validAddress(address(initPendingWithdrawals));
+        _validAddress(address(initPoolMigrator));
+&nbsp;
+        _network = initNetwork;
+        _bntGovernance = initBNTGovernance;
+        _bnt = initBNTGovernance.token();
+        _vbntGovernance = initVBNTGovernance;
+        _vbnt = initVBNTGovernance.token();
+        _networkSettings = initNetworkSettings;
+        _masterVault = initMasterVault;
+        _externalProtectionVault = initExternalProtectionVault;
+        _externalRewardsVault = initExternalRewardsVault;
+        _bntPool = initBNTPool;
+        _bntPoolToken = initBNTPool.poolToken();
+        _pendingWithdrawals = initPendingWithdrawals;
+        _poolMigrator = initPoolMigrator;
+    }
+&nbsp;
+    /**
+     * @dev fully initializes the contract and its parents
+     */
+    function initialize() external initializer {
+        __BancorNetworkInfo_init();
+    }
+&nbsp;
+    // solhint-disable func-name-mixedcase
+&nbsp;
+    /**
+     * @dev initializes the contract and its parents
+     */
+    function __BancorNetworkInfo_init() internal onlyInitializing {
+        __Upgradeable_init();
+&nbsp;
+        __BancorNetworkInfo_init_unchained();
+    }
+&nbsp;
+    /**
+     * @dev performs contract-specific initialization
+     */
+    function __BancorNetworkInfo_init_unchained() internal onlyInitializing {}
+&nbsp;
+    // solhint-enable func-name-mixedcase
+&nbsp;
+    modifier validTokensForTrade(Token sourceToken, Token targetToken) {
+        _validTokensForTrade(sourceToken, targetToken);
+&nbsp;
+        _;
+    }
+&nbsp;
+    /**
+     * @dev validates that the provided tokens are valid and unique
+     */
+    function _validTokensForTrade(Token sourceToken, Token targetToken) internal pure {
+        _validAddress(address(sourceToken));
+        _validAddress(address(targetToken));
+&nbsp;
+        if (sourceToken == targetToken) {
+            revert InvalidToken();
+        }
+    }
+&nbsp;
+    /**
+     * @inheritdoc Upgradeable
+     */
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
+        return 1;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function network() external view returns (IBancorNetwork) {
+        return _network;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function bnt() external view returns (IERC20) {
+        return _bnt;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function bntGovernance() external view returns (ITokenGovernance) {
+        return _bntGovernance;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function vbnt() external view returns (IERC20) {
+        return _vbnt;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function vbntGovernance() external view returns (ITokenGovernance) {
+        return _vbntGovernance;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function networkSettings() external view returns (INetworkSettings) {
+        return _networkSettings;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function masterVault() external view returns (IMasterVault) {
+        return _masterVault;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function externalProtectionVault() external view returns (IExternalProtectionVault) {
+        return _externalProtectionVault;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function externalRewardsVault() external view returns (IExternalRewardsVault) {
+        return _externalRewardsVault;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function bntPool() external view returns (IBNTPool) {
+        return _bntPool;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function poolToken(Token pool) external view returns (IPoolToken) {
+        return pool.isEqual(_bnt) ? _bntPoolToken : _poolCollection(pool).poolToken(pool);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function pendingWithdrawals() external view returns (IPendingWithdrawals) {
+        return _pendingWithdrawals;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function poolMigrator() external view returns (IPoolMigrator) {
+        return _poolMigrator;
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function tradeOutputBySourceAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount
+    ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(sourceAmount) returns (uint256) {
+        return _tradeOutputAmount(sourceToken, targetToken, sourceAmount, true);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function tradeInputByTargetAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount
+    ) external view validTokensForTrade(sourceToken, targetToken) greaterThanZero(targetAmount) returns (uint256) {
+        return _tradeOutputAmount(sourceToken, targetToken, targetAmount, false);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function isReadyForWithdrawal(uint256 id) external view returns (bool) {
+        return _pendingWithdrawals.isReadyForWithdrawal(id);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
+        return
+            pool.isEqual(_bnt)
+                ? _bntPool.poolTokenToUnderlying(poolTokenAmount)
+                : _poolCollection(pool).poolTokenToUnderlying(pool, poolTokenAmount);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256) {
+        return
+            pool.isEqual(_bnt)
+                ? _bntPool.underlyingToPoolToken(tokenAmount)
+                : _poolCollection(pool).underlyingToPoolToken(pool, tokenAmount);
+    }
+&nbsp;
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function withdrawalAmounts(Token pool, uint256 poolTokenAmount)
+        external
+        view
+        validAddress(address(pool))
+        greaterThanZero(poolTokenAmount)
+        returns (WithdrawalAmounts memory)
+    {
+        if (pool.isEqual(_bnt)) {
+            uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
+            return WithdrawalAmounts({ totalAmount: amount, baseTokenAmount: 0, bntAmount: amount });
+        }
+&nbsp;
+        IPoolCollection poolCollection = _poolCollection(pool);
+        return poolCollection.withdrawalAmounts(pool, poolTokenAmount);
+    }
+&nbsp;
+    /**
+     * @dev returns either the source amount or the target amount by providing the source and the target tokens
+     * and whether we're interested in the target or the source amount
+     */
+    function _tradeOutputAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 amount,
+        bool bySourceAmount
+    ) private view returns (uint256) {
+        bool isSourceBNT = sourceToken.isEqual(_bnt);
+        bool isTargetBNT = targetToken.isEqual(_bnt);
+&nbsp;
+        // return the trade amount when trading BNT
+        if (isSourceBNT || isTargetBNT) {
+            Token token = isSourceBNT ? targetToken : sourceToken;
+            IPoolCollection poolCollection = _poolCollection(token);
+&nbsp;
+            return
+                (
+                    bySourceAmount
+                        ? poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken, targetToken, amount)
+                        : poolCollection.tradeInputAndFeeByTargetAmount(sourceToken, targetToken, amount)
+                ).amount;
+        }
+&nbsp;
+        // return the target amount by simulating double-hop trade from the source token to the target token via BNT
+        if (bySourceAmount) {
+            uint256 targetAmount = _poolCollection(sourceToken)
+                .tradeOutputAndFeeBySourceAmount(sourceToken, Token(address(_bnt)), amount)
+                .amount;
+&nbsp;
+            return
+                _poolCollection(targetToken)
+                    .tradeOutputAndFeeBySourceAmount(Token(address(_bnt)), targetToken, targetAmount)
+                    .amount;
+        }
+&nbsp;
+        // return the source amount by simulating a "reverse" double-hop trade from the source token to the target token
+        // via BNT
+        uint256 requireNetworkAmount = _poolCollection(targetToken)
+            .tradeInputAndFeeByTargetAmount(Token(address(_bnt)), targetToken, amount)
+            .amount;
+&nbsp;
+        return
+            _poolCollection(sourceToken)
+                .tradeInputAndFeeByTargetAmount(sourceToken, Token(address(_bnt)), requireNetworkAmount)
+                .amount;
+    }
+&nbsp;
+    /**
+     * @dev verifies that the specified pool is managed by a valid pool collection and returns it
+     */
+    function _poolCollection(Token token) private view returns (IPoolCollection) {
+        // verify that the pool is managed by a valid pool collection
+        IPoolCollection poolCollection = _network.collectionByPool(token);
+        if (address(poolCollection) == address(0)) {
+            revert InvalidToken();
+        }
+&nbsp;
+        return poolCollection;
+    }
+}
+&nbsp;</pre></td></tr>
+</table></pre>
+<div class='push'></div><!-- for sticky footer -->
+</div><!-- /wrapper -->
+<div class='footer quiet pad2 space-top1 center small'>
+  Code coverage
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Apr 15 2022 21:09:57 GMT-0400 (Eastern Daylight Time)
+</div>
+</div>
+<script src="../prettify.js"></script>
+<script>
+window.onload = function () {
+        if (typeof prettyPrint === 'function') {
+            prettyPrint();
+        }
+};
+</script>
+<script src="../sorter.js"></script>
+</body>
+</html>
