@@ -1,9 +1,11 @@
 import {
     deploy,
+    DeployedContracts,
     execute,
     grantRole,
     InstanceName,
-    isMainnet,
+    isLive,
+    isMainnetFork,
     revokeRole,
     setDeploymentMetadata
 } from '../utils/Deploy';
@@ -17,6 +19,28 @@ const INITIAL_SUPPLY = toWei(1_000_000_000);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, foundationMultisig } = await getNamedAccounts();
+
+    // if we're running on a live production, just ensure that the deployer received the required roles and permissions
+    if (isLive()) {
+        const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+        if (!(await bntGovernance.hasRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer))) {
+            throw new Error('Missing ROLE_GOVERNOR role!');
+        }
+
+        return true;
+    }
+
+    // simulate all the required roles and permissions on a mainnet fork
+    if (isMainnetFork()) {
+        await grantRole({
+            name: InstanceName.BNTGovernance,
+            id: Roles.TokenGovernance.ROLE_GOVERNOR,
+            member: deployer,
+            from: foundationMultisig
+        });
+
+        return true;
+    }
 
     const bntData = new TokenData(TokenSymbol.BNT);
     const bnt = await deploy({
@@ -90,7 +114,5 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     return true;
 };
-
-func.skip = async () => isMainnet();
 
 export default setDeploymentMetadata(__filename, func);
