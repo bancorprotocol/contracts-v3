@@ -1,4 +1,4 @@
-import { grantRole, InstanceName, revokeRole, setDeploymentMetadata } from '../utils/Deploy';
+import { grantRole, InstanceName, isLive, revokeRole, setDeploymentMetadata } from '../utils/Deploy';
 import { Roles } from '../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -38,5 +38,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     return true;
 };
+
+// postpone the execution of this script to the end of the beta
+func.skip = async () => isLive();
 
 export default setDeploymentMetadata(__filename, func);
