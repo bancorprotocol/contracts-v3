@@ -1,5 +1,3 @@
-import Contracts from '../components/Contracts';
-import { RewardsDistributionType } from '../utils/Constants';
 import { DeployedContracts, execute, InstanceName, isLive, setDeploymentMetadata } from '../utils/Deploy';
 import { duration } from '../utils/Time';
 import { toWei } from '../utils/Types';
@@ -17,7 +15,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
     const testToken1 = await DeployedContracts.TestToken1.deployed();
     const testToken2 = await DeployedContracts.TestToken2.deployed();
-    const testToken5 = await DeployedContracts.TestToken5.deployed();
 
     const { timestamp: now } = await ethers.provider.getBlock('latest');
 
@@ -37,25 +34,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             TOTAL_REWARDS,
             now + PROGRAM_START_DELAY,
             now + PROGRAM_START_DELAY + PROGRAM_DURATION
-        ],
-        from: deployer
-    });
-
-    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
-    const poolTokenAddress = await poolCollection.poolToken(testToken5.address);
-    const poolToken = await Contracts.PoolToken.attach(poolTokenAddress);
-    const poolTokensToBurn = await poolCollection.underlyingToPoolToken(testToken5.address, TOTAL_REWARDS);
-    await poolToken.connect(await ethers.getSigner(deployer)).transfer(externalRewardsVault.address, poolTokensToBurn);
-
-    await execute({
-        name: InstanceName.AutoCompoundingRewards,
-        methodName: 'createProgram',
-        args: [
-            testToken5.address,
-            TOTAL_REWARDS,
-            RewardsDistributionType.ExponentialDecay,
-            now + PROGRAM_START_DELAY,
-            0
         ],
         from: deployer
     });

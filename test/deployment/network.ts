@@ -1,6 +1,5 @@
 import {
     AccessControlEnumerable,
-    AutoCompoundingRewards,
     BancorNetwork,
     BancorNetworkInfo,
     BancorPortal,
@@ -41,7 +40,6 @@ describe('network', () => {
     let poolTokenFactory: PoolTokenFactory;
     let poolMigrator: PoolMigrator;
     let poolCollection: PoolCollection;
-    let autoCompoundingRewards: AutoCompoundingRewards;
     let standardRewards: StandardRewards;
     let networkInfo: BancorNetworkInfo;
     let bancorPortal: BancorPortal;
@@ -68,7 +66,6 @@ describe('network', () => {
         poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
         poolMigrator = await DeployedContracts.PoolMigrator.deployed();
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
-        autoCompoundingRewards = await DeployedContracts.AutoCompoundingRewards.deployed();
         standardRewards = await DeployedContracts.StandardRewards.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
         bancorPortal = await DeployedContracts.BancorPortal.deployed();
@@ -119,17 +116,14 @@ describe('network', () => {
         ]);
 
         await expectRoleMembers(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
-        await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
-            autoCompoundingRewards.address,
-            standardRewards.address
-        ]);
+        await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [standardRewards.address]);
 
         await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
         await expectRoleMembers(networkSettings, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
         await expectRoleMembers(bntPool, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
-        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, [autoCompoundingRewards.address]);
+        await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER);
         await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_MANAGER, [poolCollection.address]);
         await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
         await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
@@ -142,8 +136,6 @@ describe('network', () => {
         await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER);
         await expectRoleMembers(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER);
         await expectRoleMembers(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER);
-
-        await expectRoleMembers(autoCompoundingRewards, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
         await expectRoleMembers(standardRewards, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 

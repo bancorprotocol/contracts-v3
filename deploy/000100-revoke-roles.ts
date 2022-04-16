@@ -7,7 +7,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, daoMultisig } = await getNamedAccounts();
 
     for (const name of [
-        InstanceName.AutoCompoundingRewards,
         InstanceName.BancorNetworkInfo,
         InstanceName.BancorNetwork,
         InstanceName.BancorPortal,
