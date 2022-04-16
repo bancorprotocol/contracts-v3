@@ -4011,6 +4011,8 @@ describe('BancorNetwork Financial Verification', () => {
         bntStakedBalance: Decimal;
         tknTradingLiquidity: Decimal;
         bntTradingLiquidity: Decimal;
+        tknAvgTradingLiquidity: Decimal;
+        bntAvgTradingLiquidity: Decimal;
     }
 
     interface Operation {
@@ -4134,7 +4136,9 @@ describe('BancorNetwork Financial Verification', () => {
             tknStakedBalance: new Decimal(0),
             bntStakedBalance: new Decimal(0),
             tknTradingLiquidity: new Decimal(0),
-            bntTradingLiquidity: new Decimal(0)
+            bntTradingLiquidity: new Decimal(0),
+            tknAvgTradingLiquidity: new Decimal(0),
+            bntAvgTradingLiquidity: new Decimal(0)
         };
 
         for (const userId in users) {
@@ -4170,6 +4174,8 @@ describe('BancorNetwork Financial Verification', () => {
         actual.bntStakedBalance = integerToDecimal(await bntPool.stakedBalance(), bntDecimals);
         actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
         actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.bntTradingLiquidity, bntDecimals);
+        actual.tknAvgTradingLiquidity = integerToDecimal(poolData.averageRate.rate.d, tknDecimals);
+        actual.bntAvgTradingLiquidity = integerToDecimal(poolData.averageRate.rate.n, bntDecimals);
 
         expect(actual).to.deep.equal(expected);
     };

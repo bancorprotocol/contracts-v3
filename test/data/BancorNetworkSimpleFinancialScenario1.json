@@ -58,7 +58,9 @@
         "tknStakedBalance": "1000000",
         "bntStakedBalance": "0",
         "tknTradingLiquidity": "0",
-        "bntTradingLiquidity": "0"
+        "bntTradingLiquidity": "0",
+        "tknAvgTradingLiquidity": "1e-18",
+        "bntAvgTradingLiquidity": "0"
       }
     },
     {
@@ -95,7 +97,9 @@
         "tknStakedBalance": "10000000",
         "bntStakedBalance": "0",
         "tknTradingLiquidity": "0",
-        "bntTradingLiquidity": "0"
+        "bntTradingLiquidity": "0",
+        "tknAvgTradingLiquidity": "1e-18",
+        "bntAvgTradingLiquidity": "0"
       }
     },
     {
@@ -135,7 +139,9 @@
         "tknStakedBalance": "10000000",
         "bntStakedBalance": "2000000",
         "tknTradingLiquidity": "2000000",
-        "bntTradingLiquidity": "2000000"
+        "bntTradingLiquidity": "2000000",
+        "tknAvgTradingLiquidity": "1e-18",
+        "bntAvgTradingLiquidity": "1e-18"
       }
     },
     {
@@ -172,7 +178,9 @@
         "tknStakedBalance": "10000000",
         "bntStakedBalance": "2000000",
         "tknTradingLiquidity": "2000000",
-        "bntTradingLiquidity": "2000000"
+        "bntTradingLiquidity": "2000000",
+        "tknAvgTradingLiquidity": "1e-18",
+        "bntAvgTradingLiquidity": "1e-18"
       }
     },
     {
@@ -209,7 +217,9 @@
         "tknStakedBalance": "5000000",
         "bntStakedBalance": "2000000",
         "tknTradingLiquidity": "2000000",
-        "bntTradingLiquidity": "2000000"
+        "bntTradingLiquidity": "2000000",
+        "tknAvgTradingLiquidity": "1e-18",
+        "bntAvgTradingLiquidity": "1e-18"
       }
     },
     {
@@ -246,7 +256,9 @@
         "tknStakedBalance": "5000000",
         "bntStakedBalance": "2000000",
         "tknTradingLiquidity": "2000000",
-        "bntTradingLiquidity": "2000000"
+        "bntTradingLiquidity": "2000000",
+        "tknAvgTradingLiquidity": "1e-18",
+        "bntAvgTradingLiquidity": "1e-18"
       }
     }
   ]
