@@ -17,7 +17,6 @@ describeDeployment(
 
         it('should revoke deployer roles', async () => {
             for (const name of [
-                InstanceName.AutoCompoundingRewards,
                 InstanceName.BancorNetworkInfo,
                 InstanceName.BancorNetwork,
                 InstanceName.BancorPortal,

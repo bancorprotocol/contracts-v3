@@ -1,6 +1,5 @@
 import {
     AccessControlEnumerable,
-    AutoCompoundingRewards,
     BNTPool,
     ExternalRewardsVault,
     ProxyAdmin,
@@ -20,7 +19,6 @@ describeDeployment(__filename, () => {
     let bntPool: BNTPool;
     let externalRewardsVault: ExternalRewardsVault;
     let standardRewards: StandardRewards;
-    let autoCompoundingRewards: AutoCompoundingRewards;
     let liquidityProtection: string;
     let legacyStakingRewards: string;
 
@@ -33,7 +31,6 @@ describeDeployment(__filename, () => {
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
-        autoCompoundingRewards = await DeployedContracts.AutoCompoundingRewards.deployed();
         standardRewards = await DeployedContracts.StandardRewards.deployed();
     });
 
@@ -50,9 +47,6 @@ describeDeployment(__filename, () => {
                 ? [standardRewards.address, bntPool.address, liquidityProtection, legacyStakingRewards]
                 : [standardRewards.address, bntPool.address]
         );
-        await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
-            autoCompoundingRewards.address,
-            standardRewards.address
-        ]);
+        await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [standardRewards.address]);
     });
 });
