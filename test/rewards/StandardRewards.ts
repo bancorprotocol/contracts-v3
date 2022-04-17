@@ -2006,7 +2006,7 @@ describe('StandardRewards', () => {
 
                             await expect(
                                 standardRewards.connect(provider).claimRewards([programData.id])
-                            ).to.be.revertedWith('InvalidRewards');
+                            ).to.be.revertedWith('RewardsTooHigh');
                         });
 
                         context('with staked tokens in different rewards program', () => {

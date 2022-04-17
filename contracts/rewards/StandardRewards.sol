@@ -59,7 +59,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
     error ArrayNotUnique();
     error InsufficientFunds();
-    error InvalidRewards();
+    error RewardsTooHigh();
     error NativeTokenAmountMismatch();
     error PoolMismatch();
     error ProgramDisabled();
@@ -741,7 +741,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
                 // a sanity check that the reward amount doesn't exceed the remaining rewards per program
                 if (remainingRewards < claimData.reward) {
-                    revert InvalidRewards();
+                    revert RewardsTooHigh();
                 }
 
                 // decrease the remaining rewards per program
