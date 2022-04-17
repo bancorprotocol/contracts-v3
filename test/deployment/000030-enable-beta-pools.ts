@@ -55,6 +55,7 @@ describeDeployment(__filename, () => {
             const depositLimit = toWei(TKN_DEPOSIT_LIMIT_IN_CENTS).div(tokenPriceInCents);
 
             const data = await poolCollection.poolData(address);
+            expect(data.depositingEnabled).to.be.true;
             expect(data.depositLimit).to.equal(depositLimit);
             expect(data.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
 

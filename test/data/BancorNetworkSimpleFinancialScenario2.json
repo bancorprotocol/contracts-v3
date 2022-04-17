@@ -58,7 +58,9 @@
         "tknStakedBalance": "1000000",
         "bntStakedBalance": "0",
         "tknTradingLiquidity": "0",
-        "bntTradingLiquidity": "0"
+        "bntTradingLiquidity": "0",
+        "averageRateN": "0",
+        "averageRateD": "1"
       }
     },
     {
@@ -95,7 +97,9 @@
         "tknStakedBalance": "5500000",
         "bntStakedBalance": "0",
         "tknTradingLiquidity": "0",
-        "bntTradingLiquidity": "0"
+        "bntTradingLiquidity": "0",
+        "averageRateN": "0",
+        "averageRateD": "1"
       }
     },
     {
@@ -135,7 +139,9 @@
         "tknStakedBalance": "5500000",
         "bntStakedBalance": "2000000",
         "tknTradingLiquidity": "2000000",
-        "bntTradingLiquidity": "2000000"
+        "bntTradingLiquidity": "2000000",
+        "averageRateN": "1",
+        "averageRateD": "1"
       }
     },
     {
@@ -172,7 +178,9 @@
         "tknStakedBalance": "5500000",
         "bntStakedBalance": "2000000",
         "tknTradingLiquidity": "2000000",
-        "bntTradingLiquidity": "2000000"
+        "bntTradingLiquidity": "2000000",
+        "averageRateN": "1",
+        "averageRateD": "1"
       }
     },
     {
@@ -209,7 +217,9 @@
         "tknStakedBalance": "5500000",
         "bntStakedBalance": "2000002.498750624687656171",
         "tknTradingLiquidity": "2001000",
-        "bntTradingLiquidity": "1999002.998500749625187406"
+        "bntTradingLiquidity": "1999002.998500749625187406",
+        "averageRateN": "1",
+        "averageRateD": "1"
       }
     },
     {
@@ -246,7 +256,9 @@
         "tknStakedBalance": "5500002.50124625000562218",
         "bntStakedBalance": "2000002.498750624687656171",
         "tknTradingLiquidity": "2000002.00274624775674999",
-        "bntTradingLiquidity": "2000002.998500749625187406"
+        "bntTradingLiquidity": "2000002.998500749625187406",
+        "averageRateN": "1",
+        "averageRateD": "1"
       }
     },
     {
@@ -283,7 +295,9 @@
         "tknStakedBalance": "2750001.25062312500281109",
         "bntStakedBalance": "2000002.498750624687656171",
         "tknTradingLiquidity": "2000002.00274624775674999",
-        "bntTradingLiquidity": "2000002.998500749625187406"
+        "bntTradingLiquidity": "2000002.998500749625187406",
+        "averageRateN": "1",
+        "averageRateD": "1"
       }
     },
     {
@@ -320,7 +334,9 @@
         "tknStakedBalance": "2750001.25062312500281109",
         "bntStakedBalance": "2000002.498750624687656171",
         "tknTradingLiquidity": "2000002.00274624775674999",
-        "bntTradingLiquidity": "2000002.998500749625187406"
+        "bntTradingLiquidity": "2000002.998500749625187406",
+        "averageRateN": "1",
+        "averageRateD": "1"
       }
     }
   ]

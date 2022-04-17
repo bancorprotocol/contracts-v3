@@ -1,4 +1,4 @@
-import { execute, InstanceName, setDeploymentMetadata } from '../utils/Deploy';
+import { execute, InstanceName, isLive, setDeploymentMetadata } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -20,5 +20,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     return true;
 };
+
+// postpone the execution of this script to the end of the beta
+func.skip = async () => isLive();
 
 export default setDeploymentMetadata(__filename, func);

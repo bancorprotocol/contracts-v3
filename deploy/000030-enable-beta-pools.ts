@@ -1,10 +1,10 @@
 import Contracts from '../components/Contracts';
-import { PoolType } from '../utils/Constants';
 import {
     DeployedContracts,
     execute,
     InstanceName,
     isHardhat,
+    isLive,
     isLocalhost,
     isMainnetFork,
     setDeploymentMetadata
@@ -36,6 +36,10 @@ const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_000);
 const FUNDING_LIMIT = toWei(BNT_FUNDING_LIMIT_IN_CENTS).div(BNT_TOKEN_PRICE_IN_CENTS);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
+    if (isLive()) {
+        throw new Error('Unable to proceed. Please enable only after verification of the deployment');
+    }
+
     const { deployer, dai, link, ethWhale, daiWhale, linkWhale } = await getNamedAccounts();
 
     const BETA_TOKENS = {
@@ -82,20 +86,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
         await execute({
             name: InstanceName.NetworkSettings,
-            methodName: 'addTokenToWhitelist',
-            args: [address],
-            from: deployer
-        });
-
-        await execute({
-            name: InstanceName.BancorNetwork,
-            methodName: 'createPool',
-            args: [PoolType.Standard, address],
-            from: deployer
-        });
-
-        await execute({
-            name: InstanceName.NetworkSettings,
             methodName: 'setFundingLimit',
             args: [address, FUNDING_LIMIT],
             from: deployer
@@ -108,6 +98,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             name: InstanceName.PoolCollectionType1V1,
             methodName: 'setDepositLimit',
             args: [address, depositLimit],
+            from: deployer
+        });
+
+        await execute({
+            name: InstanceName.PoolCollectionType1V1,
+            methodName: 'enableDepositing',
+            args: [address, true],
             from: deployer
         });
 
