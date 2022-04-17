@@ -423,8 +423,7 @@ describe('StandardRewards', () => {
                         prevUnclaimedRewards.add(totalRewards)
                     );
 
-                    const programs = await standardRewards.programs([id]);
-                    const program = programs[0];
+                    const [program] = await standardRewards.programs([id]);
 
                     expect(program.id).to.equal(id);
                     expect(program.pool).to.equal(pool.address);
@@ -434,6 +433,7 @@ describe('StandardRewards', () => {
                     expect(program.startTime).to.equal(startTime);
                     expect(program.endTime).to.equal(endTime);
                     expect(program.rewardRate).to.equal(BigNumber.from(totalRewards).div(endTime - startTime));
+                    expect(program.remainingRewards).to.equal(program.rewardRate.mul(endTime - startTime));
                 };
 
                 if (!rewardsData.isBNT()) {
@@ -645,8 +645,7 @@ describe('StandardRewards', () => {
                 const testTerminate = async () => {
                     const prevUnclaimedRewards = await standardRewards.unclaimedRewards(rewardsToken.address);
                     const prevRewards = await standardRewards.pendingRewards(provider.address, [id]);
-                    const prevPrograms = await standardRewards.programs([id]);
-                    const prevProgram = prevPrograms[0];
+                    const [prevProgram] = await standardRewards.programs([id]);
 
                     const res = await standardRewards.terminateProgram(id);
 
@@ -661,9 +660,7 @@ describe('StandardRewards', () => {
                         prevUnclaimedRewards.sub(remainingRewards)
                     );
 
-                    const programs = await standardRewards.programs([id]);
-                    const program = programs[0];
-
+                    const [program] = await standardRewards.programs([id]);
                     expect(program.startTime).to.equal(prevProgram.startTime);
                     expect(program.endTime).not.to.equal(prevProgram.endTime);
                     expect(program.endTime).to.equal(await standardRewards.currentTime());
@@ -775,8 +772,8 @@ describe('StandardRewards', () => {
 
                     const res = await standardRewards.enableProgram(id, false);
 
-                    const programs = await standardRewards.programs([id]);
-                    const { endTime } = programs[0];
+                    const [program] = await standardRewards.programs([id]);
+                    const { endTime } = program;
                     const remainingRewards = now >= endTime ? 0 : rewardRate.mul(endTime - now);
                     await expect(res)
                         .to.emit(standardRewards, 'ProgramEnabled')
@@ -1415,8 +1412,7 @@ describe('StandardRewards', () => {
                         if (!permitted) {
                             let { value } = overrides;
 
-                            const programs = await standardRewards.programs([id]);
-                            const program = programs[0];
+                            const [program] = await standardRewards.programs([id]);
 
                             if (program.pool === nativePool.address) {
                                 value ||= BigNumber.from(amount);
@@ -1994,12 +1990,26 @@ describe('StandardRewards', () => {
 
                     context('with staked tokens', () => {
                         beforeEach(async () => {
-                            const amount = toWei(1);
+                            const amount = toWei(10_000);
                             await programData.poolToken.connect(provider).approve(standardRewards.address, amount);
-                            return standardRewards.connect(provider).join(programData.id, amount);
+                            await standardRewards.connect(provider).join(programData.id, amount);
+
+                            await increaseTime(standardRewards, duration.weeks(1));
                         });
 
-                        context('with staked tokens in a different rewards program', () => {
+                        it('should revert when attempting to accidentally claim more tokens than possible', async () => {
+                            const pendingRewards = await standardRewards.pendingRewards(provider.address, [
+                                programData.id
+                            ]);
+
+                            await standardRewards.setRemainingRewards(programData.id, pendingRewards.sub(1));
+
+                            await expect(
+                                standardRewards.connect(provider).claimRewards([programData.id])
+                            ).to.be.revertedWith('InvalidRewards');
+                        });
+
+                        context('with staked tokens in different rewards program', () => {
                             let rewardsData2: RewardsData;
                             let programData2: ProgramData;
 
@@ -2371,6 +2381,9 @@ describe('StandardRewards', () => {
                                 (id) => id.toNumber()
                             );
 
+                            const prevPrograms = await standardRewards.programs(ids);
+                            const [prevProgram, prevProgram2] = prevPrograms;
+
                             const { totalClaimed, claimed, poolTokenAmount, res } = await stakeOrClaim(stake, p, ids);
                             const [claimedProgram, claimedProgram2] = claimed;
 
@@ -2395,6 +2408,14 @@ describe('StandardRewards', () => {
                                     .to.emit(standardRewards, stake ? 'RewardsStaked' : 'RewardsClaimed')
                                     .withArgs(programData2.pool.address, programData2.id, p.address, claimedProgram2);
                             }
+
+                            const programs = await standardRewards.programs(ids);
+                            const [program, program2] = programs;
+
+                            expect(program.remainingRewards).to.equal(prevProgram.remainingRewards.sub(claimedProgram));
+                            expect(program2.remainingRewards).to.equal(
+                                prevProgram2.remainingRewards.sub(claimedProgram2)
+                            );
 
                             expect(await standardRewards.unclaimedRewards(rewardsToken.address)).to.equal(
                                 prevUnclaimedRewards.sub(totalClaimed)

@@ -58,8 +58,9 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     error ArrayNotUnique();
-    error NativeTokenAmountMismatch();
     error InsufficientFunds();
+    error InvalidRewards();
+    error NativeTokenAmountMismatch();
     error PoolMismatch();
     error ProgramDisabled();
     error ProgramInactive();
@@ -330,8 +331,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         nonReentrant
         returns (uint256)
     {
-        uint32 currTime = _time();
-        if (!(currTime <= startTime && startTime < endTime)) {
+        if (!(_time() <= startTime && startTime < endTime)) {
             revert InvalidParam();
         }
 
@@ -360,6 +360,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         }
 
         uint256 id = _nextProgramId++;
+        uint256 rewardRate = totalRewards / (endTime - startTime);
 
         _programs[id] = ProgramData({
             id: id,
@@ -369,7 +370,8 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             isEnabled: true,
             startTime: startTime,
             endTime: endTime,
-            rewardRate: totalRewards / (endTime - startTime)
+            rewardRate: rewardRate,
+            remainingRewards: rewardRate * (endTime - startTime)
         });
 
         // set the program as the latest program of the pool
@@ -733,7 +735,21 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             }
 
             ClaimData memory claimData = _claimRewards(provider, p);
-            rewardData.amount += claimData.reward;
+
+            if (claimData.reward > 0) {
+                uint256 remainingRewards = p.remainingRewards;
+
+                // a sanity check that the reward amount doesn't exceed the remaining rewards per program
+                if (remainingRewards < claimData.reward) {
+                    revert InvalidRewards();
+                }
+
+                // decrease the remaining rewards per program
+                _programs[ids[i]].remainingRewards = remainingRewards - claimData.reward;
+
+                // collect same-reward token rewards
+                rewardData.amount += claimData.reward;
+            }
 
             // if the program is no longer active, has no stake left, and there are no pending rewards - remove the
             // program from the provider's program list
@@ -834,12 +850,24 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
+     * @dev returns the maximum available rewards of given program from a given point in time
+     */
+    function _availableRewards(ProgramData memory p, uint32 startTime) private pure returns (uint256) {
+        return p.endTime > startTime ? p.rewardRate * (p.endTime - startTime) : 0;
+    }
+
+    /**
      * @dev returns the remaining rewards of given program
      */
     function _remainingRewards(ProgramData memory p) private view returns (uint256) {
-        uint32 currTime = _time();
+        return _availableRewards(p, _time());
+    }
 
-        return p.endTime > currTime ? p.rewardRate * (p.endTime - currTime) : 0;
+    /**
+     * @dev returns the total rewards of given program
+     */
+    function _totalRewards(ProgramData memory p) private pure returns (uint256) {
+        return _availableRewards(p, p.startTime);
     }
 
     /**
