@@ -14,7 +14,7 @@ interface Output {
     t: BigNumber;
     u: BigNumber;
     v: BigNumber;
-};
+}
 
 const ZERO = Constants.ZERO;
 const ONE = Constants.ONE;
@@ -115,7 +115,7 @@ function calculateWithdrawalAmounts(
         t: ZERO,
         u: ZERO,
         v: ZERO,
-    }
+    };
 
     const y = x.mul(M.sub(n)).div(M);
 

@@ -11,4 +11,4 @@ export const Constants = {
 export enum TokenType {
     BNT,
     TKN
-};
+}

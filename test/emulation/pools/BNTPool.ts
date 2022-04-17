@@ -52,7 +52,7 @@ function poolTokenAmountToBurn(
     protocolPoolTokenAmount: BigNumber
 ) {
     const val = tokenAmountToDistribute.mul(poolTokenSupply);
-    return MathEx.mulDivF(poolTokenSupply, val, val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))))
+    return MathEx.mulDivF(poolTokenSupply, val, val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 }
 
 function _poolTokenToUnderlying(
