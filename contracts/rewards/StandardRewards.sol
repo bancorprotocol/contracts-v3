@@ -850,24 +850,12 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev returns the maximum available rewards of given program from a given point in time
-     */
-    function _availableRewards(ProgramData memory p, uint32 startTime) private pure returns (uint256) {
-        return p.endTime > startTime ? p.rewardRate * (p.endTime - startTime) : 0;
-    }
-
-    /**
      * @dev returns the remaining rewards of given program
      */
     function _remainingRewards(ProgramData memory p) private view returns (uint256) {
-        return _availableRewards(p, _time());
-    }
+        uint32 currTime = _time();
 
-    /**
-     * @dev returns the total rewards of given program
-     */
-    function _totalRewards(ProgramData memory p) private pure returns (uint256) {
-        return _availableRewards(p, p.startTime);
+        return p.endTime > currTime ? p.rewardRate * (p.endTime - currTime) : 0;
     }
 
     /**
