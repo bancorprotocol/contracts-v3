@@ -12,6 +12,12 @@ export const BancorNetwork = {
     tradeBySourceAmountTKNtoBNT,
     tradeByTargetAmountBNTtoTKN,
     tradeByTargetAmountTKNtoBNT,
+    poolTokenToUnderlyingBNT,
+    poolTokenToUnderlyingTKN,
+    underlyingToPoolTokenBNT,
+    underlyingToPoolTokenTKN,
+    poolTokenAmountToBurnBNT,
+    poolTokenAmountToBurnTKN,
 };
 
 interface TradeResult {
@@ -160,6 +166,56 @@ function tradeByTargetAmountTKNtoBNT(
         bntTradingLiquidity,
         tknTradingLiquidity
     );
+}
+
+function poolTokenToUnderlyingBNT(
+    poolTokenAmount: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber
+) {
+    return BNTPool.poolTokenToUnderlying(poolTokenAmount, poolTokenSupply, stakedBalance);
+}
+
+function poolTokenToUnderlyingTKN(
+    poolTokenAmount: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber
+) {
+    return PoolCollection.poolTokenToUnderlying(poolTokenAmount, poolTokenSupply, stakedBalance);
+}
+
+function underlyingToPoolTokenBNT(
+    reserveTokenAmount: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber
+) {
+    return BNTPool.underlyingToPoolToken(reserveTokenAmount, poolTokenSupply, stakedBalance);
+}
+
+function underlyingToPoolTokenTKN(
+    reserveTokenAmount: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber
+) {
+    return PoolCollection.underlyingToPoolToken(reserveTokenAmount, poolTokenSupply, stakedBalance);
+}
+
+function poolTokenAmountToBurnBNT(
+    tokenAmountToDistribute: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber,
+    protocolPoolTokenAmount: BigNumber
+) {
+    return BNTPool.poolTokenAmountToBurn(tokenAmountToDistribute, poolTokenSupply, stakedBalance, protocolPoolTokenAmount);
+}
+
+function poolTokenAmountToBurnTKN(
+    tokenAmountToDistribute: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber,
+    protocolPoolTokenAmount: BigNumber
+) {
+    return PoolCollection.poolTokenAmountToBurn(tokenAmountToDistribute, poolTokenSupply, stakedBalance, protocolPoolTokenAmount);
 }
 
 function _trade(
