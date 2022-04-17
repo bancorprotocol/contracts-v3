@@ -230,7 +230,7 @@ function _trade(
     bntTradingLiquidity: BigNumber,
     tknTradingLiquidity: BigNumber
 ) {
-    if ((sourceToken === TokenType.BNT) != (targetToken === TokenType.BNT)) {
+    if ((sourceToken === TokenType.BNT) !== (targetToken === TokenType.BNT)) {
         const hop = _tradeBNT(
             sourceToken,
             targetToken,
