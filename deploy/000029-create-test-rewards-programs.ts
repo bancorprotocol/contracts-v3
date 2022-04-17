@@ -37,6 +37,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         ],
         from: deployer
     });
+
+    return true;
 };
 
 func.skip = async () => isLive();
