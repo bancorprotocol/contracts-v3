@@ -48,7 +48,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     struct RewardData {
-        Token pool;
         Token rewardsToken;
         uint256 amount;
     }
@@ -718,11 +717,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         uint256[] calldata ids,
         bool stake
     ) private returns (RewardData memory) {
-        RewardData memory rewardData = RewardData({
-            pool: Token(address(0)),
-            rewardsToken: Token(address(0)),
-            amount: 0
-        });
+        RewardData memory rewardData = RewardData({ rewardsToken: Token(address(0)), amount: 0 });
 
         for (uint256 i = 0; i < ids.length; i++) {
             ProgramData memory p = _programs[ids[i]];
@@ -730,7 +725,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             _verifyProgramEnabled(p);
 
             if (i == 0) {
-                rewardData.pool = p.pool;
                 rewardData.rewardsToken = p.rewardsToken;
             }
 
