@@ -1101,6 +1101,11 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"
   integrity sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==
 
+"@snyk/protect@^1.906.0":
+  version "1.906.0"
+  resolved "https://registry.yarnpkg.com/@snyk/protect/-/protect-1.906.0.tgz#4ff306a7f79d1b797a44b760f197f658cb142d3b"
+  integrity sha512-klT+LMCbAwkCkseJ5njqg1oQO5i1KHSnn0TUvsf1HgERCfwmBKWvZBLMGIKqf+tfpWrHiCAggDZDOM/7MHoMrw==
+
 "@solidity-parser/parser@^0.14.0", "@solidity-parser/parser@^0.14.1":
   version "0.14.1"
   resolved "https://registry.yarnpkg.com/@solidity-parser/parser/-/parser-0.14.1.tgz#179afb29f4e295a77cc141151f26b3848abc3c46"
@@ -9285,11 +9290,6 @@ snapdragon@^0.8.1:
     source-map "^0.5.6"
     source-map-resolve "^0.5.0"
     use "^3.1.0"
-
-snyk@^1.896.0:
-  version "1.896.0"
-  resolved "https://registry.yarnpkg.com/snyk/-/snyk-1.896.0.tgz#7f2d6a4cb89bbadf270fba1bb91b88733eb6dbd7"
-  integrity sha512-Mf0opgb8ClBDtNQqKsSRnnbIgWk8qg5BYyKElkVtmzG8IJ2uGvLF6fhT9vKQPS4K1DcglDZ9Peystj5ghYh5fw==
 
 solc@0.7.3:
   version "0.7.3"
