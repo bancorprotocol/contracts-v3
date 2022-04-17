@@ -4,15 +4,15 @@ import { Constants, TokenType } from '../utility/Common';
 import { PoolCollectionWithdrawal } from './PoolCollectionWithdrawal';
 
 export const PoolCollection = {
-    poolTokenToUnderlying,
-    underlyingToPoolToken,
-    poolTokenAmountToBurn,
     deposit,
     withdraw,
     tradeBySourceAmount,
     tradeByTargetAmount,
     tradeOutputAndFeeBySourceAmount,
-    tradeInputAndFeeByTargetAmount
+    tradeInputAndFeeByTargetAmount,
+    poolTokenToUnderlying,
+    underlyingToPoolToken,
+    poolTokenAmountToBurn,
 };
 
 interface TradeIntermediateResult {
@@ -30,32 +30,6 @@ interface TradeIntermediateResult {
     tradingFeePPM: BigNumber;
     networkFeePPM: BigNumber;
     contextId: string;
-}
-
-function poolTokenToUnderlying(
-    poolTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
-    return _poolTokenToUnderlying(poolTokenAmount, poolTokenSupply, stakedBalance);
-}
-
-function underlyingToPoolToken(
-    reserveTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
-    return _underlyingToPoolToken(reserveTokenAmount, poolTokenSupply, stakedBalance);
-}
-
-function poolTokenAmountToBurn(
-    tokenAmountToDistribute: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber,
-    protocolPoolTokenAmount: BigNumber
-) {
-    const val = tokenAmountToDistribute.mul(poolTokenSupply);
-    return MathEx.mulDivF(poolTokenSupply, val, val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 }
 
 function deposit(
@@ -241,6 +215,32 @@ function tradeInputAndFeeByTargetAmount(
         tradingFeeAmount: result.tradingFeeAmount,
         networkFeeAmount: result.networkFeeAmount
     };
+}
+
+function poolTokenToUnderlying(
+    poolTokenAmount: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber
+) {
+    return _poolTokenToUnderlying(poolTokenAmount, poolTokenSupply, stakedBalance);
+}
+
+function underlyingToPoolToken(
+    reserveTokenAmount: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber
+) {
+    return _underlyingToPoolToken(reserveTokenAmount, poolTokenSupply, stakedBalance);
+}
+
+function poolTokenAmountToBurn(
+    tokenAmountToDistribute: BigNumber,
+    poolTokenSupply: BigNumber,
+    stakedBalance: BigNumber,
+    protocolPoolTokenAmount: BigNumber
+) {
+    const val = tokenAmountToDistribute.mul(poolTokenSupply);
+    return MathEx.mulDivF(poolTokenSupply, val, val.add(stakedBalance.mul(poolTokenSupply.sub(protocolPoolTokenAmount))));
 }
 
 function _poolTokenToUnderlying(
