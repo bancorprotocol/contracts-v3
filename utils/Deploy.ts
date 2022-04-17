@@ -302,7 +302,7 @@ export const deploy = async (options: DeployOptions) => {
         const data = { name, contract: contractName };
         saveTypes(data);
 
-        await verifyTenderly({
+        await verifyTenderlyFork({
             address: res.address,
             proxy: isProxy,
             implementation: isProxy ? res.implementation : undefined,
@@ -358,7 +358,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
     const data = { name, contract: contractName };
     saveTypes(data);
 
-    await verifyTenderly({
+    await verifyTenderlyFork({
         address: res.address,
         proxy: true,
         implementation: res.implementation,
@@ -466,8 +466,8 @@ export const save = async (deployment: Deployment) => {
         return;
     }
 
-    // publish the contract to Tenderly
-    return verifyTenderly(deployment);
+    // publish the contract to a Tenderly fork
+    return verifyTenderlyFork(deployment);
 };
 
 interface ContractData {
@@ -475,9 +475,9 @@ interface ContractData {
     address: Address;
 }
 
-const verifyTenderly = async (deployment: Deployment) => {
+const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isLive() && !isTenderlyFork()) {
+    if (!isTenderlyFork()) {
         return;
     }
 
@@ -504,7 +504,7 @@ const verifyTenderly = async (deployment: Deployment) => {
     });
 
     for (const contract of contracts) {
-        console.log('verifying (Tenderly)', contract.name, 'at', contract.address);
+        console.log('verifying (Tenderly fork)', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }
