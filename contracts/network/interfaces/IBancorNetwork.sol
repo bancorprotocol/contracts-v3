@@ -3,21 +3,12 @@ pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
-
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
-import { IMasterVault } from "./../../vaults/interfaces/IMasterVault.sol";
 
 import { Token } from "../../token/Token.sol";
 
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
-import { IPoolMigrator } from "../../pools/interfaces/IPoolMigrator.sol";
-
-import { INetworkSettings } from "./INetworkSettings.sol";
-import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
  * @dev Flash-loan recipient interface

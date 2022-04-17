@@ -3,10 +3,10 @@ pragma solidity 0.8.13;
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { Token } from "../token/Token.sol";
-
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
+
+import { Token } from "../token/Token.sol";
 
 import { IExternalRewardsVault } from "./interfaces/IExternalRewardsVault.sol";
 import { IVault, ROLE_ASSET_MANAGER } from "./interfaces/IVault.sol";
