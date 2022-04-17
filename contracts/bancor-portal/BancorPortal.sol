@@ -18,7 +18,6 @@ import { Utils } from "../utility/Utils.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { NetworkSettings } from "../network/NetworkSettings.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { IBancorPortal, UniswapV2PositionMigration } from "./interfaces/IBancorPortal.sol";

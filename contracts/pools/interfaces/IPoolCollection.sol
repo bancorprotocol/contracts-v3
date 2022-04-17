@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
-import { Sint256 } from "../../utility/MathEx.sol";
-import { Fraction, Fraction112 } from "../../utility/FractionLibrary.sol";
+import { Fraction112 } from "../../utility/FractionLibrary.sol";
 
 import { Token } from "../../token/Token.sol";
 
-import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
-
 import { IPoolToken } from "./IPoolToken.sol";
-import { IPoolTokenFactory } from "./IPoolTokenFactory.sol";
-import { IPoolMigrator } from "./IPoolMigrator.sol";
 
 struct PoolLiquidity {
     uint128 bntTradingLiquidity; // the BNT trading liquidity

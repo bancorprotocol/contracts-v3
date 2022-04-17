@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
-import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
-
 import { Token } from "../../token/Token.sol";
 
 import { IVersioned } from "../../utility/interfaces/IVersioned.sol";
