@@ -16,6 +16,7 @@ struct ProgramData {
     uint32 startTime;
     uint32 endTime;
     uint256 rewardRate;
+    uint256 remainingRewards;
 }
 
 struct StakeAmounts {
