@@ -3403,80 +3403,91 @@ describe('PoolCollection', () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
             await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-
-            await network.depositToPoolCollectionForT(
-                poolCollection.address,
-                CONTEXT_ID,
-                deployer.address,
-                reserveToken.address,
-                BASE_TOKEN_LIQUIDITY
-            );
         });
 
-        for (const tokenAmount of [0, 1000, toWei(20_000)]) {
-            context(`underlying amount of ${tokenAmount.toString()}`, () => {
-                it('should properly convert between underlying amount and pool token amount', async () => {
-                    const poolTokenTotalSupply = await poolToken.totalSupply();
-                    const { stakedBalance } = await poolCollection.poolLiquidity(reserveToken.address);
+        context('initial', () => {
+            it('should report intial amounts', async () => {
+                expect(await poolCollection.underlyingToPoolToken(reserveToken.address, 1234)).to.equal(1234);
+                expect(await poolCollection.poolTokenToUnderlying(reserveToken.address, 5678)).to.equal(5678);
+            });
+        });
 
-                    const poolTokenAmount = await poolCollection.underlyingToPoolToken(
-                        reserveToken.address,
-                        tokenAmount
-                    );
-                    expect(poolTokenAmount).to.equal(
-                        // ceil(tokenAmount * poolTokenTotalSupply / stakedBalance)
-                        BigNumber.from(tokenAmount)
-                            .mul(poolTokenTotalSupply)
-                            .add(stakedBalance)
-                            .sub(1)
-                            .div(stakedBalance)
-                    );
+        context('with liquidity', () => {
+            beforeEach(async () => {
+                await network.depositToPoolCollectionForT(
+                    poolCollection.address,
+                    CONTEXT_ID,
+                    deployer.address,
+                    reserveToken.address,
+                    BASE_TOKEN_LIQUIDITY
+                );
+            });
 
-                    const underlyingAmount = await poolCollection.poolTokenToUnderlying(
-                        reserveToken.address,
-                        poolTokenAmount
-                    );
-                    expect(underlyingAmount).to.equal(tokenAmount);
-                });
+            for (const tokenAmount of [0, 1000, toWei(20_000)]) {
+                context(`underlying amount of ${tokenAmount.toString()}`, () => {
+                    it('should properly convert between underlying amount and pool token amount', async () => {
+                        const poolTokenTotalSupply = await poolToken.totalSupply();
+                        const { stakedBalance } = await poolCollection.poolLiquidity(reserveToken.address);
 
-                for (const protocolPoolTokenAmount of [0, 100_000, toWei(50_000)]) {
-                    context(`protocol pool token amount of ${protocolPoolTokenAmount} `, () => {
-                        beforeEach(async () => {
-                            if (protocolPoolTokenAmount !== 0) {
-                                await poolCollection.mintPoolTokenT(
+                        const poolTokenAmount = await poolCollection.underlyingToPoolToken(
+                            reserveToken.address,
+                            tokenAmount
+                        );
+                        expect(poolTokenAmount).to.equal(
+                            // ceil(tokenAmount * poolTokenTotalSupply / stakedBalance)
+                            BigNumber.from(tokenAmount)
+                                .mul(poolTokenTotalSupply)
+                                .add(stakedBalance)
+                                .sub(1)
+                                .div(stakedBalance)
+                        );
+
+                        const underlyingAmount = await poolCollection.poolTokenToUnderlying(
+                            reserveToken.address,
+                            poolTokenAmount
+                        );
+                        expect(underlyingAmount).to.equal(tokenAmount);
+                    });
+
+                    for (const protocolPoolTokenAmount of [0, 100_000, toWei(50_000)]) {
+                        context(`protocol pool token amount of ${protocolPoolTokenAmount} `, () => {
+                            beforeEach(async () => {
+                                if (protocolPoolTokenAmount !== 0) {
+                                    await poolCollection.mintPoolTokenT(
+                                        reserveToken.address,
+                                        externalRewardsVault.address,
+                                        protocolPoolTokenAmount
+                                    );
+                                }
+                            });
+
+                            it('should properly calculate pool token amount to burn in order to increase underlying value', async () => {
+                                const poolTokenAmount = await poolToken.balanceOf(deployer.address);
+                                const prevUnderlying = await poolCollection.poolTokenToUnderlying(
                                     reserveToken.address,
-                                    externalRewardsVault.address,
+                                    poolTokenAmount
+                                );
+
+                                const poolTokenAmountToBurn = await poolCollection.poolTokenAmountToBurn(
+                                    reserveToken.address,
+                                    tokenAmount,
                                     protocolPoolTokenAmount
                                 );
-                            }
+
+                                // ensure that burning the resulted pool token amount increases the underlying by the
+                                // specified BNT amount while taking into account pool tokens owned by the protocol
+                                // (note that, for this test, it doesn't matter where from the pool tokens are being burned)
+                                await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
+
+                                expect(
+                                    await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount)
+                                ).to.be.closeTo(prevUnderlying.add(tokenAmount), 1);
+                            });
                         });
-
-                        it('should properly calculate pool token amount to burn in order to increase underlying value', async () => {
-                            const poolTokenAmount = await poolToken.balanceOf(deployer.address);
-                            const prevUnderlying = await poolCollection.poolTokenToUnderlying(
-                                reserveToken.address,
-                                poolTokenAmount
-                            );
-
-                            const poolTokenAmountToBurn = await poolCollection.poolTokenAmountToBurn(
-                                reserveToken.address,
-                                tokenAmount,
-                                protocolPoolTokenAmount
-                            );
-
-                            // ensure that burning the resulted pool token amount increases the underlying by the
-                            // specified BNT amount while taking into account pool tokens owned by the protocol
-                            // (note that, for this test, it doesn't matter where from the pool tokens are being burned)
-                            await poolToken.connect(deployer).burn(poolTokenAmountToBurn);
-
-                            expect(
-                                await poolCollection.poolTokenToUnderlying(reserveToken.address, poolTokenAmount)
-                            ).to.be.closeTo(prevUnderlying.add(tokenAmount), 1);
-                        });
-                    });
-                }
-            });
-        }
+                    }
+                });
+            }
+        });
     });
 
     describe('pool migrations', () => {
