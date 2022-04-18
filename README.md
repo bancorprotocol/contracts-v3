@@ -79,10 +79,10 @@ This will automatically be skipped on an already deployed and configured deploym
 
 #### Report (2022-04-18)
 
-- 99.66% Statements 1464/1469
-- 96.91% Branches 471/486
+- 99.86% Statements 1470/1472
+- 97.35% Branches 477/490
 - 100% Functions 444/444
-- 99.11% Lines 1567/1581
+- 99.31% Lines 1574/1585
 
 ![Coverage Report](./docs/images/coverage.png)
 
