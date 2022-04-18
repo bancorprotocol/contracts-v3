@@ -108,7 +108,8 @@ const config: HardhatUserConfig = {
             url: `https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}`,
             autoImpersonate: true,
             saveDeployments: true,
-            live: true
+            live: true,
+            gas: 6000000
         }
     },
 
