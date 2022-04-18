@@ -4,7 +4,6 @@ import {
     execute,
     InstanceName,
     isHardhat,
-    isLive,
     isLocalhost,
     isMainnetFork,
     setDeploymentMetadata
@@ -16,7 +15,6 @@ import { ethers } from 'hardhat';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-// TODO: make sure to update the limits and the rates before running the script in production
 const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.26);
 
 enum BetaTokens {
