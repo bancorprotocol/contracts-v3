@@ -77,9 +77,7 @@ This will automatically be skipped on an already deployed and configured deploym
 
 ### Coverage Tests
 
-#### Report
-
-You can find the recent coverage report <a href="./docs/coverage/index.html" target="_blank">here</a>.
+#### Report (2022-04-18)
 
 - 99.66% Statements 1464/1469
 - 96.91% Branches 471/486
