@@ -17,7 +17,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 // TODO: make sure to update the limits and the rates before running the script in production
-const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.7);
+const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.26);
 
 enum BetaTokens {
     ETH = 'ETH',
@@ -26,20 +26,16 @@ enum BetaTokens {
 }
 
 const BETA_TOKEN_PRICES_IN_CENTS = {
-    [BetaTokens.ETH]: toCents(3266),
+    [BetaTokens.ETH]: toCents(3007),
     [BetaTokens.DAI]: toCents(1),
-    [BetaTokens.LINK]: toCents(15.67)
+    [BetaTokens.LINK]: toCents(13.84)
 };
 
-const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_000);
-const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_000);
+const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_875);
+const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_250);
 const FUNDING_LIMIT = toWei(BNT_FUNDING_LIMIT_IN_CENTS).div(BNT_TOKEN_PRICE_IN_CENTS);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    if (isLive()) {
-        throw new Error('Unable to proceed. Please enable only after verification of the deployment');
-    }
-
     const { deployer, dai, link, ethWhale, daiWhale, linkWhale } = await getNamedAccounts();
 
     const BETA_TOKENS = {

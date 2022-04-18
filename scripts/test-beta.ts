@@ -8,7 +8,7 @@ import { ethers, getNamedAccounts } from 'hardhat';
 
 // NOTE: this script is used for testing the beta (on a mainnet fork), after its partial deployment (i.e., up to the
 // enable-beta-pools script)
-const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.7);
+const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.26);
 
 enum BetaTokens {
     ETH = 'ETH',
@@ -17,18 +17,18 @@ enum BetaTokens {
 }
 
 const BETA_TOKEN_PRICES_IN_CENTS = {
-    [BetaTokens.ETH]: toCents(3266),
+    [BetaTokens.ETH]: toCents(3007),
     [BetaTokens.DAI]: toCents(1),
-    [BetaTokens.LINK]: toCents(15.67)
+    [BetaTokens.LINK]: toCents(13.84)
 };
 
-const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_000);
-const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_000);
+const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_875);
+const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_250);
 const FUNDING_LIMIT = toWei(BNT_FUNDING_LIMIT_IN_CENTS).div(BNT_TOKEN_PRICE_IN_CENTS);
 
 const PROGRAM_START_DELAY = duration.hours(1);
 const PROGRAM_DURATION = duration.weeks(4);
-const TOTAL_REWARDS = toWei(40_000);
+const TOTAL_REWARDS = toWei(44_500);
 
 const main = async () => {
     if (!isTenderlyFork()) {
@@ -84,7 +84,7 @@ const main = async () => {
 
         await network
             .connect(whale)
-            .deposit(pool, depositLimit, { value: isNativeToken ? initialDeposit : BigNumber.from(0) });
+            .deposit(pool, initialDeposit, { value: isNativeToken ? initialDeposit : BigNumber.from(0) });
 
         await poolCollection.connect(deployer).enableTrading(pool, bntVirtualBalance, tokenVirtualBalance);
     }

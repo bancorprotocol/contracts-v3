@@ -9,7 +9,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 // TODO: make sure to update the starting time of all beta programs
 const PROGRAM_START_DELAY = duration.hours(1);
 const PROGRAM_DURATION = duration.weeks(4);
-const TOTAL_REWARDS = toWei(40_000);
+const TOTAL_REWARDS = toWei(44_500);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, dai, link } = await getNamedAccounts();

@@ -10,7 +10,7 @@ import { getNamedAccounts } from 'hardhat';
 
 // TODO: make sure to update the starting time of all beta programs
 const PROGRAM_DURATION = duration.weeks(4);
-const TOTAL_REWARDS = toWei(40_000);
+const TOTAL_REWARDS = toWei(44_500);
 
 describeDeployment(__filename, () => {
     let bnt: BNT;
