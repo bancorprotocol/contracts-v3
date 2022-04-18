@@ -1267,7 +1267,7 @@ describe('Profile @profile', () => {
                             distributionType,
                             startTime,
                             distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0,
-                            distributionType === RewardsDistributionType.Flat ? 0 : 48_520_302
+                            distributionType === RewardsDistributionType.Flat ? 0 : 48_520_303
                         );
                     });
 

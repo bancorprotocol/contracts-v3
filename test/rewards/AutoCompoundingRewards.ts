@@ -34,7 +34,7 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
-const HALF_LIFE = (distributionType: RewardsDistributionType) => distributionType === RewardsDistributionType.ExponentialDecay ? 48_520_302 : 0;
+const HALF_LIFE = (distributionType: RewardsDistributionType) => distributionType === RewardsDistributionType.ExponentialDecay ? 48_520_303 : 0;
 
 describe.only('AutoCompoundingRewards', () => {
     let deployer: SignerWithAddress;
