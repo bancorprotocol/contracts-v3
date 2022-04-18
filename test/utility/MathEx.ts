@@ -37,7 +37,7 @@ const comp512Funcs = {
 
 const toDecimal = (fraction: Fraction<BigNumber>) => new Decimal(fraction.n.toString()).div(fraction.d.toString());
 
-describe.only('MathEx', () => {
+describe('MathEx', () => {
     let mathContract: TestMathEx;
 
     before(async () => {
