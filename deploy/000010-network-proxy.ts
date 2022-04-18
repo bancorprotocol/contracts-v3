@@ -11,7 +11,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const networkSettings = await DeployedContracts.NetworkSettings.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-    const bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+    const bnBNT = await DeployedContracts.bnBNT.deployed();
 
     await deployProxy(
         {
@@ -24,7 +24,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
                 networkSettings.address,
                 masterVault.address,
                 externalProtectionVault.address,
-                bntPoolToken.address
+                bnBNT.address
             ]
         },
         {

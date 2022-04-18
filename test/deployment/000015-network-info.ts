@@ -30,7 +30,7 @@ describeDeployment(__filename, () => {
     let externalProtectionVault: ExternalProtectionVault;
     let externalRewardsVault: ExternalRewardsVault;
     let bntPool: BNTPool;
-    let bntPoolToken: PoolToken;
+    let bnBNT: PoolToken;
     let pendingWithdrawals: PendingWithdrawals;
     let poolMigrator: PoolMigrator;
 
@@ -52,7 +52,7 @@ describeDeployment(__filename, () => {
         externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
-        bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+        bnBNT = await DeployedContracts.bnBNT.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
         poolMigrator = await DeployedContracts.PoolMigrator.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
@@ -73,7 +73,7 @@ describeDeployment(__filename, () => {
         expect(await networkInfo.externalProtectionVault()).to.equal(externalProtectionVault.address);
         expect(await networkInfo.externalRewardsVault()).to.equal(externalRewardsVault.address);
         expect(await networkInfo.bntPool()).to.equal(bntPool.address);
-        expect(await networkInfo.poolToken(bnt.address)).to.equal(bntPoolToken.address);
+        expect(await networkInfo.poolToken(bnt.address)).to.equal(bnBNT.address);
         expect(await networkInfo.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
         expect(await networkInfo.poolMigrator()).to.equal(poolMigrator.address);
 

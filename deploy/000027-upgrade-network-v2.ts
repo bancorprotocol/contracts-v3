@@ -10,7 +10,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const networkSettings = await DeployedContracts.NetworkSettings.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-    const bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+    const bntBNT = await DeployedContracts.bnBNT.deployed();
 
     await upgradeProxy({
         name: InstanceName.BancorNetwork,
@@ -20,7 +20,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             networkSettings.address,
             masterVault.address,
             externalProtectionVault.address,
-            bntPoolToken.address
+            bntBNT.address
         ],
         from: deployer
     });
