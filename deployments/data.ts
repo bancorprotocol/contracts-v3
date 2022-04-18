@@ -24,7 +24,7 @@ const rinkeby = (address: string) => ({
 
 const TestNamedAccounts = {
     ethWhale: {
-        ...mainnet('0xda9dfa130df4de4673b89022ee50ff26f6ea73cf', ZERO_ADDRESS),
+        ...mainnet('0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'),
         ...rinkeby('0x42EB768f2244C8811C63729A21A3569731535f06')
     },
     daiWhale: {
