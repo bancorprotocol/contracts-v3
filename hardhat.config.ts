@@ -25,6 +25,7 @@ interface EnvOptions {
     TENDERLY_USERNAME?: string;
     ETHERSCAN_API_KEY?: string;
     FORKING?: boolean;
+    GAS_PRICE?: number | 'auto';
 }
 
 const {
@@ -35,7 +36,8 @@ const {
     TENDERLY_PROJECT = '',
     TENDERLY_USERNAME = '',
     ETHERSCAN_API_KEY,
-    FORKING: isForking
+    FORKING: isForking,
+    GAS_PRICE: gasPrice = 'auto'
 }: EnvOptions = process.env as any as EnvOptions;
 
 const mochaOptions = (): MochaOptions => {
@@ -100,6 +102,7 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Mainnet]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
+            gasPrice,
             saveDeployments: true,
             live: true
         },
