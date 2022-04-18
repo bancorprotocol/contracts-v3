@@ -9,8 +9,8 @@ import { getNamedAccounts } from 'hardhat';
 describeDeployment(__filename, () => {
     let deployer: string;
     let bnt: BNT;
-    let bntPoolToken: PoolToken;
-    const bntPoolTokenData = new TokenData(TokenSymbol.bnBNT);
+    let bnBNT: PoolToken;
+    const bnBNTData = new TokenData(TokenSymbol.bnBNT);
 
     before(async () => {
         ({ deployer } = await getNamedAccounts());
@@ -18,18 +18,18 @@ describeDeployment(__filename, () => {
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
-        bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+        bnBNT = await DeployedContracts.bnBNT.deployed();
     });
 
     it('should deploy and configure the BNT pool contract', async () => {
-        expect(await bntPoolToken.version()).to.equal(1);
+        expect(await bnBNT.version()).to.equal(1);
 
-        expect(await bntPoolToken.owner()).to.equal(deployer);
+        expect(await bnBNT.owner()).to.equal(deployer);
 
-        expect(await bntPoolToken.name()).to.equal(bntPoolTokenData.name());
-        expect(await bntPoolToken.symbol()).to.equal(bntPoolTokenData.symbol());
-        expect(await bntPoolToken.decimals()).to.equal(bntPoolTokenData.decimals());
-        expect(await bntPoolToken.totalSupply()).to.equal(0);
-        expect(await bntPoolToken.reserveToken()).to.equal(bnt.address);
+        expect(await bnBNT.name()).to.equal(bnBNTData.name());
+        expect(await bnBNT.symbol()).to.equal(bnBNTData.symbol());
+        expect(await bnBNT.decimals()).to.equal(bnBNTData.decimals());
+        expect(await bnBNT.totalSupply()).to.equal(0);
+        expect(await bnBNT.reserveToken()).to.equal(bnt.address);
     });
 });

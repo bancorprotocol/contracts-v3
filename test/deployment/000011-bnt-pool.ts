@@ -23,7 +23,7 @@ describeDeployment(__filename, () => {
     let masterVault: MasterVault;
     let networkProxy: TransparentUpgradeableProxyImmutable;
     let bntPool: BNTPool;
-    let bntPoolToken: PoolToken;
+    let bnBNT: PoolToken;
 
     before(async () => {
         ({ deployer, liquidityProtection, legacyStakingRewards } = await getNamedAccounts());
@@ -35,7 +35,7 @@ describeDeployment(__filename, () => {
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
-        bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+        bnBNT = await DeployedContracts.bnBNT.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
     });
 
@@ -44,7 +44,7 @@ describeDeployment(__filename, () => {
 
         expect(await bntPool.version()).to.equal(1);
 
-        expect(await bntPool.poolToken()).to.equal(bntPoolToken.address);
+        expect(await bntPool.poolToken()).to.equal(bnBNT.address);
 
         await expectRoleMembers(bntPool, Roles.Upgradeable.ROLE_ADMIN, [deployer, networkProxy.address]);
         await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER);

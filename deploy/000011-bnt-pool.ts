@@ -19,7 +19,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     const networkSettings = await DeployedContracts.NetworkSettings.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
-    const bntPoolToken = await DeployedContracts.BNTPoolToken.deployed();
+    const bnBNT = await DeployedContracts.bnBNT.deployed();
 
     const bntPoolAddress = await deployProxy(
         {
@@ -32,7 +32,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
                 vbntGovernance.address,
                 networkSettings.address,
                 masterVault.address,
-                bntPoolToken.address
+                bnBNT.address
             ]
         },
         {
@@ -41,7 +41,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     );
 
     await execute({
-        name: InstanceName.BNTPoolToken,
+        name: InstanceName.bnBNT,
         methodName: 'transferOwnership',
         args: [bntPoolAddress],
         from: deployer
