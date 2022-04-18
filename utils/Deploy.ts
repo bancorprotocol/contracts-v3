@@ -167,7 +167,8 @@ export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
-export const isLive = () => isMainnet() && !isMainnetFork();
+export const isRinkeby = () => getNetworkName() === DeploymentNetwork.Rinkeby;
+export const isLive = () => (isMainnet() && !isMainnetFork()) || isRinkeby();
 
 const TEST_MINIMUM_BALANCE = toWei(10);
 const TEST_FUNDING = toWei(10);
@@ -265,6 +266,8 @@ const PROXY_CONTRACT = 'TransparentUpgradeableProxyImmutable';
 const INITIALIZE = 'initialize';
 const POST_UPGRADE = 'postUpgrade';
 
+const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
+
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
@@ -295,6 +298,7 @@ export const deploy = async (options: DeployOptions) => {
         value,
         args,
         proxy: isProxy ? proxyOptions : undefined,
+        waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
 
@@ -352,6 +356,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         value,
         args,
         proxy: proxyOptions,
+        waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
 
@@ -381,7 +386,12 @@ export const execute = async (options: ExecuteOptions) => {
 
     await fundAccount(from);
 
-    return executeTransaction(name, { from, value, log: true }, methodName, ...(args || []));
+    return executeTransaction(
+        name,
+        { from, value, waitConfirmations: WAIT_CONFIRMATIONS, log: true },
+        methodName,
+        ...(args || [])
+    );
 };
 
 interface InitializeProxyOptions {

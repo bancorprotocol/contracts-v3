@@ -15,7 +15,13 @@ import {
     StandardRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { DeployedContracts, deploymentMetadata, getLatestDeploymentTag, isMainnet } from '../../utils/Deploy';
+import {
+    DeployedContracts,
+    deploymentMetadata,
+    getLatestDeploymentTag,
+    isMainnet,
+    isMainnetFork
+} from '../../utils/Deploy';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
 import { performTestDeployment } from '../helpers/Deploy';
 import { getNamedAccounts } from 'hardhat';
@@ -75,7 +81,7 @@ describe('network', () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
-            [foundationMultisig]
+            [isMainnetFork() ? foundationMultisig : deployer]
         );
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
@@ -93,7 +99,7 @@ describe('network', () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
-            [foundationMultisig]
+            [isMainnetFork() ? foundationMultisig : deployer]
         );
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,

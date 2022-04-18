@@ -18,15 +18,34 @@ const mainnet = (address: string, fallback?: string) => ({
     [DeploymentNetwork.Tenderly]: address
 });
 
+const rinkeby = (address: string) => ({
+    [DeploymentNetwork.Rinkeby]: address
+});
+
 const TestNamedAccounts = {
-    ethWhale: { ...mainnet('0xda9dfa130df4de4673b89022ee50ff26f6ea73cf', ZERO_ADDRESS) },
-    linkWhale: { ...mainnet('0xc6bed363b30df7f35b601a5547fe56cd31ec63da') },
-    daiWhale: { ...mainnet('0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503') }
+    ethWhale: {
+        ...mainnet('0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'),
+        ...rinkeby('0x42EB768f2244C8811C63729A21A3569731535f06')
+    },
+    daiWhale: {
+        ...mainnet('0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503'),
+        ...rinkeby('0x91169dbb45e6804743f94609de50d511c437572e')
+    },
+    linkWhale: {
+        ...mainnet('0xc6bed363b30df7f35b601a5547fe56cd31ec63da'),
+        ...rinkeby('0xfed4ddb595f42a5dbf48b9f318ad9b8e2685c27b')
+    }
 };
 
 const TokenNamedAccounts = {
-    dai: { ...mainnet('0x6b175474e89094c44da98b954eedeac495271d0f') },
-    link: { ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA') }
+    dai: {
+        ...mainnet('0x6b175474e89094c44da98b954eedeac495271d0f'),
+        ...rinkeby('0x6A9865aDE2B6207dAAC49f8bCba9705dEB0B0e6D')
+    },
+    link: {
+        ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA'),
+        ...rinkeby('0x01be23585060835e02b77ef475b0cc51aa1e0709')
+    }
 };
 
 const LegacyNamedAccounts = {
@@ -45,7 +64,10 @@ const SushiSwapNamedAccounts = {
 };
 
 export const NamedAccounts = {
-    deployer: { ...mainnet('ledger://0x87BBAb2218Dc8bB3742D3e5767A5c9B25FF686ba') },
+    deployer: {
+        ...mainnet('ledger://0x87BBAb2218Dc8bB3742D3e5767A5c9B25FF686ba'),
+        ...rinkeby('ledger://0x0f28D58c00F9373C00811E9576eE803B4eF98abe')
+    },
     deployerV2: { ...mainnet('0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E') },
     foundationMultisig: { ...mainnet('0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83') },
     daoMultisig: { ...mainnet('0x7e3692a6d8c34a762079fa9057aed87be7e67cb8') },
