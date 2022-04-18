@@ -1,5 +1,5 @@
 import { deploymentMetadata, deploymentTagExists, isLive, isMainnetFork } from '../../utils/Deploy';
-import { deployments, ethers, getNamedAccounts, network } from 'hardhat';
+import { deployments } from 'hardhat';
 import { Suite } from 'mocha';
 
 const { run } = deployments;
@@ -9,44 +9,11 @@ export const performTestDeployment = async (tag: string) => {
         throw new Error('Unsupported network');
     }
 
-    await cleanupTestDeployment();
-
-    return run(tag, { resetMemory: false, deletePreviousDeployments: !isMainnetFork() });
-};
-
-const { ETHEREUM_PROVIDER_URL = '' } = process.env;
-let forkBlockNumber: number;
-
-export const cleanupTestDeployment = async () => {
-    // if we're running the tests on a mainnet fork, ensure that the fork is reset between every run of the suite
-    if (!isMainnetFork()) {
-        return;
-    }
-
-    if (!forkBlockNumber) {
-        forkBlockNumber = await ethers.provider.getBlockNumber();
-    }
-
-    await network.provider.request({
-        method: 'hardhat_reset',
-        params: [
-            {
-                forking: {
-                    jsonRpcUrl: ETHEREUM_PROVIDER_URL,
-                    blockNumber: forkBlockNumber
-                }
-            }
-        ]
+    return run(tag, {
+        resetMemory: false,
+        deletePreviousDeployments: !isMainnetFork(),
+        writeDeploymentsToFiles: isMainnetFork()
     });
-
-    // re-impersonate all named accounts
-    const namedAccounts = Object.values(await getNamedAccounts());
-    for (const account of namedAccounts) {
-        await network.provider.request({
-            method: 'hardhat_impersonateAccount',
-            params: [account]
-        });
-    }
 };
 
 export const describeDeployment = async (

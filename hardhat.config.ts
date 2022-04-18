@@ -82,7 +82,7 @@ const config: HardhatUserConfig = {
                       enabled: true,
                       url: ETHEREUM_PROVIDER_URL
                   },
-                  saveDeployments: false,
+                  saveDeployments: true,
                   live: true
               }
             : {
