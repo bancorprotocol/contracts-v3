@@ -1,5 +1,5 @@
 import { BancorNetworkInfo, IERC20, StandardRewards } from '../../components/Contracts';
-import { DeployedContracts, isMainnetFork } from '../../utils/Deploy';
+import { DeployedContracts, isLive } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
@@ -40,5 +40,5 @@ describeDeployment(
             );
         });
     },
-    () => isMainnetFork()
+    () => isLive()
 );

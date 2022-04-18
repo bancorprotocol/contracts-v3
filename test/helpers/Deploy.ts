@@ -11,7 +11,7 @@ export const performTestDeployment = async (tag: string) => {
 
     await cleanupTestDeployment();
 
-    return run(tag, { resetMemory: false, deletePreviousDeployments: true });
+    return run(tag, { resetMemory: false, deletePreviousDeployments: !isMainnetFork() });
 };
 
 const { ETHEREUM_PROVIDER_URL = '' } = process.env;
