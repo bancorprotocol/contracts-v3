@@ -65,7 +65,7 @@ const SushiSwapNamedAccounts = {
 
 export const NamedAccounts = {
     deployer: {
-        ...mainnet('ledger://0x5bEBA4D3533a963Dedb270a95ae5f7752fA0Fe22'),
+        ...mainnet('ledger://0x87BBAb2218Dc8bB3742D3e5767A5c9B25FF686ba'),
         ...rinkeby('ledger://0x0f28D58c00F9373C00811E9576eE803B4eF98abe')
     },
     deployerV2: { ...mainnet('0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E') },
