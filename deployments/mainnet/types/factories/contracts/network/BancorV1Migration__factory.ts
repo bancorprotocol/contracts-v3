@@ -6,7 +6,7 @@
 import type {
   BancorV1Migration,
   BancorV1MigrationInterface,
-} from "../../../../contracts/network/BancorV1Migration.sol/BancorV1Migration";
+} from "../../../contracts/network/BancorV1Migration";
 import type { Provider, TransactionRequest } from "@ethersproject/providers";
 import { Signer, utils, Contract, ContractFactory, Overrides } from "ethers";
 

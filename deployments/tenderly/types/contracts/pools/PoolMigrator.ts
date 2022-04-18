@@ -8,7 +8,7 @@ import type {
   TypedEvent,
   TypedListener,
   OnEvent,
-} from "../../../common";
+} from "../../common";
 import type {
   FunctionFragment,
   Result,
