@@ -43,7 +43,6 @@
     "profile": "PROFILE=1 yarn test",
     "watch": "hardhat watch test",
     "size": "yarn rebuild && hardhat size-contracts",
-    "verify": "hardhat verify",
     "flatten": "hardhat flatten",
     "lint": "yarn lint:sol && yarn lint:ts",
     "lint:sol": "solhint --max-warnings 0 contracts/**/*.sol",
