@@ -160,7 +160,7 @@ describe.only('MathEx', () => {
     describe('quick tests', () => {
         for (let n = 0; n < 10; n++) {
             for (let d = 1; d < 10; d++) {
-                testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000006'));
             }
         }
 
@@ -178,19 +178,19 @@ describe.only('MathEx', () => {
 
         for (let d = 1000; d < 1000000000; d *= 10) {
             for (let n = d + 1; n <= d + 10; n++) {
-                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000002'));
-            }
-        }
-
-        for (let d = 1000; d < 1000000000; d *= 10) {
-            for (let n = 2 * d - 10; n <= 2 * d - 1; n++) {
                 testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000003'));
             }
         }
 
         for (let d = 1000; d < 1000000000; d *= 10) {
+            for (let n = 2 * d - 10; n <= 2 * d - 1; n++) {
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000004'));
+            }
+        }
+
+        for (let d = 1000; d < 1000000000; d *= 10) {
             for (let n = 2 * d + 1; n <= 2 * d + 10; n++) {
-                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000002'));
+                testExp({ n, d }, new Decimal('0.00000000000000000000000000000000000003'));
             }
         }
 
