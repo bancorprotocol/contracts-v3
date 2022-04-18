@@ -6,7 +6,7 @@
 import type {
   PoolToken,
   PoolTokenInterface,
-} from "../../../contracts/pools/PoolToken";
+} from "../../../contracts/pools/bnBNT";
 import type { Provider, TransactionRequest } from "@ethersproject/providers";
 import {
   Signer,
