@@ -20,6 +20,7 @@ interface EnvOptions {
     NIGHTLY?: boolean;
     PROFILE?: boolean;
     ETHEREUM_PROVIDER_URL?: string;
+    ETHEREUM_RINKEBY_PROVIDER_URL?: string;
     TENDERLY_FORK_ID?: string;
     TENDERLY_PROJECT?: string;
     TENDERLY_USERNAME?: string;
@@ -32,6 +33,7 @@ const {
     NIGHTLY: isNightly,
     PROFILE: isProfiling,
     ETHEREUM_PROVIDER_URL = '',
+    ETHEREUM_RINKEBY_PROVIDER_URL = '',
     TENDERLY_FORK_ID = '',
     TENDERLY_PROJECT = '',
     TENDERLY_USERNAME = '',
@@ -103,6 +105,12 @@ const config: HardhatUserConfig = {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
             gasPrice,
+            saveDeployments: true,
+            live: true
+        },
+        [DeploymentNetwork.Rinkeby]: {
+            chainId: 4,
+            url: ETHEREUM_RINKEBY_PROVIDER_URL,
             saveDeployments: true,
             live: true
         },
