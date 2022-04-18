@@ -77,6 +77,17 @@ This will automatically be skipped on an already deployed and configured deploym
 
 ### Coverage Tests
 
+#### Report (2022-04-18)
+
+- 99.86% Statements 1470/1472
+- 97.35% Branches 477/490
+- 100% Functions 444/444
+- 99.31% Lines 1574/1585
+
+![Coverage Report](./docs/images/coverage.png)
+
+#### Instructions
+
 In order to audit the test coverage of the full test suite, run:
 
 ```sh
