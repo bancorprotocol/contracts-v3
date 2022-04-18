@@ -1,6 +1,6 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
 import { TokenGovernance, VBNT } from '../../components/LegacyContracts';
-import { DeployedContracts, isMainnet } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet, isMainnetFork } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRoleMembers, Roles } from '../helpers/AccessControl';
@@ -41,7 +41,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
-            [foundationMultisig]
+            [isMainnetFork() ? foundationMultisig : deployer]
         );
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
