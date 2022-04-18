@@ -1,7 +1,7 @@
 import { PendingWithdrawals, PoolCollection } from '../../components/Contracts';
 import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { MAX_UINT256 } from '../../utils/Constants';
-import { DeployedContracts, InstanceName, isLive, TestTokenInstanceName } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, isMainnetFork, TestTokenInstanceName } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { min, toPPM, toWei } from '../../utils/Types';
@@ -158,5 +158,5 @@ describeDeployment(
             expect(await pendingWithdrawals.lockDuration()).to.equal(duration.minutes(10));
         });
     },
-    () => isLive()
+    () => isMainnetFork()
 );
