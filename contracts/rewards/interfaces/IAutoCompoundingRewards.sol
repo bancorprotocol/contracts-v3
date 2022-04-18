@@ -14,6 +14,7 @@ uint8 constant EXPONENTIAL_DECAY_DISTRIBUTION = 1;
 struct ProgramData {
     uint32 startTime;
     uint32 endTime;
+    uint32 halfLife;
     uint32 prevDistributionTimestamp;
     IPoolToken poolToken;
     bool isEnabled;
@@ -56,7 +57,8 @@ interface IAutoCompoundingRewards is IUpgradeable {
         uint256 totalRewards,
         uint8 distributionType,
         uint32 startTime,
-        uint32 endTime
+        uint32 endTime,
+        uint32 halfLife
     ) external;
 
     /**

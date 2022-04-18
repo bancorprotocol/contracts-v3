@@ -6,7 +6,8 @@ import { Fraction } from "./Fraction.sol";
 
 import { PPM_RESOLUTION } from "./Constants.sol";
 
-uint256 constant ONE = 1 << 127;
+uint256 constant ONE = 0x80000000000000000000000000000000;
+uint256 constant LN2 = 0x58b90bfbe8e7bcd5e4f1d9cc01f97b57;
 
 struct Uint512 {
     uint256 hi; // 256 most significant bits
@@ -25,15 +26,15 @@ library MathEx {
     error Overflow();
 
     /**
-     * @dev returns `e ^ f`, where `e` is Euler's number and `f` is the input exponent:
+     * @dev returns `2 ^ f` by calculating `e ^ (f * ln(2))`, where `e` is Euler's number:
      * - Rewrite the input as a sum of binary exponents and a single residual r, as small as possible
      * - The exponentiation of each binary exponent is given (pre-calculated)
      * - The exponentiation of r is calculated via Taylor series for e^x, where x = r
      * - The exponentiation of the input is calculated by multiplying the intermediate results above
      * - For example: e^5.521692859 = e^(4 + 1 + 0.5 + 0.021692859) = e^4 * e^1 * e^0.5 * e^0.021692859
      */
-    function exp(Fraction memory f) internal pure returns (Fraction memory) {
-        uint256 x = MathEx.mulDivF(ONE, f.n, f.d);
+    function exp2(Fraction memory f) internal pure returns (Fraction memory) {
+        uint256 x = MathEx.mulDivF(LN2, f.n, f.d);
         uint256 y;
         uint256 z;
         uint256 n;

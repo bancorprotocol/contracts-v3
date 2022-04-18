@@ -19,7 +19,6 @@ import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
 import {
-    ExponentialDecay,
     MAX_UINT256,
     PPM_RESOLUTION,
     RewardsDistributionType,
@@ -1267,7 +1266,8 @@ describe('Profile @profile', () => {
                             totalRewards,
                             distributionType,
                             startTime,
-                            distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0
+                            distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0,
+                            distributionType === RewardsDistributionType.Flat ? 0 : 48_520_302
                         );
                     });
 
@@ -1333,7 +1333,7 @@ describe('Profile @profile', () => {
                     break;
 
                 case RewardsDistributionType.ExponentialDecay:
-                    for (const programDuration of [ExponentialDecay.MAX_DURATION]) {
+                    for (const programDuration of [1_119_999_999]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
                             () => {

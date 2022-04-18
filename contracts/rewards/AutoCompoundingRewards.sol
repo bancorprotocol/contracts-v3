@@ -77,7 +77,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint8 indexed distributionType,
         uint256 totalRewards,
         uint32 startTime,
-        uint32 endTime
+        uint32 endTime,
+        uint32 halfLife
     );
 
     /**
@@ -212,7 +213,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint8 distributionType,
         uint32 startTime,
-        uint32 endTime
+        uint32 endTime,
+        uint32 halfLife
     ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert AlreadyExists();
@@ -231,11 +233,11 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         uint32 currTime = _time();
         if (distributionType == FLAT_DISTRIBUTION) {
-            if (!(currTime <= startTime && startTime < endTime)) {
+            if (!(currTime <= startTime && startTime < endTime && halfLife == 0)) {
                 revert InvalidParam();
             }
         } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (!(currTime <= startTime && endTime == 0)) {
+            if (!(currTime <= startTime && endTime == 0 && halfLife != 0)) {
                 revert InvalidParam();
             }
         } else {
@@ -245,6 +247,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
+            halfLife: halfLife,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
             isEnabled: true,
@@ -264,7 +267,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             distributionType: distributionType,
             totalRewards: totalRewards,
             startTime: startTime,
-            endTime: endTime
+            endTime: endTime,
+            halfLife: halfLife
         });
     }
 
@@ -360,8 +364,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             uint32 currTimeElapsed = currTime - p.startTime;
             uint32 prevTimeElapsed = prevTime - p.startTime;
             return
-                RewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed) -
-                RewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
+                RewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed, p.halfLife) -
+                RewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed, p.halfLife);
         }
     }
 

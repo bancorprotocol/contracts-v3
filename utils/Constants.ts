@@ -33,17 +33,7 @@ export enum RewardsDistributionType {
     ExponentialDecay = 1
 }
 
-const EXP_INPUT_TOO_HIGH = 16;
-const EXP_DECAY_LAMBDA = new Decimal('0.0000000142857142857143');
-
-export const Exponentiation = {
-    INPUT_TOO_HIGH: EXP_INPUT_TOO_HIGH
-};
-
-export const ExponentialDecay = {
-    LAMBDA: EXP_DECAY_LAMBDA,
-    MAX_DURATION: new Decimal(1).div(EXP_DECAY_LAMBDA).mul(EXP_INPUT_TOO_HIGH).floor().toNumber()
-};
+export const EXP2_INPUT_TOO_HIGH = new Decimal(16).div(new Decimal(2).ln());
 
 export const DEFAULT_LOCK_DURATION = duration.days(7);
 

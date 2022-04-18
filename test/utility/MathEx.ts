@@ -1,12 +1,10 @@
 import Contracts, { TestMathEx } from '../../components/Contracts';
-import { Exponentiation } from '../../utils/Constants';
+import { EXP2_INPUT_TOO_HIGH } from '../../utils/Constants';
 import { Fraction, fromUint512, max, toPPM, toString, toUint512 } from '../../utils/Types';
 import { Relation } from '../matchers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
-
-const EXP_INPUT_TOO_HIGH = Exponentiation.INPUT_TOO_HIGH;
 
 const MAX_UINT32 = BigNumber.from(2).pow(32).sub(1);
 const MAX_UINT64 = BigNumber.from(2).pow(64).sub(1);
@@ -39,7 +37,7 @@ const comp512Funcs = {
 
 const toDecimal = (fraction: Fraction<BigNumber>) => new Decimal(fraction.n.toString()).div(fraction.d.toString());
 
-describe('MathEx', () => {
+describe.only('MathEx', () => {
     let mathContract: TestMathEx;
 
     before(async () => {
@@ -47,10 +45,11 @@ describe('MathEx', () => {
     });
 
     const testExp = (f: Fraction, maxRelativeError: Decimal) => {
-        it(`exp(${f.n} / ${f.d})`, async () => {
-            if (f.n / f.d < EXP_INPUT_TOO_HIGH) {
-                const actual = await mathContract.exp(f);
-                const expected = new Decimal(f.n).div(f.d).exp();
+        it(`exp2(${f.n} / ${f.d})`, async () => {
+            const fVal = new Decimal(f.n).div(f.d);
+            if (fVal.lt(EXP2_INPUT_TOO_HIGH)) {
+                const actual = await mathContract.exp2(f);
+                const expected = new Decimal(2).pow(fVal);
                 await expect(actual).to.almostEqual(
                     { n: expected, d: 1 },
                     {
@@ -59,7 +58,7 @@ describe('MathEx', () => {
                     }
                 );
             } else {
-                await expect(mathContract.exp(f)).to.revertedWith('Overflow');
+                await expect(mathContract.exp2(f)).to.revertedWith('Overflow');
             }
         });
     };
@@ -196,8 +195,8 @@ describe('MathEx', () => {
         }
 
         for (let d = 1000; d < 1000000000; d *= 10) {
-            for (let n = EXP_INPUT_TOO_HIGH * d - 10; n <= EXP_INPUT_TOO_HIGH * d - 1; n++) {
-                testExp({ n, d }, new Decimal('0.000000000000000000000000000000000002'));
+            for (let n = EXP2_INPUT_TOO_HIGH.mul(d).sub(10); n.lte(EXP2_INPUT_TOO_HIGH.mul(d).sub(1)); n = n.add(1)) {
+                testExp({ n: n.floor().toNumber(), d }, new Decimal('0.000000000000000000000000000000000002'));
             }
         }
 

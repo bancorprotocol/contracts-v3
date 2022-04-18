@@ -12,7 +12,7 @@ contract TestRewardsMath {
         return RewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration);
     }
 
-    function calcExpDecayRewards(uint256 totalRewards, uint32 timeElapsed) external pure returns (uint256) {
-        return RewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
+    function calcExpDecayRewards(uint256 totalRewards, uint32 timeElapsed, uint32 halfLife) external pure returns (uint256) {
+        return RewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife);
     }
 }

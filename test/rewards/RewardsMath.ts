@@ -1,5 +1,5 @@
 import Contracts, { TestRewardsMath } from '../../components/Contracts';
-import { ExponentialDecay } from '../../utils/Constants';
+import { EXP2_INPUT_TOO_HIGH } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { duration } from '../helpers/Time';
 import { Relation } from '../matchers';
@@ -9,7 +9,7 @@ import { BigNumber, BigNumberish } from 'ethers';
 
 const { seconds, days, minutes, hours, years } = duration;
 
-describe('RewardsMath', () => {
+describe.only('RewardsMath', () => {
     let rewardsMath: TestRewardsMath;
 
     before(async () => {
@@ -44,22 +44,22 @@ describe('RewardsMath', () => {
     });
 
     describe('exponential-decay rewards', () => {
-        const LAMBDA = ExponentialDecay.LAMBDA;
-        const MAX_DURATION = ExponentialDecay.MAX_DURATION;
+        const ONE = new Decimal(1);
+        const TWO = new Decimal(2);
 
-        const calcExpDecayRewards = (totalRewards: BigNumberish, timeElapsed: number) => {
+        const calcExpDecayRewards = (totalRewards: BigNumberish, timeElapsed: number, halfLife: number) => {
             it(`calcExpDecayRewards(${totalRewards}, ${timeElapsed})`, async () => {
-                if (timeElapsed <= MAX_DURATION) {
-                    const actual = await rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed);
-                    const expected = new Decimal(totalRewards.toString()).mul(
-                        new Decimal(1).sub(LAMBDA.neg().mul(timeElapsed).exp())
-                    );
+                const f = new Decimal(timeElapsed).div(halfLife);
+                if (f.lt(EXP2_INPUT_TOO_HIGH)) {
+                    const f = new Decimal(timeElapsed).div(halfLife);
+                    const actual = await rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife);
+                    const expected = new Decimal(totalRewards.toString()).mul(ONE.sub(ONE.div(TWO.pow(f))));
                     await expect(actual).to.be.almostEqual(expected, {
                         maxAbsoluteError: new Decimal(1),
                         relation: Relation.LesserOrEqual
                     });
                 } else {
-                    await expect(rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed)).to.revertedWith(
+                    await expect(rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife)).to.revertedWith(
                         'Overflow'
                     );
                 }
@@ -85,10 +85,12 @@ describe('RewardsMath', () => {
                     years(8),
                     years(16),
                     years(32),
-                    MAX_DURATION,
-                    MAX_DURATION + 1
+                    years(35),
+                    years(36),
                 ]) {
-                    calcExpDecayRewards(totalRewards, timeElapsed);
+                    for (const halfLife of [years(0.5), years(1), years(1.5), years(2)]) {
+                        calcExpDecayRewards(totalRewards, timeElapsed, halfLife);
+                    }
                 }
             }
         });
@@ -102,19 +104,22 @@ describe('RewardsMath', () => {
                 toWei(500_000_000),
                 toWei(5_000_000_000)
             ]) {
-                for (let seconds = 0; seconds < 5; seconds++) {
-                    for (let minutes = 0; minutes < 5; minutes++) {
-                        for (let hours = 0; hours < 5; hours++) {
-                            for (let days = 0; days < 5; days++) {
-                                for (let years = 0; years < 5; years++) {
-                                    calcExpDecayRewards(
-                                        totalRewards,
-                                        duration.seconds(seconds) +
-                                            duration.minutes(minutes) +
-                                            duration.hours(hours) +
-                                            duration.days(days) +
-                                            duration.years(years)
-                                    );
+                for (let secondsNum = 0; secondsNum < 5; secondsNum++) {
+                    for (let minutesNum = 0; minutesNum < 5; minutesNum++) {
+                        for (let hoursNum = 0; hoursNum < 5; hoursNum++) {
+                            for (let daysNum = 0; daysNum < 5; daysNum++) {
+                                for (let yearsNum = 0; yearsNum < 5; yearsNum++) {
+                                    for (const halfLife of [years(0.5), years(1), years(1.5), years(2)]) {
+                                        calcExpDecayRewards(
+                                            totalRewards,
+                                            seconds(secondsNum) +
+                                                minutes(minutesNum) +
+                                                hours(hoursNum) +
+                                                days(daysNum) +
+                                                years(yearsNum),
+                                                halfLife
+                                        );
+                                    }
                                 }
                             }
                         }
