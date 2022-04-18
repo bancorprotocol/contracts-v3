@@ -60,6 +60,10 @@ contract TestStandardRewards is StandardRewards, TestTime {
         return amounts;
     }
 
+    function setRemainingRewards(uint256 id, uint256 remainingRewards) external {
+        _programs[id].remainingRewards = remainingRewards;
+    }
+
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();
     }

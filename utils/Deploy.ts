@@ -70,7 +70,7 @@ enum NewInstanceName {
     BancorNetwork = 'BancorNetwork',
     BancorPortal = 'BancorPortal',
     BancorV1Migration = 'BancorV1Migration',
-    BNTPoolToken = 'BNTPoolToken',
+    bnBNT = 'bnBNT',
     BNTPoolProxy = 'BNTPoolProxy',
     BNTPool = 'BNTPool',
     ExternalProtectionVault = 'ExternalProtectionVault',
@@ -127,7 +127,7 @@ const DeployedNewContracts = {
     BancorNetwork: deployed<BancorNetwork>(InstanceName.BancorNetwork),
     BancorPortal: deployed<BancorPortal>(InstanceName.BancorPortal),
     BancorV1Migration: deployed<BancorV1Migration>(InstanceName.BancorV1Migration),
-    BNTPoolToken: deployed<PoolToken>(InstanceName.BNTPoolToken),
+    bnBNT: deployed<PoolToken>(InstanceName.bnBNT),
     BNTPoolProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BNTPoolProxy),
     BNTPool: deployed<BNTPool>(InstanceName.BNTPool),
     ExternalProtectionVault: deployed<ExternalProtectionVault>(InstanceName.ExternalProtectionVault),
@@ -167,7 +167,8 @@ export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
-export const isLive = () => isMainnet() && !isMainnetFork();
+export const isRinkeby = () => getNetworkName() === DeploymentNetwork.Rinkeby;
+export const isLive = () => (isMainnet() && !isMainnetFork()) || isRinkeby();
 
 const TEST_MINIMUM_BALANCE = toWei(10);
 const TEST_FUNDING = toWei(10);
@@ -265,6 +266,8 @@ const PROXY_CONTRACT = 'TransparentUpgradeableProxyImmutable';
 const INITIALIZE = 'initialize';
 const POST_UPGRADE = 'postUpgrade';
 
+const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
+
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
@@ -295,6 +298,7 @@ export const deploy = async (options: DeployOptions) => {
         value,
         args,
         proxy: isProxy ? proxyOptions : undefined,
+        waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
 
@@ -302,7 +306,7 @@ export const deploy = async (options: DeployOptions) => {
         const data = { name, contract: contractName };
         saveTypes(data);
 
-        await verifyTenderly({
+        await verifyTenderlyFork({
             address: res.address,
             proxy: isProxy,
             implementation: isProxy ? res.implementation : undefined,
@@ -352,13 +356,14 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         value,
         args,
         proxy: proxyOptions,
+        waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
 
     const data = { name, contract: contractName };
     saveTypes(data);
 
-    await verifyTenderly({
+    await verifyTenderlyFork({
         address: res.address,
         proxy: true,
         implementation: res.implementation,
@@ -381,7 +386,12 @@ export const execute = async (options: ExecuteOptions) => {
 
     await fundAccount(from);
 
-    return executeTransaction(name, { from, value, log: true }, methodName, ...(args || []));
+    return executeTransaction(
+        name,
+        { from, value, waitConfirmations: WAIT_CONFIRMATIONS, log: true },
+        methodName,
+        ...(args || [])
+    );
 };
 
 interface InitializeProxyOptions {
@@ -466,8 +476,8 @@ export const save = async (deployment: Deployment) => {
         return;
     }
 
-    // publish the contract to Tenderly
-    return verifyTenderly(deployment);
+    // publish the contract to a Tenderly fork
+    return verifyTenderlyFork(deployment);
 };
 
 interface ContractData {
@@ -475,9 +485,9 @@ interface ContractData {
     address: Address;
 }
 
-const verifyTenderly = async (deployment: Deployment) => {
+const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isLive() && !isTenderlyFork()) {
+    if (!isTenderlyFork()) {
         return;
     }
 
@@ -504,7 +514,7 @@ const verifyTenderly = async (deployment: Deployment) => {
     });
 
     for (const contract of contracts) {
-        console.log('verifying (Tenderly)', contract.name, 'at', contract.address);
+        console.log('verifying (Tenderly fork)', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }

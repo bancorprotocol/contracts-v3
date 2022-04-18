@@ -4,7 +4,7 @@ pragma solidity 0.8.13;
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
-import { INetworkSettings } from "../network/interfaces/IBancorNetwork.sol";
+import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 

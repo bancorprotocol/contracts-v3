@@ -1,5 +1,13 @@
 import { PoolType } from '../utils/Constants';
-import { execute, InstanceName, isHardhat, isLocalhost, setDeploymentMetadata } from '../utils/Deploy';
+import {
+    DeployedContracts,
+    execute,
+    InstanceName,
+    isHardhat,
+    isLocalhost,
+    save,
+    setDeploymentMetadata
+} from '../utils/Deploy';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -19,8 +27,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         [BetaTokens.LINK]: link
     };
 
-    for (const [tokenSymbol, address] of Object.entries(BETA_TOKENS)) {
-        const isNativeToken = tokenSymbol === BetaTokens.ETH;
+    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+
+    for (const [symbol, address] of Object.entries(BETA_TOKENS)) {
+        const isNativeToken = symbol === BetaTokens.ETH;
 
         // since we currently aren't using real ERC20 tokens during local unit testing, we'd use the overrides mechanism
         // to ensure that these pools can be created (otherwise, the PoolTokenFactory contract will try to call either
@@ -53,6 +63,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             methodName: 'createPool',
             args: [PoolType.Standard, address],
             from: deployer
+        });
+
+        await save({
+            name: `bn${symbol}` as InstanceName,
+            contract: 'PoolToken',
+            address: await poolCollection.poolToken(address)
         });
 
         await execute({

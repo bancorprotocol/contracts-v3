@@ -22,17 +22,17 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    const event = events![1] as PoolTokenCreated;
+    const event = events?.find((e) => e.event === 'PoolTokenCreated') as PoolTokenCreated;
     const poolTokenAddress = event.args.poolToken;
 
     await save({
-        name: InstanceName.BNTPoolToken,
+        name: InstanceName.bnBNT,
         contract: 'PoolToken',
         address: poolTokenAddress
     });
 
     await execute({
-        name: InstanceName.BNTPoolToken,
+        name: InstanceName.bnBNT,
         methodName: 'acceptOwnership',
         from: deployer
     });

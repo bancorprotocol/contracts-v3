@@ -14,7 +14,6 @@ import { Time } from "../utility/Time.sol";
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 

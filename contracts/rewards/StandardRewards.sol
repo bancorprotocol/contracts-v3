@@ -48,7 +48,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     struct RewardData {
-        Token pool;
         Token rewardsToken;
         uint256 amount;
     }
@@ -59,8 +58,9 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     error ArrayNotUnique();
-    error NativeTokenAmountMismatch();
     error InsufficientFunds();
+    error RewardsTooHigh();
+    error NativeTokenAmountMismatch();
     error PoolMismatch();
     error ProgramDisabled();
     error ProgramInactive();
@@ -331,8 +331,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         nonReentrant
         returns (uint256)
     {
-        uint32 currTime = _time();
-        if (!(currTime <= startTime && startTime < endTime)) {
+        if (!(_time() <= startTime && startTime < endTime)) {
             revert InvalidParam();
         }
 
@@ -361,6 +360,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         }
 
         uint256 id = _nextProgramId++;
+        uint256 rewardRate = totalRewards / (endTime - startTime);
 
         _programs[id] = ProgramData({
             id: id,
@@ -370,7 +370,8 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             isEnabled: true,
             startTime: startTime,
             endTime: endTime,
-            rewardRate: totalRewards / (endTime - startTime)
+            rewardRate: rewardRate,
+            remainingRewards: rewardRate * (endTime - startTime)
         });
 
         // set the program as the latest program of the pool
@@ -718,11 +719,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         uint256[] calldata ids,
         bool stake
     ) private returns (RewardData memory) {
-        RewardData memory rewardData = RewardData({
-            pool: Token(address(0)),
-            rewardsToken: Token(address(0)),
-            amount: 0
-        });
+        RewardData memory rewardData = RewardData({ rewardsToken: Token(address(0)), amount: 0 });
 
         for (uint256 i = 0; i < ids.length; i++) {
             ProgramData memory p = _programs[ids[i]];
@@ -730,7 +727,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             _verifyProgramEnabled(p);
 
             if (i == 0) {
-                rewardData.pool = p.pool;
                 rewardData.rewardsToken = p.rewardsToken;
             }
 
@@ -739,7 +735,21 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             }
 
             ClaimData memory claimData = _claimRewards(provider, p);
-            rewardData.amount += claimData.reward;
+
+            if (claimData.reward > 0) {
+                uint256 remainingRewards = p.remainingRewards;
+
+                // a sanity check that the reward amount doesn't exceed the remaining rewards per program
+                if (remainingRewards < claimData.reward) {
+                    revert RewardsTooHigh();
+                }
+
+                // decrease the remaining rewards per program
+                _programs[ids[i]].remainingRewards = remainingRewards - claimData.reward;
+
+                // collect same-reward token rewards
+                rewardData.amount += claimData.reward;
+            }
 
             // if the program is no longer active, has no stake left, and there are no pending rewards - remove the
             // program from the provider's program list

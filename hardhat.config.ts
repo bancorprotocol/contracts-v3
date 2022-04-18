@@ -20,22 +20,26 @@ interface EnvOptions {
     NIGHTLY?: boolean;
     PROFILE?: boolean;
     ETHEREUM_PROVIDER_URL?: string;
+    ETHEREUM_RINKEBY_PROVIDER_URL?: string;
     TENDERLY_FORK_ID?: string;
     TENDERLY_PROJECT?: string;
     TENDERLY_USERNAME?: string;
     ETHERSCAN_API_KEY?: string;
     FORKING?: boolean;
+    GAS_PRICE?: number | 'auto';
 }
 
 const {
     NIGHTLY: isNightly,
     PROFILE: isProfiling,
     ETHEREUM_PROVIDER_URL = '',
+    ETHEREUM_RINKEBY_PROVIDER_URL = '',
     TENDERLY_FORK_ID = '',
     TENDERLY_PROJECT = '',
     TENDERLY_USERNAME = '',
     ETHERSCAN_API_KEY,
-    FORKING: isForking
+    FORKING: isForking,
+    GAS_PRICE: gasPrice = 'auto'
 }: EnvOptions = process.env as any as EnvOptions;
 
 const mochaOptions = (): MochaOptions => {
@@ -100,6 +104,13 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Mainnet]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
+            gasPrice,
+            saveDeployments: true,
+            live: true
+        },
+        [DeploymentNetwork.Rinkeby]: {
+            chainId: 4,
+            url: ETHEREUM_RINKEBY_PROVIDER_URL,
             saveDeployments: true,
             live: true
         },

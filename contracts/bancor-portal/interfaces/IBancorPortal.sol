@@ -2,7 +2,6 @@
 pragma solidity 0.8.13;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
 import { Token } from "../../token/Token.sol";
 
 struct UniswapV2PositionMigration {
