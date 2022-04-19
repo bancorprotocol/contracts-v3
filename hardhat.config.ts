@@ -77,11 +77,12 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Hardhat]: isForking
             ? /* eslint-disable indent */
               {
+                  chainId: 1,
                   forking: {
                       enabled: true,
                       url: ETHEREUM_PROVIDER_URL
                   },
-                  saveDeployments: false,
+                  saveDeployments: true,
                   live: true
               }
             : {
