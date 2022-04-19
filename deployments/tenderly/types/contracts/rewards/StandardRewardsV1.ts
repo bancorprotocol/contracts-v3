@@ -63,25 +63,6 @@ export type ProgramDataStructOutput = [
   remainingRewards: BigNumber;
 };
 
-export type ProviderRewardsStruct = {
-  rewardPerTokenPaid: BigNumberish;
-  pendingRewards: BigNumberish;
-  claimedRewards: BigNumberish;
-  stakedAmount: BigNumberish;
-};
-
-export type ProviderRewardsStructOutput = [
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber
-] & {
-  rewardPerTokenPaid: BigNumber;
-  pendingRewards: BigNumber;
-  claimedRewards: BigNumber;
-  stakedAmount: BigNumber;
-};
-
 export type StakeAmountsStruct = {
   stakedRewardAmount: BigNumberish;
   poolTokenAmount: BigNumberish;
@@ -118,7 +99,6 @@ export interface StandardRewardsInterface extends utils.Interface {
     "programStake(uint256)": FunctionFragment;
     "programs(uint256[])": FunctionFragment;
     "providerProgramIds(address)": FunctionFragment;
-    "providerRewards(address,uint256)": FunctionFragment;
     "providerStake(address,uint256)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
@@ -155,7 +135,6 @@ export interface StandardRewardsInterface extends utils.Interface {
       | "programStake"
       | "programs"
       | "providerProgramIds"
-      | "providerRewards"
       | "providerStake"
       | "renounceRole"
       | "revokeRole"
@@ -277,10 +256,6 @@ export interface StandardRewardsInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "providerRewards",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "providerStake",
     values: [string, BigNumberish]
   ): string;
@@ -380,10 +355,6 @@ export interface StandardRewardsInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "programs", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "providerProgramIds",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "providerRewards",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -727,12 +698,6 @@ export interface StandardRewards extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber[]]>;
 
-    providerRewards(
-      provider: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[ProviderRewardsStructOutput]>;
-
     providerStake(
       provider: string,
       id: BigNumberish,
@@ -896,12 +861,6 @@ export interface StandardRewards extends BaseContract {
     provider: string,
     overrides?: CallOverrides
   ): Promise<BigNumber[]>;
-
-  providerRewards(
-    provider: string,
-    id: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<ProviderRewardsStructOutput>;
 
   providerStake(
     provider: string,
@@ -1067,12 +1026,6 @@ export interface StandardRewards extends BaseContract {
       provider: string,
       overrides?: CallOverrides
     ): Promise<BigNumber[]>;
-
-    providerRewards(
-      provider: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<ProviderRewardsStructOutput>;
 
     providerStake(
       provider: string,
@@ -1382,12 +1335,6 @@ export interface StandardRewards extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    providerRewards(
-      provider: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     providerStake(
       provider: string,
       id: BigNumberish,
@@ -1561,12 +1508,6 @@ export interface StandardRewards extends BaseContract {
 
     providerProgramIds(
       provider: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    providerRewards(
-      provider: string,
-      id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

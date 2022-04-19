@@ -38,14 +38,6 @@ contract TestStandardRewards is StandardRewards, TestTime {
         return _unclaimedRewards[rewardsToken];
     }
 
-    function programRewards(uint256 id) external view returns (Rewards memory) {
-        return _programRewards[id];
-    }
-
-    function providerRewards(address provider, uint256 id) external view returns (ProviderRewards memory) {
-        return _providerRewards[provider][id];
-    }
-
     function claimRewardsWithAmounts(uint256[] calldata ids) external returns (uint256[] memory) {
         uint256[] memory amounts = new uint256[](ids.length);
 

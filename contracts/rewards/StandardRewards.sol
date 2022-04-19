@@ -25,7 +25,7 @@ import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
 
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
-import { IStandardRewards, ProgramData, StakeAmounts } from "./interfaces/IStandardRewards.sol";
+import { IStandardRewards, ProgramData, Rewards, ProviderRewards, StakeAmounts } from "./interfaces/IStandardRewards.sol";
 
 /**
  * @dev Standard Rewards contract
@@ -34,18 +34,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     using Address for address payable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using TokenLibrary for Token;
-
-    struct Rewards {
-        uint32 lastUpdateTime;
-        uint256 rewardPerToken;
-    }
-
-    struct ProviderRewards {
-        uint256 rewardPerTokenPaid;
-        uint256 pendingRewards;
-        uint256 claimedRewards;
-        uint256 stakedAmount;
-    }
 
     struct RewardData {
         Token rewardsToken;
@@ -241,7 +229,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 1;
+        return 2;
     }
 
     /**
@@ -276,6 +264,20 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      */
     function providerProgramIds(address provider) external view returns (uint256[] memory) {
         return _programIdsByProvider[provider].values();
+    }
+
+    /**
+     * @inheritdoc IStandardRewards
+     */
+    function programRewards(uint256 id) external view returns (Rewards memory) {
+        return _programRewards[id];
+    }
+
+    /**
+     * @inheritdoc IStandardRewards
+     */
+    function providerRewards(address provider, uint256 id) external view returns (ProviderRewards memory) {
+        return _providerRewards[provider][id];
     }
 
     /**
@@ -534,9 +536,9 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             }
 
             uint256 newRewardPerToken = _rewardPerToken(p, _programRewards[id]);
-            ProviderRewards memory providerRewards = _providerRewards[provider][id];
+            ProviderRewards memory providerRewardsData = _providerRewards[provider][id];
 
-            reward += _pendingRewards(newRewardPerToken, providerRewards);
+            reward += _pendingRewards(newRewardPerToken, providerRewardsData);
         }
 
         return reward;
@@ -774,13 +776,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @dev claims rewards and returns the received and the pending reward amounts
      */
     function _claimRewards(address provider, ProgramData memory p) internal returns (ClaimData memory) {
-        ProviderRewards storage providerRewards = _snapshotRewards(p, provider);
+        ProviderRewards storage providerRewardsData = _snapshotRewards(p, provider);
 
-        uint256 reward = providerRewards.pendingRewards;
+        uint256 reward = providerRewardsData.pendingRewards;
 
-        providerRewards.pendingRewards = 0;
+        providerRewardsData.pendingRewards = 0;
 
-        return ClaimData({ reward: reward, stakedAmount: providerRewards.stakedAmount });
+        return ClaimData({ reward: reward, stakedAmount: providerRewardsData.stakedAmount });
     }
 
     /**
@@ -874,15 +876,15 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             rewards.lastUpdateTime = newUpdateTime;
         }
 
-        ProviderRewards storage providerRewards = _providerRewards[provider][p.id];
+        ProviderRewards storage providerRewardsData = _providerRewards[provider][p.id];
 
-        uint256 newPendingRewards = _pendingRewards(newRewardPerToken, providerRewards);
+        uint256 newPendingRewards = _pendingRewards(newRewardPerToken, providerRewardsData);
         if (newPendingRewards != 0) {
-            providerRewards.rewardPerTokenPaid = newRewardPerToken;
-            providerRewards.pendingRewards = newPendingRewards;
+            providerRewardsData.rewardPerTokenPaid = newRewardPerToken;
+            providerRewardsData.pendingRewards = newPendingRewards;
         }
 
-        return providerRewards;
+        return providerRewardsData;
     }
 
     /**
@@ -910,14 +912,14 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev calculates provider's pending rewards
      */
-    function _pendingRewards(uint256 updatedRewardPerToken, ProviderRewards memory providerRewards)
+    function _pendingRewards(uint256 updatedRewardPerToken, ProviderRewards memory providerRewardsData)
         private
         pure
         returns (uint256)
     {
         return
-            providerRewards.pendingRewards +
-            (providerRewards.stakedAmount * (updatedRewardPerToken - providerRewards.rewardPerTokenPaid)) /
+            providerRewardsData.pendingRewards +
+            (providerRewardsData.stakedAmount * (updatedRewardPerToken - providerRewardsData.rewardPerTokenPaid)) /
             REWARD_RATE_FACTOR;
     }
 

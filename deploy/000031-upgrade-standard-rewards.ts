@@ -1,6 +1,4 @@
-import LegacyContractsV3ArtifactData from '../components/LegacyContractsV3ArtifactData';
-import { DeployedContracts, deployProxy, grantRole, InstanceName, setDeploymentMetadata } from '../utils/Deploy';
-import { Roles } from '../utils/Roles';
+import { DeployedContracts, InstanceName, setDeploymentMetadata, upgradeProxy } from '../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -13,30 +11,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntPool = await DeployedContracts.BNTPool.deployed();
     const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
 
-    const standardRewardsAddress = await deployProxy({
+    await upgradeProxy({
         name: InstanceName.StandardRewards,
-        contractArtifactData: LegacyContractsV3ArtifactData.StandardRewardsV1,
-        from: deployer,
         args: [
             network.address,
             networkSettings.address,
             bntGovernance.address,
             bntPool.address,
             externalRewardsVault.address
-        ]
-    });
-
-    await grantRole({
-        name: InstanceName.BNTGovernance,
-        id: Roles.TokenGovernance.ROLE_MINTER,
-        member: standardRewardsAddress,
-        from: deployer
-    });
-
-    await grantRole({
-        name: InstanceName.ExternalRewardsVault,
-        id: Roles.Vault.ROLE_ASSET_MANAGER,
-        member: standardRewardsAddress,
+        ],
         from: deployer
     });
 
