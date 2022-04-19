@@ -22,10 +22,10 @@ library RewardsMath {
 
     /**
      * @dev returns the amount of rewards distributed after a given time period since deployment has elapsed
-     * The returned value is calculated as `totalRewards * (1 - 1 / 2 ^ (timeElapsed / halfLife))`
      *
-     * Note that because the exponentiation function is limited to an input of up to (and excluding) 16,
-     * the input value to this function is limited by `timeElapsed / halfLife < 16`
+     * The returned value is calculated as `totalRewards * (1 - 1 / 2 ^ (timeElapsed / halfLife))`
+     * Note that because the exponentiation function is limited to an input of up to (and excluding)
+     * 16 / ln 2, the input value to this function is limited by `timeElapsed / halfLife < 16 / ln 2`
      */
     function calcExpDecayRewards(
         uint256 totalRewards,
