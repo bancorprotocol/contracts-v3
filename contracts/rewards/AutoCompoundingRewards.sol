@@ -33,6 +33,8 @@ import {
 
 import { RewardsMath } from "./RewardsMath.sol";
 
+uint256 constant SECONDS_PER_DAY = 60 * 60 * 24;
+
 /**
  * @dev Auto-compounding Rewards contract
  */
@@ -78,7 +80,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime,
-        uint32 halfLife
+        uint32 halfLifeInDays
     );
 
     /**
@@ -214,7 +216,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime,
-        uint32 halfLife
+        uint32 halfLifeInDays
     ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert AlreadyExists();
@@ -233,11 +235,11 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         uint32 currTime = _time();
         if (distributionType == FLAT_DISTRIBUTION) {
-            if (!(currTime <= startTime && startTime < endTime && halfLife == 0)) {
+            if (!(currTime <= startTime && startTime < endTime && halfLifeInDays == 0)) {
                 revert InvalidParam();
             }
         } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (!(currTime <= startTime && endTime == 0 && halfLife != 0)) {
+            if (!(currTime <= startTime && endTime == 0 && halfLifeInDays != 0)) {
                 revert InvalidParam();
             }
         } else {
@@ -247,7 +249,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
-            halfLife: halfLife,
+            halfLife: halfLifeInDays * SECONDS_PER_DAY,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
             isEnabled: true,
@@ -268,7 +270,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             totalRewards: totalRewards,
             startTime: startTime,
             endTime: endTime,
-            halfLife: halfLife
+            halfLifeInDays: halfLifeInDays
         });
     }
 

@@ -1271,7 +1271,9 @@ describe('Profile @profile', () => {
                             distributionType,
                             startTime,
                             distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0,
-                            distributionType === RewardsDistributionType.Flat ? 0 : EXP_DECAY_HALF_LIFE
+                            distributionType === RewardsDistributionType.Flat
+                                ? 0
+                                : EXP_DECAY_HALF_LIFE / duration.days(1)
                         );
                     });
 

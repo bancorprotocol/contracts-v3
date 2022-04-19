@@ -58,7 +58,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime,
-        uint32 halfLife
+        uint32 halfLifeInDays
     ) external;
 
     /**
