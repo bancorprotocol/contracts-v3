@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -16,7 +15,6 @@ import { Time } from "../utility/Time.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
-import { IPoolCollection } from "../pools/interfaces/IPoolCollection.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
@@ -136,9 +134,9 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

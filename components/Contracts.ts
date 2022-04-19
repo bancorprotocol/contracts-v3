@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import {
-    AutoCompoundingStakingRewards__factory,
+    AutoCompoundingRewards__factory,
     BancorNetwork__factory,
     BancorNetworkInfo__factory,
     BancorPortal__factory,
@@ -20,8 +20,8 @@ import {
     PoolToken__factory,
     PoolTokenFactory__factory,
     ProxyAdmin__factory,
-    StandardStakingRewards__factory,
-    TestAutoCompoundingStakingRewards__factory,
+    StandardRewards__factory,
+    TestAutoCompoundingRewards__factory,
     TestBancorNetwork__factory,
     TestBNTPool__factory,
     TestERC20Burnable__factory,
@@ -34,11 +34,11 @@ import {
     TestOwned__factory,
     TestPendingWithdrawals__factory,
     TestPoolCollection__factory,
-    TestPoolMigrator__factory,
     TestPoolCollectionWithdrawal__factory,
+    TestPoolMigrator__factory,
+    TestRewardsMath__factory,
     TestSafeERC20Ex__factory,
-    TestStakingRewardsMath__factory,
-    TestStandardStakingRewards__factory,
+    TestStandardRewards__factory,
     TestTokenGovernance__factory,
     TestTokenLibrary__factory,
     TestUpgradeable__factory,
@@ -53,11 +53,7 @@ export * from '../typechain-types';
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
-    AutoCompoundingStakingRewards: deployOrAttach(
-        'AutoCompoundingStakingRewards',
-        AutoCompoundingStakingRewards__factory,
-        signer
-    ),
+    AutoCompoundingRewards: deployOrAttach('AutoCompoundingRewards', AutoCompoundingRewards__factory, signer),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorNetworkInfo: deployOrAttach('BancorNetworkInfo', BancorNetworkInfo__factory, signer),
     BancorPortal: deployOrAttach('BancorPortal', BancorPortal__factory, signer),
@@ -77,10 +73,10 @@ const getContracts = (signer?: Signer) => ({
     PoolToken: deployOrAttach('PoolToken', PoolToken__factory, signer),
     PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
-    StandardStakingRewards: deployOrAttach('StandardStakingRewards', StandardStakingRewards__factory, signer),
-    TestAutoCompoundingStakingRewards: deployOrAttach(
-        'TestAutoCompoundingStakingRewards',
-        TestAutoCompoundingStakingRewards__factory,
+    StandardRewards: deployOrAttach('StandardRewards', StandardRewards__factory, signer),
+    TestAutoCompoundingRewards: deployOrAttach(
+        'TestAutoCompoundingRewards',
+        TestAutoCompoundingRewards__factory,
         signer
     ),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
@@ -94,23 +90,15 @@ const getContracts = (signer?: Signer) => ({
     TestOwned: deployOrAttach('TestOwned', TestOwned__factory, signer),
     TestPendingWithdrawals: deployOrAttach('TestPendingWithdrawals', TestPendingWithdrawals__factory, signer),
     TestPoolCollection: deployOrAttach('TestPoolCollection', TestPoolCollection__factory, signer),
-    TestPoolMigrator: deployOrAttach(
-        'TestPoolMigrator',
-        TestPoolMigrator__factory,
-        signer
-    ),
+    TestPoolMigrator: deployOrAttach('TestPoolMigrator', TestPoolMigrator__factory, signer),
     TestPoolCollectionWithdrawal: deployOrAttach(
         'TestPoolCollectionWithdrawal',
         TestPoolCollectionWithdrawal__factory,
         signer
     ),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
-    TestStakingRewardsMath: deployOrAttach('TestStakingRewardsMath', TestStakingRewardsMath__factory, signer),
-    TestStandardStakingRewards: deployOrAttach(
-        'TestStandardStakingRewards',
-        TestStandardStakingRewards__factory,
-        signer
-    ),
+    TestRewardsMath: deployOrAttach('TestRewardsMath', TestRewardsMath__factory, signer),
+    TestStandardRewards: deployOrAttach('TestStandardRewards', TestStandardRewards__factory, signer),
     TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TestTokenLibrary: deployOrAttach('TestTokenLibrary', TestTokenLibrary__factory, signer),
     TestFractionLibrary: deployOrAttach('TestFractionLibrary', TestFractionLibrary__factory, signer),

@@ -1,4 +1,4 @@
-import { Contract, ContractBuilder } from '../../components/ContractBuilder';
+import { ContractBuilder } from '../../components/ContractBuilder';
 import Contracts, {
     BancorNetwork,
     BancorNetworkInfo,
@@ -27,7 +27,7 @@ import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenD
 import { Addressable, fromPPM, toWei } from '../../utils/Types';
 import { toAddress } from './Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BaseContract, BigNumber, BigNumberish, ContractFactory, utils, Wallet } from 'ethers';
+import { BaseContract, BigNumber, BigNumberish, BytesLike, ContractFactory, utils, Wallet } from 'ethers';
 import { ethers, waffle } from 'hardhat';
 
 const { formatBytes32String } = utils;
@@ -71,44 +71,62 @@ const createTransparentProxy = async (
     return Contracts.TransparentUpgradeableProxyImmutable.deploy(logicContract.address, admin.address, data);
 };
 
-export const createProxy = async <F extends ContractFactory>(
-    factory: ContractBuilder<F>,
-    args?: ProxyArguments
-): Promise<Contract<F>> => {
+export const createProxy = async <F extends ContractFactory>(factory: ContractBuilder<F>, args?: ProxyArguments) => {
     const logicContract = await createLogic(factory, args?.ctorArgs);
     const proxy = await createTransparentProxy(logicContract, args?.skipInitialization, args?.initArgs);
 
     return factory.attach(proxy.address);
 };
 
+interface ProxyUpgradeArgs extends ProxyArguments {
+    upgradeCallData?: BytesLike;
+}
+
+export const upgradeProxy = async <F extends ContractFactory>(
+    proxy: BaseContract,
+    factory: ContractBuilder<F>,
+    args?: ProxyUpgradeArgs
+) => {
+    const logicContract = await createLogic(factory, args?.ctorArgs);
+    const admin = await proxyAdmin();
+
+    await admin.upgradeAndCall(
+        proxy.address,
+        logicContract.address,
+        logicContract.interface.encodeFunctionData('postUpgrade', [args?.upgradeCallData || []])
+    );
+
+    return factory.attach(proxy.address);
+};
+
 const getDeployer = async () => (await ethers.getSigners())[0];
 
-export const createAutoCompoundingStakingRewards = async (
+export const createAutoCompoundingRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bnt: IERC20,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const stakingRewards = await createProxy(Contracts.TestAutoCompoundingStakingRewards, {
-        ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address]
+    const rewards = await createProxy(Contracts.TestAutoCompoundingRewards, {
+        ctorArgs: [network.address, networkSettings.address, bnt.address, bntPool.address, externalRewardsVault.address]
     });
 
-    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, stakingRewards.address);
+    await bntPool.grantRole(Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, rewards.address);
 
-    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, rewards.address);
 
-    return stakingRewards;
+    return rewards;
 };
 
-export const createStandardStakingRewards = async (
+export const createStandardRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bntGovernance: TokenGovernance,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
-    const stakingRewards = await createProxy(Contracts.TestStandardStakingRewards, {
+    const rewards = await createProxy(Contracts.TestStandardRewards, {
         ctorArgs: [
             network.address,
             networkSettings.address,
@@ -118,11 +136,11 @@ export const createStandardStakingRewards = async (
         ]
     });
 
-    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, stakingRewards.address);
+    await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, rewards.address);
 
-    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, stakingRewards.address);
+    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, rewards.address);
 
-    return stakingRewards;
+    return rewards;
 };
 
 const createGovernedToken = async (
@@ -318,7 +336,7 @@ const createSystemFixture = async () => {
     const poolTokenFactory = await createProxy(Contracts.PoolTokenFactory);
     const bntPoolToken = await createPoolToken(poolTokenFactory, bnt);
 
-    const networkSettings = await createProxy(Contracts.NetworkSettings);
+    const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [bnt.address] });
 
     const network = await createNetwork(
         bntGovernance,

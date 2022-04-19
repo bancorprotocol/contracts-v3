@@ -1,6 +1,5 @@
 import { getTransactionGas } from '../test/helpers/Utils';
 import { ContractTransaction } from 'ethers';
-import { tenderly } from 'hardhat';
 import { mean } from 'lodash';
 
 export const { PROFILE: isProfiling } = process.env;
@@ -19,19 +18,6 @@ export class Profiler {
         this.summary[description].push(gas.toNumber());
 
         return res;
-    }
-
-    static async persistArtifacts(contractName: string, address: string) {
-        if (!isProfiling) {
-            return;
-        }
-
-        console.log('Persisting', contractName, address);
-
-        return tenderly.persistArtifacts({
-            name: contractName,
-            address
-        });
     }
 
     printSummary() {

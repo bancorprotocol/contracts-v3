@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -17,8 +17,7 @@ struct Signature {
 }
 
 /**
- * @dev This library implements ERC20 and SafeERC20 utilities for ETH/ERC20 tokens, which can be either ERC20 tokens
- * or ETH
+ * @dev This library implements ERC20 and SafeERC20 utilities for both the native token and for ERC20 tokens
  */
 library TokenLibrary {
     using SafeERC20 for IERC20;
@@ -36,14 +35,14 @@ library TokenLibrary {
     uint8 private constant NATIVE_TOKEN_DECIMALS = 18;
 
     /**
-     * @dev returns whether the provided token represents an ERC20 or ETH reserve
+     * @dev returns whether the provided token represents an ERC20 or the native token reserve
      */
     function isNative(Token token) internal pure returns (bool) {
         return address(token) == NATIVE_TOKEN_ADDRESS;
     }
 
     /**
-     * @dev returns the symbol of the ETH/ERC20 token
+     * @dev returns the symbol of the native token/ERC20 token
      */
     function symbol(Token token) internal view returns (string memory) {
         if (isNative(token)) {
@@ -54,7 +53,7 @@ library TokenLibrary {
     }
 
     /**
-     * @dev returns the decimals of the ETH/ERC20 token
+     * @dev returns the decimals of the native token/ERC20 token
      */
     function decimals(Token token) internal view returns (uint8) {
         if (isNative(token)) {
@@ -65,7 +64,7 @@ library TokenLibrary {
     }
 
     /**
-     * @dev returns the balance of the ETH/ERC20 token
+     * @dev returns the balance of the native token/ERC20 token
      */
     function balanceOf(Token token, address account) internal view returns (uint256) {
         if (isNative(token)) {
@@ -76,7 +75,7 @@ library TokenLibrary {
     }
 
     /**
-     * @dev transfers a specific amount of the ETH/ERC20 token
+     * @dev transfers a specific amount of the native token/ERC20 token
      */
     function safeTransfer(
         Token token,
@@ -95,9 +94,9 @@ library TokenLibrary {
     }
 
     /**
-     * @dev transfers a specific amount of the ETH/ERC20 token from a specific holder using the allowance mechanism
+     * @dev transfers a specific amount of the native token/ERC20 token from a specific holder using the allowance mechanism
      *
-     * note that the function ignores a ETH/ERC20 token which represents an ETH reserve
+     * note that the function does not perform any action if the native token is provided
      */
     function safeTransferFrom(
         Token token,
@@ -113,9 +112,9 @@ library TokenLibrary {
     }
 
     /**
-     * @dev approves a specific amount of the ETH/ERC20 token from a specific holder
+     * @dev approves a specific amount of the native token/ERC20 token from a specific holder
      *
-     * note that the function ignores a ETH/ERC20 token which represents an ETH reserve
+     * note that the function does not perform any action if the native token is provided
      */
     function safeApprove(
         Token token,
@@ -132,7 +131,7 @@ library TokenLibrary {
     /**
      * @dev ensures that the spender has sufficient allowance
      *
-     * note that this function ignores a ETH/ERC20 token which represents an ETH reserve
+     * note that the function does not perform any action if the native token is provided
      */
     function ensureApprove(
         Token token,

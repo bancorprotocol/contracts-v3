@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { PPM_RESOLUTION } from "./Constants.sol";
 
@@ -14,7 +14,7 @@ error InvalidPoolCollection();
 error InvalidStakedBalance();
 error InvalidToken();
 error InvalidType();
-error InvalidInput();
+error InvalidParam();
 error NotEmpty();
 error NotPayable();
 error ZeroValue();

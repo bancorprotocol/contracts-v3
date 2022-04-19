@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
@@ -19,8 +19,8 @@ interface IPoolCollectionBase {
 
 interface IPoolCollectionV1 is IPoolCollectionBase {
     struct PoolLiquidityV1 {
-        uint256 bntTradingLiquidity; // the BNT trading liquidity
-        uint256 baseTokenTradingLiquidity; // the base token trading liquidity
+        uint128 bntTradingLiquidity; // the BNT trading liquidity
+        uint128 baseTokenTradingLiquidity; // the base token trading liquidity
         uint256 stakedBalance; // the staked balance
     }
 
@@ -89,9 +89,9 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     // solhint-enable func-name-mixedcase
 
     /**
-     * @inheritdoc IVersioned
+     * @inheritdoc Upgradeable
      */
-    function version() external pure returns (uint16) {
+    function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
         return 1;
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -9,7 +9,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
-import { CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, CompletedWithdrawal } from "../network/interfaces/IPendingWithdrawals.sol";
 import { BancorNetwork } from "../network/BancorNetwork.sol";
 
 import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
@@ -18,6 +18,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
+import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
 
@@ -43,6 +44,14 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             initBNTPoolToken
         )
     {}
+
+    function bntPool() external view returns (IBNTPool) {
+        return _bntPool;
+    }
+
+    function pendingWithdrawals() external view returns (IPendingWithdrawals) {
+        return _pendingWithdrawals;
+    }
 
     function createPoolT(IPoolCollection poolCollection, Token token) external {
         poolCollection.createPool(token);
@@ -142,10 +151,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 amount
     ) external {
         token.safeApprove(spender, amount);
-    }
-
-    function pendingNetworkFeeAmount() external view returns (uint256) {
-        return _pendingNetworkFeeAmount;
     }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {

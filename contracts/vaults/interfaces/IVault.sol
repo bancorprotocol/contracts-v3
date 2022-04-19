@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
@@ -20,7 +20,7 @@ interface IVault is IUpgradeable {
     event FundsBurned(Token indexed token, address indexed caller, uint256 amount);
 
     /**
-     * @dev tells if the contracts accepts ETH deposits
+     * @dev tells whether the vault accepts native token deposits
      */
     function isPayable() external view returns (bool);
 

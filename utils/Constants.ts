@@ -8,10 +8,11 @@ const {
 } = ethers;
 
 export enum DeploymentNetwork {
-    Hardhat = 'hardhat',
-    Localhost = 'localhost',
     Mainnet = 'mainnet',
-    Tenderly = 'tenderly'
+    Rinkeby = 'rinkeby',
+    Hardhat = 'hardhat',
+    Tenderly = 'tenderly',
+    Localhost = 'localhost'
 }
 
 export const MAX_UINT256 = MaxUint256;
@@ -27,7 +28,7 @@ export enum TradingStatusUpdateReason {
     MinLiquidity = 2
 }
 
-export enum StakingRewardsDistributionType {
+export enum RewardsDistributionType {
     Flat = 0,
     ExponentialDecay = 1
 }
@@ -49,6 +50,7 @@ export const DEFAULT_LOCK_DURATION = duration.days(7);
 export const LIQUIDITY_GROWTH_FACTOR = 2;
 export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
 export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
+export const DEFAULT_FLASH_LOAN_FEE_PPM = toPPM(0);
 export const RATE_MAX_DEVIATION_PPM = toPPM(1);
 export const EMA_AVERAGE_RATE_WEIGHT = 4;
 export const EMA_SPOT_RATE_WEIGHT = 1;

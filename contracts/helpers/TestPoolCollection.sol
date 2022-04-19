@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -67,7 +67,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         view
         returns (InternalWithdrawalAmounts memory)
     {
-        return _poolWithdrawalAmounts(pool, poolTokenAmount);
+        return _poolWithdrawalAmounts(pool, _poolData[pool], poolTokenAmount);
     }
 
     function mintPoolTokenT(

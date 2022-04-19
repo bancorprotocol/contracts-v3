@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -192,7 +192,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     function isPayable() public view virtual returns (bool);
 
     /**
-     * @dev authorize the contract to receive ETH
+     * @dev authorize the contract to receive the native token
      *
      * requirements:
      *

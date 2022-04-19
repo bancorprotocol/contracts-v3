@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
-
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+pragma solidity 0.8.13;
 
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../../token/Token.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-
-import { INetworkSettings } from "./INetworkSettings.sol";
-import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
  * @dev the data struct representing a pending withdrawal request

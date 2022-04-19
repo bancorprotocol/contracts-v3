@@ -4,6 +4,7 @@ import Contracts, {
     IERC20,
     MasterVault,
     NetworkSettings,
+    PoolCollection,
     PoolToken,
     PoolTokenFactory,
     TestBancorNetwork,
@@ -26,8 +27,9 @@ import {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
-import { TradeAmountAndFeeStructOutput } from '../../typechain-types/TestPoolCollection';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import LegacyContractsV3, { BancorNetworkV1 } from '../../components/LegacyContractsV3';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
+import { MAX_UINT256, PoolType, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
@@ -36,6 +38,7 @@ import {
     createBurnableToken,
     createPool,
     createPoolCollection,
+    createProxy,
     createSystem,
     createTestToken,
     createToken,
@@ -44,7 +47,8 @@ import {
     PoolSpec,
     setupFundedPool,
     specToString,
-    TokenWithAddress
+    TokenWithAddress,
+    upgradeProxy
 } from '../helpers/Factory';
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -279,7 +283,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(1);
+            expect(await network.version()).to.equal(2);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -292,6 +296,97 @@ describe('BancorNetwork', () => {
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
             expect(await network.isPoolValid(bnt.address)).to.be.true;
+        });
+    });
+
+    describe('upgrade', () => {
+        let network: BancorNetworkV1;
+
+        let networkSettings: NetworkSettings;
+        let bnt: IERC20;
+        let bntGovernance: TokenGovernance;
+        let vbntGovernance: TokenGovernance;
+        let bntPool: TestBNTPool;
+        let poolTokenFactory: PoolTokenFactory;
+        let poolMigrator: TestPoolMigrator;
+        let masterVault: MasterVault;
+        let externalProtectionVault: ExternalProtectionVault;
+        let pendingWithdrawals: TestPendingWithdrawals;
+        let bntPoolToken: PoolToken;
+        let poolCollection: PoolCollection;
+        let reserveToken: IERC20;
+
+        beforeEach(async () => {
+            ({
+                networkSettings,
+                bnt,
+                bntGovernance,
+                vbntGovernance,
+                bntPool,
+                poolTokenFactory,
+                poolMigrator,
+                masterVault,
+                externalProtectionVault,
+                pendingWithdrawals,
+                bntPoolToken
+            } = await createSystem());
+
+            network = await createProxy(LegacyContractsV3.BancorNetworkV1, {
+                initArgs: [bntPool.address, pendingWithdrawals.address, poolMigrator.address],
+                ctorArgs: [
+                    bntGovernance.address,
+                    vbntGovernance.address,
+                    networkSettings.address,
+                    masterVault.address,
+                    externalProtectionVault.address,
+                    bntPoolToken.address
+                ]
+            });
+
+            await masterVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+            await masterVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
+
+            await externalProtectionVault.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+            await externalProtectionVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, network.address);
+
+            await bntPool.grantRole(Roles.Upgradeable.ROLE_ADMIN, network.address);
+
+            poolCollection = await Contracts.PoolCollection.deploy(
+                network.address,
+                bnt.address,
+                networkSettings.address,
+                masterVault.address,
+                bntPool.address,
+                externalProtectionVault.address,
+                poolTokenFactory.address,
+                poolMigrator.address
+            );
+
+            await network.addPoolCollection(poolCollection.address);
+            reserveToken = await createTestToken();
+            await networkSettings.addTokenToWhitelist(reserveToken.address);
+            await network.createPool(await poolCollection.poolType(), reserveToken.address);
+        });
+
+        it('should upgrade and preserve existing settings', async () => {
+            const upgradedNetwork = await upgradeProxy(network, Contracts.TestBancorNetwork, {
+                ctorArgs: [
+                    bntGovernance.address,
+                    vbntGovernance.address,
+                    networkSettings.address,
+                    masterVault.address,
+                    externalProtectionVault.address,
+                    bntPoolToken.address
+                ]
+            });
+
+            expect(await upgradedNetwork.bntPool()).to.equal(bntPool.address);
+            expect(await upgradedNetwork.pendingWithdrawals()).to.equal(pendingWithdrawals.address);
+
+            expect(await network.poolCollections()).to.include(poolCollection.address);
+            expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
+            expect(await network.liquidityPools()).to.have.members([reserveToken.address]);
+            expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
         });
     });
 
@@ -600,6 +695,12 @@ describe('BancorNetwork', () => {
                     await expect(
                         network.removePoolCollection(otherCollection.address, newPoolCollection.address)
                     ).to.be.revertedWith('DoesNotExist');
+                });
+
+                it('should revert when attempting to remove a pool collection and specifying it as the latest', async () => {
+                    await expect(
+                        network.removePoolCollection(poolCollection.address, poolCollection.address)
+                    ).to.be.revertedWith('InvalidPoolCollection');
                 });
 
                 it('should remove an existing pool collection', async () => {
@@ -1408,11 +1509,11 @@ describe('BancorNetwork', () => {
                                                         deposit(amount, {
                                                             value: amount.sub(missingAmount)
                                                         })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(0) })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                                 });
 
                                                 it('should refund when attempting to deposit less than what was actually sent', async () => {
@@ -1430,10 +1531,11 @@ describe('BancorNetwork', () => {
                                                     );
                                                 });
                                             } else {
-                                                it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
+                                                // eslint-disable-next-line max-len
+                                                it('should revert when attempting to deposit the native token into a non native token pool', async () => {
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(1) })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                                 });
                                             }
                                         }
@@ -1851,7 +1953,7 @@ describe('BancorNetwork', () => {
                 if (tokenData.isBNT()) {
                     it('should revert when attempting to withdraw without approving VBNT', async () => {
                         await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
-                            new TokenData(TokenSymbol.VBNT).errors().exceedsAllowance
+                            new TokenData(TokenSymbol.vBNT).errors().exceedsAllowance
                         );
                     });
                 }
@@ -1874,7 +1976,7 @@ describe('BancorNetwork', () => {
                                 .transfer(deployer.address, (await vbnt.balanceOf(provider.address)).sub(1));
 
                             await expect(network.connect(provider).withdraw(requests[0].id)).to.be.revertedWith(
-                                new TokenData(TokenSymbol.VBNT).errors().exceedsBalance
+                                new TokenData(TokenSymbol.vBNT).errors().exceedsBalance
                             );
                         });
 
@@ -2328,7 +2430,7 @@ describe('BancorNetwork', () => {
                         targetAmount,
                         sourceAmount,
                         hop2.tradingFeeAmount,
-                        hop2.networkFeeAmount,
+                        0,
                         traderAddress
                     );
             } else if (isTargetBNT) {
@@ -2355,14 +2457,14 @@ describe('BancorNetwork', () => {
                     .withArgs(
                         contextId,
                         sourceToken.address,
-                        bnt.address,
+                        targetToken.address,
                         sourceAmount,
-                        // when providing the source amount, the target amount represents how much BNT we have received,
-                        // while when providing the source target, it represents how many source tokens we were required
-                        // to trade
+                        targetAmount,
+                        // when providing the source amount, the source amount represents how much BNT we were required
+                        // to trade, while when providing the target amount, it represents how many target tokens we
+                        // have received by trading BNT for them
                         bySourceAmount ? hop1.amount : hop2.amount,
-                        bySourceAmount ? hop1.amount : hop2.amount,
-                        hop1.tradingFeeAmount,
+                        hop2.tradingFeeAmount,
                         hop1.tradingFeeAmount,
                         traderAddress
                     );
@@ -2370,23 +2472,6 @@ describe('BancorNetwork', () => {
                 expect(bntPoolStakedBalance).to.equal(
                     prevBNTPoolStakedBalance.add(hop1.tradingFeeAmount.sub(hop1.networkFeeAmount))
                 );
-
-                await expect(res)
-                    .to.emit(network, 'TokensTraded')
-                    .withArgs(
-                        contextId,
-                        bnt.address,
-                        targetToken.address,
-                        // when providing the source amount, the source amount represents how much BNT we were required
-                        // to trade, while when providing the target amount, it represents how many target tokens we
-                        // have received by trading BNT for them
-                        bySourceAmount ? hop1.amount : hop2.amount,
-                        targetAmount,
-                        bySourceAmount ? hop1.amount : hop2.amount,
-                        hop2.tradingFeeAmount,
-                        hop2.networkFeeAmount,
-                        traderAddress
-                    );
             }
 
             expect(await network.pendingNetworkFeeAmount()).to.equal(pendingNetworkFeeAmount);
@@ -2474,11 +2559,11 @@ describe('BancorNetwork', () => {
                                         tradeDirectFunc(testAmount, {
                                             value: testAmount.sub(missingAmount)
                                         })
-                                    ).to.be.revertedWith('EthAmountMismatch');
+                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                     await expect(
                                         tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
-                                    ).to.be.revertedWith('EthAmountMismatch');
+                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                 });
 
                                 it('should refund when attempting to trade less than what was actually sent', async () => {
@@ -2507,9 +2592,9 @@ describe('BancorNetwork', () => {
                                     );
                                 });
                             } else {
-                                it('should revert when passing ETH with a non ETH trade', async () => {
+                                it('should revert when passing the native token with a non native token trade', async () => {
                                     await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
-                                        'EthAmountMismatch'
+                                        'NativeTokenAmountMismatch'
                                     );
                                 });
                             }
@@ -2574,7 +2659,7 @@ describe('BancorNetwork', () => {
                                     it('should revert when attempting to trade using same source and target tokens', async () => {
                                         await expect(
                                             tradeFunc(testAmount, { targetTokenAddress: sourceToken.address })
-                                        ).to.be.revertedWith('InvalidTokens');
+                                        ).to.be.revertedWith('InvalidToken');
                                     });
 
                                     it('should support a custom beneficiary', async () => {
@@ -2943,7 +3028,7 @@ describe('BancorNetwork', () => {
                     poolCollection
                 ));
 
-                await networkSettings.setFlashLoanFeePPM(flashLoanFeePPM);
+                await networkSettings.setFlashLoanFeePPM(token.address, flashLoanFeePPM);
 
                 await transfer(deployer, token, recipient.address, FEE_AMOUNT);
                 await recipient.snapshot(token.address);
@@ -3926,6 +4011,8 @@ describe('BancorNetwork Financial Verification', () => {
         bntStakedBalance: Decimal;
         tknTradingLiquidity: Decimal;
         bntTradingLiquidity: Decimal;
+        averageRateN: Decimal;
+        averageRateD: Decimal;
     }
 
     interface Operation {
@@ -4049,7 +4136,9 @@ describe('BancorNetwork Financial Verification', () => {
             tknStakedBalance: new Decimal(0),
             bntStakedBalance: new Decimal(0),
             tknTradingLiquidity: new Decimal(0),
-            bntTradingLiquidity: new Decimal(0)
+            bntTradingLiquidity: new Decimal(0),
+            averageRateN: new Decimal(0),
+            averageRateD: new Decimal(0)
         };
 
         for (const userId in users) {
@@ -4085,6 +4174,8 @@ describe('BancorNetwork Financial Verification', () => {
         actual.bntStakedBalance = integerToDecimal(await bntPool.stakedBalance(), bntDecimals);
         actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
         actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.bntTradingLiquidity, bntDecimals);
+        actual.averageRateN = integerToDecimal(poolData.averageRate.rate.n, 0);
+        actual.averageRateD = integerToDecimal(poolData.averageRate.rate.d, 0);
 
         expect(actual).to.deep.equal(expected);
     };
@@ -4223,6 +4314,7 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario1');
         test('BancorNetworkSimpleFinancialScenario2');
         test('BancorNetworkSimpleFinancialScenario3');
+        test('BancorNetworkSimpleFinancialScenario4');
     });
 
     describe('@stress test', () => {

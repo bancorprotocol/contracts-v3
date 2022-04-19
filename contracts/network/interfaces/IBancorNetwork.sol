@@ -1,23 +1,14 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity 0.8.12;
+pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
-
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
-import { IMasterVault } from "./../../vaults/interfaces/IMasterVault.sol";
 
 import { Token } from "../../token/Token.sol";
 
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
-import { IPoolMigrator } from "../../pools/interfaces/IPoolMigrator.sol";
-
-import { INetworkSettings } from "./INetworkSettings.sol";
-import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
  * @dev Flash-loan recipient interface
@@ -96,7 +87,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the tokens on its behalf (ETH is handled separately)
+     * - the caller must have approved the network to transfer the tokens on its behalf (except for in the
+     *   native token case)
      */
     function depositFor(
         address provider,
@@ -109,7 +101,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the tokens on its behalf (ETH is handled separately)
+     * - the caller must have approved the network to transfer the tokens on its behalf (except for in the
+     *   native token case)
      */
     function deposit(Token pool, uint256 tokenAmount) external payable returns (uint256);
 
@@ -199,7 +192,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
      */
     function tradeBySourceAmount(
         Token sourceToken,
@@ -235,7 +229,8 @@ interface IBancorNetwork is IUpgradeable {
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
      */
     function tradeByTargetAmount(
         Token sourceToken,
