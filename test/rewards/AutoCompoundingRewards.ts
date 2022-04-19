@@ -11,7 +11,7 @@ import Contracts, {
     TestPoolCollection,
     TestRewardsMath
 } from '../../components/Contracts';
-import { RewardsDistributionType, ZERO_ADDRESS } from '../../utils/Constants';
+import { RewardsDistributionType, ZERO_ADDRESS, EXP2_INPUT_TOO_HIGH } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, max, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -34,9 +34,12 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
-const HALF_LIFE = (distributionType: RewardsDistributionType) => distributionType === RewardsDistributionType.ExponentialDecay ? 48_520_303 : 0;
+const HALF_DURATION = duration.days(560);
+const MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(HALF_DURATION).sub(1).ceil().toNumber();
 
-describe.only('AutoCompoundingRewards', () => {
+const HALF_LIFE = (distributionType: RewardsDistributionType) => distributionType === RewardsDistributionType.ExponentialDecay ? HALF_DURATION : 0;
+
+describe('AutoCompoundingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
     let rewardsProvider: SignerWithAddress;
@@ -206,7 +209,7 @@ describe.only('AutoCompoundingRewards', () => {
 
         const testProgramManagement = (distributionType: RewardsDistributionType) => {
             const END_TIME = distributionType === RewardsDistributionType.Flat ? START_TIME + TOTAL_DURATION : 0;
-            const EFFECTIVE_END_TIME = END_TIME || START_TIME + 1_119_999_999;
+            const EFFECTIVE_END_TIME = distributionType === RewardsDistributionType.Flat ? END_TIME : START_TIME + MAX_DURATION;
 
             beforeEach(async () => {
                 autoCompoundingRewards = await createAutoCompoundingRewards(
@@ -1358,7 +1361,7 @@ describe.only('AutoCompoundingRewards', () => {
 
                 case RewardsDistributionType.ExponentialDecay:
                     describe('regular tests', () => {
-                        for (const programDuration of [1_119_999_999]) {
+                        for (const programDuration of [MAX_DURATION]) {
                             context(
                                 `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
                                 () => {

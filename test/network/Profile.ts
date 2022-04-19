@@ -22,7 +22,8 @@ import {
     MAX_UINT256,
     PPM_RESOLUTION,
     RewardsDistributionType,
-    ZERO_ADDRESS
+    ZERO_ADDRESS,
+    EXP2_INPUT_TOO_HIGH
 } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -1182,6 +1183,9 @@ describe('Profile @profile', () => {
     });
 
     describe('auto-compounding rewards', () => {
+        const HALF_LIFE = duration.days(560);
+        const MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(HALF_LIFE).sub(1).ceil().toNumber();
+
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
@@ -1267,7 +1271,7 @@ describe('Profile @profile', () => {
                             distributionType,
                             startTime,
                             distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0,
-                            distributionType === RewardsDistributionType.Flat ? 0 : 48_520_303
+                            distributionType === RewardsDistributionType.Flat ? 0 : HALF_LIFE
                         );
                     });
 
@@ -1333,7 +1337,7 @@ describe('Profile @profile', () => {
                     break;
 
                 case RewardsDistributionType.ExponentialDecay:
-                    for (const programDuration of [1_119_999_999]) {
+                    for (const programDuration of [MAX_DURATION]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
                             () => {
