@@ -1,6 +1,6 @@
 import { StandardRewards } from '../../components/Contracts';
 import { BNT } from '../../components/LegacyContracts';
-import { DeployedContracts } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { describeDeployment } from '../helpers/Deploy';
 import { expect } from 'chai';
@@ -17,6 +17,10 @@ describeDeployment(__filename, () => {
 
     it('should upgrade the standard rewards contract', async () => {
         expect(await standardRewards.version()).to.equal(2);
+
+        if (!isMainnet()) {
+            return;
+        }
 
         const { dai, link } = await getNamedAccounts();
 
