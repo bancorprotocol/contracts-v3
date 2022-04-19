@@ -34,6 +34,9 @@ const TestNamedAccounts = {
     linkWhale: {
         ...mainnet('0xc6bed363b30df7f35b601a5547fe56cd31ec63da'),
         ...rinkeby('0xfed4ddb595f42a5dbf48b9f318ad9b8e2685c27b')
+    },
+    bntWhale: {
+        ...mainnet('0xf977814e90da44bfa03b6295a0616a897441acec')
     }
 };
 
