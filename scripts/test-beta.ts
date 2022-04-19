@@ -84,7 +84,7 @@ const main = async () => {
 
         await network
             .connect(whale)
-            .deposit(pool, depositLimit, { value: isNativeToken ? initialDeposit : BigNumber.from(0) });
+            .deposit(pool, initialDeposit, { value: isNativeToken ? initialDeposit : BigNumber.from(0) });
 
         await poolCollection.connect(deployer).enableTrading(pool, bntVirtualBalance, tokenVirtualBalance);
     }
