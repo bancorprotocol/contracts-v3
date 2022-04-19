@@ -27,7 +27,11 @@ library RewardsMath {
      * Note that because the exponentiation function is limited to an input of up to (and excluding) 16,
      * the input value to this function is limited by `timeElapsed / halfLife < 16`
      */
-    function calcExpDecayRewards(uint256 totalRewards, uint32 timeElapsed, uint32 halfLife) internal pure returns (uint256) {
+    function calcExpDecayRewards(
+        uint256 totalRewards,
+        uint32 timeElapsed,
+        uint32 halfLife
+    ) internal pure returns (uint256) {
         Fraction memory input = Fraction({ n: timeElapsed, d: halfLife });
         Fraction memory output = MathEx.exp2(input);
         return MathEx.mulDivF(totalRewards, output.n - output.d, output.n);

@@ -19,11 +19,11 @@ import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
 import {
+    EXP2_INPUT_TOO_HIGH,
     MAX_UINT256,
     PPM_RESOLUTION,
     RewardsDistributionType,
-    ZERO_ADDRESS,
-    EXP2_INPUT_TOO_HIGH
+    ZERO_ADDRESS
 } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';

@@ -11,7 +11,7 @@ import Contracts, {
     TestPoolCollection,
     TestRewardsMath
 } from '../../components/Contracts';
-import { RewardsDistributionType, ZERO_ADDRESS, EXP2_INPUT_TOO_HIGH } from '../../utils/Constants';
+import { EXP2_INPUT_TOO_HIGH, RewardsDistributionType, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, max, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -37,7 +37,8 @@ import humanizeDuration from 'humanize-duration';
 const HALF_DURATION = duration.days(560);
 const MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(HALF_DURATION).sub(1).ceil().toNumber();
 
-const HALF_LIFE = (distributionType: RewardsDistributionType) => distributionType === RewardsDistributionType.ExponentialDecay ? HALF_DURATION : 0;
+const HALF_LIFE = (distributionType: RewardsDistributionType) =>
+    distributionType === RewardsDistributionType.ExponentialDecay ? HALF_DURATION : 0;
 
 describe('AutoCompoundingRewards', () => {
     let deployer: SignerWithAddress;
@@ -209,7 +210,8 @@ describe('AutoCompoundingRewards', () => {
 
         const testProgramManagement = (distributionType: RewardsDistributionType) => {
             const END_TIME = distributionType === RewardsDistributionType.Flat ? START_TIME + TOTAL_DURATION : 0;
-            const EFFECTIVE_END_TIME = distributionType === RewardsDistributionType.Flat ? END_TIME : START_TIME + MAX_DURATION;
+            const EFFECTIVE_END_TIME =
+                distributionType === RewardsDistributionType.Flat ? END_TIME : START_TIME + MAX_DURATION;
 
             beforeEach(async () => {
                 autoCompoundingRewards = await createAutoCompoundingRewards(
@@ -238,7 +240,14 @@ describe('AutoCompoundingRewards', () => {
                         await expect(
                             autoCompoundingRewards
                                 .connect(user)
-                                .createProgram(token.address, TOTAL_REWARDS, distributionType, START_TIME, END_TIME, HALF_LIFE(distributionType))
+                                .createProgram(
+                                    token.address,
+                                    TOTAL_REWARDS,
+                                    distributionType,
+                                    START_TIME,
+                                    END_TIME,
+                                    HALF_LIFE(distributionType)
+                                )
                         ).to.be.revertedWith('AccessDenied');
                     });
 
@@ -884,7 +893,14 @@ describe('AutoCompoundingRewards', () => {
 
                             await expect(res)
                                 .to.emit(autoCompoundingRewards, 'ProgramCreated')
-                                .withArgs(token.address, distributionType, TOTAL_REWARDS, START_TIME, END_TIME, HALF_LIFE(distributionType));
+                                .withArgs(
+                                    token.address,
+                                    distributionType,
+                                    TOTAL_REWARDS,
+                                    START_TIME,
+                                    END_TIME,
+                                    HALF_LIFE(distributionType)
+                                );
 
                             const program = await autoCompoundingRewards.program(token.address);
 
@@ -1034,8 +1050,18 @@ describe('AutoCompoundingRewards', () => {
                         currTimeElapsed = currTime - program.startTime;
                         prevTimeElapsed = prevTime - program.startTime;
                         tokenAmountToDistribute = (
-                            await rewardsMath.calcExpDecayRewards(program.totalRewards, currTimeElapsed, HALF_LIFE(program.distributionType))
-                        ).sub(await rewardsMath.calcExpDecayRewards(program.totalRewards, prevTimeElapsed, HALF_LIFE(program.distributionType)));
+                            await rewardsMath.calcExpDecayRewards(
+                                program.totalRewards,
+                                currTimeElapsed,
+                                HALF_LIFE(program.distributionType)
+                            )
+                        ).sub(
+                            await rewardsMath.calcExpDecayRewards(
+                                program.totalRewards,
+                                prevTimeElapsed,
+                                HALF_LIFE(program.distributionType)
+                            )
+                        );
 
                         break;
 

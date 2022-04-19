@@ -86,7 +86,7 @@ describe('RewardsMath', () => {
                     years(16),
                     years(32),
                     years(35),
-                    years(36),
+                    years(36)
                 ]) {
                     for (const halfLife of [days(350), days(560)]) {
                         calcExpDecayRewards(totalRewards, timeElapsed, halfLife);
@@ -109,7 +109,14 @@ describe('RewardsMath', () => {
                         for (let hoursNum = 0; hoursNum < 5; hoursNum++) {
                             for (let daysNum = 0; daysNum < 5; daysNum++) {
                                 for (let yearsNum = 0; yearsNum < 5; yearsNum++) {
-                                    for (const halfLife of [days(1), days(30), years(0.5), years(1), years(1.5), years(2)]) {
+                                    for (const halfLife of [
+                                        days(1),
+                                        days(30),
+                                        years(0.5),
+                                        years(1),
+                                        years(1.5),
+                                        years(2)
+                                    ]) {
                                         calcExpDecayRewards(
                                             totalRewards,
                                             seconds(secondsNum) +
@@ -117,7 +124,7 @@ describe('RewardsMath', () => {
                                                 hours(hoursNum) +
                                                 days(daysNum) +
                                                 years(yearsNum),
-                                                halfLife
+                                            halfLife
                                         );
                                     }
                                 }
