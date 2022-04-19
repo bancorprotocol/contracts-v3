@@ -29,7 +29,7 @@ describeDeployment(
         };
 
         const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_875);
-        
+
         beforeEach(async () => {
             networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
             poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
