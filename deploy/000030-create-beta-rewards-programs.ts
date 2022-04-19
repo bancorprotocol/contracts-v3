@@ -1,4 +1,4 @@
-import { DeployedContracts, execute, InstanceName, setDeploymentMetadata } from '../utils/Deploy';
+import { DeployedContracts, execute, InstanceName, isLive, setDeploymentMetadata } from '../utils/Deploy';
 import { duration } from '../utils/Time';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
@@ -34,5 +34,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     return true;
 };
+
+func.skip = async () => !isLive();
 
 export default setDeploymentMetadata(__filename, func);

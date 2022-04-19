@@ -3,9 +3,9 @@ import {
     DeployedContracts,
     execute,
     InstanceName,
+    isLive,
     isHardhat,
     isLocalhost,
-    isMainnetFork,
     setDeploymentMetadata
 } from '../utils/Deploy';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
@@ -30,8 +30,6 @@ const BETA_TOKEN_PRICES_IN_CENTS = {
 };
 
 const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_875);
-const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_250);
-const FUNDING_LIMIT = toWei(BNT_FUNDING_LIMIT_IN_CENTS).div(BNT_TOKEN_PRICE_IN_CENTS);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, dai, link, ethWhale, daiWhale, linkWhale } = await getNamedAccounts();
@@ -78,13 +76,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             });
         }
 
-        await execute({
-            name: InstanceName.NetworkSettings,
-            methodName: 'setFundingLimit',
-            args: [address, FUNDING_LIMIT],
-            from: deployer
-        });
-
         const tokenPriceInCents = BETA_TOKEN_PRICES_IN_CENTS[tokenSymbol as BetaTokens];
         const depositLimit = toWei(TKN_DEPOSIT_LIMIT_IN_CENTS).div(tokenPriceInCents);
 
@@ -102,34 +93,27 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             from: deployer
         });
 
-        if (isMainnetFork()) {
-            const bntVirtualBalance = tokenPriceInCents;
-            const tokenVirtualBalance = BNT_TOKEN_PRICE_IN_CENTS;
-            const initialDeposit = minLiquidityForTrading.mul(tokenVirtualBalance).div(bntVirtualBalance).mul(3);
+        const bntVirtualBalance = tokenPriceInCents;
+        const tokenVirtualBalance = BNT_TOKEN_PRICE_IN_CENTS;
+        const initialDeposit = minLiquidityForTrading.mul(tokenVirtualBalance).div(bntVirtualBalance).mul(3);
 
-            if (!isNativeToken) {
-                const token = await Contracts.ERC20.attach(address);
-                await token.connect(await ethers.getSigner(whale)).approve(network.address, initialDeposit);
-            }
-
-            await execute({
-                name: InstanceName.BancorNetwork,
-                methodName: 'deposit',
-                args: [address, initialDeposit],
-                from: whale,
-                value: isNativeToken ? initialDeposit : BigNumber.from(0)
-            });
-
-            await execute({
-                name: InstanceName.PoolCollectionType1V1,
-                methodName: 'enableTrading',
-                args: [address, bntVirtualBalance, tokenVirtualBalance],
-                from: deployer
-            });
+        if (!isNativeToken) {
+            const token = await Contracts.ERC20.attach(address);
+            await token.connect(await ethers.getSigner(whale)).approve(network.address, initialDeposit);
         }
+
+        await execute({
+            name: InstanceName.BancorNetwork,
+            methodName: 'deposit',
+            args: [address, initialDeposit],
+            from: whale,
+            value: isNativeToken ? initialDeposit : BigNumber.from(0)
+        });
     }
 
     return true;
 };
+
+func.skip = async () => !isLive();
 
 export default setDeploymentMetadata(__filename, func);
