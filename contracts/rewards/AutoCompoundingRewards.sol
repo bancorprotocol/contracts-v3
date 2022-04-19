@@ -33,8 +33,6 @@ import {
 
 import { RewardsMath } from "./RewardsMath.sol";
 
-uint32 constant SECONDS_PER_DAY = 60 * 60 * 24;
-
 /**
  * @dev Auto-compounding Rewards contract
  */
@@ -249,7 +247,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
-            halfLife: halfLifeInDays * SECONDS_PER_DAY,
+            halfLife: halfLifeInDays * 1 days,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
             isEnabled: true,
