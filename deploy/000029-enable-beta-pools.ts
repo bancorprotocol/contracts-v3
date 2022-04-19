@@ -3,9 +3,9 @@ import {
     DeployedContracts,
     execute,
     InstanceName,
-    isLive,
     isHardhat,
     isLocalhost,
+    isMainnet,
     setDeploymentMetadata
 } from '../utils/Deploy';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
@@ -114,6 +114,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.skip = async () => !isLive();
+func.skip = async () => !isMainnet();
 
 export default setDeploymentMetadata(__filename, func);

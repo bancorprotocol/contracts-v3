@@ -1,6 +1,6 @@
 import { BancorNetworkInfo, StandardRewards } from '../../components/Contracts';
 import { BNT } from '../../components/LegacyContracts';
-import { DeployedContracts, isLive } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
@@ -46,5 +46,5 @@ describeDeployment(
             }
         });
     },
-    () => !isLive()
+    () => !isMainnet()
 );

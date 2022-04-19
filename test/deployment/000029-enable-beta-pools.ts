@@ -1,6 +1,6 @@
 import { PoolCollection } from '../../components/Contracts';
 import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
-import { DeployedContracts, isLive } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toCents, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
@@ -64,5 +64,5 @@ describeDeployment(
             }
         });
     },
-    () => !isLive()
+    () => !isMainnet()
 );
