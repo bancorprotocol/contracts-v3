@@ -1,11 +1,12 @@
 import Contracts, { BancorNetwork, PoolCollection, PoolToken } from '../../components/Contracts';
 import { BNT, VBNT } from '../../components/LegacyContracts';
 import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
-import { DEFAULT_TRADING_FEE_PPM, MAX_UINT256 } from '../../utils/Constants';
+import { DEFAULT_TRADING_FEE_PPM, MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
 import { DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toCents, toWei } from '../../utils/Types';
 import { describeDeployment } from '../helpers/Deploy';
+import { getBalance, getTransactionCost } from '../helpers/Utils';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
 import { BigNumber } from 'ethers';
@@ -89,7 +90,7 @@ describeDeployment(
                 // increase deposit limits and perform a few tests
                 await poolCollection.connect(deployerSigner).setDepositLimit(address, MAX_UINT256);
 
-                // perform a few token deposit tests
+                // perform a few deposit tests
                 const whaleSigner = await ethers.getSigner(whale);
                 const tokenAmount = toWei(100);
 
@@ -122,6 +123,46 @@ describeDeployment(
                         }
                     );
                 }
+
+                // perform a few trade tests
+                for (let i = 0; i < 5; i++) {
+                    if (!isNativeToken) {
+                        const token = await Contracts.ERC20.attach(address);
+                        await token.connect(whaleSigner).approve(network.address, tokenAmount);
+                    }
+
+                    const prevTokenBalance = await getBalance({ address }, whaleSigner);
+                    const prevBNTBalance = await getBalance(bnt, whaleSigner);
+
+                    const res = await network
+                        .connect(whaleSigner)
+                        .tradeBySourceAmount(address, bnt.address, tokenAmount, 1, MAX_UINT256, ZERO_ADDRESS, {
+                            value: isNativeToken ? tokenAmount : BigNumber.from(0)
+                        });
+
+                    let transactionCost = BigNumber.from(0);
+                    if (isNativeToken) {
+                        transactionCost = await getTransactionCost(res);
+                    }
+
+                    const newBNTBalance = await getBalance(bnt, whaleSigner);
+
+                    expect(await getBalance({ address }, whaleSigner)).to.equal(
+                        prevTokenBalance.sub(tokenAmount).sub(transactionCost)
+                    );
+                    expect(newBNTBalance).to.be.gt(prevBNTBalance);
+
+                    await bnt.connect(whaleSigner).approve(network.address, newBNTBalance);
+
+                    const prevTokenBalance2 = await getBalance({ address }, whaleSigner);
+
+                    await network
+                        .connect(whaleSigner)
+                        .tradeBySourceAmount(bnt.address, address, newBNTBalance, 1, MAX_UINT256, ZERO_ADDRESS);
+
+                    expect(await getBalance({ address }, whaleSigner)).to.gte(prevTokenBalance2);
+                    expect(await getBalance(bnt, whaleSigner)).to.be.equal(0);
+                }
             }
 
             // perform a few BNT deposit tests
@@ -129,16 +170,17 @@ describeDeployment(
             const bntAmount = toWei(1000);
 
             for (let i = 0; i < 5; i++) {
-                const prevBNBNTTokenAmount = await bntBNT.balanceOf(bntWhaleSigner.address);
-                const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhaleSigner.address);
+                const prevBNBNAmount = await getBalance(bntBNT, bntWhaleSigner);
+                const prevVBNTTokenAmount = await getBalance(vbnt, bntWhaleSigner);
                 const prevTotalSupply = await bnt.totalSupply();
 
                 await bnt.connect(bntWhaleSigner).approve(network.address, bntAmount);
                 await network.connect(bntWhaleSigner).deposit(bnt.address, bntAmount);
 
-                // test received bnBNT and VBNT amounts (assuming an initial 1:1 ratio)
-                expect(await bntBNT.balanceOf(bntWhaleSigner.address)).to.equal(prevBNBNTTokenAmount.add(bntAmount));
-                expect(await vbnt.balanceOf(bntWhaleSigner.address)).to.equal(prevVBNTTokenAmount.add(bntAmount));
+                const receivedBNBNTAmount = (await getBalance(bntBNT, bntWhaleSigner)).sub(prevBNBNAmount);
+
+                expect(receivedBNBNTAmount).be.gt(0);
+                expect(await getBalance(vbnt, bntWhaleSigner)).to.equal(prevVBNTTokenAmount.add(receivedBNBNTAmount));
 
                 expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(bntAmount));
             }
