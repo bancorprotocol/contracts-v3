@@ -534,7 +534,9 @@ export const deploymentTagExists = async (tag: string) => {
     }
 
     const migrations = JSON.parse(fs.readFileSync(migrationsPath, 'utf-8'));
-    return !!migrations[tag];
+    const tags = Object.keys(migrations).map((tag) => deploymentFileNameToTag(tag));
+
+    return tags.includes(tag);
 };
 
 const deploymentFileNameToTag = (filename: string) => Number(path.basename(filename).split('-')[0]).toString();
