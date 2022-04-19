@@ -33,7 +33,7 @@ import {
 
 import { RewardsMath } from "./RewardsMath.sol";
 
-uint256 constant SECONDS_PER_DAY = 60 * 60 * 24;
+uint32 constant SECONDS_PER_DAY = 60 * 60 * 24;
 
 /**
  * @dev Auto-compounding Rewards contract
