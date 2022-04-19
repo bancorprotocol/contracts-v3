@@ -2513,7 +2513,7 @@ describe('StandardRewards', () => {
                     const testClaimRewards = async () => testStakeOrClaimRewards(false);
                     const testStakeRewards = async () => testStakeOrClaimRewards(true);
 
-                    it.only('should properly claim rewards', async () => {
+                    it('should properly claim rewards', async () => {
                         // pending rewards should be 0 before the beginning of the program
                         await setTime(standardRewards, rewardsData.startTime - duration.days(1));
 
