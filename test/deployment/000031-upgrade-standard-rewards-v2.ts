@@ -23,9 +23,6 @@ describeDeployment(__filename, () => {
         for (const pool of [bnt.address, NATIVE_TOKEN_ADDRESS, dai, link]) {
             const id = await standardRewards.latestProgramId(pool);
 
-            expect(await standardRewards.isProgramActive(id)).to.be.true;
-            expect(await standardRewards.isProgramEnabled(id)).to.be.true;
-
             const programs = await standardRewards.programs([id]);
             const program = programs[0];
 
