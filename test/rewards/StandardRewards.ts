@@ -1049,7 +1049,6 @@ describe('StandardRewards', () => {
                             ).to.include(id.toNumber());
 
                             const programRewards = await standardRewards.programRewards(id);
-                            const providerRewards = await standardRewards.providerRewards(provider.address, id);
 
                             // ensure that the snapshot has been updated
                             expect(programRewards.lastUpdateTime).to.equal(expectedUpdateTime);
@@ -1059,6 +1058,9 @@ describe('StandardRewards', () => {
                             expect(await standardRewards.providerStake(provider.address, id)).to.equal(
                                 prevProviderStake.add(amount)
                             );
+
+                            const providerRewards = await standardRewards.providerRewards(provider.address, id);
+                            expect(providerRewards.rewardPerTokenPaid).to.equal(programRewards.rewardPerToken);
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
 
                             expect(await poolToken.balanceOf(provider.address)).to.equal(
@@ -1656,6 +1658,8 @@ describe('StandardRewards', () => {
                             expect(await standardRewards.providerStake(provider.address, id)).to.equal(
                                 prevProviderStake.add(amount)
                             );
+
+                            expect(providerRewards.rewardPerTokenPaid).to.equal(programRewards.rewardPerToken);
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
                             expect(await getBalance(pool, provider.address)).to.equal(
                                 prevProviderTokenBalance.sub(amount).sub(poolData.isNative() ? transactionCost : 0)
@@ -2397,6 +2401,10 @@ describe('StandardRewards', () => {
                                 maxRelativeError: new Decimal('0000000000000000000001')
                             });
 
+                            const programRewards = await standardRewards.programRewards(id);
+                            const providerRewards = await standardRewards.providerRewards(p.address, id);
+                            expect(providerRewards.rewardPerTokenPaid).to.equal(programRewards.rewardPerToken);
+
                             if (!claimedProgram.isZero()) {
                                 await expect(res)
                                     .to.emit(standardRewards, stake ? 'RewardsStaked' : 'RewardsClaimed')
@@ -2505,7 +2513,7 @@ describe('StandardRewards', () => {
                     const testClaimRewards = async () => testStakeOrClaimRewards(false);
                     const testStakeRewards = async () => testStakeOrClaimRewards(true);
 
-                    it('should properly claim rewards', async () => {
+                    it.only('should properly claim rewards', async () => {
                         // pending rewards should be 0 before the beginning of the program
                         await setTime(standardRewards, rewardsData.startTime - duration.days(1));
 

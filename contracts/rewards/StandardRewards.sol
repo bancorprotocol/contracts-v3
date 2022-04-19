@@ -579,6 +579,33 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
+     * @dev set providers rewards data to the latest snapshot
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     *
+     * @notice this function will be removed before the official launch
+     */
+    function resetProgram(uint256 id, address[] calldata providers) external onlyAdmin {
+        _verifyProgramExists(_programs[id]);
+
+        Rewards memory rewards = _programRewards[id];
+        uint256 rewardPerToken = rewards.rewardPerToken;
+
+        uint256 length = providers.length;
+        for (uint256 i = 0; i < length; i++) {
+            ProviderRewards storage providerRewardsData = _providerRewards[providers[i]][id];
+            if (providerRewardsData.stakedAmount == 0) {
+                revert DoesNotExist();
+            }
+
+            providerRewardsData.rewardPerTokenPaid = rewardPerToken;
+            providerRewardsData.pendingRewards = 0;
+        }
+    }
+
+    /**
      * @dev adds provider's stake to the program
      */
     function _join(
@@ -880,9 +907,10 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
         uint256 newPendingRewards = _pendingRewards(newRewardPerToken, providerRewardsData);
         if (newPendingRewards != 0) {
-            providerRewardsData.rewardPerTokenPaid = newRewardPerToken;
             providerRewardsData.pendingRewards = newPendingRewards;
         }
+
+        providerRewardsData.rewardPerTokenPaid = newRewardPerToken;
 
         return providerRewardsData;
     }
