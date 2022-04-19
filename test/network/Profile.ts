@@ -1183,8 +1183,8 @@ describe('Profile @profile', () => {
     });
 
     describe('auto-compounding rewards', () => {
-        const HALF_LIFE = duration.days(560);
-        const MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(HALF_LIFE).sub(1).ceil().toNumber();
+        const EXP_DECAY_HALF_LIFE = duration.days(561);
+        const EXP_DECAY_MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(EXP_DECAY_HALF_LIFE).sub(1).ceil().toNumber();
 
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
@@ -1271,7 +1271,7 @@ describe('Profile @profile', () => {
                             distributionType,
                             startTime,
                             distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0,
-                            distributionType === RewardsDistributionType.Flat ? 0 : HALF_LIFE
+                            distributionType === RewardsDistributionType.Flat ? 0 : EXP_DECAY_HALF_LIFE
                         );
                     });
 
@@ -1337,7 +1337,7 @@ describe('Profile @profile', () => {
                     break;
 
                 case RewardsDistributionType.ExponentialDecay:
-                    for (const programDuration of [MAX_DURATION]) {
+                    for (const programDuration of [EXP_DECAY_MAX_DURATION]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
                             () => {
