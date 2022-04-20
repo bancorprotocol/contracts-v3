@@ -1,5 +1,5 @@
-import { StandardRewards } from '../../components/Contracts';
 import { BNT } from '../../components/LegacyContracts';
+import { StandardRewardsV2 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
@@ -8,7 +8,7 @@ import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
     let bnt: BNT;
-    let standardRewards: StandardRewards;
+    let standardRewards: StandardRewardsV2;
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
