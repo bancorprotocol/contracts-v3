@@ -1,8 +1,8 @@
-import { isTenderlyFork } from '../utils/Deploy';
+import { getNamedSigners, isTenderlyFork } from '../utils/Deploy';
 import { toWei } from '../utils/Types';
 import '@nomiclabs/hardhat-ethers';
 import '@typechain/hardhat';
-import { ethers, getNamedAccounts } from 'hardhat';
+import { ethers } from 'hardhat';
 import 'hardhat-deploy';
 import { setTimeout } from 'timers/promises';
 
@@ -13,9 +13,7 @@ const main = async () => {
         throw new Error('Invalid network');
     }
 
-    const { ethWhale: ethWhaleAddress } = await getNamedAccounts();
-
-    const ethWhale = await ethers.getSigner(ethWhaleAddress);
+    const { ethWhale } = await getNamedSigners();
 
     while (true) {
         try {

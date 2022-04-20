@@ -30,6 +30,7 @@ import { ExternalContracts } from '../deployments/data';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
@@ -174,6 +175,16 @@ export const isLive = () => (isMainnet() && !isMainnetFork()) || isRinkeby();
 const TEST_MINIMUM_BALANCE = toWei(10);
 const TEST_FUNDING = toWei(10);
 
+export const getNamedSigners = async (): Promise<Record<string, SignerWithAddress>> => {
+    const signers: Record<string, SignerWithAddress> = {};
+
+    for (const [name, address] of Object.entries(await getNamedAccounts())) {
+        signers[name] = await ethers.getSigner(address);
+    }
+
+    return signers;
+};
+
 export const fundAccount = async (account: string) => {
     if (!isMainnetFork()) {
         return;
@@ -184,10 +195,9 @@ export const fundAccount = async (account: string) => {
         return;
     }
 
-    const { ethWhale } = await getNamedAccounts();
-    const whale = await ethers.getSigner(ethWhale);
+    const { ethWhale } = await getNamedSigners();
 
-    return whale.sendTransaction({
+    return ethWhale.sendTransaction({
         value: TEST_FUNDING,
         to: account
     });
