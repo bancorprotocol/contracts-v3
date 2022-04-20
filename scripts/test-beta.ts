@@ -1,5 +1,5 @@
 import Contracts from '../components/Contracts';
-import { DeployedContracts, isTenderlyFork } from '../utils/Deploy';
+import { DeployedContracts, getNamedSigners, isTenderlyFork } from '../utils/Deploy';
 import { duration } from '../utils/Time';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toCents, toWei } from '../utils/Types';
@@ -35,22 +35,21 @@ const main = async () => {
         throw new Error('Invalid network');
     }
 
-    const { deployer: deployerAddress, dai, link, ethWhale, daiWhale, linkWhale } = await getNamedAccounts();
-
-    const deployer = await ethers.getSigner(deployerAddress);
+    const { dai, link } = await getNamedAccounts();
+    const { deployer, ethWhale, daiWhale, linkWhale } = await getNamedSigners();
 
     const BETA_TOKENS = {
         [BetaTokens.ETH]: {
             pool: NATIVE_TOKEN_ADDRESS,
-            whale: await ethers.getSigner(ethWhale)
+            whale: ethWhale
         },
         [BetaTokens.DAI]: {
             pool: dai,
-            whale: await ethers.getSigner(daiWhale)
+            whale: daiWhale
         },
         [BetaTokens.LINK]: {
             pool: link,
-            whale: await ethers.getSigner(linkWhale)
+            whale: linkWhale
         }
     };
 

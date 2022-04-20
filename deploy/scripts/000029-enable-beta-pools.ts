@@ -2,6 +2,7 @@ import Contracts from '../../components/Contracts';
 import {
     DeployedContracts,
     execute,
+    getNamedSigners,
     InstanceName,
     isHardhat,
     isLocalhost,
@@ -11,7 +12,6 @@ import {
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../../utils/TokenData';
 import { toCents, toWei } from '../../utils/Types';
 import { BigNumber } from 'ethers';
-import { ethers } from 'hardhat';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -32,7 +32,8 @@ const BETA_TOKEN_PRICES_IN_CENTS = {
 const TKN_DEPOSIT_LIMIT_IN_CENTS = toCents(171_875);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, dai, link, ethWhale, daiWhale, linkWhale } = await getNamedAccounts();
+    const { deployer, dai, link } = await getNamedAccounts();
+    const { ethWhale, daiWhale, linkWhale } = await getNamedSigners();
 
     const BETA_TOKENS = {
         [BetaTokens.ETH]: {
@@ -99,14 +100,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
         if (!isNativeToken) {
             const token = await Contracts.ERC20.attach(address);
-            await token.connect(await ethers.getSigner(whale)).approve(network.address, initialDeposit);
+            await token.connect(whale).approve(network.address, initialDeposit);
         }
 
         await execute({
             name: InstanceName.BancorNetwork,
             methodName: 'deposit',
             args: [address, initialDeposit],
-            from: whale,
+            from: whale.address,
             value: isNativeToken ? initialDeposit : BigNumber.from(0)
         });
     }
