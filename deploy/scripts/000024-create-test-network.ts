@@ -5,7 +5,6 @@ import {
     execute,
     InstanceName,
     isLive,
-    save,
     setDeploymentMetadata,
     TestTokenInstanceName
 } from '../../utils/Deploy';
@@ -111,7 +110,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
-    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
 
     for (const {
         symbol,
@@ -155,12 +153,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             methodName: 'createPool',
             args: [PoolType.Standard, testToken.address],
             from: deployer
-        });
-
-        await save({
-            name: `bn${symbol}` as InstanceName,
-            contract: 'PoolToken',
-            address: await poolCollection.poolToken(testToken.address)
         });
 
         await execute({
