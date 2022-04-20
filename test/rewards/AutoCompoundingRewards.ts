@@ -34,7 +34,7 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
-describe.only('AutoCompoundingRewards', () => {
+describe('AutoCompoundingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
     let rewardsProvider: SignerWithAddress;
