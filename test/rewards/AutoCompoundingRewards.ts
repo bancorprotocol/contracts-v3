@@ -346,7 +346,7 @@ describe.only('AutoCompoundingRewards', () => {
                                         isProgramTimingValid = currTime <= startTime && startTime < endTime;
                                         break;
                                     case RewardsDistributionType.ExponentialDecay:
-                                        isProgramTimingValid = currTime <= startTime && endTime === 0;
+                                        isProgramTimingValid = currTime <= startTime;
                                         break;
                                 }
 
@@ -666,7 +666,7 @@ describe.only('AutoCompoundingRewards', () => {
                                             break;
 
                                         case RewardsDistributionType.ExponentialDecay:
-                                            isProgramTimingValid = creationTime <= startTime && endTime === 0;
+                                            isProgramTimingValid = creationTime <= startTime;
                                             isProgramTimingActive = startTime <= currTime;
                                             break;
                                     }
