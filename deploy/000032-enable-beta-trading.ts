@@ -13,9 +13,9 @@ enum BetaTokens {
 }
 
 const BETA_TOKEN_PRICES_IN_CENTS = {
-    [BetaTokens.ETH]: toCents(3081),
+    [BetaTokens.ETH]: toCents(3082),
     [BetaTokens.DAI]: toCents(1),
-    [BetaTokens.LINK]: toCents(14.25)
+    [BetaTokens.LINK]: toCents(13.92)
 };
 
 const BNT_FUNDING_LIMIT_IN_CENTS = toCents(156_250);
