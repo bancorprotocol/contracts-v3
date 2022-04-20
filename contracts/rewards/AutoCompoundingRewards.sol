@@ -206,20 +206,18 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IAutoCompoundingRewards
+     * @dev creates an exponential-decay program for a pool
      */
-    function createFlatProgram(
+    function _createProgram(
         Token pool,
         uint256 totalRewards,
+        uint8 distributionType,
         uint32 startTime,
-        uint32 endTime
-    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
+        uint32 endTime,
+        uint32 halfLifeInDays
+    ) private validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert AlreadyExists();
-        }
-
-        if (startTime < _time() || startTime >= endTime) {
-            revert InvalidParam();
         }
 
         IPoolToken poolToken;
@@ -233,14 +231,27 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
+        uint32 currTime = _time();
+        if (distributionType == FLAT_DISTRIBUTION) {
+            if (!(currTime <= startTime && startTime < endTime && halfLifeInDays == 0)) {
+                revert InvalidParam();
+            }
+        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+            if (!(currTime <= startTime && endTime == 0 && halfLifeInDays != 0)) {
+                revert InvalidParam();
+            }
+        } else {
+            revert InvalidParam();
+        }
+
         ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
-            halfLife: 0,
+            halfLife: halfLifeInDays * 1 days,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
             isEnabled: true,
-            distributionType: FLAT_DISTRIBUTION,
+            distributionType: distributionType,
             totalRewards: totalRewards,
             remainingRewards: totalRewards
         });
@@ -253,12 +264,24 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         emit ProgramCreated({
             pool: pool,
-            distributionType: FLAT_DISTRIBUTION,
+            distributionType: distributionType,
             totalRewards: totalRewards,
             startTime: startTime,
             endTime: endTime,
-            halfLifeInDays: 0
+            halfLifeInDays: halfLifeInDays
         });
+    }
+
+    /**
+     * @inheritdoc IAutoCompoundingRewards
+     */
+    function createFlatProgram(
+        Token pool,
+        uint256 totalRewards,
+        uint32 startTime,
+        uint32 endTime
+    ) external {
+        _createProgram(pool, totalRewards, FLAT_DISTRIBUTION, startTime, endTime, 0);
     }
 
     /**
@@ -269,52 +292,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint32 startTime,
         uint32 halfLifeInDays
-    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
-        if (_doesProgramExist(_programs[pool])) {
-            revert AlreadyExists();
-        }
-
-        if (startTime < _time() || halfLifeInDays == 0) {
-            revert InvalidParam();
-        }
-
-        IPoolToken poolToken;
-        if (pool.isEqual(_bnt)) {
-            poolToken = _bntPoolToken;
-        } else {
-            if (!_networkSettings.isTokenWhitelisted(pool)) {
-                revert NotWhitelisted();
-            }
-
-            poolToken = _network.collectionByPool(pool).poolToken(pool);
-        }
-
-        ProgramData memory p = ProgramData({
-            startTime: startTime,
-            endTime: 0,
-            halfLife: halfLifeInDays * 1 days,
-            prevDistributionTimestamp: 0,
-            poolToken: poolToken,
-            isEnabled: true,
-            distributionType: EXPONENTIAL_DECAY_DISTRIBUTION,
-            totalRewards: totalRewards,
-            remainingRewards: totalRewards
-        });
-
-        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, _rewardsVault(pool));
-
-        _programs[pool] = p;
-
-        assert(_pools.add(address(pool)));
-
-        emit ProgramCreated({
-            pool: pool,
-            distributionType: EXPONENTIAL_DECAY_DISTRIBUTION,
-            totalRewards: totalRewards,
-            startTime: startTime,
-            endTime: 0,
-            halfLifeInDays: halfLifeInDays
-        });
+    ) external {
+        _createProgram(pool, totalRewards, EXPONENTIAL_DECAY_DISTRIBUTION, startTime, 0, halfLifeInDays);
     }
 
     /**
