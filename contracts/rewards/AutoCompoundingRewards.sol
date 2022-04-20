@@ -206,7 +206,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev creates an exponential-decay program for a pool
+     * @dev creates a program for a pool
      */
     function _createProgram(
         Token pool,
