@@ -208,16 +208,18 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function createProgram(
+    function createFlatProgram(
         Token pool,
         uint256 totalRewards,
-        uint8 distributionType,
         uint32 startTime,
-        uint32 endTime,
-        uint32 halfLifeInDays
+        uint32 endTime
     ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert AlreadyExists();
+        }
+
+        if (startTime < _time() || startTime >= endTime) {
+            revert InvalidParam();
         }
 
         IPoolToken poolToken;
@@ -231,27 +233,14 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
-        uint32 currTime = _time();
-        if (distributionType == FLAT_DISTRIBUTION) {
-            if (!(currTime <= startTime && startTime < endTime && halfLifeInDays == 0)) {
-                revert InvalidParam();
-            }
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (!(currTime <= startTime && endTime == 0 && halfLifeInDays != 0)) {
-                revert InvalidParam();
-            }
-        } else {
-            revert InvalidParam();
-        }
-
         ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
-            halfLife: halfLifeInDays * 1 days,
+            halfLife: 0,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
             isEnabled: true,
-            distributionType: distributionType,
+            distributionType: FLAT_DISTRIBUTION,
             totalRewards: totalRewards,
             remainingRewards: totalRewards
         });
@@ -264,10 +253,66 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         emit ProgramCreated({
             pool: pool,
-            distributionType: distributionType,
+            distributionType: FLAT_DISTRIBUTION,
             totalRewards: totalRewards,
             startTime: startTime,
             endTime: endTime,
+            halfLifeInDays: 0
+        });
+    }
+
+    /**
+     * @inheritdoc IAutoCompoundingRewards
+     */
+    function createExpProgram(
+        Token pool,
+        uint256 totalRewards,
+        uint32 startTime,
+        uint32 halfLifeInDays
+    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
+        if (_doesProgramExist(_programs[pool])) {
+            revert AlreadyExists();
+        }
+
+        if (startTime < _time() || halfLifeInDays == 0) {
+            revert InvalidParam();
+        }
+
+        IPoolToken poolToken;
+        if (pool.isEqual(_bnt)) {
+            poolToken = _bntPoolToken;
+        } else {
+            if (!_networkSettings.isTokenWhitelisted(pool)) {
+                revert NotWhitelisted();
+            }
+
+            poolToken = _network.collectionByPool(pool).poolToken(pool);
+        }
+
+        ProgramData memory p = ProgramData({
+            startTime: startTime,
+            endTime: 0,
+            halfLife: halfLifeInDays * 1 days,
+            prevDistributionTimestamp: 0,
+            poolToken: poolToken,
+            isEnabled: true,
+            distributionType: EXPONENTIAL_DECAY_DISTRIBUTION,
+            totalRewards: totalRewards,
+            remainingRewards: totalRewards
+        });
+
+        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, _rewardsVault(pool));
+
+        _programs[pool] = p;
+
+        assert(_pools.add(address(pool)));
+
+        emit ProgramCreated({
+            pool: pool,
+            distributionType: EXPONENTIAL_DECAY_DISTRIBUTION,
+            totalRewards: totalRewards,
+            startTime: startTime,
+            endTime: 0,
             halfLifeInDays: halfLifeInDays
         });
     }

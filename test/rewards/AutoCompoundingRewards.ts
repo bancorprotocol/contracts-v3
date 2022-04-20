@@ -34,7 +34,7 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 
-describe('AutoCompoundingRewards', () => {
+describe.only('AutoCompoundingRewards', () => {
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
     let rewardsProvider: SignerWithAddress;
@@ -206,6 +206,23 @@ describe('AutoCompoundingRewards', () => {
         const DURATION = (distributionType: RewardsDistributionType) =>
             distributionType === RewardsDistributionType.Flat ? FLAT_TOTAL_DURATION : EXP_DECAY_MAX_DURATION;
 
+        const createProgram = async (
+            autoCompoundingRewards: TestAutoCompoundingRewards,
+            pool: string,
+            totalRewards: BigNumberish,
+            distributionType: RewardsDistributionType,
+            startTime: number,
+            endTime: number,
+            halfLifeInDays: number
+        ) => {
+            switch (distributionType) {
+                case RewardsDistributionType.Flat:
+                    return autoCompoundingRewards.createFlatProgram(pool, totalRewards, startTime, endTime);
+                case RewardsDistributionType.ExponentialDecay:
+                    return autoCompoundingRewards.createExpProgram(pool, totalRewards, startTime, halfLifeInDays);
+            }
+        };
+
         beforeEach(async () => {
             ({ network, networkInfo, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } =
                 await createSystem());
@@ -239,22 +256,22 @@ describe('AutoCompoundingRewards', () => {
                 describe('creation', () => {
                     it('should revert when a non-admin attempts to create a program', async () => {
                         await expect(
-                            autoCompoundingRewards
-                                .connect(user)
-                                .createProgram(
-                                    token.address,
-                                    TOTAL_REWARDS,
-                                    distributionType,
-                                    START_TIME,
-                                    END_TIME(distributionType),
-                                    HALF_LIFE(distributionType)
-                                )
+                            createProgram(
+                                autoCompoundingRewards.connect(user),
+                                token.address,
+                                TOTAL_REWARDS,
+                                distributionType,
+                                START_TIME,
+                                END_TIME(distributionType),
+                                HALF_LIFE(distributionType)
+                            )
                         ).to.be.revertedWith('AccessDenied');
                     });
 
                     it('should revert when the reserve token is invalid', async () => {
                         await expect(
-                            autoCompoundingRewards.createProgram(
+                            createProgram(
+                                autoCompoundingRewards,
                                 ZERO_ADDRESS,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -266,7 +283,8 @@ describe('AutoCompoundingRewards', () => {
                     });
 
                     it('should revert when the program already exists', async () => {
-                        await autoCompoundingRewards.createProgram(
+                        await createProgram(
+                            autoCompoundingRewards,
                             token.address,
                             TOTAL_REWARDS,
                             distributionType,
@@ -276,7 +294,8 @@ describe('AutoCompoundingRewards', () => {
                         );
 
                         await expect(
-                            autoCompoundingRewards.createProgram(
+                            createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -289,7 +308,8 @@ describe('AutoCompoundingRewards', () => {
 
                     it('should revert when the total rewards are equal to 0', async () => {
                         await expect(
-                            autoCompoundingRewards.createProgram(
+                            createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 0,
                                 distributionType,
@@ -304,7 +324,8 @@ describe('AutoCompoundingRewards', () => {
                         const nonWhitelistedToken = await createTestToken();
 
                         await expect(
-                            autoCompoundingRewards.createProgram(
+                            createProgram(
+                                autoCompoundingRewards,
                                 nonWhitelistedToken.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -339,7 +360,8 @@ describe('AutoCompoundingRewards', () => {
                                             const poolsBefore = await autoCompoundingRewards.pools();
                                             expect(poolsBefore).to.not.include(token.address);
 
-                                            const res = await autoCompoundingRewards.createProgram(
+                                            const res = await createProgram(
+                                                autoCompoundingRewards,
                                                 token.address,
                                                 TOTAL_REWARDS,
                                                 distributionType,
@@ -382,7 +404,8 @@ describe('AutoCompoundingRewards', () => {
                                             expect(poolsBefore).to.not.include(token.address);
 
                                             await expect(
-                                                autoCompoundingRewards.createProgram(
+                                                createProgram(
+                                                    autoCompoundingRewards,
                                                     token.address,
                                                     TOTAL_REWARDS,
                                                     distributionType,
@@ -416,7 +439,8 @@ describe('AutoCompoundingRewards', () => {
 
                     context('when a program is already created', () => {
                         beforeEach(async () => {
-                            await autoCompoundingRewards.createProgram(
+                            await createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -484,7 +508,8 @@ describe('AutoCompoundingRewards', () => {
 
                 describe('enabling / disabling', () => {
                     beforeEach(async () => {
-                        await autoCompoundingRewards.createProgram(
+                        await createProgram(
+                            autoCompoundingRewards,
                             token.address,
                             TOTAL_REWARDS,
                             distributionType,
@@ -566,7 +591,8 @@ describe('AutoCompoundingRewards', () => {
 
                 describe('processing rewards', () => {
                     beforeEach(async () => {
-                        await autoCompoundingRewards.createProgram(
+                        await createProgram(
+                            autoCompoundingRewards,
                             token.address,
                             TOTAL_REWARDS,
                             distributionType,
@@ -657,7 +683,8 @@ describe('AutoCompoundingRewards', () => {
                                                 beforeEach(async () => {
                                                     await autoCompoundingRewards.setTime(creationTime);
 
-                                                    await autoCompoundingRewards.createProgram(
+                                                    await createProgram(
+                                                        autoCompoundingRewards,
                                                         token.address,
                                                         TOTAL_REWARDS,
                                                         distributionType,
@@ -684,7 +711,8 @@ describe('AutoCompoundingRewards', () => {
 
                     context('before a program has started', () => {
                         beforeEach(async () => {
-                            await autoCompoundingRewards.createProgram(
+                            await createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -703,7 +731,8 @@ describe('AutoCompoundingRewards', () => {
 
                     context('after a program has started', () => {
                         beforeEach(async () => {
-                            await autoCompoundingRewards.createProgram(
+                            await createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -722,7 +751,8 @@ describe('AutoCompoundingRewards', () => {
 
                     context('after a program has ended', () => {
                         beforeEach(async () => {
-                            await autoCompoundingRewards.createProgram(
+                            await createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -759,7 +789,8 @@ describe('AutoCompoundingRewards', () => {
                         });
 
                         it('should return an existing program', async () => {
-                            await autoCompoundingRewards.createProgram(
+                            await createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -794,7 +825,8 @@ describe('AutoCompoundingRewards', () => {
                             ));
 
                             for (const currToken of [token, token1, token2]) {
-                                await autoCompoundingRewards.createProgram(
+                                await createProgram(
+                                    autoCompoundingRewards,
                                     currToken.address,
                                     TOTAL_REWARDS,
                                     distributionType,
@@ -859,7 +891,8 @@ describe('AutoCompoundingRewards', () => {
 
                             it('should not revert when the funds are sufficient for backing the total rewards', async () => {
                                 await expect(
-                                    autoCompoundingRewards.createProgram(
+                                    createProgram(
+                                        autoCompoundingRewards,
                                         token.address,
                                         maxTotalRewards,
                                         distributionType,
@@ -872,7 +905,8 @@ describe('AutoCompoundingRewards', () => {
 
                             it('should revert when the funds are not sufficient for backing the total rewards', async () => {
                                 await expect(
-                                    autoCompoundingRewards.createProgram(
+                                    createProgram(
+                                        autoCompoundingRewards,
                                         token.address,
                                         maxTotalRewards.add(1),
                                         distributionType,
@@ -885,7 +919,8 @@ describe('AutoCompoundingRewards', () => {
                         });
 
                         it('should create the program', async () => {
-                            const res = await autoCompoundingRewards.createProgram(
+                            const res = await createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -923,7 +958,8 @@ describe('AutoCompoundingRewards', () => {
                         let rewardsVault: IVault;
 
                         beforeEach(async () => {
-                            await autoCompoundingRewards.createProgram(
+                            await createProgram(
+                                autoCompoundingRewards,
                                 token.address,
                                 TOTAL_REWARDS,
                                 distributionType,
@@ -1180,16 +1216,19 @@ describe('AutoCompoundingRewards', () => {
                     beforeEach(async () => {
                         startTime = await latest();
 
-                        await autoCompoundingRewards.createProgram(
-                            token.address,
-                            totalRewards,
-                            distributionType,
-                            startTime,
-                            distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0,
-                            distributionType === RewardsDistributionType.Flat
-                                ? 0
-                                : EXP_DECAY_HALF_LIFE / duration.days(1)
-                        );
+                        (await distributionType) === RewardsDistributionType.Flat
+                            ? autoCompoundingRewards.createFlatProgram(
+                                  token.address,
+                                  totalRewards,
+                                  startTime,
+                                  startTime + programDuration
+                              )
+                            : autoCompoundingRewards.createExpProgram(
+                                  token.address,
+                                  totalRewards,
+                                  startTime,
+                                  EXP_DECAY_HALF_LIFE / duration.days(1)
+                              );
                     });
 
                     describe('basic tests', () => {

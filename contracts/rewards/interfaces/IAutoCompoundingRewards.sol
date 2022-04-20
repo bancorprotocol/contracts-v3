@@ -45,19 +45,32 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function isProgramActive(Token pool) external view returns (bool);
 
     /**
-     * @dev creates a program for a pool
+     * @dev creates a flat program for a pool
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      * - the pool must not have an active program
      */
-    function createProgram(
+    function createFlatProgram(
         Token pool,
         uint256 totalRewards,
-        uint8 distributionType,
         uint32 startTime,
-        uint32 endTime,
+        uint32 endTime
+    ) external;
+
+    /**
+     * @dev creates an exponential-decay program for a pool
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     * - the pool must not have an active program
+     */
+    function createExpProgram(
+        Token pool,
+        uint256 totalRewards,
+        uint32 startTime,
         uint32 halfLifeInDays
     ) external;
 
