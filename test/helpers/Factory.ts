@@ -123,6 +123,7 @@ export const createStandardRewards = async (
     network: TestBancorNetwork | BancorNetwork,
     networkSettings: NetworkSettings,
     bntGovernance: TokenGovernance,
+    vbnt: IERC20,
     bntPool: TestBNTPool | BNTPool,
     externalRewardsVault: ExternalRewardsVault
 ) => {
@@ -131,6 +132,7 @@ export const createStandardRewards = async (
             network.address,
             networkSettings.address,
             bntGovernance.address,
+            vbnt.address,
             bntPool.address,
             externalRewardsVault.address
         ]

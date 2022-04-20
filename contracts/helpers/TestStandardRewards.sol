@@ -26,9 +26,19 @@ contract TestStandardRewards is StandardRewards, TestTime {
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         ITokenGovernance initBNTGovernance,
+        IERC20 initVBNT,
         IBNTPool initBNTPool,
         IExternalRewardsVault initExternalRewardsVault
-    ) StandardRewards(initNetwork, initNetworkSettings, initBNTGovernance, initBNTPool, initExternalRewardsVault) {}
+    )
+        StandardRewards(
+            initNetwork,
+            initNetworkSettings,
+            initBNTGovernance,
+            initVBNT,
+            initBNTPool,
+            initExternalRewardsVault
+        )
+    {}
 
     function nextProgramId() external view returns (uint256) {
         return _nextProgramId;

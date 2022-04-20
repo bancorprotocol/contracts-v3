@@ -45,6 +45,7 @@ describe('StandardRewards', () => {
     let bntGovernance: TokenGovernance;
     let bntPool: TestBNTPool;
     let bnt: IERC20;
+    let vbnt: IERC20;
     let poolCollection: TestPoolCollection;
     let externalRewardsVault: ExternalRewardsVault;
     let masterVault: MasterVault;
@@ -133,6 +134,7 @@ describe('StandardRewards', () => {
                 networkInfo,
                 networkSettings,
                 bnt,
+                vbnt,
                 bntGovernance,
                 bntPool,
                 externalRewardsVault,
@@ -147,6 +149,7 @@ describe('StandardRewards', () => {
                     ZERO_ADDRESS,
                     networkSettings.address,
                     bntGovernance.address,
+                    vbnt.address,
                     bntPool.address,
                     externalRewardsVault.address
                 )
@@ -159,6 +162,7 @@ describe('StandardRewards', () => {
                     network.address,
                     ZERO_ADDRESS,
                     bntGovernance.address,
+                    vbnt.address,
                     bntPool.address,
                     externalRewardsVault.address
                 )
@@ -170,6 +174,20 @@ describe('StandardRewards', () => {
                 Contracts.StandardRewards.deploy(
                     network.address,
                     networkSettings.address,
+                    ZERO_ADDRESS,
+                    vbnt.address,
+                    bntPool.address,
+                    externalRewardsVault.address
+                )
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid VBNT contract', async () => {
+            await expect(
+                Contracts.StandardRewards.deploy(
+                    network.address,
+                    networkSettings.address,
+                    bntGovernance.address,
                     ZERO_ADDRESS,
                     bntPool.address,
                     externalRewardsVault.address
@@ -183,6 +201,7 @@ describe('StandardRewards', () => {
                     network.address,
                     networkSettings.address,
                     bntGovernance.address,
+                    vbnt.address,
                     ZERO_ADDRESS,
                     externalRewardsVault.address
                 )
@@ -195,6 +214,7 @@ describe('StandardRewards', () => {
                     network.address,
                     networkSettings.address,
                     bntGovernance.address,
+                    vbnt.address,
                     bntPool.address,
                     ZERO_ADDRESS
                 )
@@ -206,6 +226,7 @@ describe('StandardRewards', () => {
                 network,
                 networkSettings,
                 bntGovernance,
+                vbnt,
                 bntPool,
                 externalRewardsVault
             );
@@ -220,11 +241,12 @@ describe('StandardRewards', () => {
                 network,
                 networkSettings,
                 bntGovernance,
+                vbnt,
                 bntPool,
                 externalRewardsVault
             );
 
-            expect(await standardRewards.version()).to.equal(2);
+            expect(await standardRewards.version()).to.equal(3);
 
             await expectRoles(standardRewards, Roles.Upgradeable);
 
@@ -245,6 +267,7 @@ describe('StandardRewards', () => {
                 networkInfo,
                 networkSettings,
                 bnt,
+                vbnt,
                 bntGovernance,
                 bntPool,
                 externalRewardsVault,
@@ -256,6 +279,7 @@ describe('StandardRewards', () => {
                 network,
                 networkSettings,
                 bntGovernance,
+                vbnt,
                 bntPool,
                 externalRewardsVault
             );
@@ -841,6 +865,7 @@ describe('StandardRewards', () => {
                 networkInfo,
                 networkSettings,
                 bnt,
+                vbnt,
                 bntGovernance,
                 bntPool,
                 externalRewardsVault,
@@ -854,6 +879,7 @@ describe('StandardRewards', () => {
                 network,
                 networkSettings,
                 bntGovernance,
+                vbnt,
                 bntPool,
                 externalRewardsVault
             );
@@ -1019,9 +1045,9 @@ describe('StandardRewards', () => {
                             const prevProgramStake = await standardRewards.programStake(id);
                             const prevProviderStake = await standardRewards.providerStake(provider.address, id);
                             const prevProviderTokenBalance = await poolToken.balanceOf(provider.address);
-                            const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
+                            const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider);
                             const prevStandardRewardsBalance = await poolToken.balanceOf(standardRewards.address);
-                            const prevRewardsTokenBalance = await getBalance(rewardsToken, standardRewards.address);
+                            const prevRewardsTokenBalance = await getBalance(rewardsToken, standardRewards);
 
                             const providerProgramIds = (await standardRewards.providerProgramIds(provider.address)).map(
                                 (id) => id.toNumber()
@@ -1066,15 +1092,13 @@ describe('StandardRewards', () => {
                             expect(await poolToken.balanceOf(provider.address)).to.equal(
                                 prevProviderTokenBalance.sub(amount)
                             );
-                            expect(await getBalance(rewardsToken, provider.address)).to.equal(
+                            expect(await getBalance(rewardsToken, provider)).to.equal(
                                 prevProviderRewardsTokenBalance.sub(transactionCost)
                             );
                             expect(await poolToken.balanceOf(standardRewards.address)).to.equal(
                                 prevStandardRewardsBalance.add(amount)
                             );
-                            expect(await getBalance(rewardsToken, standardRewards.address)).to.equal(
-                                prevRewardsTokenBalance
-                            );
+                            expect(await getBalance(rewardsToken, standardRewards)).to.equal(prevRewardsTokenBalance);
                         };
 
                         it('should join', async () => {
@@ -1227,9 +1251,9 @@ describe('StandardRewards', () => {
                         const prevProviderStake = await standardRewards.providerStake(provider.address, id);
                         const prevProviderRewards = await standardRewards.providerRewards(provider.address, id);
                         const prevProviderTokenBalance = await poolToken.balanceOf(provider.address);
-                        const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
+                        const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider);
                         const prevStandardRewardsBalance = await poolToken.balanceOf(standardRewards.address);
-                        const prevRewardsTokenBalance = await getBalance(rewardsToken, standardRewards.address);
+                        const prevRewardsTokenBalance = await getBalance(rewardsToken, standardRewards);
 
                         const res = await standardRewards.connect(provider).leave(id, amount);
 
@@ -1277,15 +1301,13 @@ describe('StandardRewards', () => {
                         expect(await poolToken.balanceOf(provider.address)).to.equal(
                             prevProviderTokenBalance.add(amount)
                         );
-                        expect(await getBalance(rewardsToken, provider.address)).to.equal(
+                        expect(await getBalance(rewardsToken, provider)).to.equal(
                             prevProviderRewardsTokenBalance.sub(transactionCost)
                         );
                         expect(await poolToken.balanceOf(standardRewards.address)).to.equal(
                             prevStandardRewardsBalance.sub(amount)
                         );
-                        expect(await getBalance(rewardsToken, standardRewards.address)).to.equal(
-                            prevRewardsTokenBalance
-                        );
+                        expect(await getBalance(rewardsToken, standardRewards)).to.equal(prevRewardsTokenBalance);
                     };
 
                     it('should leave', async () => {
@@ -1589,7 +1611,8 @@ describe('StandardRewards', () => {
                             const prevProviderRewards = await standardRewards.providerRewards(provider.address, id);
                             const prevProgramStake = await standardRewards.programStake(id);
                             const prevProviderStake = await standardRewards.providerStake(provider.address, id);
-                            const prevProviderTokenBalance = await getBalance(pool, provider.address);
+                            const prevProviderTokenBalance = await getBalance(pool, provider);
+                            const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
                             const prevProviderRewardsTokenBalance = await getBalance(rewardsToken, provider.address);
                             const prevStandardRewardsBalance = await poolToken.balanceOf(standardRewards.address);
                             const prevRewardsTokenBalance = await getBalance(rewardsToken, standardRewards.address);
@@ -1663,6 +1686,11 @@ describe('StandardRewards', () => {
                             expect(providerRewards.stakedAmount).to.equal(prevProviderRewards.stakedAmount.add(amount));
                             expect(await getBalance(pool, provider.address)).to.equal(
                                 prevProviderTokenBalance.sub(amount).sub(poolData.isNative() ? transactionCost : 0)
+                            );
+                            expect(await vbnt.balanceOf(provider.address)).to.equal(
+                                poolData.isBNT()
+                                    ? prevProviderVBNTBalance.add(expectedPoolTokenAmount)
+                                    : prevProviderVBNTBalance
                             );
                             expect(await getBalance(rewardsToken, provider.address)).to.equal(
                                 prevProviderRewardsTokenBalance
@@ -1756,6 +1784,7 @@ describe('StandardRewards', () => {
                 networkInfo,
                 networkSettings,
                 bnt,
+                vbnt,
                 bntGovernance,
                 bntPool,
                 externalRewardsVault,
@@ -1767,6 +1796,7 @@ describe('StandardRewards', () => {
                 network,
                 networkSettings,
                 bntGovernance,
+                vbnt,
                 bntPool,
                 externalRewardsVault
             );
@@ -2369,6 +2399,7 @@ describe('StandardRewards', () => {
                             const prevUnclaimedRewards = await standardRewards.unclaimedRewards(rewardsToken.address);
 
                             const prevProviderBalance = await getBalance(rewardsToken, p);
+                            const prevProviderVBNTBalance = await vbnt.balanceOf(p.address);
                             const prevMasterVaultBalance = await getBalance(rewardsToken, masterVault);
                             const prevContractVaultBalance = await getBalance(rewardsToken, standardRewards);
                             const prevBntTotalSupply = await bnt.totalSupply();
@@ -2454,12 +2485,17 @@ describe('StandardRewards', () => {
                                 } else {
                                     expect(poolTokenAmount).not.to.equal(0);
                                 }
+
                                 expect(await rewardsPoolData.poolToken.balanceOf(p.address)).to.equal(
                                     prevProviderRewardsPoolTokenBalance.add(poolTokenAmount)
                                 );
-
                                 expect(await getBalance(rewardsToken, p)).to.equal(
                                     prevProviderBalance.sub(transactionCost)
+                                );
+                                expect(await vbnt.balanceOf(p.address)).to.equal(
+                                    rewardsTokenData.isBNT()
+                                        ? prevProviderVBNTBalance.add(poolTokenAmount)
+                                        : prevProviderVBNTBalance
                                 );
 
                                 // in any case, there shouldn't be any newly minted BNT tokens since either the rewards
@@ -2492,6 +2528,7 @@ describe('StandardRewards', () => {
                                     prevProviderBalance.add(totalClaimed).sub(transactionCost)
                                 );
                                 expect(await getBalance(rewardsToken, masterVault)).to.equal(prevMasterVaultBalance);
+                                expect(await vbnt.balanceOf(p.address)).to.equal(prevProviderVBNTBalance);
 
                                 if (rewardsTokenData.isBNT()) {
                                     expect(await bnt.totalSupply()).to.equal(prevBntTotalSupply.add(totalClaimed));

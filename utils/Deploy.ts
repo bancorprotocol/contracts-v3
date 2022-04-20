@@ -25,7 +25,12 @@ import {
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
-import { BancorNetworkV1, NetworkSettingsV1, StandardRewardsV1 } from '../components/LegacyContractsV3';
+import {
+    BancorNetworkV1,
+    NetworkSettingsV1,
+    StandardRewardsV1,
+    StandardRewardsV2
+} from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
@@ -119,7 +124,8 @@ const DeployedLegacyContracts = {
 
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
-    StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards)
+    StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
+    StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards)
 };
 
 const DeployedNewContracts = {

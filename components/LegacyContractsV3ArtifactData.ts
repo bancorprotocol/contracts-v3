@@ -1,7 +1,8 @@
 import {
     BancorNetworkV1__factory,
     NetworkSettingsV1__factory,
-    StandardRewardsV1__factory
+    StandardRewardsV1__factory,
+    StandardRewardsV2__factory
 } from '../deployments/mainnet/types';
 import { ArtifactData } from './ContractBuilder';
 
@@ -21,6 +22,11 @@ const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
     StandardRewardsV1: {
         abi: StandardRewardsV1__factory.abi,
         bytecode: StandardRewardsV1__factory.bytecode
+    },
+
+    StandardRewardsV2: {
+        abi: StandardRewardsV2__factory.abi,
+        bytecode: StandardRewardsV2__factory.bytecode
     }
 };
 

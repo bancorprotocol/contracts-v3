@@ -6,7 +6,7 @@
 import type {
   StandardRewards,
   StandardRewardsInterface,
-} from "../../../contracts/rewards/StandardRewards";
+} from "../../../contracts/rewards/StandardRewardsV2";
 import type { Provider, TransactionRequest } from "@ethersproject/providers";
 import { Signer, utils, Contract, ContractFactory, Overrides } from "ethers";
 

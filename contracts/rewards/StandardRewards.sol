@@ -3,6 +3,7 @@ pragma solidity 0.8.13;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -34,6 +35,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     using Address for address payable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using TokenLibrary for Token;
+    using SafeERC20 for IERC20;
 
     struct RewardData {
         Token rewardsToken;
@@ -72,6 +74,9 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
     // the BNT contract
     IERC20 private immutable _bnt;
+
+    // the VBNT contract
+    IERC20 private immutable _vbnt;
 
     // the BNT pool token contract
     IPoolToken private immutable _bntPoolToken;
@@ -167,12 +172,14 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         ITokenGovernance initBNTGovernance,
+        IERC20 initVBNT,
         IBNTPool initBNTPool,
         IExternalRewardsVault initExternalRewardsVault
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initBNTGovernance))
+        validAddress(address(initVBNT))
         validAddress(address(initBNTPool))
         validAddress(address(initExternalRewardsVault))
     {
@@ -180,6 +187,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         _networkSettings = initNetworkSettings;
         _bntGovernance = initBNTGovernance;
         _bnt = initBNTGovernance.token();
+        _vbnt = initVBNT;
         _bntPoolToken = initBNTPool.poolToken();
         _externalRewardsVault = initExternalRewardsVault;
     }
@@ -229,7 +237,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**
@@ -573,35 +581,28 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
         // deposit provider's tokens to the network. Please note, that since we're staking rewards, then the deposit
         // should come from the contract itself, but the pool tokens should be sent to the provider directly
-        uint256 poolTokenAmount = _deposit(msg.sender, rewardData.rewardsToken, rewardData.amount, address(this));
+        uint256 poolTokenAmount = _deposit(
+            msg.sender,
+            address(this),
+            false,
+            rewardData.rewardsToken,
+            rewardData.amount
+        );
 
         return StakeAmounts({ stakedRewardAmount: rewardData.amount, poolTokenAmount: poolTokenAmount });
     }
 
     /**
-     * @dev set providers rewards data to the latest snapshot
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     *
-     * @notice this function will be removed before the official launch
+     * @dev transfers provider vBNT tokens to their owners (beta utility only, will be removed before the official launch)
      */
-    function resetProgram(uint256 id, address[] calldata providers) external onlyAdmin {
-        _verifyProgramExists(_programs[id]);
-
-        Rewards memory rewards = _programRewards[id];
-        uint256 rewardPerToken = rewards.rewardPerToken;
-
+    function transferProviderVBNT(address[] calldata providers, uint256[] calldata amounts) external onlyAdmin {
         uint256 length = providers.length;
-        for (uint256 i = 0; i < length; i++) {
-            ProviderRewards storage providerRewardsData = _providerRewards[providers[i]][id];
-            if (providerRewardsData.stakedAmount == 0) {
-                revert DoesNotExist();
-            }
+        if (length != amounts.length) {
+            revert InvalidParam();
+        }
 
-            providerRewardsData.rewardPerTokenPaid = rewardPerToken;
-            providerRewardsData.pendingRewards = 0;
+        for (uint256 i = 0; i < length; i++) {
+            _vbnt.safeTransfer(providers[i], amounts[i]);
         }
     }
 
@@ -683,11 +684,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      */
     function _deposit(
         address provider,
+        address payer,
+        bool keepPoolTokens,
         Token pool,
-        uint256 tokenAmount,
-        address payer
+        uint256 tokenAmount
     ) private returns (uint256) {
         uint256 poolTokenAmount;
+        address recipient = keepPoolTokens ? address(this) : provider;
         bool externalPayer = payer != address(this);
 
         if (pool.isNative()) {
@@ -699,7 +702,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
                 }
             }
 
-            poolTokenAmount = _network.depositFor{ value: tokenAmount }(provider, pool, tokenAmount);
+            poolTokenAmount = _network.depositFor{ value: tokenAmount }(recipient, pool, tokenAmount);
 
             // refund the caller for the remaining native token amount
             if (externalPayer && msg.value > tokenAmount) {
@@ -715,9 +718,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             if (externalPayer) {
                 pool.safeTransferFrom(payer, address(this), tokenAmount);
             }
-            pool.ensureApprove(address(_network), tokenAmount);
 
-            poolTokenAmount = _network.depositFor(provider, pool, tokenAmount);
+            pool.ensureApprove(address(_network), tokenAmount);
+            poolTokenAmount = _network.depositFor(recipient, pool, tokenAmount);
+
+            if (keepPoolTokens && pool.isEqual(_bnt)) {
+                _vbnt.safeTransfer(provider, poolTokenAmount);
+            }
         }
 
         return poolTokenAmount;
@@ -733,7 +740,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     ) private {
         // deposit provider's tokens to the network and let the contract itself to claim the pool tokens so that it can
         // immediately add them to a program
-        uint256 poolTokenAmount = _deposit(address(this), p.pool, tokenAmount, provider);
+        uint256 poolTokenAmount = _deposit(provider, provider, true, p.pool, tokenAmount);
 
         // join the existing program, but ensure not to attempt to transfer the tokens from the provider by setting the
         // payer as the contract itself
