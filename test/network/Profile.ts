@@ -1265,7 +1265,7 @@ describe('Profile @profile', () => {
                     beforeEach(async () => {
                         startTime = await latest();
 
-                        (await distributionType) === RewardsDistributionType.Flat
+                        await (distributionType === RewardsDistributionType.Flat
                             ? autoCompoundingRewards.createFlatProgram(
                                   token.address,
                                   totalRewards,
@@ -1277,7 +1277,7 @@ describe('Profile @profile', () => {
                                   totalRewards,
                                   startTime,
                                   EXP_DECAY_HALF_LIFE / duration.days(1)
-                              );
+                              ));
                     });
 
                     const testMultipleDistributions = (step: number, totalSteps: number) => {

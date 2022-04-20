@@ -1216,7 +1216,7 @@ describe('AutoCompoundingRewards', () => {
                     beforeEach(async () => {
                         startTime = await latest();
 
-                        (await distributionType) === RewardsDistributionType.Flat
+                        await (distributionType === RewardsDistributionType.Flat
                             ? autoCompoundingRewards.createFlatProgram(
                                   token.address,
                                   totalRewards,
@@ -1228,7 +1228,7 @@ describe('AutoCompoundingRewards', () => {
                                   totalRewards,
                                   startTime,
                                   EXP_DECAY_HALF_LIFE / duration.days(1)
-                              );
+                              ));
                     });
 
                     describe('basic tests', () => {
