@@ -593,20 +593,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev transfers provider vBNT tokens to their owners (beta utility only, will be removed before the official launch)
-     */
-    function transferProviderVBNT(address[] calldata providers, uint256[] calldata amounts) external onlyAdmin {
-        uint256 length = providers.length;
-        if (length != amounts.length) {
-            revert InvalidParam();
-        }
-
-        for (uint256 i = 0; i < length; i++) {
-            _vbnt.safeTransfer(providers[i], amounts[i]);
-        }
-    }
-
-    /**
      * @dev adds provider's stake to the program
      */
     function _join(
