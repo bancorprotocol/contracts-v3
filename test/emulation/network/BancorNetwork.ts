@@ -1,7 +1,7 @@
-import { BigNumber } from 'ethers';
 import { BNTPool } from '../pools/BNTPool';
 import { PoolCollection } from '../pools/PoolCollection';
 import { Constants, TokenType } from '../utility/Common';
+import { BigNumber } from 'ethers';
 
 export const BancorNetwork = {
     depositBNT,
@@ -17,7 +17,7 @@ export const BancorNetwork = {
     underlyingToPoolTokenBNT,
     underlyingToPoolTokenTKN,
     poolTokenAmountToBurnBNT,
-    poolTokenAmountToBurnTKN,
+    poolTokenAmountToBurnTKN
 };
 
 interface TradeResult {
@@ -27,19 +27,11 @@ interface TradeResult {
     networkFeeAmount: BigNumber;
 }
 
-function depositBNT(
-    reserveTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
+function depositBNT(reserveTokenAmount: BigNumber, poolTokenSupply: BigNumber, stakedBalance: BigNumber) {
     return BNTPool.deposit(reserveTokenAmount, poolTokenSupply, stakedBalance);
 }
 
-function depositTKN(
-    reserveTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
+function depositTKN(reserveTokenAmount: BigNumber, poolTokenSupply: BigNumber, stakedBalance: BigNumber) {
     return PoolCollection.deposit(reserveTokenAmount, poolTokenSupply, stakedBalance);
 }
 
@@ -83,7 +75,7 @@ function tradeBySourceAmountBNTtoTKN(
     tradingFeePPM: BigNumber,
     networkFeePPM: BigNumber,
     bntTradingLiquidity: BigNumber,
-    tknTradingLiquidity: BigNumber,
+    tknTradingLiquidity: BigNumber
 ) {
     return _trade(
         TokenType.BNT,
@@ -106,7 +98,7 @@ function tradeBySourceAmountTKNtoBNT(
     tradingFeePPM: BigNumber,
     networkFeePPM: BigNumber,
     bntTradingLiquidity: BigNumber,
-    tknTradingLiquidity: BigNumber,
+    tknTradingLiquidity: BigNumber
 ) {
     return _trade(
         TokenType.TKN,
@@ -129,7 +121,7 @@ function tradeByTargetAmountBNTtoTKN(
     tradingFeePPM: BigNumber,
     networkFeePPM: BigNumber,
     bntTradingLiquidity: BigNumber,
-    tknTradingLiquidity: BigNumber,
+    tknTradingLiquidity: BigNumber
 ) {
     return _trade(
         TokenType.BNT,
@@ -152,7 +144,7 @@ function tradeByTargetAmountTKNtoBNT(
     tradingFeePPM: BigNumber,
     networkFeePPM: BigNumber,
     bntTradingLiquidity: BigNumber,
-    tknTradingLiquidity: BigNumber,
+    tknTradingLiquidity: BigNumber
 ) {
     return _trade(
         TokenType.TKN,
@@ -168,35 +160,19 @@ function tradeByTargetAmountTKNtoBNT(
     );
 }
 
-function poolTokenToUnderlyingBNT(
-    poolTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
+function poolTokenToUnderlyingBNT(poolTokenAmount: BigNumber, poolTokenSupply: BigNumber, stakedBalance: BigNumber) {
     return BNTPool.poolTokenToUnderlying(poolTokenAmount, poolTokenSupply, stakedBalance);
 }
 
-function poolTokenToUnderlyingTKN(
-    poolTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
+function poolTokenToUnderlyingTKN(poolTokenAmount: BigNumber, poolTokenSupply: BigNumber, stakedBalance: BigNumber) {
     return PoolCollection.poolTokenToUnderlying(poolTokenAmount, poolTokenSupply, stakedBalance);
 }
 
-function underlyingToPoolTokenBNT(
-    reserveTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
+function underlyingToPoolTokenBNT(reserveTokenAmount: BigNumber, poolTokenSupply: BigNumber, stakedBalance: BigNumber) {
     return BNTPool.underlyingToPoolToken(reserveTokenAmount, poolTokenSupply, stakedBalance);
 }
 
-function underlyingToPoolTokenTKN(
-    reserveTokenAmount: BigNumber,
-    poolTokenSupply: BigNumber,
-    stakedBalance: BigNumber
-) {
+function underlyingToPoolTokenTKN(reserveTokenAmount: BigNumber, poolTokenSupply: BigNumber, stakedBalance: BigNumber) {
     return PoolCollection.underlyingToPoolToken(reserveTokenAmount, poolTokenSupply, stakedBalance);
 }
 
@@ -206,7 +182,12 @@ function poolTokenAmountToBurnBNT(
     stakedBalance: BigNumber,
     protocolPoolTokenAmount: BigNumber
 ) {
-    return BNTPool.poolTokenAmountToBurn(tokenAmountToDistribute, poolTokenSupply, stakedBalance, protocolPoolTokenAmount);
+    return BNTPool.poolTokenAmountToBurn(
+        tokenAmountToDistribute,
+        poolTokenSupply,
+        stakedBalance,
+        protocolPoolTokenAmount
+    );
 }
 
 function poolTokenAmountToBurnTKN(
@@ -215,7 +196,12 @@ function poolTokenAmountToBurnTKN(
     stakedBalance: BigNumber,
     protocolPoolTokenAmount: BigNumber
 ) {
-    return PoolCollection.poolTokenAmountToBurn(tokenAmountToDistribute, poolTokenSupply, stakedBalance, protocolPoolTokenAmount);
+    return PoolCollection.poolTokenAmountToBurn(
+        tokenAmountToDistribute,
+        poolTokenSupply,
+        stakedBalance,
+        protocolPoolTokenAmount
+    );
 }
 
 function _trade(
@@ -251,7 +237,7 @@ function _trade(
         };
     }
 
-    if ((sourceToken === TokenType.TKN) && (targetToken === TokenType.TKN)) {
+    if (sourceToken === TokenType.TKN && targetToken === TokenType.TKN) {
         const hops = _tradeTKN(
             sourceToken,
             targetToken,
@@ -325,11 +311,55 @@ function _tradeTKN(
     const hops = new Array<TradeResult>(2);
 
     if (bySourceAmount) {
-        hops[0] = _tradeBNT(sourceToken, TokenType.BNT, true, amount, Constants.ONE, stakedBalance, tradingFeePPM, networkFeePPM, bntTradingLiquidity, tknTradingLiquidity);
-        hops[1] = _tradeBNT(TokenType.BNT, targetToken, true, hops[0].targetAmount, limit, stakedBalance, tradingFeePPM, networkFeePPM, bntTradingLiquidity, tknTradingLiquidity);
+        hops[0] = _tradeBNT(
+            sourceToken,
+            TokenType.BNT,
+            true,
+            amount,
+            Constants.ONE,
+            stakedBalance,
+            tradingFeePPM,
+            networkFeePPM,
+            bntTradingLiquidity,
+            tknTradingLiquidity
+        );
+        hops[1] = _tradeBNT(
+            TokenType.BNT,
+            targetToken,
+            true,
+            hops[0].targetAmount,
+            limit,
+            stakedBalance,
+            tradingFeePPM,
+            networkFeePPM,
+            bntTradingLiquidity,
+            tknTradingLiquidity
+        );
     } else {
-        hops[1] = _tradeBNT(targetToken, TokenType.BNT, false, amount, Constants.MAX_UINT256, stakedBalance, tradingFeePPM, networkFeePPM, bntTradingLiquidity, tknTradingLiquidity);
-        hops[0] = _tradeBNT(TokenType.BNT, sourceToken, false, hops[1].sourceAmount, stakedBalance, limit, tradingFeePPM, networkFeePPM, bntTradingLiquidity, tknTradingLiquidity);
+        hops[1] = _tradeBNT(
+            targetToken,
+            TokenType.BNT,
+            false,
+            amount,
+            Constants.MAX_UINT256,
+            stakedBalance,
+            tradingFeePPM,
+            networkFeePPM,
+            bntTradingLiquidity,
+            tknTradingLiquidity
+        );
+        hops[0] = _tradeBNT(
+            TokenType.BNT,
+            sourceToken,
+            false,
+            hops[1].sourceAmount,
+            stakedBalance,
+            limit,
+            tradingFeePPM,
+            networkFeePPM,
+            bntTradingLiquidity,
+            tknTradingLiquidity
+        );
     }
 
     return hops;
