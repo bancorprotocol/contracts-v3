@@ -324,11 +324,14 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         _autoTriggerCount = autoTriggerCount;
 
-        emit AutoTriggerCountUpdated({ prevAutoTriggerCount: prevAutoTriggerCount, autoTriggerCount: autoTriggerCount });
+        emit AutoTriggerCountUpdated({
+            prevAutoTriggerCount: prevAutoTriggerCount,
+            autoTriggerCount: autoTriggerCount
+        });
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function trigger() external nonReentrant {
         address[] memory values = _pools.values();
@@ -346,7 +349,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @inheritdoc IAutoCompoundingStakingRewards
+     * @inheritdoc IAutoCompoundingRewards
      */
     function processRewards(Token pool) external nonReentrant {
         _processRewards(pool);
