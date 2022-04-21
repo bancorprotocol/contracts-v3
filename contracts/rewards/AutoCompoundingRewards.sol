@@ -231,16 +231,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
-        uint32 currTime = _time();
-        if (distributionType == FLAT_DISTRIBUTION) {
-            if (!(currTime <= startTime && startTime < endTime && halfLifeInDays == 0)) {
-                revert InvalidParam();
-            }
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (!(currTime <= startTime && endTime == 0 && halfLifeInDays != 0)) {
-                revert InvalidParam();
-            }
-        } else {
+        if (startTime < _time()) {
             revert InvalidParam();
         }
 
@@ -281,6 +272,10 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint32 startTime,
         uint32 endTime
     ) external {
+        if (startTime >= endTime) {
+            revert InvalidParam();
+        }
+
         _createProgram(pool, totalRewards, FLAT_DISTRIBUTION, startTime, endTime, 0);
     }
 
@@ -293,6 +288,10 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint32 startTime,
         uint32 halfLifeInDays
     ) external {
+        if (halfLifeInDays == 0) {
+            revert InvalidParam();
+        }
+
         _createProgram(pool, totalRewards, EXPONENTIAL_DECAY_DISTRIBUTION, startTime, 0, halfLifeInDays);
     }
 
