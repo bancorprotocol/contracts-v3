@@ -28,7 +28,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await save({
         name: InstanceName.bnBNT,
         contract: 'PoolToken',
-        address: poolTokenAddress
+        address: poolTokenAddress,
+        skipTypechain: true
     });
 
     await execute({

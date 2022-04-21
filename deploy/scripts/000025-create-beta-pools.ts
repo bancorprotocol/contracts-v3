@@ -1,13 +1,5 @@
 import { PoolType } from '../../utils/Constants';
-import {
-    DeployedContracts,
-    execute,
-    InstanceName,
-    isHardhat,
-    isLocalhost,
-    save,
-    setDeploymentMetadata
-} from '../../utils/Deploy';
+import { execute, InstanceName, isHardhat, isLocalhost, setDeploymentMetadata } from '../../utils/Deploy';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../../utils/TokenData';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -26,8 +18,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         [BetaTokens.DAI]: dai,
         [BetaTokens.LINK]: link
     };
-
-    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
 
     for (const [symbol, address] of Object.entries(BETA_TOKENS)) {
         const isNativeToken = symbol === BetaTokens.ETH;
@@ -63,12 +53,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             methodName: 'createPool',
             args: [PoolType.Standard, address],
             from: deployer
-        });
-
-        await save({
-            name: `bn${symbol}` as InstanceName,
-            contract: 'PoolToken',
-            address: await poolCollection.poolToken(address)
         });
 
         await execute({

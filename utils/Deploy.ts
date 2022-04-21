@@ -469,17 +469,20 @@ interface Deployment {
     address: Address;
     proxy?: boolean;
     implementation?: Address;
+    skipTypechain?: boolean;
     skipVerification?: boolean;
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address, proxy, skipVerification } = deployment;
+    const { name, contract, address, proxy, skipVerification, skipTypechain } = deployment;
 
     const contractName = contract || name;
     const { abi } = await getExtendedArtifact(contractName);
 
     // save the typechain for future use
-    saveTypes({ name, contract: contractName });
+    if (!skipTypechain) {
+        saveTypes({ name, contract: contractName });
+    }
 
     // save the deployment json data in the deployments folder
     await saveContract(name, { abi, address });
@@ -489,12 +492,10 @@ export const save = async (deployment: Deployment) => {
         await saveContract(`${name}_Proxy`, { abi, address });
     }
 
-    if (skipVerification) {
-        return;
-    }
-
     // publish the contract to a Tenderly fork
-    return verifyTenderlyFork(deployment);
+    if (!skipVerification) {
+        await verifyTenderlyFork(deployment);
+    }
 };
 
 interface ContractData {
