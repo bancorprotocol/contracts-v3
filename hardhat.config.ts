@@ -123,6 +123,10 @@ const config: HardhatUserConfig = {
         }
     },
 
+    paths: {
+        deploy: ['deploy/scripts']
+    },
+
     tenderly: {
         forkNetwork: '1',
         project: TENDERLY_PROJECT,

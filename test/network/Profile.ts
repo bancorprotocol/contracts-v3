@@ -1385,6 +1385,7 @@ describe('Profile @profile', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bntGovernance: TokenGovernance;
+        let vbnt: IERC20;
         let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
         let externalRewardsVault: ExternalRewardsVault;
@@ -1399,13 +1400,22 @@ describe('Profile @profile', () => {
         });
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, bntGovernance, bntPool, externalRewardsVault, poolCollection } =
-                await createSystem());
+            ({
+                network,
+                networkInfo,
+                networkSettings,
+                bntGovernance,
+                vbnt,
+                bntPool,
+                externalRewardsVault,
+                poolCollection
+            } = await createSystem());
 
             standardRewards = await createStandardRewards(
                 network,
                 networkSettings,
                 bntGovernance,
+                vbnt,
                 bntPool,
                 externalRewardsVault
             );
