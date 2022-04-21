@@ -340,13 +340,16 @@ describe('AutoCompoundingRewards', () => {
                         for (let endTime = 0; endTime < 4; endTime++) {
                             for (let currTime = 0; currTime < 4; currTime++) {
                                 let isProgramTimingValid: boolean;
+                                let effectiveEndTime: number;
 
                                 switch (distributionType) {
                                     case RewardsDistributionType.Flat:
                                         isProgramTimingValid = currTime <= startTime && startTime < endTime;
+                                        effectiveEndTime = endTime;
                                         break;
                                     case RewardsDistributionType.ExponentialDecay:
                                         isProgramTimingValid = currTime <= startTime;
+                                        effectiveEndTime = 0;
                                         break;
                                 }
 
@@ -380,7 +383,7 @@ describe('AutoCompoundingRewards', () => {
                                                     distributionType,
                                                     TOTAL_REWARDS,
                                                     startTime,
-                                                    endTime,
+                                                    effectiveEndTime,
                                                     programHalfLife(distributionType)
                                                 );
 
@@ -391,7 +394,7 @@ describe('AutoCompoundingRewards', () => {
                                             expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
                                             expect(program.distributionType).to.equal(distributionType);
                                             expect(program.startTime).to.equal(startTime);
-                                            expect(program.endTime).to.equal(endTime);
+                                            expect(program.endTime).to.equal(effectiveEndTime);
                                             expect(program.halfLife).to.equal(
                                                 programHalfLife(distributionType) * duration.days(1)
                                             );
