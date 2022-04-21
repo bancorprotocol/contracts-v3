@@ -1,18 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
-
 import { IPoolToken } from "./IPoolToken.sol";
-import { IPoolCollection } from "./IPoolCollection.sol";
 
 import { Token } from "../../token/Token.sol";
-
-import { IBancorNetwork } from "../../network/interfaces/IBancorNetwork.sol";
-import { INetworkSettings } from "../../network/interfaces/INetworkSettings.sol";
-import { IMasterVault } from "../../vaults/interfaces/IMasterVault.sol";
 
 import { IVault } from "../../vaults/interfaces/IVault.sol";
 

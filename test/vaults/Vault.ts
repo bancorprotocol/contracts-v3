@@ -69,7 +69,7 @@ describe('Vault', () => {
         });
     });
 
-    describe('depositing ETH ', () => {
+    describe('depositing the native token ', () => {
         let testVault: TestVault;
 
         const amount = 1_000_000;
@@ -83,7 +83,7 @@ describe('Vault', () => {
                 await testVault.setPayable(true);
             });
 
-            it('should be able to receive ETH', async () => {
+            it('should be able to receive the native token', async () => {
                 const balance = await getBalance({ address: NATIVE_TOKEN_ADDRESS }, testVault.address);
 
                 await deployer.sendTransaction({ value: amount, to: testVault.address });
@@ -95,7 +95,7 @@ describe('Vault', () => {
         });
 
         context('non-payable', () => {
-            it('should revert when sending ETH', async () => {
+            it('should revert when sending the native token', async () => {
                 await expect(deployer.sendTransaction({ value: amount, to: testVault.address })).to.be.revertedWith(
                     'NotPayable'
                 );
@@ -225,7 +225,7 @@ describe('Vault', () => {
             });
 
             if (tokenData.isNative()) {
-                it('should revert when attempting to burn ETH', async () => {
+                it('should revert when attempting to burn the native token', async () => {
                     await expect(testVault.burn(token.address, amount)).to.revertedWith('InvalidToken');
                 });
             } else {

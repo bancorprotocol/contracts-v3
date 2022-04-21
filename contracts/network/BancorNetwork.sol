@@ -61,7 +61,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using SafeERC20 for IPoolToken;
 
     error DeadlineExpired();
-    error EthAmountMismatch();
+    error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
 
     struct TradeParams {
@@ -141,7 +141,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(Token => IPoolCollection) private _collectionByPool;
 
-    // the pending network fees amount to be burned by the vortex
+    // the pending network fee amount to be burned by the vortex
     uint256 internal _pendingNetworkFeeAmount;
 
     // upgrade forward-compatibility storage gap
@@ -319,6 +319,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function roleNetworkFeeManager() external pure returns (bytes32) {
         return ROLE_NETWORK_FEE_MANAGER;
+    }
+
+    /**
+     * @dev returns the pending network fee amount to be burned by the vortex
+     */
+    function pendingNetworkFeeAmount() external view returns (uint256) {
+        return _pendingNetworkFeeAmount;
     }
 
     /**
@@ -848,16 +855,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
     {
-        uint256 pendingNetworkFeeAmount = _pendingNetworkFeeAmount;
-        if (pendingNetworkFeeAmount == 0) {
+        uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
+        if (currentPendingNetworkFeeAmount == 0) {
             return;
         }
 
         _pendingNetworkFeeAmount = 0;
 
-        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), pendingNetworkFeeAmount);
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), currentPendingNetworkFeeAmount);
 
-        emit NetworkFeesWithdrawn(msg.sender, recipient, pendingNetworkFeeAmount);
+        emit NetworkFeesWithdrawn(msg.sender, recipient, currentPendingNetworkFeeAmount);
     }
 
     /**
@@ -1006,7 +1013,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that managed this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // process deposit to the base token pool (taking into account the ETH pool)
+        // process deposit to the base token pool (includes the native token pool)
         return poolCollection.depositFor(contextId, provider, pool, tokenAmount);
     }
 
@@ -1117,7 +1124,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * requirements:
      *
-     * - the caller must have approved the network to transfer the source tokens on its behalf, in the non-ETH case
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
      */
     function _trade(
         TradeTokens memory tokens,
@@ -1194,14 +1202,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // transfer the tokens from the trader to the vault
         _depositToMasterVault(tokens.sourceToken, traderInfo.trader, firstHopTradeResult.sourceAmount);
 
-        // transfer the target tokens/ETH to the beneficiary
+        // transfer the target tokens/native token to the beneficiary
         _masterVault.withdrawFunds(
             tokens.targetToken,
             payable(traderInfo.beneficiary),
             lastHopTradeResult.targetAmount
         );
 
-        // update the pending network fees amount to be burned by the vortex
+        // update the pending network fee amount to be burned by the vortex
         _pendingNetworkFeeAmount += networkFeeAmount;
     }
 
@@ -1239,7 +1247,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 params.limit
             );
 
-        // if the target token is BNT, notify the BNT pool on collected fees
+        // if the target token is BNT, notify the BNT pool on collected fees (which shouldn't include the network fee
+        // amount, so we have to deduct it explicitly from the full trading fee amount)
         if (!fromBNT) {
             _bntPool.onFeesCollected(
                 pool,
@@ -1326,20 +1335,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private {
         if (token.isNative()) {
             if (msg.value < amount) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             // using a regular transfer here would revert due to exceeding the 2300 gas limit which is why we're using
             // call instead (via sendValue), which the 2300 gas limit does not apply for
             payable(address(_masterVault)).sendValue(amount);
 
-            // refund the caller for the remaining ETH
+            // refund the caller for the remaining native token amount
             if (msg.value > amount) {
                 payable(address(caller)).sendValue(msg.value - amount);
             }
         } else {
             if (msg.value > 0) {
-                revert EthAmountMismatch();
+                revert NativeTokenAmountMismatch();
             }
 
             token.safeTransferFrom(caller, address(_masterVault), amount);

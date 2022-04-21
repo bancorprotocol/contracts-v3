@@ -8,10 +8,11 @@ const {
 } = ethers;
 
 export enum DeploymentNetwork {
-    Hardhat = 'hardhat',
-    Localhost = 'localhost',
     Mainnet = 'mainnet',
-    Tenderly = 'tenderly'
+    Rinkeby = 'rinkeby',
+    Hardhat = 'hardhat',
+    Tenderly = 'tenderly',
+    Localhost = 'localhost'
 }
 
 export const MAX_UINT256 = MaxUint256;
@@ -27,7 +28,7 @@ export enum TradingStatusUpdateReason {
     MinLiquidity = 2
 }
 
-export enum StakingRewardsDistributionType {
+export enum RewardsDistributionType {
     Flat = 0,
     ExponentialDecay = 1
 }

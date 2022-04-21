@@ -1,7 +1,7 @@
 import { MAX_UINT256, PPM_RESOLUTION } from './Constants';
 import { DEFAULT_DECIMALS } from './TokenData';
 import Decimal from 'decimal.js';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 
 export type Addressable = { address: string };
 
@@ -96,11 +96,11 @@ export const fromUint512 = (x: Uint512): BigNumber => {
     return x.hi.shl(256).or(x.lo);
 };
 
-type ToWeiInput = Decimal | BigNumber | number;
+type ToWeiInput = Decimal | BigNumberish;
 
-export const toWei = <T extends ToWeiInput>(v: T): BigNumber => {
+export const toWei = <T extends ToWeiInput>(v: T, decimals = DEFAULT_DECIMALS): BigNumber => {
     if (Decimal.isDecimal(v)) {
-        return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(DEFAULT_DECIMALS)).toFixed());
+        return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(decimals)).toFixed());
     }
 
     return BigNumber.from(v).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));
@@ -109,4 +109,10 @@ export const toWei = <T extends ToWeiInput>(v: T): BigNumber => {
 export const toPPM = (percent: number | undefined): number => (percent ? percent * (PPM_RESOLUTION / 100) : 0);
 export const fromPPM = (ppm: number | undefined): number => (ppm ? ppm / (PPM_RESOLUTION / 100) : 0);
 
-export const toCents = (dollars: number) => dollars * 100;
+export const toCents = (dollars: number) => Math.ceil(dollars * 100);
+
+export const min = (a: BigNumberish, b: BigNumberish) =>
+    BigNumber.from(a).lt(b) ? BigNumber.from(a) : BigNumber.from(b);
+
+export const max = (a: BigNumberish, b: BigNumberish) =>
+    BigNumber.from(a).gt(b) ? BigNumber.from(a) : BigNumber.from(b);

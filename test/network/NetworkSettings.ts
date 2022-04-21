@@ -143,11 +143,13 @@ describe('NetworkSettings', () => {
 
             it('should whitelist a token', async () => {
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+                expect(await networkSettings.protectedTokenWhitelist()).not.to.include(reserveToken.address);
 
                 const res = await networkSettings.addTokenToWhitelist(reserveToken.address);
                 await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+                expect(await networkSettings.protectedTokenWhitelist()).to.include(reserveToken.address);
             });
 
             it('should revert when a non-admin attempts to add tokens', async () => {
@@ -179,6 +181,10 @@ describe('NetworkSettings', () => {
                 const reserveToken2 = await createTestToken();
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
                 expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.false;
+                expect(await networkSettings.protectedTokenWhitelist()).not.to.have.members([
+                    reserveToken.address,
+                    reserveToken2.address
+                ]);
 
                 const res = await networkSettings.addTokensToWhitelist([reserveToken.address, reserveToken2.address]);
                 await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
@@ -186,6 +192,10 @@ describe('NetworkSettings', () => {
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
                 expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.true;
+                expect(await networkSettings.protectedTokenWhitelist()).to.have.members([
+                    reserveToken.address,
+                    reserveToken2.address
+                ]);
             });
         });
 
@@ -211,11 +221,13 @@ describe('NetworkSettings', () => {
 
             it('should remove a token', async () => {
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+                expect(await networkSettings.protectedTokenWhitelist()).to.include(reserveToken.address);
 
                 const res = await networkSettings.removeTokenFromWhitelist(reserveToken.address);
                 await expect(res).to.emit(networkSettings, 'TokenRemovedFromWhitelist').withArgs(reserveToken.address);
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+                expect(await networkSettings.protectedTokenWhitelist()).not.to.include(reserveToken.address);
             });
         });
     });
@@ -361,6 +373,7 @@ describe('NetworkSettings', () => {
 
         it('should whitelist a token with funding limit', async () => {
             expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+            expect(await networkSettings.protectedTokenWhitelist()).not.to.include(reserveToken.address);
 
             const res = await networkSettings.addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit);
             await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
@@ -369,6 +382,7 @@ describe('NetworkSettings', () => {
                 .withArgs(reserveToken.address, 0, poolFundingLimit);
 
             expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+            expect(await networkSettings.protectedTokenWhitelist()).to.include(reserveToken.address);
             expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(poolFundingLimit);
         });
     });

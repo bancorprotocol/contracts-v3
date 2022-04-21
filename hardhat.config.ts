@@ -2,7 +2,6 @@ import { ExternalContracts, NamedAccounts } from './deployments/data';
 import './test/Setup';
 import { DeploymentNetwork } from './utils/Constants';
 import '@nomiclabs/hardhat-ethers';
-import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-solhint';
 import '@nomiclabs/hardhat-waffle';
 import '@tenderly/hardhat-tenderly';
@@ -20,22 +19,26 @@ interface EnvOptions {
     NIGHTLY?: boolean;
     PROFILE?: boolean;
     ETHEREUM_PROVIDER_URL?: string;
+    ETHEREUM_RINKEBY_PROVIDER_URL?: string;
     TENDERLY_FORK_ID?: string;
     TENDERLY_PROJECT?: string;
     TENDERLY_USERNAME?: string;
     ETHERSCAN_API_KEY?: string;
     FORKING?: boolean;
+    GAS_PRICE?: number | 'auto';
 }
 
 const {
     NIGHTLY: isNightly,
     PROFILE: isProfiling,
     ETHEREUM_PROVIDER_URL = '',
+    ETHEREUM_RINKEBY_PROVIDER_URL = '',
     TENDERLY_FORK_ID = '',
     TENDERLY_PROJECT = '',
     TENDERLY_USERNAME = '',
     ETHERSCAN_API_KEY,
-    FORKING: isForking
+    FORKING: isForking,
+    GAS_PRICE: gasPrice = 'auto'
 }: EnvOptions = process.env as any as EnvOptions;
 
 const mochaOptions = (): MochaOptions => {
@@ -74,16 +77,17 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Hardhat]: isForking
             ? /* eslint-disable indent */
               {
+                  chainId: 1,
                   forking: {
                       enabled: true,
                       url: ETHEREUM_PROVIDER_URL
                   },
-                  saveDeployments: false,
+                  saveDeployments: true,
                   live: true
               }
             : {
                   accounts: {
-                      count: 10,
+                      count: 20,
                       accountsBalance: '10000000000000000000000000000000000000000000000'
                   },
                   allowUnlimitedContractSize: true,
@@ -100,6 +104,13 @@ const config: HardhatUserConfig = {
         [DeploymentNetwork.Mainnet]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,
+            gasPrice,
+            saveDeployments: true,
+            live: true
+        },
+        [DeploymentNetwork.Rinkeby]: {
+            chainId: 4,
+            url: ETHEREUM_RINKEBY_PROVIDER_URL,
             saveDeployments: true,
             live: true
         },
@@ -110,6 +121,10 @@ const config: HardhatUserConfig = {
             saveDeployments: true,
             live: true
         }
+    },
+
+    paths: {
+        deploy: ['deploy/scripts']
     },
 
     tenderly: {
@@ -153,8 +168,10 @@ const config: HardhatUserConfig = {
         disambiguatePaths: false
     },
 
-    etherscan: {
-        apiKey: ETHERSCAN_API_KEY
+    verify: {
+        etherscan: {
+            apiKey: ETHERSCAN_API_KEY
+        }
     },
 
     watcher: {

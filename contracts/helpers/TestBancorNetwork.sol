@@ -153,10 +153,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         token.safeApprove(spender, amount);
     }
 
-    function pendingNetworkFeeAmount() external view returns (uint256) {
-        return _pendingNetworkFeeAmount;
-    }
-
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();
     }

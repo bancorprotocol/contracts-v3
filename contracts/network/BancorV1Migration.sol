@@ -14,8 +14,8 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
+import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
-import { BancorNetwork } from "./BancorNetwork.sol";
 
 interface IBancorConverterV1 {
     function reserveTokens() external view returns (Token[] memory);
@@ -36,7 +36,7 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     using TokenLibrary for Token;
 
     // the network contract
-    BancorNetwork private immutable _network;
+    IBancorNetwork private immutable _network;
 
     // the network settings contract
     INetworkSettings private immutable _networkSettings;
@@ -59,7 +59,7 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(
-        BancorNetwork initNetwork,
+        IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         IERC20 initBNT
     ) validAddress(address(initNetwork)) validAddress(address(initNetworkSettings)) validAddress(address(initBNT)) {
@@ -76,7 +76,7 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     }
 
     /**
-     * @dev ETH receive callback
+     * @dev authorize the contract to receive the native token
      */
     receive() external payable {}
 

@@ -1,6 +1,6 @@
 import { ArtifactData } from '../components/ContractBuilder';
 import {
-    AutoCompoundingStakingRewards,
+    AutoCompoundingRewards,
     BancorNetwork,
     BancorNetworkInfo,
     BancorPortal,
@@ -20,16 +20,22 @@ import {
     PoolToken,
     PoolTokenFactory,
     ProxyAdmin,
-    StandardStakingRewards,
+    StandardRewards,
     TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
-import { BancorNetworkV1, NetworkSettingsV1 } from '../components/LegacyContractsV3';
+import {
+    BancorNetworkV1,
+    NetworkSettingsV1,
+    StandardRewardsV1,
+    StandardRewardsV2
+} from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
@@ -64,13 +70,14 @@ enum LegacyInstanceName {
 }
 
 enum NewInstanceName {
-    AutoCompoundingStakingRewards = 'AutoCompoundingStakingRewards',
+    AutoCompoundingRewards = 'AutoCompoundingRewards',
     BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',
     BancorNetwork = 'BancorNetwork',
     BancorPortal = 'BancorPortal',
     BancorV1Migration = 'BancorV1Migration',
-    BNTPoolToken = 'BNTPoolToken',
+    bnBNT = 'bnBNT',
+    BNTPoolProxy = 'BNTPoolProxy',
     BNTPool = 'BNTPool',
     ExternalProtectionVault = 'ExternalProtectionVault',
     ExternalRewardsVault = 'ExternalRewardsVault',
@@ -81,27 +88,33 @@ enum NewInstanceName {
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
-    StandardStakingRewards = 'StandardStakingRewards'
+    StandardRewards = 'StandardRewards'
 }
 
 enum TestInstanceName {
     MockUniswapV2Factory = 'MockUniswapV2Factory',
     MockUniswapV2Pair = 'MockUniswapV2Pair',
-    MockUniswapV2Router02 = 'MockUniswapV2Router02',
+    MockUniswapV2Router02 = 'MockUniswapV2Router02'
+}
+
+export enum TestTokenInstanceName {
     TestToken1 = 'TestToken1',
     TestToken2 = 'TestToken2',
     TestToken3 = 'TestToken3',
     TestToken4 = 'TestToken4',
-    TestToken5 = 'TestToken5'
+    TestToken5 = 'TestToken5',
+    TestToken6 = 'TestToken6',
+    TestToken7 = 'TestToken7'
 }
 
 export const InstanceName = {
     ...LegacyInstanceName,
     ...NewInstanceName,
-    ...TestInstanceName
+    ...TestInstanceName,
+    ...TestTokenInstanceName
 };
 
-export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName;
+export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName | TestTokenInstanceName;
 
 const DeployedLegacyContracts = {
     BNT: deployed<BNT>(InstanceName.BNT),
@@ -110,17 +123,20 @@ const DeployedLegacyContracts = {
     VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
 
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
-    NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings)
+    NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
+    StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
+    StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards)
 };
 
 const DeployedNewContracts = {
-    AutoCompoundingStakingRewards: deployed<AutoCompoundingStakingRewards>(InstanceName.AutoCompoundingStakingRewards),
+    AutoCompoundingRewards: deployed<AutoCompoundingRewards>(InstanceName.AutoCompoundingRewards),
     BancorNetworkInfo: deployed<BancorNetworkInfo>(InstanceName.BancorNetworkInfo),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BancorNetworkProxy),
     BancorNetwork: deployed<BancorNetwork>(InstanceName.BancorNetwork),
     BancorPortal: deployed<BancorPortal>(InstanceName.BancorPortal),
     BancorV1Migration: deployed<BancorV1Migration>(InstanceName.BancorV1Migration),
-    BNTPoolToken: deployed<PoolToken>(InstanceName.BNTPoolToken),
+    bnBNT: deployed<PoolToken>(InstanceName.bnBNT),
+    BNTPoolProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BNTPoolProxy),
     BNTPool: deployed<BNTPool>(InstanceName.BNTPool),
     ExternalProtectionVault: deployed<ExternalProtectionVault>(InstanceName.ExternalProtectionVault),
     ExternalRewardsVault: deployed<ExternalRewardsVault>(InstanceName.ExternalRewardsVault),
@@ -131,7 +147,7 @@ const DeployedNewContracts = {
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
-    StandardStakingRewards: deployed<StandardStakingRewards>(InstanceName.StandardStakingRewards)
+    StandardRewards: deployed<StandardRewards>(InstanceName.StandardRewards)
 };
 
 const DeployedTestContracts = {
@@ -142,7 +158,9 @@ const DeployedTestContracts = {
     TestToken2: deployed<TestERC20Token>(InstanceName.TestToken2),
     TestToken3: deployed<TestERC20Token>(InstanceName.TestToken3),
     TestToken4: deployed<TestERC20Token>(InstanceName.TestToken4),
-    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5)
+    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5),
+    TestToken6: deployed<TestERC20Token>(InstanceName.TestToken6),
+    TestToken7: deployed<TestERC20Token>(InstanceName.TestToken7)
 };
 
 export const DeployedContracts = {
@@ -157,10 +175,21 @@ export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
-export const isLive = () => isMainnet() && !isMainnetFork();
+export const isRinkeby = () => getNetworkName() === DeploymentNetwork.Rinkeby;
+export const isLive = () => (isMainnet() && !isMainnetFork()) || isRinkeby();
 
 const TEST_MINIMUM_BALANCE = toWei(10);
 const TEST_FUNDING = toWei(10);
+
+export const getNamedSigners = async (): Promise<Record<string, SignerWithAddress>> => {
+    const signers: Record<string, SignerWithAddress> = {};
+
+    for (const [name, address] of Object.entries(await getNamedAccounts())) {
+        signers[name] = await ethers.getSigner(address);
+    }
+
+    return signers;
+};
 
 export const fundAccount = async (account: string) => {
     if (!isMainnetFork()) {
@@ -172,10 +201,9 @@ export const fundAccount = async (account: string) => {
         return;
     }
 
-    const { ethWhale } = await getNamedAccounts();
-    const whale = await ethers.getSigner(ethWhale);
+    const { ethWhale } = await getNamedSigners();
 
-    return whale.sendTransaction({
+    return ethWhale.sendTransaction({
         value: TEST_FUNDING,
         to: account
     });
@@ -255,6 +283,8 @@ const PROXY_CONTRACT = 'TransparentUpgradeableProxyImmutable';
 const INITIALIZE = 'initialize';
 const POST_UPGRADE = 'postUpgrade';
 
+const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
+
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
@@ -285,6 +315,7 @@ export const deploy = async (options: DeployOptions) => {
         value,
         args,
         proxy: isProxy ? proxyOptions : undefined,
+        waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
 
@@ -292,7 +323,7 @@ export const deploy = async (options: DeployOptions) => {
         const data = { name, contract: contractName };
         saveTypes(data);
 
-        await verifyTenderly({
+        await verifyTenderlyFork({
             address: res.address,
             proxy: isProxy,
             implementation: isProxy ? res.implementation : undefined,
@@ -342,13 +373,14 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         value,
         args,
         proxy: proxyOptions,
+        waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
 
     const data = { name, contract: contractName };
     saveTypes(data);
 
-    await verifyTenderly({
+    await verifyTenderlyFork({
         address: res.address,
         proxy: true,
         implementation: res.implementation,
@@ -371,7 +403,12 @@ export const execute = async (options: ExecuteOptions) => {
 
     await fundAccount(from);
 
-    return executeTransaction(name, { from, value, log: true }, methodName, ...(args || []));
+    return executeTransaction(
+        name,
+        { from, value, waitConfirmations: WAIT_CONFIRMATIONS, log: true },
+        methodName,
+        ...(args || [])
+    );
 };
 
 interface InitializeProxyOptions {
@@ -432,17 +469,20 @@ interface Deployment {
     address: Address;
     proxy?: boolean;
     implementation?: Address;
+    skipTypechain?: boolean;
     skipVerification?: boolean;
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address, proxy, skipVerification } = deployment;
+    const { name, contract, address, proxy, skipVerification, skipTypechain } = deployment;
 
     const contractName = contract || name;
     const { abi } = await getExtendedArtifact(contractName);
 
     // save the typechain for future use
-    saveTypes({ name, contract: contractName });
+    if (!skipTypechain) {
+        saveTypes({ name, contract: contractName });
+    }
 
     // save the deployment json data in the deployments folder
     await saveContract(name, { abi, address });
@@ -452,12 +492,10 @@ export const save = async (deployment: Deployment) => {
         await saveContract(`${name}_Proxy`, { abi, address });
     }
 
-    if (skipVerification) {
-        return;
+    // publish the contract to a Tenderly fork
+    if (!skipVerification) {
+        await verifyTenderlyFork(deployment);
     }
-
-    // publish the contract to Tenderly
-    return verifyTenderly(deployment);
 };
 
 interface ContractData {
@@ -465,9 +503,9 @@ interface ContractData {
     address: Address;
 }
 
-const verifyTenderly = async (deployment: Deployment) => {
+const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isLive() && !isTenderlyFork()) {
+    if (!isTenderlyFork()) {
         return;
     }
 
@@ -494,7 +532,7 @@ const verifyTenderly = async (deployment: Deployment) => {
     });
 
     for (const contract of contracts) {
-        console.log('verifying (Tenderly)', contract.name, 'at', contract.address);
+        console.log('verifying (Tenderly fork)', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }
@@ -514,7 +552,9 @@ export const deploymentTagExists = async (tag: string) => {
     }
 
     const migrations = JSON.parse(fs.readFileSync(migrationsPath, 'utf-8'));
-    return !!migrations[tag];
+    const tags = Object.keys(migrations).map((tag) => deploymentFileNameToTag(tag));
+
+    return tags.includes(tag);
 };
 
 const deploymentFileNameToTag = (filename: string) => Number(path.basename(filename).split('-')[0]).toString();

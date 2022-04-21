@@ -1509,11 +1509,11 @@ describe('BancorNetwork', () => {
                                                         deposit(amount, {
                                                             value: amount.sub(missingAmount)
                                                         })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(0) })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                                 });
 
                                                 it('should refund when attempting to deposit less than what was actually sent', async () => {
@@ -1531,10 +1531,11 @@ describe('BancorNetwork', () => {
                                                     );
                                                 });
                                             } else {
-                                                it('should revert when attempting to deposit ETH into a non ETH pool', async () => {
+                                                // eslint-disable-next-line max-len
+                                                it('should revert when attempting to deposit the native token into a non native token pool', async () => {
                                                     await expect(
                                                         deposit(amount, { value: BigNumber.from(1) })
-                                                    ).to.be.revertedWith('EthAmountMismatch');
+                                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                                 });
                                             }
                                         }
@@ -2558,11 +2559,11 @@ describe('BancorNetwork', () => {
                                         tradeDirectFunc(testAmount, {
                                             value: testAmount.sub(missingAmount)
                                         })
-                                    ).to.be.revertedWith('EthAmountMismatch');
+                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
 
                                     await expect(
                                         tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
-                                    ).to.be.revertedWith('EthAmountMismatch');
+                                    ).to.be.revertedWith('NativeTokenAmountMismatch');
                                 });
 
                                 it('should refund when attempting to trade less than what was actually sent', async () => {
@@ -2591,9 +2592,9 @@ describe('BancorNetwork', () => {
                                     );
                                 });
                             } else {
-                                it('should revert when passing ETH with a non ETH trade', async () => {
+                                it('should revert when passing the native token with a non native token trade', async () => {
                                     await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
-                                        'EthAmountMismatch'
+                                        'NativeTokenAmountMismatch'
                                     );
                                 });
                             }
@@ -4010,6 +4011,8 @@ describe('BancorNetwork Financial Verification', () => {
         bntStakedBalance: Decimal;
         tknTradingLiquidity: Decimal;
         bntTradingLiquidity: Decimal;
+        averageRateN: Decimal;
+        averageRateD: Decimal;
     }
 
     interface Operation {
@@ -4133,7 +4136,9 @@ describe('BancorNetwork Financial Verification', () => {
             tknStakedBalance: new Decimal(0),
             bntStakedBalance: new Decimal(0),
             tknTradingLiquidity: new Decimal(0),
-            bntTradingLiquidity: new Decimal(0)
+            bntTradingLiquidity: new Decimal(0),
+            averageRateN: new Decimal(0),
+            averageRateD: new Decimal(0)
         };
 
         for (const userId in users) {
@@ -4169,6 +4174,8 @@ describe('BancorNetwork Financial Verification', () => {
         actual.bntStakedBalance = integerToDecimal(await bntPool.stakedBalance(), bntDecimals);
         actual.tknTradingLiquidity = integerToDecimal(poolData.liquidity.baseTokenTradingLiquidity, tknDecimals);
         actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.bntTradingLiquidity, bntDecimals);
+        actual.averageRateN = integerToDecimal(poolData.averageRate.rate.n, 0);
+        actual.averageRateD = integerToDecimal(poolData.averageRate.rate.d, 0);
 
         expect(actual).to.deep.equal(expected);
     };
@@ -4307,6 +4314,7 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario1');
         test('BancorNetworkSimpleFinancialScenario2');
         test('BancorNetworkSimpleFinancialScenario3');
+        test('BancorNetworkSimpleFinancialScenario4');
     });
 
     describe('@stress test', () => {
