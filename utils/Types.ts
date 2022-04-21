@@ -109,7 +109,7 @@ export const toWei = <T extends ToWeiInput>(v: T, decimals = DEFAULT_DECIMALS): 
 export const toPPM = (percent: number | undefined): number => (percent ? percent * (PPM_RESOLUTION / 100) : 0);
 export const fromPPM = (ppm: number | undefined): number => (ppm ? ppm / (PPM_RESOLUTION / 100) : 0);
 
-export const toCents = (dollars: number) => dollars * 100;
+export const toCents = (dollars: number) => Math.ceil(dollars * 100);
 
 export const min = (a: BigNumberish, b: BigNumberish) =>
     BigNumber.from(a).lt(b) ? BigNumber.from(a) : BigNumber.from(b);

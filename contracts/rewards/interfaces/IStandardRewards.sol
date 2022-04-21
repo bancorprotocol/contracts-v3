@@ -7,6 +7,11 @@ import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
 
 import { Token } from "../../token/Token.sol";
 
+struct Rewards {
+    uint32 lastUpdateTime;
+    uint256 rewardPerToken;
+}
+
 struct ProgramData {
     uint256 id;
     Token pool;
@@ -17,6 +22,13 @@ struct ProgramData {
     uint32 endTime;
     uint256 rewardRate;
     uint256 remainingRewards;
+}
+
+struct ProviderRewards {
+    uint256 rewardPerTokenPaid;
+    uint256 pendingRewards;
+    uint256 reserved0;
+    uint256 stakedAmount;
 }
 
 struct StakeAmounts {
@@ -39,6 +51,16 @@ interface IStandardRewards is IUpgradeable {
      * @dev returns all the program ids that the provider participates in
      */
     function providerProgramIds(address provider) external view returns (uint256[] memory);
+
+    /**
+     * @dev returns program rewards
+     */
+    function programRewards(uint256 id) external view returns (Rewards memory);
+
+    /**
+     * @dev returns provider rewards
+     */
+    function providerRewards(address provider, uint256 id) external view returns (ProviderRewards memory);
 
     /**
      * @dev returns the total staked amount in a specific program

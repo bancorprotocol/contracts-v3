@@ -75,9 +75,11 @@ yarn test:deploy:fork
 
 This will automatically be skipped on an already deployed and configured deployment scripts and will only test the additional changeset resulting by running any new/pending deployment scripts and perform an e2e test against the up to date state. This is especially useful to verify that any future deployments and upgrades, suggested by the DAO, work correctly and preserve the integrity of the system.
 
-### Coverage Tests
+### Coverage
 
-#### Report (2022-04-18)
+You can find historic tests coverage report in [releases](https://github.com/bancorprotocol/contracts-v3/releases).
+
+#### Latest Report (2022-04-18)
 
 - 99.86% Statements 1470/1472
 - 97.35% Branches 477/490

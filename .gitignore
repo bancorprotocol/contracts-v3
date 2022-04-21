@@ -20,7 +20,6 @@ deployments/tenderly/solcInputs
 !deployments/mainnet
 !deployments/tenderly
 !deployments/localhost/.chainId
-!deployments/hardhat/.chainId
 
 .coverage_artifacts
 .coverage_contracts
