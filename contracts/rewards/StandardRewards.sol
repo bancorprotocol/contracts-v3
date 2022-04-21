@@ -3,6 +3,7 @@ pragma solidity 0.8.13;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSetUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -25,7 +26,7 @@ import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
 
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
-import { IStandardRewards, ProgramData, StakeAmounts } from "./interfaces/IStandardRewards.sol";
+import { IStandardRewards, ProgramData, Rewards, ProviderRewards, StakeAmounts } from "./interfaces/IStandardRewards.sol";
 
 /**
  * @dev Standard Rewards contract
@@ -34,18 +35,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     using Address for address payable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using TokenLibrary for Token;
-
-    struct Rewards {
-        uint32 lastUpdateTime;
-        uint256 rewardPerToken;
-    }
-
-    struct ProviderRewards {
-        uint256 rewardPerTokenPaid;
-        uint256 pendingRewards;
-        uint256 claimedRewards;
-        uint256 stakedAmount;
-    }
+    using SafeERC20 for IERC20;
 
     struct RewardData {
         Token rewardsToken;
@@ -84,6 +74,9 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
     // the BNT contract
     IERC20 private immutable _bnt;
+
+    // the VBNT contract
+    IERC20 private immutable _vbnt;
 
     // the BNT pool token contract
     IPoolToken private immutable _bntPoolToken;
@@ -179,12 +172,14 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         ITokenGovernance initBNTGovernance,
+        IERC20 initVBNT,
         IBNTPool initBNTPool,
         IExternalRewardsVault initExternalRewardsVault
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initBNTGovernance))
+        validAddress(address(initVBNT))
         validAddress(address(initBNTPool))
         validAddress(address(initExternalRewardsVault))
     {
@@ -192,6 +187,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         _networkSettings = initNetworkSettings;
         _bntGovernance = initBNTGovernance;
         _bnt = initBNTGovernance.token();
+        _vbnt = initVBNT;
         _bntPoolToken = initBNTPool.poolToken();
         _externalRewardsVault = initExternalRewardsVault;
     }
@@ -241,7 +237,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 1;
+        return 3;
     }
 
     /**
@@ -276,6 +272,20 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      */
     function providerProgramIds(address provider) external view returns (uint256[] memory) {
         return _programIdsByProvider[provider].values();
+    }
+
+    /**
+     * @inheritdoc IStandardRewards
+     */
+    function programRewards(uint256 id) external view returns (Rewards memory) {
+        return _programRewards[id];
+    }
+
+    /**
+     * @inheritdoc IStandardRewards
+     */
+    function providerRewards(address provider, uint256 id) external view returns (ProviderRewards memory) {
+        return _providerRewards[provider][id];
     }
 
     /**
@@ -534,9 +544,9 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             }
 
             uint256 newRewardPerToken = _rewardPerToken(p, _programRewards[id]);
-            ProviderRewards memory providerRewards = _providerRewards[provider][id];
+            ProviderRewards memory providerRewardsData = _providerRewards[provider][id];
 
-            reward += _pendingRewards(newRewardPerToken, providerRewards);
+            reward += _pendingRewards(newRewardPerToken, providerRewardsData);
         }
 
         return reward;
@@ -571,7 +581,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
         // deposit provider's tokens to the network. Please note, that since we're staking rewards, then the deposit
         // should come from the contract itself, but the pool tokens should be sent to the provider directly
-        uint256 poolTokenAmount = _deposit(msg.sender, rewardData.rewardsToken, rewardData.amount, address(this));
+        uint256 poolTokenAmount = _deposit(
+            msg.sender,
+            address(this),
+            false,
+            rewardData.rewardsToken,
+            rewardData.amount
+        );
 
         return StakeAmounts({ stakedRewardAmount: rewardData.amount, poolTokenAmount: poolTokenAmount });
     }
@@ -654,11 +670,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      */
     function _deposit(
         address provider,
+        address payer,
+        bool keepPoolTokens,
         Token pool,
-        uint256 tokenAmount,
-        address payer
+        uint256 tokenAmount
     ) private returns (uint256) {
         uint256 poolTokenAmount;
+        address recipient = keepPoolTokens ? address(this) : provider;
         bool externalPayer = payer != address(this);
 
         if (pool.isNative()) {
@@ -670,7 +688,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
                 }
             }
 
-            poolTokenAmount = _network.depositFor{ value: tokenAmount }(provider, pool, tokenAmount);
+            poolTokenAmount = _network.depositFor{ value: tokenAmount }(recipient, pool, tokenAmount);
 
             // refund the caller for the remaining native token amount
             if (externalPayer && msg.value > tokenAmount) {
@@ -686,9 +704,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             if (externalPayer) {
                 pool.safeTransferFrom(payer, address(this), tokenAmount);
             }
-            pool.ensureApprove(address(_network), tokenAmount);
 
-            poolTokenAmount = _network.depositFor(provider, pool, tokenAmount);
+            pool.ensureApprove(address(_network), tokenAmount);
+            poolTokenAmount = _network.depositFor(recipient, pool, tokenAmount);
+
+            if (keepPoolTokens && pool.isEqual(_bnt)) {
+                _vbnt.safeTransfer(provider, poolTokenAmount);
+            }
         }
 
         return poolTokenAmount;
@@ -704,7 +726,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     ) private {
         // deposit provider's tokens to the network and let the contract itself to claim the pool tokens so that it can
         // immediately add them to a program
-        uint256 poolTokenAmount = _deposit(address(this), p.pool, tokenAmount, provider);
+        uint256 poolTokenAmount = _deposit(provider, provider, true, p.pool, tokenAmount);
 
         // join the existing program, but ensure not to attempt to transfer the tokens from the provider by setting the
         // payer as the contract itself
@@ -774,13 +796,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @dev claims rewards and returns the received and the pending reward amounts
      */
     function _claimRewards(address provider, ProgramData memory p) internal returns (ClaimData memory) {
-        ProviderRewards storage providerRewards = _snapshotRewards(p, provider);
+        ProviderRewards storage providerRewardsData = _snapshotRewards(p, provider);
 
-        uint256 reward = providerRewards.pendingRewards;
+        uint256 reward = providerRewardsData.pendingRewards;
 
-        providerRewards.pendingRewards = 0;
+        providerRewardsData.pendingRewards = 0;
 
-        return ClaimData({ reward: reward, stakedAmount: providerRewards.stakedAmount });
+        return ClaimData({ reward: reward, stakedAmount: providerRewardsData.stakedAmount });
     }
 
     /**
@@ -874,15 +896,16 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             rewards.lastUpdateTime = newUpdateTime;
         }
 
-        ProviderRewards storage providerRewards = _providerRewards[provider][p.id];
+        ProviderRewards storage providerRewardsData = _providerRewards[provider][p.id];
 
-        uint256 newPendingRewards = _pendingRewards(newRewardPerToken, providerRewards);
+        uint256 newPendingRewards = _pendingRewards(newRewardPerToken, providerRewardsData);
         if (newPendingRewards != 0) {
-            providerRewards.rewardPerTokenPaid = newRewardPerToken;
-            providerRewards.pendingRewards = newPendingRewards;
+            providerRewardsData.pendingRewards = newPendingRewards;
         }
 
-        return providerRewards;
+        providerRewardsData.rewardPerTokenPaid = newRewardPerToken;
+
+        return providerRewardsData;
     }
 
     /**
@@ -910,14 +933,14 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev calculates provider's pending rewards
      */
-    function _pendingRewards(uint256 updatedRewardPerToken, ProviderRewards memory providerRewards)
+    function _pendingRewards(uint256 updatedRewardPerToken, ProviderRewards memory providerRewardsData)
         private
         pure
         returns (uint256)
     {
         return
-            providerRewards.pendingRewards +
-            (providerRewards.stakedAmount * (updatedRewardPerToken - providerRewards.rewardPerTokenPaid)) /
+            providerRewardsData.pendingRewards +
+            (providerRewardsData.stakedAmount * (updatedRewardPerToken - providerRewardsData.rewardPerTokenPaid)) /
             REWARD_RATE_FACTOR;
     }
 

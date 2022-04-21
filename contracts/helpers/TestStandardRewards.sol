@@ -26,9 +26,19 @@ contract TestStandardRewards is StandardRewards, TestTime {
         IBancorNetwork initNetwork,
         INetworkSettings initNetworkSettings,
         ITokenGovernance initBNTGovernance,
+        IERC20 initVBNT,
         IBNTPool initBNTPool,
         IExternalRewardsVault initExternalRewardsVault
-    ) StandardRewards(initNetwork, initNetworkSettings, initBNTGovernance, initBNTPool, initExternalRewardsVault) {}
+    )
+        StandardRewards(
+            initNetwork,
+            initNetworkSettings,
+            initBNTGovernance,
+            initVBNT,
+            initBNTPool,
+            initExternalRewardsVault
+        )
+    {}
 
     function nextProgramId() external view returns (uint256) {
         return _nextProgramId;
@@ -36,14 +46,6 @@ contract TestStandardRewards is StandardRewards, TestTime {
 
     function unclaimedRewards(Token rewardsToken) external view returns (uint256) {
         return _unclaimedRewards[rewardsToken];
-    }
-
-    function programRewards(uint256 id) external view returns (Rewards memory) {
-        return _programRewards[id];
-    }
-
-    function providerRewards(address provider, uint256 id) external view returns (ProviderRewards memory) {
-        return _providerRewards[provider][id];
     }
 
     function claimRewardsWithAmounts(uint256[] calldata ids) external returns (uint256[] memory) {

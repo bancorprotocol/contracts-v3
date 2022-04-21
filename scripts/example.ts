@@ -1,8 +1,7 @@
 import { MAX_UINT256, ZERO_ADDRESS } from '../utils/Constants';
-import { DeployedContracts, isTenderlyFork } from '../utils/Deploy';
+import { DeployedContracts, getNamedSigners, isTenderlyFork } from '../utils/Deploy';
 import '@nomiclabs/hardhat-ethers';
 import '@typechain/hardhat';
-import { ethers, getNamedAccounts } from 'hardhat';
 import 'hardhat-deploy';
 
 const main = async () => {
@@ -10,8 +9,7 @@ const main = async () => {
         throw new Error('Invalid network');
     }
 
-    const { deployer: deployerAddress } = await getNamedAccounts();
-    const deployer = await ethers.getSigner(deployerAddress);
+    const { deployer } = await getNamedSigners();
 
     const network = await DeployedContracts.BancorNetworkV1.deployed();
 
