@@ -1216,19 +1216,21 @@ describe('AutoCompoundingRewards', () => {
                     beforeEach(async () => {
                         startTime = await latest();
 
-                        await (distributionType === RewardsDistributionType.Flat
-                            ? autoCompoundingRewards.createFlatProgram(
-                                  token.address,
-                                  totalRewards,
-                                  startTime,
-                                  startTime + programDuration
-                              )
-                            : autoCompoundingRewards.createExpProgram(
-                                  token.address,
-                                  totalRewards,
-                                  startTime,
-                                  EXP_DECAY_HALF_LIFE / duration.days(1)
-                              ));
+                        if (distributionType === RewardsDistributionType.Flat) {
+                            await autoCompoundingRewards.createFlatProgram(
+                                token.address,
+                                totalRewards,
+                                startTime,
+                                startTime + programDuration
+                            );
+                        } else {
+                            await autoCompoundingRewards.createExpProgram(
+                                token.address,
+                                totalRewards,
+                                startTime,
+                                EXP_DECAY_HALF_LIFE / duration.days(1)
+                            );
+                        }
                     });
 
                     describe('basic tests', () => {
