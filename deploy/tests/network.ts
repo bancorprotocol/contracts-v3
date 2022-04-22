@@ -86,7 +86,7 @@ describe('network', () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_GOVERNOR,
-            isMainnet() ? [deployerV2, deployer] : [deployer]
+            isMainnet() ? [deployerV2] : [deployer]
         );
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
@@ -104,7 +104,7 @@ describe('network', () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_GOVERNOR,
-            isMainnet() ? [deployerV2, deployer] : [deployer]
+            isMainnet() ? [deployerV2] : [deployer]
         );
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
