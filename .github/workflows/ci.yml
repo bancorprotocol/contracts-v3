@@ -45,3 +45,11 @@ jobs:
 
       - name: Test
         run: yarn test:ci
+
+      - name: Test Deployment
+        run: yarn test:deploy
+
+      - name: Test Deployment (Mainnet Fork)
+        run: yarn test:deploy:fork
+        env:
+          ETHEREUM_PROVIDER_URL: ${{ secrets.ETHEREUM_PROVIDER_URL }}
