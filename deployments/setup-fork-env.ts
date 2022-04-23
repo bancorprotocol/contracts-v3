@@ -139,7 +139,7 @@ const main = async () => {
 
     await archiveArtifacts();
 
-    console.log('********************************************');
+    console.log('*********************************************************');
     console.log();
     console.log('Main Fork');
     console.log('‾‾‾‾‾‾‾‾‾');
@@ -164,7 +164,7 @@ const main = async () => {
         console.log(`   ${address}`);
     }
     console.log();
-    console.log('********************************************');
+    console.log('*********************************************************');
 };
 
 main()
