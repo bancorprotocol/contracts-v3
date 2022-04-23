@@ -86,6 +86,8 @@ const main = async () => {
         throw new Error('Invalid network');
     }
 
+    console.log();
+
     console.log('Setting up main fork...');
     const mainForkId = await createTenderlyFork();
 
