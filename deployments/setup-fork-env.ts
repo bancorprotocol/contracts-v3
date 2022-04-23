@@ -1,4 +1,5 @@
 import Contracts from '../components/Contracts';
+import { MAX_UINT256 } from '../utils/Constants';
 import { DeployedContracts, getNamedSigners, isTenderlyFork } from '../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
@@ -57,6 +58,20 @@ const fundAccount = async (forkId: string, account: string, fundingRequests: Fun
     }
 };
 
+const removeDepositLimits = async (forkId: string, tokens: string[]) => {
+    console.log(`Removing deposit limits on fork ${forkId}...`);
+    console.log();
+
+    const { deployer } = await getNamedSigners();
+
+    tenderlyNetwork.setFork(forkId);
+
+    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+    for (const token of tokens) {
+        await poolCollection.connect(deployer).setDepositLimit(token, MAX_UINT256);
+    }
+};
+
 const setLockDuration = async (forkId: string, lockDuration: number) => {
     console.log(`Setting withdrawal lock duration to ${lockDuration} seconds on fork ${forkId}`);
     console.log();
@@ -64,6 +79,7 @@ const setLockDuration = async (forkId: string, lockDuration: number) => {
     const { deployer } = await getNamedSigners();
 
     tenderlyNetwork.setFork(forkId);
+
     const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
     await pendingWithdrawals.connect(deployer).setLockDuration(lockDuration);
 };
@@ -136,6 +152,10 @@ const main = async () => {
 
     console.log();
 
+    for (const forkId of [mainForkId, researchForkId]) {
+        await removeDepositLimits(forkId, [NATIVE_TOKEN_ADDRESS, dai, link]);
+    }
+
     const lockDuration = 2;
     await setLockDuration(researchForkId, lockDuration);
 
@@ -151,6 +171,7 @@ const main = async () => {
     console.log('‾‾‾‾‾‾‾‾‾‾‾‾‾');
     console.log(`   RPC: https://rpc.tenderly.co/fork/${researchForkId}`);
     console.log();
+    console.log(`   * Unlimited deposits`);
     console.log(`   * Withdrawal locking duration was set to ${lockDuration} seconds`);
     console.log();
     console.log('Funding');
