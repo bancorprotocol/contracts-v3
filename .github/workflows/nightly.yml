@@ -7,7 +7,7 @@ on:
 
 jobs:
   check_latest_commit_date:
-  name: Check Latest Commit
+    name: Check Latest Commit
     runs-on: ubuntu-latest
 
     outputs:
