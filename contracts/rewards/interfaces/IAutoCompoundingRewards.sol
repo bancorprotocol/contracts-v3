@@ -84,7 +84,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function enableProgram(Token pool, bool status) external;
 
     /**
-     * @dev sets the number of programs to process the rewards of, when auto-trigerred
+     * @dev sets the number of programs to process the rewards for, when auto-trigerred
      *
      * requirements:
      *
@@ -93,7 +93,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function setAutoTriggerCount(uint256 autoTriggerCount) external;
 
     /**
-     * @dev processes program rewards for several pools
+     * @dev processes program rewards based on internal logic, without requiring any input
      */
     function trigger() external;
 
