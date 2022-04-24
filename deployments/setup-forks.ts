@@ -14,10 +14,12 @@ import 'hardhat-deploy';
 import path from 'path';
 
 interface EnvOptions {
+    TENDERLY_PROJECT: string;
+    TENDERLY_USERNAME: string;
     DEV_ADDRESSES: string;
 }
 
-const { DEV_ADDRESSES }: EnvOptions = process.env as any as EnvOptions;
+const { TENDERLY_PROJECT, TENDERLY_USERNAME, DEV_ADDRESSES }: EnvOptions = process.env as any as EnvOptions;
 
 const tenderlyNetwork = tenderly.network();
 
@@ -161,15 +163,21 @@ const main = async () => {
 
     await archiveArtifacts();
 
-    console.log('*********************************************************');
+    console.log('********************************************************************************');
     console.log();
     console.log('Main Fork');
     console.log('‾‾‾‾‾‾‾‾‾');
     console.log(`   RPC: https://rpc.tenderly.co/fork/${mainForkId}`);
+    console.log(
+        `   Dashboard: https://dashboard.tenderly.co/${TENDERLY_USERNAME}/${TENDERLY_PROJECT}/fork/${mainForkId}`
+    );
     console.log();
     console.log('Research Fork');
     console.log('‾‾‾‾‾‾‾‾‾‾‾‾‾');
     console.log(`   RPC: https://rpc.tenderly.co/fork/${researchForkId}`);
+    console.log(
+        `   Dashboard: https://dashboard.tenderly.co/${TENDERLY_USERNAME}/${TENDERLY_PROJECT}/fork/${researchForkId}`
+    );
     console.log();
     console.log(`   * Unlimited deposits`);
     console.log(`   * Withdrawal locking duration was set to ${lockDuration} seconds`);
@@ -187,7 +195,7 @@ const main = async () => {
         console.log(`   ${address}`);
     }
     console.log();
-    console.log('*********************************************************');
+    console.log('********************************************************************************');
 };
 
 main()
