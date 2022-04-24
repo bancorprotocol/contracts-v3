@@ -534,6 +534,31 @@ describe('AutoCompoundingRewards', () => {
                     });
                 });
 
+                describe('setting auto-trigger count', () => {
+                    it('should revert when a non-admin attempts to set the auto-trigger count', async () => {
+                        await expect(autoCompoundingRewards.connect(user).setAutoTriggerCount(1)).to.be.revertedWith(
+                            'AccessDenied'
+                        );
+                    });
+
+                    it('should set the auto-trigger count', async () => {
+                        const prevAutoTriggerCount = await autoCompoundingRewards.autoTriggerCount();
+                        const newAutoTriggerCount = prevAutoTriggerCount.add(1);
+
+                        const res1 = await autoCompoundingRewards.setAutoTriggerCount(newAutoTriggerCount);
+
+                        await expect(res1)
+                            .to.emit(autoCompoundingRewards, 'AutoTriggerCountUpdated')
+                            .withArgs(prevAutoTriggerCount, newAutoTriggerCount);
+                        expect(await autoCompoundingRewards.autoTriggerCount()).to.equal(newAutoTriggerCount);
+
+                        const res2 = await autoCompoundingRewards.setAutoTriggerCount(newAutoTriggerCount);
+
+                        await expect(res2).not.to.emit(autoCompoundingRewards, 'AutoTriggerCountUpdated');
+                        expect(await autoCompoundingRewards.autoTriggerCount()).to.equal(newAutoTriggerCount);
+                    });
+                });
+
                 describe('processing rewards', () => {
                     beforeEach(async () => {
                         await autoCompoundingRewards.createProgram(

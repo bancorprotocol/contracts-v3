@@ -96,7 +96,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev triggered when the auto trigger count is updated
      */
-    event AutoTriggerCountUpdated(uint256 prevAutoTriggerCount, uint256 autoTriggerCount);
+    event AutoTriggerCountUpdated(uint256 prevAutoTriggerCount, uint256 newAutoTriggerCount);
 
     /**
      * @dev triggered when rewards are distributed
@@ -191,6 +191,13 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      */
     function pools() external view returns (address[] memory) {
         return _pools.values();
+    }
+
+    /**
+     * @inheritdoc IAutoCompoundingRewards
+     */
+    function autoTriggerCount() external view returns (uint256) {
+        return _autoTriggerCount;
     }
 
     /**
@@ -316,17 +323,17 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function setAutoTriggerCount(uint256 autoTriggerCount) external onlyAdmin {
+    function setAutoTriggerCount(uint256 newAutoTriggerCount) external onlyAdmin {
         uint256 prevAutoTriggerCount = _autoTriggerCount;
-        if (prevAutoTriggerCount == autoTriggerCount) {
+        if (prevAutoTriggerCount == newAutoTriggerCount) {
             return;
         }
 
-        _autoTriggerCount = autoTriggerCount;
+        _autoTriggerCount = newAutoTriggerCount;
 
         emit AutoTriggerCountUpdated({
             prevAutoTriggerCount: prevAutoTriggerCount,
-            autoTriggerCount: autoTriggerCount
+            newAutoTriggerCount: newAutoTriggerCount
         });
     }
 
@@ -336,16 +343,15 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     function trigger() external nonReentrant {
         address[] memory values = _pools.values();
         uint256 numOfPools = values.length;
-        uint256 autoTriggerCount = _autoTriggerCount;
-        uint256 nextTriggerIndex = _nextTriggerIndex;
-        uint256 count = Math.min(numOfPools, autoTriggerCount);
+        uint256 startIndex = _nextTriggerIndex;
+        uint256 count = Math.min(numOfPools, _autoTriggerCount);
 
         for (uint256 i = 0; i < count; i++) {
-            uint256 index = (nextTriggerIndex + i) % numOfPools;
+            uint256 index = (startIndex + i) % numOfPools;
             _processRewards(Token(values[index]));
         }
 
-        _nextTriggerIndex = (nextTriggerIndex + count) % numOfPools;
+        _nextTriggerIndex = (startIndex + count) % numOfPools;
     }
 
     /**

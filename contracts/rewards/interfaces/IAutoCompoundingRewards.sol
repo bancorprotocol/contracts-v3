@@ -39,6 +39,11 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function pools() external view returns (address[] memory);
 
     /**
+     * @dev returns the auto-trigger count
+     */
+    function autoTriggerCount() external view returns (uint256);
+
+    /**
      * @dev returns whether a program is currently active
      */
     function isProgramActive(Token pool) external view returns (bool);
