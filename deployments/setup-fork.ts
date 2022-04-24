@@ -15,19 +15,19 @@ import { HttpNetworkUserConfig } from 'hardhat/types';
 import path from 'path';
 
 interface EnvOptions {
+    DEV_ADDRESSES: string;
     FORK_NAME: string;
     FORK_RESEARCH: boolean;
     TENDERLY_PROJECT: string;
     TENDERLY_USERNAME: string;
-    DEV_ADDRESSES: string;
 }
 
 const {
-    TENDERLY_PROJECT,
-    TENDERLY_USERNAME,
     DEV_ADDRESSES,
     FORK_NAME,
-    FORK_RESEARCH: isResearch
+    FORK_RESEARCH: isResearch,
+    TENDERLY_PROJECT,
+    TENDERLY_USERNAME
 }: EnvOptions = process.env as any as EnvOptions;
 
 const tenderlyNetwork = tenderly.network();

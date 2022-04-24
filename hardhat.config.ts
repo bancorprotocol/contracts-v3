@@ -16,29 +16,29 @@ import { MochaOptions } from 'mocha';
 import 'solidity-coverage';
 
 interface EnvOptions {
-    NIGHTLY?: boolean;
-    PROFILE?: boolean;
     ETHEREUM_PROVIDER_URL?: string;
     ETHEREUM_RINKEBY_PROVIDER_URL?: string;
-    TENDERLY_FORK_ID?: string;
-    TENDERLY_PROJECT?: string;
-    TENDERLY_USERNAME?: string;
     ETHERSCAN_API_KEY?: string;
     FORKING?: boolean;
     GAS_PRICE?: number | 'auto';
+    NIGHTLY?: boolean;
+    PROFILE?: boolean;
+    TENDERLY_FORK_ID?: string;
+    TENDERLY_PROJECT?: string;
+    TENDERLY_USERNAME?: string;
 }
 
 const {
-    NIGHTLY: isNightly,
-    PROFILE: isProfiling,
     ETHEREUM_PROVIDER_URL = '',
     ETHEREUM_RINKEBY_PROVIDER_URL = '',
-    TENDERLY_FORK_ID = '',
-    TENDERLY_PROJECT = '',
-    TENDERLY_USERNAME = '',
     ETHERSCAN_API_KEY,
     FORKING: isForking,
-    GAS_PRICE: gasPrice = 'auto'
+    GAS_PRICE: gasPrice = 'auto',
+    NIGHTLY: isNightly,
+    PROFILE: isProfiling,
+    TENDERLY_FORK_ID = '',
+    TENDERLY_PROJECT = '',
+    TENDERLY_USERNAME = ''
 }: EnvOptions = process.env as any as EnvOptions;
 
 const mochaOptions = (): MochaOptions => {
