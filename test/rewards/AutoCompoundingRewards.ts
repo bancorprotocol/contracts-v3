@@ -586,6 +586,56 @@ describe('AutoCompoundingRewards', () => {
                     }
                 });
 
+                describe('trigger processing rewards', () => {
+                    const setups = [
+                        { tokenSymbol: TokenSymbol.ETH, initialUserStake: toWei(10_000), totalRewards: toWei(11_000) },
+                        { tokenSymbol: TokenSymbol.BNT, initialUserStake: toWei(20_000), totalRewards: toWei(12_000) },
+                        { tokenSymbol: TokenSymbol.TKN, initialUserStake: toWei(30_000), totalRewards: toWei(13_000) },
+                        { tokenSymbol: TokenSymbol.TKN1, initialUserStake: toWei(40_000), totalRewards: toWei(14_000) },
+                        { tokenSymbol: TokenSymbol.TKN2, initialUserStake: toWei(50_000), totalRewards: toWei(15_000) },
+                        { tokenSymbol: TokenSymbol.TKN3, initialUserStake: toWei(60_000), totalRewards: toWei(16_000) },
+                        { tokenSymbol: TokenSymbol.TKN4, initialUserStake: toWei(70_000), totalRewards: toWei(17_000) },
+                        { tokenSymbol: TokenSymbol.TKN5, initialUserStake: toWei(80_000), totalRewards: toWei(18_000) }
+                    ];
+
+                    const AUTO_TRIGGER_COUNT = 3;
+
+                    let tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
+                    let poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
+
+                    beforeEach(async () => {
+                        for (const [index, setup] of setups.entries()) {
+                            ({ token: tokens[index], poolToken: poolTokens[index] } = await prepareSimplePool(
+                                new TokenData(setup.tokenSymbol),
+                                setup.initialUserStake,
+                                setup.totalRewards
+                            ));
+
+                            await autoCompoundingRewards.createProgram(
+                                tokens[index].address,
+                                setup.totalRewards,
+                                distributionType,
+                                START_TIME,
+                                END_TIME
+                            );
+                        }
+
+                        await autoCompoundingRewards.setAutoTriggerCount(AUTO_TRIGGER_COUNT);
+                        await autoCompoundingRewards.setTime(END_TIME);
+                    });
+
+                    if (distributionType === RewardsDistributionType.Flat) {
+                        it('should distribute tokens', async () => {
+                            for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT); i++) {
+                                const res = await autoCompoundingRewards.trigger();
+                                await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                            }
+                            const res = await autoCompoundingRewards.trigger();
+                            await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                        });
+                    }
+                });
+
                 describe('is program active', () => {
                     context('before a program has been created', () => {
                         it('should return false', async () => {
