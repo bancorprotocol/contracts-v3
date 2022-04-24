@@ -3,7 +3,7 @@ name: Health
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *' # every 5 minutes
+    - cron: '*/10 * * * *' # every 10 minutes
 
 jobs:
   test:
