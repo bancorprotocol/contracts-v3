@@ -612,6 +612,8 @@ describe('AutoCompoundingRewards', () => {
                 });
 
                 describe('trigger processing rewards', () => {
+                    const AUTO_TRIGGER_COUNT = 3;
+
                     const setups = [
                         { tokenSymbol: TokenSymbol.ETH, initialUserStake: toWei(10_000), totalRewards: toWei(11_000) },
                         { tokenSymbol: TokenSymbol.BNT, initialUserStake: toWei(20_000), totalRewards: toWei(12_000) },
@@ -623,10 +625,8 @@ describe('AutoCompoundingRewards', () => {
                         { tokenSymbol: TokenSymbol.TKN5, initialUserStake: toWei(80_000), totalRewards: toWei(18_000) }
                     ];
 
-                    const AUTO_TRIGGER_COUNT = 3;
-
-                    let tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
-                    let poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
+                    const tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
+                    const poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
 
                     beforeEach(async () => {
                         for (const [index, setup] of setups.entries()) {
@@ -646,17 +646,25 @@ describe('AutoCompoundingRewards', () => {
                         }
 
                         await autoCompoundingRewards.setAutoTriggerCount(AUTO_TRIGGER_COUNT);
-                        await autoCompoundingRewards.setTime(END_TIME);
                     });
 
                     if (distributionType === RewardsDistributionType.Flat) {
-                        it('should distribute tokens', async () => {
+                        it('should distribute all tokens', async () => {
+                            await autoCompoundingRewards.setTime(END_TIME);
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT); i++) {
                                 const res = await autoCompoundingRewards.trigger();
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
                             }
                             const res = await autoCompoundingRewards.trigger();
                             await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                        });
+
+                        it('should distribute some tokens', async () => {
+                            for (let i = 0; i < 5; i++) {
+                                await autoCompoundingRewards.setTime(Math.floor(START_TIME + (END_TIME - START_TIME) * 2 ** i / (2 ** i + 1)));
+                                const res = await autoCompoundingRewards.trigger();
+                                await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                            }
                         });
                     }
                 });
