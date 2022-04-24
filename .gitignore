@@ -18,6 +18,8 @@ deployments/localhost/*
 deployments/hardhat/*
 deployments/tenderly/*
 
+fork-*.zip
+
 .coverage_artifacts
 .coverage_contracts
 /coverage
