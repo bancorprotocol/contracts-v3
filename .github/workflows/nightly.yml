@@ -7,9 +7,8 @@ on:
 
 jobs:
   check_latest_commit_date:
+  name: Check Latest Commit
     runs-on: ubuntu-latest
-
-    name: Check Latest Commit
 
     outputs:
       should_run: ${{ steps.should_run.outputs.should_run }}
@@ -27,7 +26,7 @@ jobs:
   test:
     name: Full Test
 
-    runs-on: self-hosted
+    runs-on: [self-hosted, CI]
     timeout-minutes: 1200
 
     needs: check_latest_commit_date
