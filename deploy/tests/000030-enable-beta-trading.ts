@@ -167,14 +167,14 @@ describeDeployment(
             const bntAmount = toWei(1000);
 
             for (let i = 0; i < 5; i++) {
-                const prevBNBNAmount = await getBalance(bntBNT, bntWhale);
+                const prevBNBNTAmount = await getBalance(bntBNT, bntWhale);
                 const prevVBNTTokenAmount = await getBalance(vbnt, bntWhale);
                 const prevTotalSupply = await bnt.totalSupply();
 
                 await bnt.connect(bntWhale).approve(network.address, bntAmount);
                 await network.connect(bntWhale).deposit(bnt.address, bntAmount);
 
-                const receivedBNBNTAmount = (await getBalance(bntBNT, bntWhale)).sub(prevBNBNAmount);
+                const receivedBNBNTAmount = (await getBalance(bntBNT, bntWhale)).sub(prevBNBNTAmount);
 
                 expect(receivedBNBNTAmount).be.gt(0);
                 expect(await getBalance(vbnt, bntWhale)).to.equal(prevVBNTTokenAmount.add(receivedBNBNTAmount));
