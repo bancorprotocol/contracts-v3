@@ -42,6 +42,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     error InsufficientFunds();
 
+    uint16 private constant AUTO_TRIGGER_MIN_TIME_DELTA = 1 hours;
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -348,7 +350,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         for (uint256 i = 0; i < count; i++) {
             uint256 index = (startIndex + i) % numOfPools;
-            _processRewards(Token(values[index]));
+            _processRewards(Token(values[index]), true);
         }
 
         _nextTriggerIndex = (startIndex + count) % numOfPools;
@@ -358,18 +360,22 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * @inheritdoc IAutoCompoundingRewards
      */
     function processRewards(Token pool) external nonReentrant {
-        _processRewards(pool);
+        _processRewards(pool, false);
     }
 
     /**
      * @dev processes the rewards of a given pool
      */
-    function _processRewards(Token pool) private {
+    function _processRewards(Token pool, bool skip) private {
         ProgramData memory p = _programs[pool];
 
         uint32 currTime = _time();
 
         if (!p.isEnabled || currTime < p.startTime) {
+            return;
+        }
+
+        if (skip && currTime < p.prevDistributionTimestamp + AUTO_TRIGGER_MIN_TIME_DELTA) {
             return;
         }
 
