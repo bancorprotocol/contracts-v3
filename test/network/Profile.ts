@@ -1277,7 +1277,7 @@ describe('Profile @profile', () => {
                                 token.address,
                                 totalRewards,
                                 startTime,
-                                EXP_DECAY_HALF_LIFE / duration.days(1)
+                                EXP_DECAY_HALF_LIFE
                             );
                         }
                     });

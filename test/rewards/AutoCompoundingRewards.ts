@@ -201,7 +201,7 @@ describe('AutoCompoundingRewards', () => {
             distributionType === RewardsDistributionType.Flat ? START_TIME + FLAT_TOTAL_DURATION : 0;
 
         const programHalfLife = (distributionType: RewardsDistributionType) =>
-            distributionType === RewardsDistributionType.Flat ? 0 : EXP_DECAY_HALF_LIFE / duration.days(1);
+            distributionType === RewardsDistributionType.Flat ? 0 : EXP_DECAY_HALF_LIFE;
 
         const programDuration = (distributionType: RewardsDistributionType) =>
             distributionType === RewardsDistributionType.Flat ? FLAT_TOTAL_DURATION : EXP_DECAY_MAX_DURATION;
@@ -213,13 +213,13 @@ describe('AutoCompoundingRewards', () => {
             distributionType: RewardsDistributionType,
             startTime: number,
             endTime: number,
-            halfLifeInDays: number
+            halfLife: number
         ) => {
             switch (distributionType) {
                 case RewardsDistributionType.Flat:
                     return autoCompoundingRewards.createFlatProgram(pool, totalRewards, startTime, endTime);
                 case RewardsDistributionType.ExponentialDecay:
-                    return autoCompoundingRewards.createExpProgram(pool, totalRewards, startTime, halfLifeInDays);
+                    return autoCompoundingRewards.createExpProgram(pool, totalRewards, startTime, halfLife);
             }
         };
 
@@ -395,9 +395,7 @@ describe('AutoCompoundingRewards', () => {
                                             expect(program.distributionType).to.equal(distributionType);
                                             expect(program.startTime).to.equal(startTime);
                                             expect(program.endTime).to.equal(effectiveEndTime);
-                                            expect(program.halfLife).to.equal(
-                                                programHalfLife(distributionType) * duration.days(1)
-                                            );
+                                            expect(program.halfLife).to.equal(programHalfLife(distributionType));
                                             expect(program.prevDistributionTimestamp).to.equal(0);
                                             expect(program.isEnabled).to.be.true;
                                         });
@@ -951,7 +949,7 @@ describe('AutoCompoundingRewards', () => {
                             expect(program.distributionType).to.equal(distributionType);
                             expect(program.startTime).to.equal(START_TIME);
                             expect(program.endTime).to.equal(programEndTime(distributionType));
-                            expect(program.halfLife).to.equal(programHalfLife(distributionType) * duration.days(1));
+                            expect(program.halfLife).to.equal(programHalfLife(distributionType));
                             expect(program.prevDistributionTimestamp).to.equal(0);
                             expect(program.isEnabled).to.be.true;
                         });
@@ -1231,7 +1229,7 @@ describe('AutoCompoundingRewards', () => {
                                 token.address,
                                 totalRewards,
                                 startTime,
-                                EXP_DECAY_HALF_LIFE / duration.days(1)
+                                EXP_DECAY_HALF_LIFE
                             );
                         }
                     });

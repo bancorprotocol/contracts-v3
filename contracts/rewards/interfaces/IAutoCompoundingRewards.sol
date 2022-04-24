@@ -71,7 +71,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
         Token pool,
         uint256 totalRewards,
         uint32 startTime,
-        uint32 halfLifeInDays
+        uint32 halfLife
     ) external;
 
     /**

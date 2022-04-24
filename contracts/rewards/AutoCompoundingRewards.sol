@@ -78,7 +78,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime,
-        uint32 halfLifeInDays
+        uint32 halfLife
     );
 
     /**
@@ -214,7 +214,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint8 distributionType,
         uint32 startTime,
         uint32 endTime,
-        uint32 halfLifeInDays
+        uint32 halfLife
     ) private validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (_doesProgramExist(_programs[pool])) {
             revert AlreadyExists();
@@ -238,7 +238,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         ProgramData memory p = ProgramData({
             startTime: startTime,
             endTime: endTime,
-            halfLife: halfLifeInDays * 1 days,
+            halfLife: halfLife,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
             isEnabled: true,
@@ -259,7 +259,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             totalRewards: totalRewards,
             startTime: startTime,
             endTime: endTime,
-            halfLifeInDays: halfLifeInDays
+            halfLife: halfLife
         });
     }
 
@@ -286,13 +286,13 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         Token pool,
         uint256 totalRewards,
         uint32 startTime,
-        uint32 halfLifeInDays
+        uint32 halfLife
     ) external {
-        if (halfLifeInDays == 0) {
+        if (halfLife == 0) {
             revert InvalidParam();
         }
 
-        _createProgram(pool, totalRewards, EXPONENTIAL_DECAY_DISTRIBUTION, startTime, 0, halfLifeInDays);
+        _createProgram(pool, totalRewards, EXPONENTIAL_DECAY_DISTRIBUTION, startTime, 0, halfLife);
     }
 
     /**
