@@ -64,6 +64,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     // SushiSwap v2 factory contract
     IUniswapV2Factory private immutable _sushiSwapV2Factory;
 
+    // WETH9 contract
+    address private immutable _WETH; // solhint-disable-line var-name-mixedcase
+
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
 
@@ -108,7 +111,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IUniswapV2Router02 uniswapV2Router,
         IUniswapV2Factory uniswapV2Factory,
         IUniswapV2Router02 sushiSwapV2Router,
-        IUniswapV2Factory sushiSwapV2Factory
+        IUniswapV2Factory sushiSwapV2Factory,
+        address WETH // solhint-disable-line var-name-mixedcase
     )
         validAddress(address(network))
         validAddress(address(networkSettings))
@@ -117,6 +121,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(uniswapV2Factory))
         validAddress(address(sushiSwapV2Router))
         validAddress(address(sushiSwapV2Factory))
+        validAddress(address(WETH))
     {
         _network = network;
         _networkSettings = networkSettings;
@@ -125,6 +130,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         _uniswapV2Factory = uniswapV2Factory;
         _sushiSwapV2Router = sushiSwapV2Router;
         _sushiSwapV2Factory = sushiSwapV2Factory;
+        _WETH = WETH;
     }
 
     /**
@@ -256,7 +262,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         address provider
     ) private returns (MigrationResult memory) {
         // get Uniswap's pair
-        address pairAddress = factory.getPair(address(token0), address(token1));
+        address pairAddress = factory.getPair(address(_nativeToWETH(token0)), address(_nativeToWETH(token1)));
         IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
         if (address(pair) == address(0)) {
             revert NoPairForTokens();
@@ -271,28 +277,32 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
         for (uint256 i = 0; i < 2; i++) {
-            whitelist[i] = tokens[i].isEqual(_bnt) || _networkSettings.isTokenWhitelisted(tokens[i]);
+            Token token = _WETHToNative(tokens[i]);
+            whitelist[i] = token.isEqual(_bnt) || _networkSettings.isTokenWhitelisted(token);
         }
         if (!whitelist[0] && !whitelist[1]) {
             revert UnsupportedTokens();
         }
 
         // save states
-        uint256[2] memory previousBalances = [tokens[0].balanceOf(address(this)), tokens[1].balanceOf(address(this))];
+        uint256[2] memory previousBalances = [
+            _WETHToNative(tokens[0]).balanceOf(address(this)),
+            _WETHToNative(tokens[1]).balanceOf(address(this))
+        ];
 
         // remove liquidity from Uniswap
         _uniV2RemoveLiquidity(tokens, pair, router, poolTokenAmount);
 
         // migrate funds
         uint256[2] memory deposited;
-
         for (uint256 i = 0; i < 2; i++) {
-            uint256 delta = tokens[i].balanceOf(address(this)) - previousBalances[i];
+            Token token = _WETHToNative(tokens[i]);
+            uint256 delta = token.balanceOf(address(this)) - previousBalances[i];
             if (whitelist[i]) {
                 deposited[i] = delta;
-                _deposit(tokens[i], deposited[i], provider);
+                _deposit(token, deposited[i], provider);
             } else {
-                _transferToProvider(tokens[i], delta, provider);
+                _transferToProvider(token, delta, provider);
             }
         }
 
@@ -349,22 +359,47 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         uint256 poolTokenAmount
     ) private {
         IERC20(address(pair)).safeApprove(address(router), poolTokenAmount);
-
         uint256 deadline = block.timestamp + MAX_DEADLINE;
-        if (tokens[0].isNative()) {
-            router.removeLiquidityETH(address(tokens[1]), poolTokenAmount, 1, 1, address(this), deadline);
-        } else if (tokens[1].isNative()) {
-            router.removeLiquidityETH(address(tokens[0]), poolTokenAmount, 1, 1, address(this), deadline);
+
+        Token token0 = _nativeToWETH(tokens[0]);
+        Token token1 = _nativeToWETH(tokens[1]);
+
+        if (_isWETH(token0)) {
+            router.removeLiquidityETH(address(token1), poolTokenAmount, 1, 1, address(this), deadline);
+        } else if (_isWETH(token1)) {
+            router.removeLiquidityETH(address(token0), poolTokenAmount, 1, 1, address(this), deadline);
         } else {
-            router.removeLiquidity(
-                address(tokens[0]),
-                address(tokens[1]),
-                poolTokenAmount,
-                1,
-                1,
-                address(this),
-                deadline
-            );
+            router.removeLiquidity(address(token0), address(token1), poolTokenAmount, 1, 1, address(this), deadline);
         }
+    }
+
+    /**
+     * @dev replaces native token with WETH
+     */
+    function _nativeToWETH(Token token) private view returns (Token) {
+        if (token.isNative()) {
+            return Token(_WETH);
+        }
+        return token;
+    }
+
+    /**
+     * @dev replaces WETH with the native token
+     */
+    function _WETHToNative(Token token) private view returns (Token) {
+        if (_isWETH(token)) {
+            return Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS));
+        }
+        return token;
+    }
+
+    /**
+     * @dev returns true if given token is WETH
+     */
+    function _isWETH(Token token) private view returns (bool) {
+        if (address(token) == _WETH) {
+            return true;
+        }
+        return false;
     }
 }

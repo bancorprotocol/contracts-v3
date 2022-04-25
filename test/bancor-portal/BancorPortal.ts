@@ -11,19 +11,20 @@ import Contracts, {
     TestPoolCollection
 } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei } from '../../utils/Types';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, WETH_ADDRESS } from '../../utils/TokenData';
+import { Addressable, toWei } from '../../utils/Types';
 import { createProxy, createSystem, createToken, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { getBalances, getTransactionCost, transfer } from '../helpers/Utils';
+import { getBalances, getTransactionCost, toAddress } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, ContractTransaction, utils } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 const FUNDING_LIMIT = toWei(10_000_000);
 const CONTEXT_ID = formatBytes32String('CTX');
+const tokenWithAddressWETH: TokenWithAddress = { address: WETH_ADDRESS };
 
 interface Whitelist {
     [address: string]: boolean;
@@ -65,7 +66,12 @@ describe('BancorPortal', () => {
 
     beforeEach(async () => {
         ({ network, networkSettings, bnt, poolCollection, networkInfo, bntPoolToken } = await createSystem());
-        uniswapV2Pair = await Contracts.MockUniswapV2Pair.deploy('UniswapV2Pair', 'UniswapV2Pair', 100_000_000);
+        uniswapV2Pair = await Contracts.MockUniswapV2Pair.deploy(
+            'UniswapV2Pair',
+            'UniswapV2Pair',
+            100_000_000,
+            WETH_ADDRESS
+        );
         uniswapV2Router02 = await Contracts.MockUniswapV2Router02.deploy(
             'UniswapV2Router02',
             'UniswapV2Router02',
@@ -87,7 +93,8 @@ describe('BancorPortal', () => {
                 uniswapV2Router02.address,
                 uniswapV2Factory.address,
                 uniswapV2Router02.address,
-                uniswapV2Factory.address
+                uniswapV2Factory.address,
+                WETH_ADDRESS
             ]
         });
 
@@ -137,8 +144,8 @@ describe('BancorPortal', () => {
 
         it('returns the correct values', async () => {
             await uniswapV2Pair.connect(user).approve(bancorPortal.address, AMOUNT);
-            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.ETH);
-            const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.TKN2);
             await uniswapV2Pair.setTokens(whitelistedToken1.address, whitelistedToken2.address);
             await uniswapV2Factory.setTokens(whitelistedToken1.address, whitelistedToken2.address);
             const res = await testMigrationDeposit([
@@ -170,7 +177,8 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address
+                    uniswapV2Factory.address,
+                    WETH_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -184,7 +192,8 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address
+                    uniswapV2Factory.address,
+                    WETH_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -198,7 +207,8 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address
+                    uniswapV2Factory.address,
+                    WETH_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -212,7 +222,8 @@ describe('BancorPortal', () => {
                     ZERO_ADDRESS,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address
+                    uniswapV2Factory.address,
+                    WETH_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -226,7 +237,8 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     ZERO_ADDRESS,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address
+                    uniswapV2Factory.address,
+                    WETH_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -240,7 +252,8 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     ZERO_ADDRESS,
-                    uniswapV2Factory.address
+                    uniswapV2Factory.address,
+                    WETH_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -254,7 +267,8 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    ZERO_ADDRESS
+                    ZERO_ADDRESS,
+                    WETH_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -288,16 +302,16 @@ describe('BancorPortal', () => {
         it("transfers funds to the user's wallet when token1 is the native token and token2 is whitelisted", async () => {
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
-            await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
-            await uniswapV2Factory.setTokens(unlistedToken.address, whitelistedToken.address);
+            await uniswapV2Pair.setTokens(WETH_ADDRESS, whitelistedToken.address);
+            await uniswapV2Factory.setTokens(WETH_ADDRESS, whitelistedToken.address);
             await testMigrationTransfer(unlistedToken, whitelistedToken);
         });
 
         it("transfers funds to the user's wallet when token1 is whitelisted and token2 is the native token", async () => {
             const { token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.TKN1);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.ETH));
-            await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
-            await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
+            await uniswapV2Pair.setTokens(whitelistedToken.address, WETH_ADDRESS);
+            await uniswapV2Factory.setTokens(whitelistedToken.address, WETH_ADDRESS);
             await testMigrationTransfer(whitelistedToken, unlistedToken);
         });
     });
@@ -379,8 +393,8 @@ describe('BancorPortal', () => {
         it('deposits when token1 is the native token and token2 is unlisted', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
-            await uniswapV2Pair.setTokens(whitelistedToken.address, unlistedToken.address);
-            await uniswapV2Factory.setTokens(whitelistedToken.address, unlistedToken.address);
+            await uniswapV2Pair.setTokens(WETH_ADDRESS, unlistedToken.address);
+            await uniswapV2Factory.setTokens(WETH_ADDRESS, unlistedToken.address);
             const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken, poolToken },
                 { reserveToken: unlistedToken }
@@ -402,8 +416,8 @@ describe('BancorPortal', () => {
         it('deposits when token1 is the native token and token2 is whitelisted', async () => {
             const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.ETH);
             const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.TKN1);
-            await uniswapV2Pair.setTokens(whitelistedToken1.address, whitelistedToken2.address);
-            await uniswapV2Factory.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            await uniswapV2Pair.setTokens(WETH_ADDRESS, whitelistedToken2.address);
+            await uniswapV2Factory.setTokens(WETH_ADDRESS, whitelistedToken2.address);
             const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken1, poolToken: poolToken1 },
                 { reserveToken: whitelistedToken2, poolToken: poolToken2 }
@@ -422,11 +436,103 @@ describe('BancorPortal', () => {
                 );
         });
 
+        it('deposits when token1 is WETH and token2 is whitelisted', async () => {
+            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.ETH);
+            const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.TKN1);
+            await uniswapV2Pair.setTokens(WETH_ADDRESS, whitelistedToken2.address);
+            await uniswapV2Factory.setTokens(WETH_ADDRESS, whitelistedToken2.address);
+            const res = await testMigrationDeposit([
+                { reserveToken: tokenWithAddressWETH, poolToken: poolToken1 },
+                { reserveToken: whitelistedToken2, poolToken: poolToken2 }
+            ]);
+            expect(res)
+                .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
+                .withArgs(
+                    user.address,
+                    uniswapV2Pair.address,
+                    whitelistedToken1.address,
+                    whitelistedToken2.address,
+                    AMOUNT,
+                    AMOUNT,
+                    true,
+                    true
+                );
+        });
+
+        it('deposits when token1 is WETH and token2 is unlisted', async () => {
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Pair.setTokens(WETH_ADDRESS, unlistedToken.address);
+            await uniswapV2Factory.setTokens(WETH_ADDRESS, unlistedToken.address);
+            const res = await testMigrationDeposit([
+                { reserveToken: tokenWithAddressWETH, poolToken },
+                { reserveToken: unlistedToken }
+            ]);
+            expect(res)
+                .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
+                .withArgs(
+                    user.address,
+                    uniswapV2Pair.address,
+                    whitelistedToken.address,
+                    unlistedToken.address,
+                    AMOUNT,
+                    ZERO,
+                    true,
+                    false
+                );
+        });
+
         it('deposits when token1 is unlisted and token2 is the native token', async () => {
             const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
             const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
-            await uniswapV2Pair.setTokens(unlistedToken.address, whitelistedToken.address);
-            await uniswapV2Factory.setTokens(unlistedToken.address, whitelistedToken.address);
+            await uniswapV2Pair.setTokens(unlistedToken.address, WETH_ADDRESS);
+            await uniswapV2Factory.setTokens(unlistedToken.address, WETH_ADDRESS);
+            const res = await testMigrationDeposit([
+                { reserveToken: unlistedToken },
+                { reserveToken: tokenWithAddressWETH, poolToken }
+            ]);
+            expect(res)
+                .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
+                .withArgs(
+                    user.address,
+                    uniswapV2Pair.address,
+                    unlistedToken.address,
+                    whitelistedToken.address,
+                    ZERO,
+                    AMOUNT,
+                    false,
+                    true
+                );
+        });
+
+        it('deposits when token1 is whitelisted and token2 is the native token', async () => {
+            const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN1);
+            const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.ETH);
+            await uniswapV2Pair.setTokens(whitelistedToken1.address, WETH_ADDRESS);
+            await uniswapV2Factory.setTokens(whitelistedToken1.address, WETH_ADDRESS);
+            const res = await testMigrationDeposit([
+                { reserveToken: whitelistedToken1, poolToken: poolToken1 },
+                { reserveToken: tokenWithAddressWETH, poolToken: poolToken2 }
+            ]);
+            expect(res)
+                .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
+                .withArgs(
+                    user.address,
+                    uniswapV2Pair.address,
+                    whitelistedToken1.address,
+                    whitelistedToken2.address,
+                    AMOUNT,
+                    AMOUNT,
+                    true,
+                    true
+                );
+        });
+
+        it('deposits when token1 is unlisted and token2 is the native token', async () => {
+            const { poolToken, token: whitelistedToken } = await preparePoolAndToken(TokenSymbol.ETH);
+            const unlistedToken = await createToken(new TokenData(TokenSymbol.TKN2));
+            await uniswapV2Pair.setTokens(unlistedToken.address, WETH_ADDRESS);
+            await uniswapV2Factory.setTokens(unlistedToken.address, WETH_ADDRESS);
             const res = await testMigrationDeposit([
                 { reserveToken: unlistedToken },
                 { reserveToken: whitelistedToken, poolToken }
@@ -448,8 +554,8 @@ describe('BancorPortal', () => {
         it('deposits when token1 is whitelisted and token2 is the native token', async () => {
             const { poolToken: poolToken1, token: whitelistedToken1 } = await preparePoolAndToken(TokenSymbol.TKN1);
             const { poolToken: poolToken2, token: whitelistedToken2 } = await preparePoolAndToken(TokenSymbol.ETH);
-            await uniswapV2Pair.setTokens(whitelistedToken1.address, whitelistedToken2.address);
-            await uniswapV2Factory.setTokens(whitelistedToken1.address, whitelistedToken2.address);
+            await uniswapV2Pair.setTokens(whitelistedToken1.address, WETH_ADDRESS);
+            await uniswapV2Factory.setTokens(whitelistedToken1.address, WETH_ADDRESS);
             const res = await testMigrationDeposit([
                 { reserveToken: whitelistedToken1, poolToken: poolToken1 },
                 { reserveToken: whitelistedToken2, poolToken: poolToken2 }
@@ -739,5 +845,21 @@ describe('BancorPortal', () => {
 
     const isBNT = (token: TokenWithAddress): boolean => {
         return token.address === bnt.address;
+    };
+
+    const transfer = async (
+        sourceAccount: SignerWithAddress,
+        token: TokenWithAddress,
+        target: string | Addressable,
+        amount: BigNumberish
+    ) => {
+        const targetAddress = toAddress(target);
+        const tokenAddress = token.address;
+        if ([NATIVE_TOKEN_ADDRESS, WETH_ADDRESS].includes(tokenAddress)) {
+            return await sourceAccount.sendTransaction({ to: targetAddress, value: amount });
+        }
+        return await (await Contracts.TestERC20Token.attach(tokenAddress))
+            .connect(sourceAccount)
+            .transfer(targetAddress, amount);
     };
 });
