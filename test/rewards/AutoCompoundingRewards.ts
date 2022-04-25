@@ -197,14 +197,20 @@ describe('AutoCompoundingRewards', () => {
         const EXP_DECAY_HALF_LIFE = duration.days(560);
         const EXP_DECAY_MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(EXP_DECAY_HALF_LIFE).sub(1).ceil().toNumber();
 
-        const programEndTime = (distributionType: RewardsDistributionType) =>
-            distributionType === RewardsDistributionType.Flat ? START_TIME + FLAT_TOTAL_DURATION : 0;
+        const programEndTime = {
+            [RewardsDistributionType.Flat]: START_TIME + FLAT_TOTAL_DURATION,
+            [RewardsDistributionType.ExponentialDecay]: 0
+        };
 
-        const programHalfLife = (distributionType: RewardsDistributionType) =>
-            distributionType === RewardsDistributionType.Flat ? 0 : EXP_DECAY_HALF_LIFE;
+        const programHalfLife = {
+            [RewardsDistributionType.Flat]: 0,
+            [RewardsDistributionType.ExponentialDecay]: EXP_DECAY_HALF_LIFE
+        };
 
-        const programDuration = (distributionType: RewardsDistributionType) =>
-            distributionType === RewardsDistributionType.Flat ? FLAT_TOTAL_DURATION : EXP_DECAY_MAX_DURATION;
+        const programDuration = {
+            [RewardsDistributionType.Flat]: FLAT_TOTAL_DURATION,
+            [RewardsDistributionType.ExponentialDecay]: EXP_DECAY_MAX_DURATION
+        };
 
         const createProgram = async (
             autoCompoundingRewards: TestAutoCompoundingRewards,
@@ -262,8 +268,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             )
                         ).to.be.revertedWith('AccessDenied');
                     });
@@ -276,8 +282,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             )
                         ).to.revertedWith('InvalidAddress');
                     });
@@ -289,8 +295,8 @@ describe('AutoCompoundingRewards', () => {
                             TOTAL_REWARDS,
                             distributionType,
                             START_TIME,
-                            programEndTime(distributionType),
-                            programHalfLife(distributionType)
+                            programEndTime[distributionType],
+                            programHalfLife[distributionType]
                         );
 
                         await expect(
@@ -300,8 +306,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             )
                         ).to.revertedWith('AlreadyExists');
                     });
@@ -314,8 +320,8 @@ describe('AutoCompoundingRewards', () => {
                                 0,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             )
                         ).to.revertedWith('ZeroValue');
                     });
@@ -330,8 +336,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             )
                         ).to.revertedWith('NotWhitelisted');
                     });
@@ -370,7 +376,7 @@ describe('AutoCompoundingRewards', () => {
                                                 distributionType,
                                                 startTime,
                                                 endTime,
-                                                programHalfLife(distributionType)
+                                                programHalfLife[distributionType]
                                             );
 
                                             const poolsAfter = await autoCompoundingRewards.pools();
@@ -384,7 +390,7 @@ describe('AutoCompoundingRewards', () => {
                                                     TOTAL_REWARDS,
                                                     startTime,
                                                     effectiveEndTime,
-                                                    programHalfLife(distributionType)
+                                                    programHalfLife[distributionType]
                                                 );
 
                                             const program = await autoCompoundingRewards.program(token.address);
@@ -395,7 +401,7 @@ describe('AutoCompoundingRewards', () => {
                                             expect(program.distributionType).to.equal(distributionType);
                                             expect(program.startTime).to.equal(startTime);
                                             expect(program.endTime).to.equal(effectiveEndTime);
-                                            expect(program.halfLife).to.equal(programHalfLife(distributionType));
+                                            expect(program.halfLife).to.equal(programHalfLife[distributionType]);
                                             expect(program.prevDistributionTimestamp).to.equal(0);
                                             expect(program.isEnabled).to.be.true;
                                         });
@@ -412,7 +418,7 @@ describe('AutoCompoundingRewards', () => {
                                                     distributionType,
                                                     startTime,
                                                     endTime,
-                                                    programHalfLife(distributionType)
+                                                    programHalfLife[distributionType]
                                                 )
                                             ).to.be.revertedWith('InvalidParam');
                                         });
@@ -446,8 +452,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             );
                         });
 
@@ -462,7 +468,7 @@ describe('AutoCompoundingRewards', () => {
 
                             await expect(res)
                                 .to.emit(autoCompoundingRewards, 'ProgramTerminated')
-                                .withArgs(token.address, programEndTime(distributionType), TOTAL_REWARDS);
+                                .withArgs(token.address, programEndTime[distributionType], TOTAL_REWARDS);
 
                             const program = await autoCompoundingRewards.program(token.address);
 
@@ -490,7 +496,7 @@ describe('AutoCompoundingRewards', () => {
 
                             await expect(res)
                                 .to.emit(autoCompoundingRewards, 'ProgramTerminated')
-                                .withArgs(token.address, programEndTime(distributionType), TOTAL_REWARDS);
+                                .withArgs(token.address, programEndTime[distributionType], TOTAL_REWARDS);
 
                             const program = await autoCompoundingRewards.program(token.address);
 
@@ -515,8 +521,8 @@ describe('AutoCompoundingRewards', () => {
                             TOTAL_REWARDS,
                             distributionType,
                             START_TIME,
-                            programEndTime(distributionType),
-                            programHalfLife(distributionType)
+                            programEndTime[distributionType],
+                            programHalfLife[distributionType]
                         );
                     });
 
@@ -598,13 +604,13 @@ describe('AutoCompoundingRewards', () => {
                             TOTAL_REWARDS,
                             distributionType,
                             START_TIME,
-                            programEndTime(distributionType),
-                            programHalfLife(distributionType)
+                            programEndTime[distributionType],
+                            programHalfLife[distributionType]
                         );
                     });
 
                     it('should distribute tokens only when the program is enabled', async () => {
-                        await autoCompoundingRewards.setTime(START_TIME + programDuration(distributionType));
+                        await autoCompoundingRewards.setTime(START_TIME + programDuration[distributionType]);
                         await autoCompoundingRewards.enableProgram(token.address, false);
                         const res1 = await autoCompoundingRewards.processRewards(token.address);
                         await expect(res1).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
@@ -691,7 +697,7 @@ describe('AutoCompoundingRewards', () => {
                                                         distributionType,
                                                         startTime,
                                                         endTime,
-                                                        programHalfLife(distributionType)
+                                                        programHalfLife[distributionType]
                                                     );
 
                                                     await autoCompoundingRewards.setTime(currTime);
@@ -718,8 +724,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             );
 
                             await autoCompoundingRewards.setTime(START_TIME - 1);
@@ -738,8 +744,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             );
 
                             await autoCompoundingRewards.setTime(START_TIME);
@@ -758,11 +764,11 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             );
 
-                            await autoCompoundingRewards.setTime(START_TIME + programDuration(distributionType) + 1);
+                            await autoCompoundingRewards.setTime(START_TIME + programDuration[distributionType] + 1);
                         });
 
                         switch (distributionType) {
@@ -796,8 +802,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             );
 
                             const program = await autoCompoundingRewards.program(token.address);
@@ -832,8 +838,8 @@ describe('AutoCompoundingRewards', () => {
                                     TOTAL_REWARDS,
                                     distributionType,
                                     START_TIME,
-                                    programEndTime(distributionType),
-                                    programHalfLife(distributionType)
+                                    programEndTime[distributionType],
+                                    programHalfLife[distributionType]
                                 );
                             }
                         });
@@ -898,8 +904,8 @@ describe('AutoCompoundingRewards', () => {
                                         maxTotalRewards,
                                         distributionType,
                                         START_TIME,
-                                        programEndTime(distributionType),
-                                        programHalfLife(distributionType)
+                                        programEndTime[distributionType],
+                                        programHalfLife[distributionType]
                                     )
                                 ).to.emit(autoCompoundingRewards, 'ProgramCreated');
                             });
@@ -912,8 +918,8 @@ describe('AutoCompoundingRewards', () => {
                                         maxTotalRewards.add(1),
                                         distributionType,
                                         START_TIME,
-                                        programEndTime(distributionType),
-                                        programHalfLife(distributionType)
+                                        programEndTime[distributionType],
+                                        programHalfLife[distributionType]
                                     )
                                 ).to.revertedWith('InsufficientFunds');
                             });
@@ -926,8 +932,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             );
 
                             await expect(res)
@@ -937,8 +943,8 @@ describe('AutoCompoundingRewards', () => {
                                     distributionType,
                                     TOTAL_REWARDS,
                                     START_TIME,
-                                    programEndTime(distributionType),
-                                    programHalfLife(distributionType)
+                                    programEndTime[distributionType],
+                                    programHalfLife[distributionType]
                                 );
 
                             const program = await autoCompoundingRewards.program(token.address);
@@ -948,8 +954,8 @@ describe('AutoCompoundingRewards', () => {
                             expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
                             expect(program.distributionType).to.equal(distributionType);
                             expect(program.startTime).to.equal(START_TIME);
-                            expect(program.endTime).to.equal(programEndTime(distributionType));
-                            expect(program.halfLife).to.equal(programHalfLife(distributionType));
+                            expect(program.endTime).to.equal(programEndTime[distributionType]);
+                            expect(program.halfLife).to.equal(programHalfLife[distributionType]);
                             expect(program.prevDistributionTimestamp).to.equal(0);
                             expect(program.isEnabled).to.be.true;
                         });
@@ -965,8 +971,8 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 distributionType,
                                 START_TIME,
-                                programEndTime(distributionType),
-                                programHalfLife(distributionType)
+                                programEndTime[distributionType],
+                                programHalfLife[distributionType]
                             );
 
                             rewardsVault = tokenData.isBNT() ? bntPool : externalRewardsVault;
@@ -979,7 +985,7 @@ describe('AutoCompoundingRewards', () => {
                                 await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, deployer.address);
                             }
 
-                            await autoCompoundingRewards.setTime(START_TIME + programDuration(distributionType));
+                            await autoCompoundingRewards.setTime(START_TIME + programDuration[distributionType]);
 
                             const balance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
                             await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance.sub(1));
