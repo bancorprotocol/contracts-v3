@@ -65,7 +65,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     IUniswapV2Factory private immutable _sushiSwapV2Factory;
 
     // WETH9 contract
-    address private immutable _WETH; // solhint-disable-line var-name-mixedcase
+    address private immutable _weth;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -112,7 +112,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IUniswapV2Factory uniswapV2Factory,
         IUniswapV2Router02 sushiSwapV2Router,
         IUniswapV2Factory sushiSwapV2Factory,
-        address WETH // solhint-disable-line var-name-mixedcase
+        address weth
     )
         validAddress(address(network))
         validAddress(address(networkSettings))
@@ -121,7 +121,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(uniswapV2Factory))
         validAddress(address(sushiSwapV2Router))
         validAddress(address(sushiSwapV2Factory))
-        validAddress(address(WETH))
+        validAddress(address(weth))
     {
         _network = network;
         _networkSettings = networkSettings;
@@ -130,14 +130,14 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         _uniswapV2Factory = uniswapV2Factory;
         _sushiSwapV2Router = sushiSwapV2Router;
         _sushiSwapV2Factory = sushiSwapV2Factory;
-        _WETH = WETH;
+        _weth = weth;
     }
 
     /**
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 1;
+        return 2;
     }
 
     /**
@@ -277,7 +277,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
         for (uint256 i = 0; i < 2; i++) {
-            Token token = _WETHToNative(tokens[i]);
+            Token token = _wethToNative(tokens[i]);
             whitelist[i] = token.isEqual(_bnt) || _networkSettings.isTokenWhitelisted(token);
         }
         if (!whitelist[0] && !whitelist[1]) {
@@ -286,8 +286,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
 
         // save states
         uint256[2] memory previousBalances = [
-            _WETHToNative(tokens[0]).balanceOf(address(this)),
-            _WETHToNative(tokens[1]).balanceOf(address(this))
+            _wethToNative(tokens[0]).balanceOf(address(this)),
+            _wethToNative(tokens[1]).balanceOf(address(this))
         ];
 
         // remove liquidity from Uniswap
@@ -296,7 +296,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // migrate funds
         uint256[2] memory deposited;
         for (uint256 i = 0; i < 2; i++) {
-            Token token = _WETHToNative(tokens[i]);
+            Token token = _wethToNative(tokens[i]);
             uint256 delta = token.balanceOf(address(this)) - previousBalances[i];
             if (whitelist[i]) {
                 deposited[i] = delta;
@@ -378,7 +378,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      */
     function _nativeToWETH(Token token) private view returns (Token) {
         if (token.isNative()) {
-            return Token(_WETH);
+            return Token(_weth);
         }
         return token;
     }
@@ -386,7 +386,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev replaces WETH with the native token
      */
-    function _WETHToNative(Token token) private view returns (Token) {
+    function _wethToNative(Token token) private view returns (Token) {
         if (_isWETH(token)) {
             return Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS));
         }
@@ -397,7 +397,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      * @dev returns true if given token is WETH
      */
     function _isWETH(Token token) private view returns (bool) {
-        if (address(token) == _WETH) {
+        if (address(token) == _weth) {
             return true;
         }
         return false;

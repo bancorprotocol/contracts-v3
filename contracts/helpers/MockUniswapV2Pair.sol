@@ -18,15 +18,15 @@ contract MockUniswapV2Pair is TestERC20Token, Utils {
 
     Token public token0;
     Token public token1;
-    address private _WETH;
+    address private _weth;
 
     constructor(
         string memory name,
         string memory symbol,
         uint256 totalSupply,
-        address WETH
+        address weth
     ) TestERC20Token(name, symbol, totalSupply) {
-        _WETH = WETH;
+        _weth = weth;
     }
 
     function setTokens(Token token0_, Token token1_) external {
@@ -38,7 +38,7 @@ contract MockUniswapV2Pair is TestERC20Token, Utils {
         Token[2] memory tokens = [token0, token1];
 
         for (uint256 i = 0; i < 2; i++) {
-            if (address(tokens[i]) == _WETH) {
+            if (address(tokens[i]) == _weth) {
                 payable(address(to)).transfer(amount);
             } else {
                 tokens[i].safeTransfer(to, amount);

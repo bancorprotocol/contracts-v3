@@ -27,6 +27,7 @@ import {
 import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
 import {
     BancorNetworkV1,
+    BancorPortalV1,
     NetworkSettingsV1,
     StandardRewardsV1,
     StandardRewardsV2
@@ -123,6 +124,7 @@ const DeployedLegacyContracts = {
     VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
 
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
+    BancorPortalV1: deployed<BancorPortalV1>(InstanceName.BancorPortal),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
     StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
     StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards)

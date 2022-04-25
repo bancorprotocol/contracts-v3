@@ -274,7 +274,7 @@ describe('BancorPortal', () => {
         });
 
         it('should be initialized', async () => {
-            expect(await bancorPortal.version()).to.equal(1);
+            expect(await bancorPortal.version()).to.equal(2);
         });
     });
 

@@ -1,5 +1,6 @@
 import {
     BancorNetworkV1__factory,
+    BancorPortalV1__factory,
     NetworkSettingsV1__factory,
     StandardRewardsV1__factory,
     StandardRewardsV2__factory
@@ -12,6 +13,11 @@ const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
     BancorNetworkV1: {
         abi: BancorNetworkV1__factory.abi,
         bytecode: BancorNetworkV1__factory.bytecode
+    },
+
+    BancorPortalV1: {
+        abi: BancorPortalV1__factory.abi,
+        bytecode: BancorPortalV1__factory.bytecode
     },
 
     NetworkSettingsV1: {

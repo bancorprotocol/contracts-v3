@@ -1,10 +1,9 @@
-import LegacyContractsV3ArtifactData from '../../components/LegacyContractsV3ArtifactData';
-import { DeployedContracts, deployProxy, InstanceName, isMainnet, setDeploymentMetadata } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, isMainnet, setDeploymentMetadata, upgradeProxy } from '../../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory } =
+    const { deployer, uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory, weth } =
         await getNamedAccounts();
 
     const bnt = await DeployedContracts.BNT.deployed();
@@ -13,7 +12,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const args = [network.address, networkSettings.address, bnt.address];
     if (isMainnet()) {
-        args.push(uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory);
+        args.push(uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory, weth);
     } else {
         const uniswapV2FactoryMock = await DeployedContracts.MockUniswapV2Factory.deployed();
         const uniswapV2RouterMock = await DeployedContracts.MockUniswapV2Router02.deployed();
@@ -21,13 +20,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             uniswapV2RouterMock.address,
             uniswapV2FactoryMock.address,
             uniswapV2RouterMock.address,
-            uniswapV2FactoryMock.address
+            uniswapV2FactoryMock.address,
+            weth
         );
     }
 
-    await deployProxy({
+    await upgradeProxy({
         name: InstanceName.BancorPortal,
-        contractArtifactData: LegacyContractsV3ArtifactData.BancorPortalV1,
         from: deployer,
         args
     });
