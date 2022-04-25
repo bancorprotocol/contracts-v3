@@ -1,6 +1,6 @@
 import Contracts, { TestTime } from '../../components/Contracts';
+import { latest } from '../helpers/Time';
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
 
 describe('Time', () => {
     let time: TestTime;
@@ -10,6 +10,6 @@ describe('Time', () => {
     });
 
     it('should return the time of the current block', async () => {
-        expect(await time.callStatic.realTime()).to.equal((await ethers.provider.getBlock('latest')).timestamp);
+        expect(await time.callStatic.realTime()).to.equal(await latest());
     });
 });

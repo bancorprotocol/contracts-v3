@@ -1,6 +1,6 @@
 import Contracts, { TestBlockNumber } from '../../components/Contracts';
+import { latestBlockNumber } from '../helpers/BlockNumber';
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
 
 describe('BlockNumber', () => {
     let blockNumber: TestBlockNumber;
@@ -10,8 +10,6 @@ describe('BlockNumber', () => {
     });
 
     it('should return the time of the current block number', async () => {
-        expect(await blockNumber.callStatic.realBlockNumber()).to.equal(
-            (await ethers.provider.getBlock('latest')).number
-        );
+        expect(await blockNumber.callStatic.realBlockNumber()).to.equal(await latestBlockNumber());
     });
 });
