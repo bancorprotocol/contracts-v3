@@ -314,7 +314,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev creates a program for a pool
+     * @dev creates a rewards program for a given pool
      */
     function _createProgram(
         Token pool,

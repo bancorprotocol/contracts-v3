@@ -45,7 +45,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function isProgramActive(Token pool) external view returns (bool);
 
     /**
-     * @dev creates a flat program for a pool
+     * @dev creates a rewards program with flat distribution for a given pool
      *
      * requirements:
      *
@@ -60,7 +60,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
     ) external;
 
     /**
-     * @dev creates an exponential-decay program for a pool
+     * @dev creates a rewards program with exponential-decay distribution for a given pool
      *
      * requirements:
      *
