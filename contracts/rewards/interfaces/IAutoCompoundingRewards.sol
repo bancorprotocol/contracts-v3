@@ -9,7 +9,7 @@ import { Token } from "../../token/Token.sol";
 
 // distribution types
 uint8 constant FLAT_DISTRIBUTION = 0;
-uint8 constant EXPONENTIAL_DECAY_DISTRIBUTION = 1;
+uint8 constant EXP_DECAY_DISTRIBUTION = 1;
 
 struct ProgramData {
     uint32 startTime;
@@ -67,7 +67,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
      * - the caller must be the admin of the contract
      * - the pool must not have an active program
      */
-    function createExpProgram(
+    function createExpDecayProgram(
         Token pool,
         uint256 totalRewards,
         uint32 startTime,

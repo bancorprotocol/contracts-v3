@@ -30,7 +30,7 @@ export enum TradingStatusUpdateReason {
 
 export enum RewardsDistributionType {
     Flat = 0,
-    ExponentialDecay = 1
+    ExpDecay = 1
 }
 
 export const EXP2_INPUT_TOO_HIGH = new Decimal(16).div(new Decimal(2).ln());

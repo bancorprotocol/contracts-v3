@@ -1273,7 +1273,7 @@ describe('Profile @profile', () => {
                                 startTime + programDuration
                             );
                         } else {
-                            await autoCompoundingRewards.createExpProgram(
+                            await autoCompoundingRewards.createExpDecayProgram(
                                 token.address,
                                 totalRewards,
                                 startTime,
@@ -1315,7 +1315,7 @@ describe('Profile @profile', () => {
 
                             break;
 
-                        case RewardsDistributionType.ExponentialDecay:
+                        case RewardsDistributionType.ExpDecay:
                             for (const step of [duration.hours(1), duration.weeks(1)]) {
                                 for (const totalSteps of [5]) {
                                     testMultipleDistributions(step, totalSteps);
@@ -1343,7 +1343,7 @@ describe('Profile @profile', () => {
 
                     break;
 
-                case RewardsDistributionType.ExponentialDecay:
+                case RewardsDistributionType.ExpDecay:
                     for (const programDuration of [EXP_DECAY_MAX_DURATION]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,

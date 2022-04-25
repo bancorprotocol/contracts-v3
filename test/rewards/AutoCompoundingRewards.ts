@@ -199,17 +199,17 @@ describe('AutoCompoundingRewards', () => {
 
         const programEndTime = {
             [RewardsDistributionType.Flat]: START_TIME + FLAT_TOTAL_DURATION,
-            [RewardsDistributionType.ExponentialDecay]: 0
+            [RewardsDistributionType.ExpDecay]: 0
         };
 
         const programHalfLife = {
             [RewardsDistributionType.Flat]: 0,
-            [RewardsDistributionType.ExponentialDecay]: EXP_DECAY_HALF_LIFE
+            [RewardsDistributionType.ExpDecay]: EXP_DECAY_HALF_LIFE
         };
 
         const programDuration = {
             [RewardsDistributionType.Flat]: FLAT_TOTAL_DURATION,
-            [RewardsDistributionType.ExponentialDecay]: EXP_DECAY_MAX_DURATION
+            [RewardsDistributionType.ExpDecay]: EXP_DECAY_MAX_DURATION
         };
 
         const createProgram = async (
@@ -224,8 +224,8 @@ describe('AutoCompoundingRewards', () => {
             switch (distributionType) {
                 case RewardsDistributionType.Flat:
                     return autoCompoundingRewards.createFlatProgram(pool, totalRewards, startTime, endTime);
-                case RewardsDistributionType.ExponentialDecay:
-                    return autoCompoundingRewards.createExpProgram(pool, totalRewards, startTime, halfLife);
+                case RewardsDistributionType.ExpDecay:
+                    return autoCompoundingRewards.createExpDecayProgram(pool, totalRewards, startTime, halfLife);
             }
         };
 
@@ -353,7 +353,7 @@ describe('AutoCompoundingRewards', () => {
                                         isProgramTimingValid = currTime <= startTime && startTime < endTime;
                                         effectiveEndTime = endTime;
                                         break;
-                                    case RewardsDistributionType.ExponentialDecay:
+                                    case RewardsDistributionType.ExpDecay:
                                         isProgramTimingValid = currTime <= startTime;
                                         effectiveEndTime = 0;
                                         break;
@@ -672,7 +672,7 @@ describe('AutoCompoundingRewards', () => {
                                             isProgramTimingActive = startTime <= currTime && currTime <= endTime;
                                             break;
 
-                                        case RewardsDistributionType.ExponentialDecay:
+                                        case RewardsDistributionType.ExpDecay:
                                             isProgramTimingValid = creationTime <= startTime;
                                             isProgramTimingActive = startTime <= currTime;
                                             break;
@@ -778,7 +778,7 @@ describe('AutoCompoundingRewards', () => {
                                 });
                                 break;
 
-                            case RewardsDistributionType.ExponentialDecay:
+                            case RewardsDistributionType.ExpDecay:
                                 it('should return true', async () => {
                                     expect(await autoCompoundingRewards.isProgramActive(token.address)).to.be.true;
                                 });
@@ -1005,7 +1005,7 @@ describe('AutoCompoundingRewards', () => {
             }
         };
 
-        for (const distributionType of [RewardsDistributionType.Flat, RewardsDistributionType.ExponentialDecay]) {
+        for (const distributionType of [RewardsDistributionType.Flat, RewardsDistributionType.ExpDecay]) {
             context(distributionType === RewardsDistributionType.Flat ? 'flat' : 'exponential decay', () => {
                 testProgramManagement(distributionType);
             });
@@ -1095,7 +1095,7 @@ describe('AutoCompoundingRewards', () => {
 
                         break;
 
-                    case RewardsDistributionType.ExponentialDecay:
+                    case RewardsDistributionType.ExpDecay:
                         currTimeElapsed = currTime - program.startTime;
                         prevTimeElapsed = prevTime - program.startTime;
                         tokenAmountToDistribute = (
@@ -1196,7 +1196,7 @@ describe('AutoCompoundingRewards', () => {
                         });
                         break;
 
-                    case RewardsDistributionType.ExponentialDecay:
+                    case RewardsDistributionType.ExpDecay:
                         expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
                             maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('0000000000000000000002'),
@@ -1231,7 +1231,7 @@ describe('AutoCompoundingRewards', () => {
                                 startTime + programDuration
                             );
                         } else {
-                            await autoCompoundingRewards.createExpProgram(
+                            await autoCompoundingRewards.createExpDecayProgram(
                                 token.address,
                                 totalRewards,
                                 startTime,
@@ -1277,7 +1277,7 @@ describe('AutoCompoundingRewards', () => {
 
                                     break;
 
-                                case RewardsDistributionType.ExponentialDecay:
+                                case RewardsDistributionType.ExpDecay:
                                     it('should distribute almost all the rewards', async () => {
                                         const { tokenAmountToDistribute } = await testDistribution();
                                         expect(tokenAmountToDistribute).to.be.almostEqual(totalRewards, {
@@ -1308,7 +1308,7 @@ describe('AutoCompoundingRewards', () => {
 
                                     break;
 
-                                case RewardsDistributionType.ExponentialDecay:
+                                case RewardsDistributionType.ExpDecay:
                                     it('should revert with an overflow', async () => {
                                         await expect(
                                             autoCompoundingRewards.processRewards(token.address)
@@ -1390,7 +1390,7 @@ describe('AutoCompoundingRewards', () => {
 
                             break;
 
-                        case RewardsDistributionType.ExponentialDecay:
+                        case RewardsDistributionType.ExpDecay:
                             describe('regular tests', () => {
                                 for (const step of [duration.days(1)]) {
                                     for (const totalSteps of [5]) {
@@ -1441,7 +1441,7 @@ describe('AutoCompoundingRewards', () => {
 
                     break;
 
-                case RewardsDistributionType.ExponentialDecay:
+                case RewardsDistributionType.ExpDecay:
                     describe('regular tests', () => {
                         for (const programDuration of [EXP_DECAY_MAX_DURATION]) {
                             context(

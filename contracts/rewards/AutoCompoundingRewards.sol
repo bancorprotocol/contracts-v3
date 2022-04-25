@@ -28,7 +28,7 @@ import {
     IAutoCompoundingRewards,
     ProgramData,
     FLAT_DISTRIBUTION,
-    EXPONENTIAL_DECAY_DISTRIBUTION
+    EXP_DECAY_DISTRIBUTION
 } from "./interfaces/IAutoCompoundingRewards.sol";
 
 import { RewardsMath } from "./RewardsMath.sol";
@@ -198,7 +198,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         uint32 currTime = _time();
 
-        if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+        if (p.distributionType == EXP_DECAY_DISTRIBUTION) {
             return p.startTime <= currTime;
         }
 
@@ -224,7 +224,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function createExpProgram(
+    function createExpDecayProgram(
         Token pool,
         uint256 totalRewards,
         uint32 startTime,
@@ -234,7 +234,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             revert InvalidParam();
         }
 
-        _createProgram(pool, totalRewards, EXPONENTIAL_DECAY_DISTRIBUTION, startTime, 0, halfLife);
+        _createProgram(pool, totalRewards, EXP_DECAY_DISTRIBUTION, startTime, 0, halfLife);
     }
 
     /**
@@ -383,7 +383,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             return
                 RewardsMath.calcFlatRewards(p.totalRewards, currTimeElapsed - prevTimeElapsed, p.endTime - p.startTime);
         } else {
-            // if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION)
+            // if (p.distributionType == EXP_DECAY_DISTRIBUTION)
             uint32 currTimeElapsed = currTime - p.startTime;
             uint32 prevTimeElapsed = prevTime - p.startTime;
             return
