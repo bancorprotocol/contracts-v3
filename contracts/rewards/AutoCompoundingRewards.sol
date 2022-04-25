@@ -206,64 +206,6 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev creates a program for a pool
-     */
-    function _createProgram(
-        Token pool,
-        uint256 totalRewards,
-        uint8 distributionType,
-        uint32 startTime,
-        uint32 endTime,
-        uint32 halfLife
-    ) private validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
-        if (_doesProgramExist(_programs[pool])) {
-            revert AlreadyExists();
-        }
-
-        IPoolToken poolToken;
-        if (pool.isEqual(_bnt)) {
-            poolToken = _bntPoolToken;
-        } else {
-            if (!_networkSettings.isTokenWhitelisted(pool)) {
-                revert NotWhitelisted();
-            }
-
-            poolToken = _network.collectionByPool(pool).poolToken(pool);
-        }
-
-        if (startTime < _time()) {
-            revert InvalidParam();
-        }
-
-        ProgramData memory p = ProgramData({
-            startTime: startTime,
-            endTime: endTime,
-            halfLife: halfLife,
-            prevDistributionTimestamp: 0,
-            poolToken: poolToken,
-            isEnabled: true,
-            distributionType: distributionType,
-            totalRewards: totalRewards,
-            remainingRewards: totalRewards
-        });
-
-        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, _rewardsVault(pool));
-
-        _programs[pool] = p;
-
-        assert(_pools.add(address(pool)));
-
-        emit ProgramCreated({
-            pool: pool,
-            distributionType: distributionType,
-            totalRewards: totalRewards,
-            startTime: startTime,
-            endTime: endTime,
-            halfLife: halfLife
-        });
-    }
-
-    /**
      * @inheritdoc IAutoCompoundingRewards
      */
     function createFlatProgram(
@@ -368,6 +310,64 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             rewardsAmount: tokenAmountToDistribute,
             poolTokenAmount: poolTokenAmountToBurn,
             remainingRewards: p.remainingRewards
+        });
+    }
+
+    /**
+     * @dev creates a program for a pool
+     */
+    function _createProgram(
+        Token pool,
+        uint256 totalRewards,
+        uint8 distributionType,
+        uint32 startTime,
+        uint32 endTime,
+        uint32 halfLife
+    ) private validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
+        if (_doesProgramExist(_programs[pool])) {
+            revert AlreadyExists();
+        }
+
+        IPoolToken poolToken;
+        if (pool.isEqual(_bnt)) {
+            poolToken = _bntPoolToken;
+        } else {
+            if (!_networkSettings.isTokenWhitelisted(pool)) {
+                revert NotWhitelisted();
+            }
+
+            poolToken = _network.collectionByPool(pool).poolToken(pool);
+        }
+
+        if (startTime < _time()) {
+            revert InvalidParam();
+        }
+
+        ProgramData memory p = ProgramData({
+            startTime: startTime,
+            endTime: endTime,
+            halfLife: halfLife,
+            prevDistributionTimestamp: 0,
+            poolToken: poolToken,
+            isEnabled: true,
+            distributionType: distributionType,
+            totalRewards: totalRewards,
+            remainingRewards: totalRewards
+        });
+
+        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, _rewardsVault(pool));
+
+        _programs[pool] = p;
+
+        assert(_pools.add(address(pool)));
+
+        emit ProgramCreated({
+            pool: pool,
+            distributionType: distributionType,
+            totalRewards: totalRewards,
+            startTime: startTime,
+            endTime: endTime,
+            halfLife: halfLife
         });
     }
 
