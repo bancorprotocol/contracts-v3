@@ -65,7 +65,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     IUniswapV2Factory private immutable _sushiSwapV2Factory;
 
     // WETH9 contract
-    address private immutable _weth;
+    IERC20 private immutable _weth;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
@@ -108,29 +108,29 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IBancorNetwork network,
         INetworkSettings networkSettings,
         IERC20 bnt,
-        IUniswapV2Router02 uniswapV2Router,
-        IUniswapV2Factory uniswapV2Factory,
-        IUniswapV2Router02 sushiSwapV2Router,
-        IUniswapV2Factory sushiSwapV2Factory,
-        address weth
+        IUniswapV2Router02 initUniswapV2Router,
+        IUniswapV2Factory initUniswapV2Factory,
+        IUniswapV2Router02 initSushiSwapV2Router,
+        IUniswapV2Factory initSushiSwapV2Factory,
+        IERC20 initWETH
     )
         validAddress(address(network))
         validAddress(address(networkSettings))
         validAddress(address(bnt))
-        validAddress(address(uniswapV2Router))
-        validAddress(address(uniswapV2Factory))
-        validAddress(address(sushiSwapV2Router))
-        validAddress(address(sushiSwapV2Factory))
-        validAddress(address(weth))
+        validAddress(address(initUniswapV2Router))
+        validAddress(address(initUniswapV2Factory))
+        validAddress(address(initSushiSwapV2Router))
+        validAddress(address(initSushiSwapV2Factory))
+        validAddress(address(initWETH))
     {
         _network = network;
         _networkSettings = networkSettings;
         _bnt = bnt;
-        _uniswapV2Router = uniswapV2Router;
-        _uniswapV2Factory = uniswapV2Factory;
-        _sushiSwapV2Router = sushiSwapV2Router;
-        _sushiSwapV2Factory = sushiSwapV2Factory;
-        _weth = weth;
+        _uniswapV2Router = initUniswapV2Router;
+        _uniswapV2Factory = initUniswapV2Factory;
+        _sushiSwapV2Router = initSushiSwapV2Router;
+        _sushiSwapV2Factory = initSushiSwapV2Factory;
+        _weth = initWETH;
     }
 
     /**
@@ -272,12 +272,12 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         Token(address(pair)).safeTransferFrom(provider, address(this), poolTokenAmount);
 
         // arrange tokens in an array
-        Token[2] memory tokens = [token0, token1];
+        Token[2] memory tokens = [_wethToNative(token0), _wethToNative(token1)];
 
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
         for (uint256 i = 0; i < 2; i++) {
-            Token token = _wethToNative(tokens[i]);
+            Token token = tokens[i];
             whitelist[i] = token.isEqual(_bnt) || _networkSettings.isTokenWhitelisted(token);
         }
         if (!whitelist[0] && !whitelist[1]) {
@@ -285,10 +285,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         }
 
         // save states
-        uint256[2] memory previousBalances = [
-            _wethToNative(tokens[0]).balanceOf(address(this)),
-            _wethToNative(tokens[1]).balanceOf(address(this))
-        ];
+        uint256[2] memory previousBalances = [tokens[0].balanceOf(address(this)), tokens[1].balanceOf(address(this))];
 
         // remove liquidity from Uniswap
         _uniV2RemoveLiquidity(tokens, pair, router, poolTokenAmount);
@@ -296,7 +293,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         // migrate funds
         uint256[2] memory deposited;
         for (uint256 i = 0; i < 2; i++) {
-            Token token = _wethToNative(tokens[i]);
+            Token token = tokens[i];
             uint256 delta = token.balanceOf(address(this)) - previousBalances[i];
             if (whitelist[i]) {
                 deposited[i] = delta;
@@ -361,15 +358,20 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IERC20(address(pair)).safeApprove(address(router), poolTokenAmount);
         uint256 deadline = block.timestamp + MAX_DEADLINE;
 
-        Token token0 = _nativeToWETH(tokens[0]);
-        Token token1 = _nativeToWETH(tokens[1]);
-
-        if (_isWETH(token0)) {
-            router.removeLiquidityETH(address(token1), poolTokenAmount, 1, 1, address(this), deadline);
-        } else if (_isWETH(token1)) {
-            router.removeLiquidityETH(address(token0), poolTokenAmount, 1, 1, address(this), deadline);
+        if (tokens[0].isNative()) {
+            router.removeLiquidityETH(address(tokens[1]), poolTokenAmount, 1, 1, address(this), deadline);
+        } else if (tokens[1].isNative()) {
+            router.removeLiquidityETH(address(tokens[0]), poolTokenAmount, 1, 1, address(this), deadline);
         } else {
-            router.removeLiquidity(address(token0), address(token1), poolTokenAmount, 1, 1, address(this), deadline);
+            router.removeLiquidity(
+                address(tokens[0]),
+                address(tokens[1]),
+                poolTokenAmount,
+                1,
+                1,
+                address(this),
+                deadline
+            );
         }
     }
 
@@ -378,7 +380,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      */
     function _nativeToWETH(Token token) private view returns (Token) {
         if (token.isNative()) {
-            return Token(_weth);
+            return Token(address(_weth));
         }
         return token;
     }
@@ -397,7 +399,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      * @dev returns true if given token is WETH
      */
     function _isWETH(Token token) private view returns (bool) {
-        if (address(token) == _weth) {
+        if (address(token) == address(_weth)) {
             return true;
         }
         return false;
