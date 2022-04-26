@@ -260,7 +260,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         address provider
     ) private returns (MigrationResult memory) {
         // get Uniswap's pair
-        address pairAddress = factory.getPair(address(_nativeToWETH(token0)), address(_nativeToWETH(token1)));
+        address pairAddress = factory.getPair(address(_nativeToWeth(token0)), address(_nativeToWeth(token1)));
         IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
         if (address(pair) == address(0)) {
             revert NoPairForTokens();
@@ -376,7 +376,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev replaces native token with WETH
      */
-    function _nativeToWETH(Token token) private view returns (Token) {
+    function _nativeToWeth(Token token) private view returns (Token) {
         if (token.isNative()) {
             return Token(address(_weth));
         }
