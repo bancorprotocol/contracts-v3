@@ -77,7 +77,7 @@ This will automatically be skipped on an already deployed and configured deploym
 
 ### Test Coverage
 
-You can find historic tests coverage reports in [releases](https://github.com/bancorprotocol/contracts-v3/releases).
+You can find historic test coverage reports in [releases](https://github.com/bancorprotocol/contracts-v3/releases).
 
 #### Latest Test Coverage Report (2022-04-24)
 
