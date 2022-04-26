@@ -850,9 +850,9 @@ describe('BancorPortal', () => {
         const targetAddress = toAddress(target);
         const tokenAddress = token.address;
         if ([NATIVE_TOKEN_ADDRESS, WETH_ADDRESS].includes(tokenAddress)) {
-            return await sourceAccount.sendTransaction({ to: targetAddress, value: amount });
+            return sourceAccount.sendTransaction({ to: targetAddress, value: amount });
         }
-        return await (await Contracts.TestERC20Token.attach(tokenAddress))
+        return (await Contracts.TestERC20Token.attach(tokenAddress))
             .connect(sourceAccount)
             .transfer(targetAddress, amount);
     };
