@@ -11,7 +11,7 @@ import Contracts, {
     TestPoolCollection
 } from '../../components/Contracts';
 import { ZERO_ADDRESS } from '../../utils/Constants';
-import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol, WETH_ADDRESS } from '../../utils/TokenData';
+import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, toWei } from '../../utils/Types';
 import { createProxy, createSystem, createToken, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -24,6 +24,7 @@ import { ethers } from 'hardhat';
 const { formatBytes32String } = utils;
 const FUNDING_LIMIT = toWei(10_000_000);
 const CONTEXT_ID = formatBytes32String('CTX');
+const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 const tokenWithAddressWETH: TokenWithAddress = { address: WETH_ADDRESS };
 
 interface Whitelist {
@@ -76,7 +77,8 @@ describe('BancorPortal', () => {
             'UniswapV2Router02',
             'UniswapV2Router02',
             100_000_000,
-            uniswapV2Pair.address
+            uniswapV2Pair.address,
+            WETH_ADDRESS
         );
 
         uniswapV2Factory = await Contracts.MockUniswapV2Factory.deploy(
@@ -93,8 +95,7 @@ describe('BancorPortal', () => {
                 uniswapV2Router02.address,
                 uniswapV2Factory.address,
                 uniswapV2Router02.address,
-                uniswapV2Factory.address,
-                WETH_ADDRESS
+                uniswapV2Factory.address
             ]
         });
 
@@ -177,8 +178,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address,
-                    WETH_ADDRESS
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -192,8 +192,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address,
-                    WETH_ADDRESS
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -207,8 +206,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address,
-                    WETH_ADDRESS
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -222,8 +220,7 @@ describe('BancorPortal', () => {
                     ZERO_ADDRESS,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address,
-                    WETH_ADDRESS
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -237,8 +234,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     ZERO_ADDRESS,
                     uniswapV2Router02.address,
-                    uniswapV2Factory.address,
-                    WETH_ADDRESS
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -252,8 +248,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     ZERO_ADDRESS,
-                    uniswapV2Factory.address,
-                    WETH_ADDRESS
+                    uniswapV2Factory.address
                 )
             ).to.be.revertedWith('InvalidAddress');
         });
@@ -267,8 +262,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address,
                     uniswapV2Router02.address,
-                    ZERO_ADDRESS,
-                    WETH_ADDRESS
+                    ZERO_ADDRESS
                 )
             ).to.be.revertedWith('InvalidAddress');
         });

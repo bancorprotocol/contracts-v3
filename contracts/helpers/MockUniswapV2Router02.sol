@@ -18,14 +18,17 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
     using TokenLibrary for Token;
 
     MockUniswapV2Pair private _pair;
+    IERC20 private _weth;
 
     constructor(
         string memory name,
         string memory symbol,
         uint256 totalSupply,
-        MockUniswapV2Pair pair
+        MockUniswapV2Pair initPair,
+        IERC20 initWeth
     ) TestERC20Token(name, symbol, totalSupply) {
-        _pair = pair;
+        _pair = initPair;
+        _weth = initWeth;
     }
 
     function removeLiquidity(
@@ -62,5 +65,10 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
 
         amountToken = liquidity;
         amountETH = liquidity;
+    }
+
+    //solhint-disable-next-line func-name-mixedcase
+    function WETH() external view returns (address) {
+        return address(_weth);
     }
 }

@@ -111,8 +111,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IUniswapV2Router02 initUniswapV2Router,
         IUniswapV2Factory initUniswapV2Factory,
         IUniswapV2Router02 initSushiSwapV2Router,
-        IUniswapV2Factory initSushiSwapV2Factory,
-        IERC20 initWETH
+        IUniswapV2Factory initSushiSwapV2Factory
     )
         validAddress(address(network))
         validAddress(address(networkSettings))
@@ -121,7 +120,6 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(initUniswapV2Factory))
         validAddress(address(initSushiSwapV2Router))
         validAddress(address(initSushiSwapV2Factory))
-        validAddress(address(initWETH))
     {
         _network = network;
         _networkSettings = networkSettings;
@@ -130,7 +128,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         _uniswapV2Factory = initUniswapV2Factory;
         _sushiSwapV2Router = initSushiSwapV2Router;
         _sushiSwapV2Factory = initSushiSwapV2Factory;
-        _weth = initWETH;
+        _weth = IERC20(initUniswapV2Router.WETH());
     }
 
     /**

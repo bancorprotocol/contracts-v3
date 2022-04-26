@@ -3,7 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory, weth } =
+    const { deployer, uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory } =
         await getNamedAccounts();
 
     const bnt = await DeployedContracts.BNT.deployed();
@@ -12,7 +12,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const args = [network.address, networkSettings.address, bnt.address];
     if (isMainnet()) {
-        args.push(uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory, weth);
+        args.push(uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory);
     } else {
         const uniswapV2FactoryMock = await DeployedContracts.MockUniswapV2Factory.deployed();
         const uniswapV2RouterMock = await DeployedContracts.MockUniswapV2Router02.deployed();
@@ -20,8 +20,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             uniswapV2RouterMock.address,
             uniswapV2FactoryMock.address,
             uniswapV2RouterMock.address,
-            uniswapV2FactoryMock.address,
-            weth
+            uniswapV2FactoryMock.address
         );
     }
 

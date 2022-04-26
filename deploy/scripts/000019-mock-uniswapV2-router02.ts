@@ -4,7 +4,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer } = await getNamedAccounts();
+    const { deployer, weth } = await getNamedAccounts();
 
     const uniswapPair = await DeployedContracts.MockUniswapV2Pair.deployed();
 
@@ -15,7 +15,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             InstanceName.MockUniswapV2Router02,
             InstanceName.MockUniswapV2Router02,
             BigNumber.from(100_000_000),
-            uniswapPair.address
+            uniswapPair.address,
+            weth
         ]
     });
 

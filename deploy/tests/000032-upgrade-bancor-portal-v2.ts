@@ -19,7 +19,7 @@ describeDeployment(__filename, () => {
         bancorPortal = await DeployedContracts.BancorPortal.deployed();
     });
 
-    it('should deploy and configure the bancor portal contract', async () => {
+    it('should upgrade the bancor portal contract', async () => {
         expect(await proxyAdmin.getProxyAdmin(bancorPortal.address)).to.equal(proxyAdmin.address);
         expect(await bancorPortal.version()).to.equal(2);
         await expectRoleMembers(bancorPortal, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
