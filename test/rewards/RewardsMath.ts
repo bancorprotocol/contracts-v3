@@ -48,13 +48,13 @@ describe('RewardsMath', () => {
         const TWO = new Decimal(2);
 
         const calcExpDecayRewards = (totalRewards: BigNumberish, timeElapsed: number, halfLife: number) => {
-            it(`calcExpDecayRewards(${totalRewards}, ${timeElapsed})`, async () => {
+            it(`calcExpDecayRewards(${totalRewards}, ${timeElapsed}, ${halfLife})`, async () => {
                 const f = new Decimal(timeElapsed).div(halfLife);
                 if (f.lt(EXP2_INPUT_TOO_HIGH)) {
                     const f = new Decimal(timeElapsed).div(halfLife);
                     const actual = await rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife);
                     const expected = new Decimal(totalRewards.toString()).mul(ONE.sub(ONE.div(TWO.pow(f))));
-                    await expect(actual).to.be.almostEqual(expected, {
+                    await expect(actual).to.almostEqual(expected, {
                         maxAbsoluteError: new Decimal(1),
                         relation: Relation.LesserOrEqual
                     });
@@ -63,6 +63,16 @@ describe('RewardsMath', () => {
                         'Overflow'
                     );
                 }
+            });
+
+            // verify that after half-life has elapsed, we get (almost) half of the rewards
+            it(`calcExpDecayRewards(${totalRewards}, ${halfLife}, ${halfLife})`, async () => {
+                const actual = await rewardsMath.calcExpDecayRewards(totalRewards, halfLife, halfLife);
+                const expected = new Decimal(totalRewards.toString()).div(TWO);
+                await expect(actual).to.almostEqual(expected, {
+                    maxAbsoluteError: new Decimal(1),
+                    relation: Relation.LesserOrEqual
+                });
             });
         };
 
