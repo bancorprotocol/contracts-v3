@@ -70,16 +70,14 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     uint256[MAX_GAP - 3] private __gap;
 
     /**
-     * @dev triggered when a program is created
+     * @dev triggered when a flat program is created
      */
-    event ProgramCreated(
-        Token indexed pool,
-        uint8 indexed distributionType,
-        uint256 totalRewards,
-        uint32 startTime,
-        uint32 endTime,
-        uint32 halfLife
-    );
+    event FlatProgramCreated(Token indexed pool, uint256 totalRewards, uint32 startTime, uint32 endTime);
+
+    /**
+     * @dev triggered when an exponential-decay program is created
+     */
+    event ExpDecayProgramCreated(Token indexed pool, uint256 totalRewards, uint32 startTime, uint32 halfLife);
 
     /**
      * @dev triggered when a program is terminated prematurely
@@ -219,6 +217,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         }
 
         _createProgram(pool, totalRewards, FLAT_DISTRIBUTION, startTime, endTime, 0);
+
+        emit FlatProgramCreated({ pool: pool, totalRewards: totalRewards, startTime: startTime, endTime: endTime });
     }
 
     /**
@@ -235,6 +235,13 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         }
 
         _createProgram(pool, totalRewards, EXP_DECAY_DISTRIBUTION, startTime, 0, halfLife);
+
+        emit ExpDecayProgramCreated({
+            pool: pool,
+            totalRewards: totalRewards,
+            startTime: startTime,
+            halfLife: halfLife
+        });
     }
 
     /**
@@ -360,15 +367,6 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         _programs[pool] = p;
 
         assert(_pools.add(address(pool)));
-
-        emit ProgramCreated({
-            pool: pool,
-            distributionType: distributionType,
-            totalRewards: totalRewards,
-            startTime: startTime,
-            endTime: endTime,
-            halfLife: halfLife
-        });
     }
 
     /**
