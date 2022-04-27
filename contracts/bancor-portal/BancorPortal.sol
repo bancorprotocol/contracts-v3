@@ -395,9 +395,6 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      * @dev returns true if given token is WETH
      */
     function _isWETH(Token token) private view returns (bool) {
-        if (address(token) == address(_weth)) {
-            return true;
-        }
-        return false;
+        return (address(token) == address(_weth));
     }
 }
