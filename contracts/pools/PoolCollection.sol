@@ -209,6 +209,17 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     event DepositLimitUpdated(Token indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
 
     /**
+     * @dev triggered when a pool's trading liquidity is reduced
+     */
+    event TradingLiquidityReduced(
+        Token indexed pool,
+        uint256 prevBNTTradingLiquidity,
+        uint256 newBNTTradingLiquidity,
+        uint256 prevBaseTokenTradingLiquidity,
+        uint256 newBaseTokenTradingLiquidity
+    );
+
+    /**
      * @dev triggered when new liquidity is deposited into a pool
      */
     event TokensDeposited(
@@ -602,6 +613,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // this is safe because we reduce `bntTradingLiquidity` to `bntAmount`
         data.liquidity.bntTradingLiquidity = uint128(bntAmount);
+
+        emit TradingLiquidityReduced({
+            pool: pool,
+            prevBNTTradingLiquidity: bntTradingLiquidity,
+            newBNTTradingLiquidity: data.liquidity.bntTradingLiquidity,
+            prevBaseTokenTradingLiquidity: baseTokenTradingLiquidity,
+            newBaseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity
+        });
     }
 
     /**
