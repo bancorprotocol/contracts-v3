@@ -105,25 +105,25 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(
-        IBancorNetwork network,
-        INetworkSettings networkSettings,
-        IERC20 bnt,
+        IBancorNetwork initNetwork,
+        INetworkSettings initNetworkSettings,
+        IERC20 initBnt,
         IUniswapV2Router02 initUniswapV2Router,
         IUniswapV2Factory initUniswapV2Factory,
         IUniswapV2Router02 initSushiSwapV2Router,
         IUniswapV2Factory initSushiSwapV2Factory
     )
-        validAddress(address(network))
-        validAddress(address(networkSettings))
-        validAddress(address(bnt))
+        validAddress(address(initNetwork))
+        validAddress(address(initNetworkSettings))
+        validAddress(address(initBnt))
         validAddress(address(initUniswapV2Router))
         validAddress(address(initUniswapV2Factory))
         validAddress(address(initSushiSwapV2Router))
         validAddress(address(initSushiSwapV2Factory))
     {
-        _network = network;
-        _networkSettings = networkSettings;
-        _bnt = bnt;
+        _network = initNetwork;
+        _networkSettings = initNetworkSettings;
+        _bnt = initBnt;
         _uniswapV2Router = initUniswapV2Router;
         _uniswapV2Factory = initUniswapV2Factory;
         _sushiSwapV2Router = initSushiSwapV2Router;
@@ -259,18 +259,20 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         uint256 poolTokenAmount,
         address provider
     ) private returns (MigrationResult memory) {
+        // arrange tokens in an array, replace WETH with the native token
+        Token[2] memory tokens = [
+            _isWETH(token0) ? Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS)) : token0,
+            _isWETH(token1) ? Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS)) : token1
+        ];
+
         // get Uniswap's pair
-        address pairAddress = factory.getPair(address(_nativeToWeth(token0)), address(_nativeToWeth(token1)));
-        IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
+        IUniswapV2Pair pair = _getUniswapV2Pair(factory, tokens);
         if (address(pair) == address(0)) {
             revert NoPairForTokens();
         }
 
         // transfer the tokens from the caller
         Token(address(pair)).safeTransferFrom(provider, address(this), poolTokenAmount);
-
-        // arrange tokens in an array
-        Token[2] memory tokens = [_wethToNative(token0), _wethToNative(token1)];
 
         // look for relevant whitelisted pools, revert if there are none
         bool[2] memory whitelist;
@@ -374,23 +376,19 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     }
 
     /**
-     * @dev replaces native token with WETH
+     * @dev fetchs a UniswapV2 pair
      */
-    function _nativeToWeth(Token token) private view returns (Token) {
-        if (token.isNative()) {
-            return Token(address(_weth));
-        }
-        return token;
-    }
+    function _getUniswapV2Pair(IUniswapV2Factory factory, Token[2] memory tokens)
+        private
+        view
+        returns (IUniswapV2Pair)
+    {
+        // Uniswap does not support ETH input, transform to WETH if necessary
+        address token0Address = tokens[0].isNative() ? address(_weth) : address(tokens[0]);
+        address token1Address = tokens[1].isNative() ? address(_weth) : address(tokens[1]);
 
-    /**
-     * @dev replaces WETH with the native token
-     */
-    function _wethToNative(Token token) private view returns (Token) {
-        if (_isWETH(token)) {
-            return Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS));
-        }
-        return token;
+        address pairAddress = factory.getPair(token0Address, token1Address);
+        return IUniswapV2Pair(pairAddress);
     }
 
     /**
