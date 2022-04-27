@@ -747,7 +747,7 @@ describe('AutoCompoundingRewards', () => {
                                     for (let creationTime = 0; creationTime < 5; creationTime++) {
                                         for (let elapsedTime = 0; elapsedTime < 5; elapsedTime++) {
                                             const currTime = creationTime + elapsedTime;
-                                            const isProgramTimingValid = creationTime <= startTime;
+                                            const isProgramTimingValid = creationTime <= startTime && halfLife !== 0;
                                             const isProgramTimingActive = startTime <= currTime;
 
                                             if (isProgramTimingValid) {
