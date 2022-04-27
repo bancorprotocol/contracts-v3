@@ -101,6 +101,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     error InvalidRate();
     error RateUnstable();
     error TradingDisabled();
+    error FundingLimitTooHigh();
 
     uint16 private constant POOL_TYPE = 1;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
@@ -562,6 +563,43 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         data.depositLimit = newDepositLimit;
 
         emit DepositLimitUpdated({ pool: pool, prevDepositLimit: prevDepositLimit, newDepositLimit: newDepositLimit });
+    }
+
+    /**
+     * @dev sets the deposit limit of a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function reduceTradingLiquidity(Token pool, uint256 bntAmount) external onlyOwner {
+        Pool storage data = _poolStorage(pool);
+        uint256 bntTradingLiquidity = data.liquidity.bntTradingLiquidity;
+
+        if (bntAmount >= bntTradingLiquidity) {
+            return;
+        }
+
+        if (bntAmount == 0) {
+            _resetTradingLiquidity(bytes32(0), pool, data, TRADING_STATUS_UPDATE_ADMIN);
+            return;
+        }
+
+        if (bntAmount < _networkSettings.poolFundingLimit(pool)) {
+            revert FundingLimitTooHigh();
+        }
+
+        /*
+            reduce the BNT trading liquidity to the new amount
+            burn the excessive BNT 
+            deplete the available funding if it’s above 0 (bntCurrentFunding = bntFundingLimit)
+            note that the current funding might actually be higher than the limit
+            request liquidity for the full amount
+            burn the BNT
+            update the TKN trading liquidity accordingly
+            using the EMA
+            apply the EMA only to the delta between ther prev/new BNT trading liquidity
+        */
     }
 
     /**
