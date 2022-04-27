@@ -589,12 +589,19 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             revert FundingLimitTooHigh();
         }
 
-        _bntPool.renounceFunding(bytes32(0), pool, bntTradingLiquidity - bntAmount);
+        uint256 bntRenounced = bntTradingLiquidity - bntAmount;
+        _bntPool.renounceFunding(bytes32(0), pool, bntRenounced);
 
-        /*
-            update the TKN trading liquidity accordingly, using the EMA
-            apply the EMA only to the delta between ther prev/new BNT trading liquidity
-        */
+        Fraction memory averageRate = data.averageRate.rate.fromFraction112();
+        uint256 baseTokenTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
+
+        // this is safe because we reduce `baseTokenTradingLiquidity` to `baseTokenTradingLiquidity - bntRenounced / averageRate`
+        data.liquidity.baseTokenTradingLiquidity = uint128(
+            (baseTokenTradingLiquidity * averageRate.n - bntRenounced * averageRate.d) / averageRate.n
+        );
+
+        // this is safe because we reduce `bntTradingLiquidity` to `bntAmount`
+        data.liquidity.bntTradingLiquidity = uint128(bntAmount);
     }
 
     /**
