@@ -35,4 +35,4 @@ jobs:
       - name: Test Deployment (Mainnet Fork)
         run: yarn test:deploy:fork
         env:
-          ETHEREUM_PROVIDER_URL: ${{ secrets.ETHEREUM_PROVIDER_URL }}
+          ETHEREUM_PROVIDER_URL: ${{ secrets.HEALTH_CHECKS_ETHEREUM_PROVIDER_URL }}
