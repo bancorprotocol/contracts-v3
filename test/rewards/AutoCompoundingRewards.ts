@@ -403,13 +403,13 @@ describe('AutoCompoundingRewards', () => {
                                 for (let halfLife = 0; halfLife < 4; halfLife++) {
                                     for (let currTime = 0; currTime < 4; currTime++) {
                                         context(
-                                            `[startTime, endTime, currTime] = ${[startTime, halfLife, currTime]}`,
+                                            `[startTime, halfLife, currTime] = ${[startTime, halfLife, currTime]}`,
                                             () => {
                                                 beforeEach(async () => {
                                                     await autoCompoundingRewards.setTime(currTime);
                                                 });
 
-                                                if (currTime <= startTime) {
+                                                if (currTime <= startTime && halfLife != 0) {
                                                     it(`should complete`, async () => {
                                                         const poolsBefore = await autoCompoundingRewards.pools();
                                                         expect(poolsBefore).to.not.include(token.address);
