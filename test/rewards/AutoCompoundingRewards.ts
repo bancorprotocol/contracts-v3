@@ -367,7 +367,7 @@ describe('AutoCompoundingRewards', () => {
                                                                 TOTAL_REWARDS,
                                                                 startTime,
                                                                 endTime,
-                                                                programHalfLife[distributionType]
+                                                                0
                                                             );
 
                                                         const program = await autoCompoundingRewards.program(
@@ -438,8 +438,8 @@ describe('AutoCompoundingRewards', () => {
                                                                 distributionType,
                                                                 TOTAL_REWARDS,
                                                                 startTime,
-                                                                halfLife,
-                                                                programHalfLife[distributionType]
+                                                                0,
+                                                                halfLife
                                                             );
 
                                                         const program = await autoCompoundingRewards.program(
@@ -1004,7 +1004,14 @@ describe('AutoCompoundingRewards', () => {
 
                             await expect(res)
                                 .to.emit(autoCompoundingRewards, 'ProgramCreated')
-                                .withArgs(token.address, distributionType, TOTAL_REWARDS, START_TIME);
+                                .withArgs(
+                                    token.address,
+                                    distributionType,
+                                    TOTAL_REWARDS,
+                                    START_TIME,
+                                    programEndTime[distributionType],
+                                    programHalfLife[distributionType]
+                                );
 
                             const program = await autoCompoundingRewards.program(token.address);
 
