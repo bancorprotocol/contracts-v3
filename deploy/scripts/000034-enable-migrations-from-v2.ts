@@ -7,13 +7,9 @@ import {
     setDeploymentMetadata
 } from '../../utils/Deploy';
 import { Roles } from '../../utils/Roles';
-import { utils } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-const { id } = utils;
-
-const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
+const func: DeployFunction = async () => {
     if (!isMainnetFork()) {
         throw new Error('Unsupported network');
     }

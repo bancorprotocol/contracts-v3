@@ -1,5 +1,5 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
-import { BNT, TokenGovernance } from '../../components/LegacyContracts';
+import { BNT, StakingRewards, TokenGovernance } from '../../components/LegacyContracts';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts, isMainnet, isMainnetFork } from '../../utils/Deploy';
@@ -13,21 +13,21 @@ describeDeployment(__filename, () => {
     let deployerV2: string;
     let foundationMultisig: string;
     let legacyLiquidityProtection: string;
-    let legacyStakingRewards: string;
     let bnt: BNT;
     let bntGovernance: TokenGovernance;
+    let legacyStakingRewards: StakingRewards;
 
     const INITIAL_SUPPLY = toWei(1_000_000_000);
     const bntData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
-        ({ deployer, deployerV2, foundationMultisig, legacyLiquidityProtection, legacyStakingRewards } =
-            await getNamedAccounts());
+        ({ deployer, deployerV2, foundationMultisig, legacyLiquidityProtection } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+        legacyStakingRewards = await DeployedContracts.StakingRewards.deployed();
     });
 
     it('should deploy the BNT contract', async () => {
@@ -54,7 +54,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [legacyLiquidityProtection, legacyStakingRewards] : []
+            isMainnet() ? [legacyLiquidityProtection, legacyStakingRewards.address] : []
         );
     });
 

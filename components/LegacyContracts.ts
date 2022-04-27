@@ -2,6 +2,7 @@
 import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork__factory,
+    CheckpointStore,
     CheckpointStore__factory,
     ContractRegistry,
     ContractRegistry__factory,
@@ -24,6 +25,7 @@ import {
     LiquidityProtectionSystemStore,
     LiquidityProtectionSystemStore__factory,
     NetworkSettings__factory,
+    StakingRewards,
     StakingRewards__factory,
     TestCheckpointStore,
     TestCheckpointStore__factory,
@@ -51,6 +53,7 @@ import { Signer } from 'ethers';
 export {
     BNT__factory,
     BNT,
+    CheckpointStore,
     ContractRegistry,
     ConverterFactory,
     ConverterRegistry,
@@ -63,14 +66,15 @@ export {
     LiquidityProtectionStats,
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
+    StakingRewards,
     TestCheckpointStore,
     TestLiquidityProtection,
     TestStandardPoolConverter,
     TestStandardPoolConverterFactory,
     TokenGovernance,
     TokenHolder,
-    VBNT__factory,
-    VBNT
+    VBNT,
+    VBNT__factory
 };
 
 /* eslint-enable camelcase */

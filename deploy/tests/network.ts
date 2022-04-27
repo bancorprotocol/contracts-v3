@@ -15,7 +15,7 @@ import Contracts, {
     PoolTokenFactory,
     StandardRewards
 } from '../../components/Contracts';
-import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
+import { BNT, LiquidityProtection, StakingRewards, TokenGovernance, VBNT } from '../../components/LegacyContracts';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { performTestDeployment } from '../../test/helpers/Deploy';
 import { getBalance, getTransactionCost } from '../../test/helpers/Utils';
@@ -38,23 +38,14 @@ import { getNamedAccounts } from 'hardhat';
 
 (isMainnet() ? describe : describe.skip)('network', async () => {
     let network: BancorNetwork;
+    let networkInfo: BancorNetworkInfo;
     let bntGovernance: TokenGovernance;
     let vbntGovernance: TokenGovernance;
     let bnt: BNT;
     let vbnt: VBNT;
-    let networkSettings: NetworkSettings;
-    let masterVault: MasterVault;
-    let externalProtectionVault: ExternalProtectionVault;
-    let externalRewardsVault: ExternalRewardsVault;
     let bntPool: BNTPool;
-    let bntBNT: PoolToken;
-    let pendingWithdrawals: PendingWithdrawals;
-    let poolTokenFactory: PoolTokenFactory;
-    let poolMigrator: PoolMigrator;
     let poolCollection: PoolCollection;
-    let standardRewards: StandardRewards;
-    let networkInfo: BancorNetworkInfo;
-    let bancorPortal: BancorPortal;
+    let pendingWithdrawals: PendingWithdrawals;
 
     beforeEach(async () => {
         const { tag } = deploymentMetadata(getLatestDeploymentTag());
@@ -66,27 +57,44 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        networkSettings = await DeployedContracts.NetworkSettings.deployed();
-        masterVault = await DeployedContracts.MasterVault.deployed();
-        externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-        externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
-        bntPool = await DeployedContracts.BNTPool.deployed();
-        bntBNT = await DeployedContracts.bnBNT.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
-        poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
-        poolMigrator = await DeployedContracts.PoolMigrator.deployed();
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
-        standardRewards = await DeployedContracts.StandardRewards.deployed();
+        bntPool = await DeployedContracts.BNTPool.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
-        bancorPortal = await DeployedContracts.BancorPortal.deployed();
     });
 
-    describe.only('roles', () => {
-        it('should have the correct set of roles', async () => {
-            const { deployer, deployerV2, foundationMultisig, daoMultisig, legacyStakingRewards } =
-                await getNamedAccounts();
+    describe('roles', () => {
+        let networkSettings: NetworkSettings;
+        let masterVault: MasterVault;
+        let externalProtectionVault: ExternalProtectionVault;
+        let externalRewardsVault: ExternalRewardsVault;
+        let poolTokenFactory: PoolTokenFactory;
+        let poolMigrator: PoolMigrator;
+        let standardRewards: StandardRewards;
+        let bancorPortal: BancorPortal;
+        let legacyStakingRewards: StakingRewards;
+        let liquidityProtection: LiquidityProtection;
 
-            const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+        beforeEach(async () => {
+            networkSettings = await DeployedContracts.NetworkSettings.deployed();
+            masterVault = await DeployedContracts.MasterVault.deployed();
+            externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
+            externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+            poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
+            poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+            poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+            standardRewards = await DeployedContracts.StandardRewards.deployed();
+            networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
+            bancorPortal = await DeployedContracts.BancorPortal.deployed();
+            legacyStakingRewards = await DeployedContracts.StakingRewards.deployed();
+            liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+        });
+
+        it('should have the correct set of roles', async () => {
+            const { deployer, deployerV2, foundationMultisig, daoMultisig } = await getNamedAccounts();
+
+            // ensure that ownership transfer to the DAO was initiated
+            expect(await liquidityProtection.newOwner()).to.equal(daoMultisig);
 
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
@@ -98,12 +106,14 @@ import { getNamedAccounts } from 'hardhat';
                 Roles.TokenGovernance.ROLE_GOVERNOR,
                 isMainnet() ? [deployerV2] : [deployer]
             );
+
+            const roles = isMainnet()
+                ? [standardRewards.address, bntPool.address, liquidityProtection.address, legacyStakingRewards.address]
+                : [standardRewards.address, bntPool.address];
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_MINTER,
-                isMainnet()
-                    ? [standardRewards.address, bntPool.address, liquidityProtection.address, legacyStakingRewards]
-                    : [standardRewards.address, bntPool.address]
+                roles
             );
 
             await expectRoleMembers(
@@ -181,6 +191,7 @@ import { getNamedAccounts } from 'hardhat';
         }
 
         let pools: Record<string, Pool>;
+        let bntBNT: PoolToken;
 
         beforeEach(async () => {
             const { dai, link } = await getNamedAccounts();
@@ -200,6 +211,8 @@ import { getNamedAccounts } from 'hardhat';
                     whale: linkWhale
                 }
             };
+
+            bntPool = await DeployedContracts.BNTPool.deployed();
 
             for (const { token } of Object.values(pools)) {
                 await poolCollection.connect(daoMultisig).setDepositLimit(token, MAX_UINT256);
