@@ -30,6 +30,13 @@ describe('RewardsMath', () => {
                     // TODO: revertedWith('panic code 0x1 (Assertion error)')
                 }
             });
+
+            // verify that after half of the program duration has elapsed, we get half of the rewards
+            it(`calcFlatRewards(${totalRewards}, ${programDuration / 2}, ${programDuration})`, async () => {
+                const actual = await rewardsMath.calcFlatRewards(totalRewards, programDuration / 2, programDuration);
+                const expected = BigNumber.from(totalRewards).div(2);
+                expect(actual).to.equal(expected);
+            });
         };
 
         describe('regular tests', () => {
