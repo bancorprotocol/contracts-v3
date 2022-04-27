@@ -577,7 +577,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @dev sets the deposit limit of a given pool
+     * @dev reduces the trading liquidity of a given pool
      *
      * requirements:
      *
