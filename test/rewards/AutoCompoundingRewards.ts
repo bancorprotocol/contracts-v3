@@ -409,7 +409,7 @@ describe('AutoCompoundingRewards', () => {
                                                     await autoCompoundingRewards.setTime(currTime);
                                                 });
 
-                                                if (currTime <= startTime && halfLife != 0) {
+                                                if (currTime <= startTime && halfLife !== 0) {
                                                     it(`should complete`, async () => {
                                                         const poolsBefore = await autoCompoundingRewards.pools();
                                                         expect(poolsBefore).to.not.include(token.address);
