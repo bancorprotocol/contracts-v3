@@ -9,7 +9,7 @@ jobs:
   test:
     name: Health Checks
 
-    runs-on: self-hosted
+    runs-on: [self-hosted, HEALTH]
     timeout-minutes: 1200
 
     steps:

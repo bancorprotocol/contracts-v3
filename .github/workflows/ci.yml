@@ -11,7 +11,7 @@ jobs:
   test:
     name: Test
 
-    runs-on: self-hosted
+    runs-on: [self-hosted, CI]
     timeout-minutes: 600
 
     steps:

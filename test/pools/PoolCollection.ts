@@ -158,7 +158,6 @@ describe('PoolCollection', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let bntPool: TestBNTPool;
         let poolTokenFactory: PoolTokenFactory;
-        let poolCollection: TestPoolCollection;
         let poolMigrator: TestPoolMigrator;
 
         beforeEach(async () => {
@@ -170,7 +169,6 @@ describe('PoolCollection', () => {
                 externalProtectionVault,
                 bntPool,
                 poolTokenFactory,
-                poolCollection,
                 poolMigrator
             } = await createSystem());
         });
@@ -296,13 +294,21 @@ describe('PoolCollection', () => {
         });
 
         it('should be properly initialized', async () => {
+            const poolCollection = await Contracts.PoolCollection.deploy(
+                network.address,
+                bnt.address,
+                networkSettings.address,
+                masterVault.address,
+                bntPool.address,
+                externalProtectionVault.address,
+                poolTokenFactory.address,
+                poolMigrator.address
+            );
             expect(await poolCollection.version()).to.equal(1);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
-        });
 
-        it('should emit events on initialization', async () => {
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(0, DEFAULT_TRADING_FEE_PPM);
