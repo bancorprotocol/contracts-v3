@@ -2,6 +2,7 @@
 import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork__factory,
+    CheckpointStore__factory,
     ContractRegistry,
     ContractRegistry__factory,
     ConverterFactory,
@@ -12,6 +13,8 @@ import {
     ConverterRegistryData__factory,
     BancorNetwork as LegacyBancorNetwork,
     NetworkSettings as LegacyNetworkSettings,
+    LiquidityProtection,
+    LiquidityProtection__factory,
     LiquidityProtectionSettings,
     LiquidityProtectionSettings__factory,
     LiquidityProtectionStats,
@@ -21,6 +24,7 @@ import {
     LiquidityProtectionSystemStore,
     LiquidityProtectionSystemStore__factory,
     NetworkSettings__factory,
+    StakingRewards__factory,
     TestCheckpointStore,
     TestCheckpointStore__factory,
     TestLiquidityProtection,
@@ -54,6 +58,7 @@ export {
     DSToken,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
+    LiquidityProtection,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
     LiquidityProtectionStore,
@@ -73,11 +78,11 @@ export {
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
-    // V2 contracts
     TokenGovernance: deployOrAttach('TokenGovernance', TokenGovernance__factory, signer),
     BNT: deployOrAttach('BNT', BNT__factory, signer),
     VBNT: deployOrAttach('VBNT', VBNT__factory, signer),
 
+    CheckpointStore: deployOrAttach('CheckpointStore', CheckpointStore__factory, signer),
     ConverterFactory: deployOrAttach('ConverterFactory', ConverterFactory__factory, signer),
     ContractRegistry: deployOrAttach('ContractRegistry', ContractRegistry__factory, signer),
     ConverterRegistry: deployOrAttach('ConverterRegistry', ConverterRegistry__factory, signer),
@@ -85,7 +90,7 @@ const getContracts = (signer?: Signer) => ({
     DSToken: deployOrAttach('DSToken', DSToken__factory, signer),
     LegacyBancorNetwork: deployOrAttach('LegacyBancorNetwork', BancorNetwork__factory, signer),
     LegacyNetworkSettings: deployOrAttach('LegacyNetworkSettings', NetworkSettings__factory, signer),
-    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
+    LiquidityProtection: deployOrAttach('LiquidityProtection', LiquidityProtection__factory, signer),
     LiquidityProtectionSettings: deployOrAttach(
         'LiquidityProtectionSettings',
         LiquidityProtectionSettings__factory,
@@ -98,6 +103,7 @@ const getContracts = (signer?: Signer) => ({
         LiquidityProtectionSystemStore__factory,
         signer
     ),
+    StakingRewards: deployOrAttach('StakingRewards', StakingRewards__factory, signer),
     TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
     TestLiquidityProtection: deployOrAttach('TestLiquidityProtection', TestLiquidityProtection__factory, signer),
     TestStandardPoolConverter: deployOrAttach('TestStandardPoolConverter', TestStandardPoolConverter__factory, signer),
@@ -105,7 +111,8 @@ const getContracts = (signer?: Signer) => ({
         'TestStandardPoolConverterFactory',
         TestStandardPoolConverterFactory__factory,
         signer
-    )
+    ),
+    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer)
 });
 
 export default getContracts();

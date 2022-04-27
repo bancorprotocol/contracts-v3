@@ -81,10 +81,12 @@ import { getNamedAccounts } from 'hardhat';
         bancorPortal = await DeployedContracts.BancorPortal.deployed();
     });
 
-    describe('roles', () => {
+    describe.only('roles', () => {
         it('should have the correct set of roles', async () => {
-            const { deployer, deployerV2, foundationMultisig, daoMultisig, liquidityProtection, legacyStakingRewards } =
+            const { deployer, deployerV2, foundationMultisig, daoMultisig, legacyStakingRewards } =
                 await getNamedAccounts();
+
+            const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
 
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
@@ -100,7 +102,7 @@ import { getNamedAccounts } from 'hardhat';
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_MINTER,
                 isMainnet()
-                    ? [standardRewards.address, bntPool.address, liquidityProtection, legacyStakingRewards]
+                    ? [standardRewards.address, bntPool.address, liquidityProtection.address, legacyStakingRewards]
                     : [standardRewards.address, bntPool.address]
             );
 
@@ -117,7 +119,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_MINTER,
-                isMainnet() ? [bntPool.address, liquidityProtection] : [bntPool.address]
+                isMainnet() ? [bntPool.address, liquidityProtection.address] : [bntPool.address]
             );
 
             await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig, network.address]);
@@ -153,7 +155,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(poolMigrator, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
 
             await expectRoleMembers(network, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig]);
-            await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER);
+            await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, [liquidityProtection.address]);
             await expectRoleMembers(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER);
             await expectRoleMembers(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER);
 

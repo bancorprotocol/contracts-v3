@@ -24,7 +24,7 @@ import {
     TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
-import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import { BNT, LiquidityProtection, TokenGovernance, VBNT } from '../components/LegacyContracts';
 import {
     BancorNetworkV1,
     NetworkSettingsV1,
@@ -66,7 +66,8 @@ enum LegacyInstanceName {
     BNT = 'BNT',
     BNTGovernance = 'BNTGovernance',
     VBNT = 'VBNT',
-    VBNTGovernance = 'VBNTGovernance'
+    VBNTGovernance = 'VBNTGovernance',
+    LiquidityProtection = 'LiquidityProtection'
 }
 
 enum NewInstanceName {
@@ -121,6 +122,7 @@ const DeployedLegacyContracts = {
     BNTGovernance: deployed<TokenGovernance>(InstanceName.BNTGovernance),
     VBNT: deployed<VBNT>(InstanceName.VBNT),
     VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
+    LiquidityProtection: deployed<LiquidityProtection>(InstanceName.LiquidityProtection),
 
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
@@ -191,12 +193,14 @@ export const getNamedSigners = async (): Promise<Record<string, SignerWithAddres
     return signers;
 };
 
-export const fundAccount = async (account: string) => {
+export const fundAccount = async (account: string | SignerWithAddress) => {
     if (!isMainnetFork()) {
         return;
     }
 
-    const balance = await ethers.provider.getBalance(account);
+    const address = typeof account === 'string' ? account : account.address;
+
+    const balance = await ethers.provider.getBalance(address);
     if (balance.gte(TEST_MINIMUM_BALANCE)) {
         return;
     }
@@ -205,7 +209,7 @@ export const fundAccount = async (account: string) => {
 
     return ethWhale.sendTransaction({
         value: TEST_FUNDING,
-        to: account
+        to: address
     });
 };
 

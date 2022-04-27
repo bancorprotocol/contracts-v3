@@ -52,8 +52,15 @@ const TokenNamedAccounts = {
 };
 
 const LegacyNamedAccounts = {
-    liquidityProtection: { ...mainnet('0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e', ZERO_ADDRESS) },
-    legacyStakingRewards: { ...mainnet('0x318fEA7e45A7D3aC5999DA7e1055F5982eEB3E67', ZERO_ADDRESS) }
+    legacyLiquidityProtection: { ...mainnet('0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e', ZERO_ADDRESS) },
+    legacyLiquidityProtectionSettings: { ...mainnet('0xf7d28faa1fe9ea53279fe6e3cde75175859bdf46', ZERO_ADDRESS) },
+    legacyLiquidityProtectionStore: { ...mainnet('0xf5fab5dbd2f3bf675de4cb76517d4767013cfb55', ZERO_ADDRESS) },
+    legacyLiquidityProtectionStats: { ...mainnet('0x9712bb50dc6efb8a3d7d12cea500a50967d2d471', ZERO_ADDRESS) },
+    legacyLiquidityProtectionSystemStore: { ...mainnet('0xc4c5634de585d43daec8fa2a6fb6286cd9b87131', ZERO_ADDRESS) },
+    legacyLiquidityProtectionWallet: { ...mainnet('0xd1d846312b819743974786050848d9b3d06b9b55', ZERO_ADDRESS) },
+    legacyCheckpointStore: { ...mainnet('0xF8a2FB650e25a26CE839D64bE8a0aBbCb0b87B32', ZERO_ADDRESS) },
+    legacyStakingRewards: { ...mainnet('0x318fEA7e45A7D3aC5999DA7e1055F5982eEB3E67', ZERO_ADDRESS) },
+    legacyContractRegistry: { ...mainnet('0x52ae12abe5d8bd778bd5397f99ca900624cfadd4', ZERO_ADDRESS) }
 };
 
 const UniswapNamedAccounts = {

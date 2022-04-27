@@ -12,7 +12,7 @@ describeDeployment(__filename, () => {
     let deployer: string;
     let deployerV2: string;
     let foundationMultisig: string;
-    let liquidityProtection: string;
+    let legacyLiquidityProtection: string;
     let vbnt: VBNT;
     let vbntGovernance: TokenGovernance;
 
@@ -20,7 +20,7 @@ describeDeployment(__filename, () => {
     const vbntData = new TokenData(TokenSymbol.vBNT);
 
     before(async () => {
-        ({ deployer, deployerV2, foundationMultisig, liquidityProtection } = await getNamedAccounts());
+        ({ deployer, deployerV2, foundationMultisig, legacyLiquidityProtection } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -51,7 +51,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection] : []
+            isMainnet() ? [legacyLiquidityProtection] : []
         );
     });
 
