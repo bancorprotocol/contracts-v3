@@ -589,15 +589,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             revert FundingLimitTooHigh();
         }
 
+        _bntPool.renounceFunding(bytes32(0), pool, bntTradingLiquidity - bntAmount);
+
         /*
-            reduce the BNT trading liquidity to the new amount
-            burn the excessive BNT 
-            deplete the available funding if it’s above 0 (bntCurrentFunding = bntFundingLimit)
-            note that the current funding might actually be higher than the limit
-            request liquidity for the full amount
-            burn the BNT
-            update the TKN trading liquidity accordingly
-            using the EMA
+            update the TKN trading liquidity accordingly, using the EMA
             apply the EMA only to the delta between ther prev/new BNT trading liquidity
         */
     }
