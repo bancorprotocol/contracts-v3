@@ -736,12 +736,12 @@ describe('AutoCompoundingRewards', () => {
                                 setup.totalRewards
                             ));
 
-                            await autoCompoundingRewards.createProgram(
+                            await createProgram(
+                                distributionType,
+                                autoCompoundingRewards,
                                 tokens[index].address,
                                 setup.totalRewards,
-                                distributionType,
-                                START_TIME,
-                                END_TIME
+                                START_TIME
                             );
                         }
 
@@ -750,7 +750,7 @@ describe('AutoCompoundingRewards', () => {
 
                     if (distributionType === RewardsDistributionType.Flat) {
                         it('should distribute all tokens', async () => {
-                            await autoCompoundingRewards.setTime(END_TIME);
+                            await autoCompoundingRewards.setTime(programEndTime[distributionType]);
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT); i++) {
                                 const res = await autoCompoundingRewards.trigger();
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
@@ -762,7 +762,7 @@ describe('AutoCompoundingRewards', () => {
                         it('should distribute some tokens', async () => {
                             for (let i = 0; i < 5; i++) {
                                 await autoCompoundingRewards.setTime(
-                                    Math.floor(START_TIME + (TOTAL_DURATION * 2 ** i) / (2 ** i + 1))
+                                    Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
                                 );
                                 const res = await autoCompoundingRewards.trigger();
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
@@ -770,13 +770,15 @@ describe('AutoCompoundingRewards', () => {
                         });
 
                         it('should not distribute tokens again after less than 1 hour', async () => {
-                            await autoCompoundingRewards.setTime(Math.floor(START_TIME + TOTAL_DURATION / 2));
+                            await autoCompoundingRewards.setTime(
+                                Math.floor(START_TIME + programDuration[distributionType] / 2)
+                            );
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT); i++) {
                                 const res = await autoCompoundingRewards.trigger();
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
                             }
                             await autoCompoundingRewards.setTime(
-                                Math.floor(START_TIME + TOTAL_DURATION / 2) + 60 * 60 - 1
+                                Math.floor(START_TIME + programDuration[distributionType] / 2) + 60 * 60 - 1
                             );
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT) + 1; i++) {
                                 const res = await autoCompoundingRewards.trigger();
