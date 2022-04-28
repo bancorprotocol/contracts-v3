@@ -6,6 +6,8 @@ import Contracts, {
     BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
+    IUniswapV2Factory__factory,
+    IUniswapV2Router02__factory,
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
@@ -393,6 +395,81 @@ import { getNamedAccounts } from 'hardhat';
 
                     expect(await getBalance(tokenWithAddress, whale)).to.gte(prevTokenBalance2);
                     expect(await getBalance(bnt, whale)).to.be.equal(0);
+                }
+            }
+        });
+
+        it.skip('should perform portal migrations from UniswapV2 type pools', async () => {
+            const { uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory, dai, link, weth } =
+                await getNamedAccounts();
+
+            const { daiEthWhale, daiLinkWhale } = await getNamedSigners();
+
+            const testPools = [
+                { tokenA: dai, tokenB: link, whale: daiLinkWhale },
+                { tokenA: dai, tokenB: weth, whale: daiEthWhale }
+            ];
+
+            const uniswapV2Protocols = [
+                {
+                    migrator: bancorPortal.migrateUniswapV2Position,
+                    router: uniswapV2Router02,
+                    factory: uniswapV2Factory
+                },
+                {
+                    migrator: bancorPortal.migrateSushiSwapV1Position,
+                    router: sushiSwapRouter,
+                    factory: sushiSwapFactory
+                }
+            ];
+
+            const MAX_DEADLINE = 10800;
+
+            for (const { tokenA, tokenB, whale } of testPools) {
+                for (const { migrator, router, factory } of uniswapV2Protocols) {
+                    // eslint-disable-next-line camelcase
+                    const routerContract = await IUniswapV2Router02__factory.connect(router, whale).deployed();
+                    // eslint-disable-next-line camelcase
+                    const factoryContract = await IUniswapV2Factory__factory.connect(factory, whale).deployed();
+
+                    // create 3rd party positions
+                    const depositAmount = toWei(1);
+                    if ([tokenA, tokenB].includes(weth)) {
+                        const token = tokenA === weth ? tokenB : tokenA;
+                        const tokenContract = await Contracts.ERC20.attach(token);
+                        await tokenContract.connect(whale).approve(router, 0);
+                        await tokenContract.connect(whale).approve(router, depositAmount);
+                        await routerContract
+                            .connect(whale)
+                            .addLiquidityETH(token, depositAmount, 1, 1, whale.address, Date.now() + MAX_DEADLINE, {
+                                value: depositAmount
+                            });
+                    } else {
+                        for (const token of [tokenA, tokenB]) {
+                            const tokenContract = await Contracts.ERC20.attach(token);
+                            await tokenContract.connect(whale).approve(router, 0);
+                            await tokenContract.connect(whale).approve(router, depositAmount);
+                        }
+                        await routerContract
+                            .connect(whale)
+                            .addLiquidity(
+                                tokenA,
+                                tokenB,
+                                depositAmount,
+                                depositAmount,
+                                1,
+                                1,
+                                whale.address,
+                                Date.now() + MAX_DEADLINE
+                            );
+                    }
+
+                    // migrate postions
+                    const pair = await factoryContract.getPair(tokenA, tokenB);
+                    const pairContract = await Contracts.ERC20.attach(pair);
+                    await pairContract.connect(whale).approve(bancorPortal.address, 0);
+                    await pairContract.connect(whale).approve(bancorPortal.address, depositAmount);
+                    await migrator(tokenA, tokenB, depositAmount);
                 }
             }
         });
