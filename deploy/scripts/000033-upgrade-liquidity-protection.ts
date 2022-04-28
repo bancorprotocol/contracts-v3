@@ -8,6 +8,7 @@ import {
     grantRole,
     InstanceName,
     isLive,
+    isMainnet,
     isMainnetFork,
     revokeRole,
     setDeploymentMetadata
@@ -228,6 +229,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
-func.skip = async () => isLive();
+func.skip = async () => !isMainnet();
 
 export default setDeploymentMetadata(__filename, func);

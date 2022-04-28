@@ -2,7 +2,7 @@ import {
     DeployedContracts,
     fundAccount,
     getNamedSigners,
-    isLive,
+    isMainnet,
     isMainnetFork,
     setDeploymentMetadata
 } from '../../utils/Deploy';
@@ -27,6 +27,6 @@ const func: DeployFunction = async () => {
     return true;
 };
 
-func.skip = async () => isLive();
+func.skip = async () => !isMainnet();
 
 export default setDeploymentMetadata(__filename, func);
