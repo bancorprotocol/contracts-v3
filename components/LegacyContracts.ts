@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import { toPPM } from '../utils/Types';
 import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork__factory,
@@ -25,6 +26,8 @@ import {
     LiquidityProtectionSystemStore,
     LiquidityProtectionSystemStore__factory,
     NetworkSettings__factory,
+    Owned,
+    Owned__factory,
     StakingRewards,
     StakingRewards__factory,
     TestCheckpointStore,
@@ -48,7 +51,9 @@ import {
     DSToken as VBNT,
     DSToken__factory as VBNT__factory
 } from '@bancor/token-governance';
-import { Signer } from 'ethers';
+import { Signer, utils } from 'ethers';
+
+const { formatBytes32String, id } = utils;
 
 export {
     BNT__factory,
@@ -74,10 +79,28 @@ export {
     TokenGovernance,
     TokenHolder,
     VBNT,
+    Owned,
     VBNT__factory
 };
 
 /* eslint-enable camelcase */
+
+export const Registry = {
+    BANCOR_NETWORK: formatBytes32String('BancorNetwork'),
+    NETWORK_SETTINGS: formatBytes32String('NetworkSettings'),
+    CONVERTER_FACTORY: formatBytes32String('ConverterFactory'),
+    CONVERTER_REGISTRY: formatBytes32String('BancorConverterRegistry'),
+    CONVERTER_REGISTRY_DATA: formatBytes32String('BancorConverterRegistryData'),
+    LIQUIDITY_PROTECTION: formatBytes32String('LIQUIDITY_PROTECTION')
+};
+
+export const Roles = {
+    ROLE_OWNER: id('ROLE_OWNER'),
+    ROLE_PUBLISHER: id('ROLE_PUBLISHER')
+};
+
+export const STANDARD_CONVERTER_TYPE = 3;
+export const STANDARD_POOL_CONVERTER_WEIGHT = toPPM(50);
 
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
@@ -92,6 +115,7 @@ const getContracts = (signer?: Signer) => ({
     ConverterRegistry: deployOrAttach('ConverterRegistry', ConverterRegistry__factory, signer),
     ConverterRegistryData: deployOrAttach('ConverterRegistryData', ConverterRegistryData__factory, signer),
     DSToken: deployOrAttach('DSToken', DSToken__factory, signer),
+    Owned: deployOrAttach('Owned', Owned__factory, signer),
     LegacyBancorNetwork: deployOrAttach('LegacyBancorNetwork', BancorNetwork__factory, signer),
     LegacyNetworkSettings: deployOrAttach('LegacyNetworkSettings', NetworkSettings__factory, signer),
     LiquidityProtection: deployOrAttach('LiquidityProtection', LiquidityProtection__factory, signer),

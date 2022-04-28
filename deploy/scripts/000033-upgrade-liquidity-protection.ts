@@ -1,3 +1,4 @@
+import { Registry as LegacyRegistry, Roles as LegacyRoles } from '../../components/LegacyContracts';
 import {
     deploy,
     DeployedContracts,
@@ -12,15 +13,8 @@ import {
     setDeploymentMetadata
 } from '../../utils/Deploy';
 import { Roles } from '../../utils/Roles';
-import { utils } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-
-const { id } = utils;
-
-const ROLE_PUBLISHER = id('ROLE_PUBLISHER');
-const ROLE_OWNER = id('ROLE_OWNER');
-const LIQUIDITY_PROTECTION = id('LiquidityProtection');
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, deployerV2 } = await getNamedAccounts();
@@ -118,7 +112,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // grant the StakingRewards ROLE_PUBLISHER role to the contract
     await grantRole({
         name: InstanceName.StakingRewards,
-        id: ROLE_PUBLISHER,
+        id: LegacyRoles.ROLE_PUBLISHER,
         member: liquidityProtection,
         from: deployerV2
     });
@@ -126,7 +120,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // grant the CheckpointStore ROLE_OWNER role to the contract
     await grantRole({
         name: InstanceName.CheckpointStore,
-        id: ROLE_OWNER,
+        id: LegacyRoles.ROLE_OWNER,
         member: liquidityProtection,
         from: deployerV2
     });
@@ -134,7 +128,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // grant the LiquidityProtectionStats ROLE_OWNER role to the contract
     await grantRole({
         name: InstanceName.LiquidityProtectionStats,
-        id: ROLE_OWNER,
+        id: LegacyRoles.ROLE_OWNER,
         member: liquidityProtection,
         from: deployerV2
     });
@@ -142,7 +136,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // grant the LiquidityProtectionSystemStore ROLE_OWNER role to the contract
     await grantRole({
         name: InstanceName.LiquidityProtectionSystemStore,
-        id: ROLE_OWNER,
+        id: LegacyRoles.ROLE_OWNER,
         member: liquidityProtection,
         from: deployerV2
     });
@@ -179,7 +173,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await execute({
         name: InstanceName.ContractRegistry,
         methodName: 'registerAddress',
-        args: [LIQUIDITY_PROTECTION, liquidityProtection],
+        args: [LegacyRegistry.LIQUIDITY_PROTECTION, liquidityProtection],
         from: deployerV2
     });
 
@@ -202,7 +196,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // revoke the StakingRewards ROLE_PUBLISHER role from the legacy contract
     await revokeRole({
         name: InstanceName.StakingRewards,
-        id: ROLE_PUBLISHER,
+        id: LegacyRoles.ROLE_PUBLISHER,
         member: legacyLiquidityProtection.address,
         from: deployerV2
     });
@@ -210,7 +204,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // revoke the CheckpointStore ROLE_OWNER role from the legacy contract
     await revokeRole({
         name: InstanceName.CheckpointStore,
-        id: ROLE_OWNER,
+        id: LegacyRoles.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
         from: deployerV2
     });
@@ -218,7 +212,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // revoke the LiquidityProtectionStats ROLE_OWNER from to the legacy contract
     await revokeRole({
         name: InstanceName.LiquidityProtectionStats,
-        id: ROLE_OWNER,
+        id: LegacyRoles.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
         from: deployerV2
     });
@@ -226,7 +220,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // revoke the LiquidityProtectionSystemStore ROLE_OWNER role from the legacy contract
     await revokeRole({
         name: InstanceName.LiquidityProtectionSystemStore,
-        id: ROLE_OWNER,
+        id: LegacyRoles.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
         from: deployerV2
     });

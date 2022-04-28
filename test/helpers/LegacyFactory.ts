@@ -1,24 +1,9 @@
 import { IERC20, MasterVault, TestBancorNetwork } from '../../components/Contracts';
-import LegacyContracts, { TokenGovernance } from '../../components/LegacyContracts';
+import LegacyContracts, { Registry, Roles, TokenGovernance } from '../../components/LegacyContracts';
 import { PPM_RESOLUTION } from '../../utils/Constants';
 import { DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { utils } from 'ethers';
-
-const { formatBytes32String, id } = utils;
-
-const Registry = {
-    BANCOR_NETWORK: formatBytes32String('BancorNetwork'),
-    NETWORK_SETTINGS: formatBytes32String('NetworkSettings'),
-    CONVERTER_FACTORY: formatBytes32String('ConverterFactory'),
-    CONVERTER_REGISTRY: formatBytes32String('BancorConverterRegistry'),
-    CONVERTER_REGISTRY_DATA: formatBytes32String('BancorConverterRegistryData')
-};
-
-const Roles = {
-    ROLE_OWNER: id('ROLE_OWNER')
-};
 
 export const createLegacySystem = async (
     owner: SignerWithAddress,

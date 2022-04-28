@@ -3372,37 +3372,6 @@ describe('BancorNetwork', () => {
                             );
                     });
 
-                    it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-                        await expect(
-                            liquidityProtection.migratePositions([
-                                {
-                                    poolToken: poolToken.address,
-                                    reserveToken: baseToken.address,
-                                    positionIds: [protectionId, protectionId]
-                                }
-                            ])
-                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
-                    });
-
-                    it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-
-                        const positions = [
-                            {
-                                poolToken: poolToken.address,
-                                reserveToken: baseToken.address,
-                                positionIds: [protectionId]
-                            }
-                        ];
-                        await liquidityProtection.migratePositions(positions);
-                        await expect(liquidityProtection.migratePositions(positions)).to.be.revertedWith(
-                            'ERR_ACCESS_DENIED'
-                        );
-                    });
-
                     it('verifies that the caller can migrate positions', async () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         const protection = await getProtection(protectionId);
@@ -3597,38 +3566,6 @@ describe('BancorNetwork', () => {
                     await expect(res)
                         .to.emit(network, 'FundsMigrated')
                         .withArgs(contextId, bnt.address, deployer.address, amount, availableAmount, originalAmount);
-                });
-
-                it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-
-                    await expect(
-                        liquidityProtection.migratePositions([
-                            {
-                                poolToken: poolToken.address,
-                                reserveToken: bnt.address,
-                                positionIds: [protectionId, protectionId]
-                            }
-                        ])
-                    ).to.be.revertedWith('ERR_ACCESS_DENIED');
-                });
-
-                it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-
-                    const positions = [
-                        {
-                            poolToken: poolToken.address,
-                            reserveToken: bnt.address,
-                            positionIds: [protectionId]
-                        }
-                    ];
-                    await liquidityProtection.migratePositions(positions);
-                    await expect(liquidityProtection.migratePositions(positions)).to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
-                    );
                 });
 
                 it('verifies that the caller can migrate positions', async () => {

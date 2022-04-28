@@ -1,5 +1,5 @@
 import { AccessControlEnumerable, BNTPool, ExternalRewardsVault, ProxyAdmin } from '../../components/Contracts';
-import { StakingRewards, TokenGovernance } from '../../components/LegacyContracts';
+import { LiquidityProtection, StakingRewards, TokenGovernance } from '../../components/LegacyContracts';
 import { StandardRewardsV1 } from '../../components/LegacyContractsV3';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
@@ -14,11 +14,11 @@ describeDeployment(__filename, () => {
     let bntPool: BNTPool;
     let externalRewardsVault: ExternalRewardsVault;
     let standardRewards: StandardRewardsV1;
-    let legacyLiquidityProtection: string;
+    let legacyLiquidityProtection: LiquidityProtection;
     let legacyStakingRewards: StakingRewards;
 
     before(async () => {
-        ({ deployer, legacyLiquidityProtection } = await getNamedAccounts());
+        ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
@@ -27,6 +27,7 @@ describeDeployment(__filename, () => {
         bntPool = await DeployedContracts.BNTPool.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
         standardRewards = await DeployedContracts.StandardRewardsV1.deployed();
+        legacyLiquidityProtection = await DeployedContracts.LegacyLiquidityProtection.deployed();
         legacyStakingRewards = await DeployedContracts.StakingRewards.deployed();
     });
 
@@ -36,12 +37,16 @@ describeDeployment(__filename, () => {
         expect(await standardRewards.version()).to.equal(1);
 
         await expectRoleMembers(standardRewards, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
+
+        const expectedRoles = [standardRewards.address, bntPool.address];
+        if (isMainnet()) {
+            expectedRoles.push(legacyLiquidityProtection.address, legacyStakingRewards.address);
+        }
+
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet()
-                ? [standardRewards.address, bntPool.address, legacyLiquidityProtection, legacyStakingRewards.address]
-                : [standardRewards.address, bntPool.address]
+            expectedRoles
         );
         await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [standardRewards.address]);
     });
