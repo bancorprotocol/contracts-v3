@@ -94,7 +94,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // grant BNT ROLE_MINTER role to the contract
+    // grant the BNT ROLE_MINTER role to the contract
     await grantRole({
         name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
@@ -102,7 +102,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // grant vBNT ROLE_MINTER role to the contract
+    // grant the vBNT ROLE_MINTER role to the contract
     await grantRole({
         name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
@@ -178,7 +178,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployerV2
     });
 
-    // revoke BNT ROLE_MINTER role from the legacy contract
+    // revoke the BNT ROLE_MINTER role from the legacy contract
     await revokeRole({
         name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
@@ -186,7 +186,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // revoke vBNT ROLE_MINTER role from the legacy contract
+    // revoke the vBNT ROLE_MINTER role from the legacy contract
     await revokeRole({
         name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
