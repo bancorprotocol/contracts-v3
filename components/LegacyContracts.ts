@@ -91,7 +91,7 @@ export const Registry = {
     CONVERTER_FACTORY: formatBytes32String('ConverterFactory'),
     CONVERTER_REGISTRY: formatBytes32String('BancorConverterRegistry'),
     CONVERTER_REGISTRY_DATA: formatBytes32String('BancorConverterRegistryData'),
-    LIQUIDITY_PROTECTION: formatBytes32String('LIQUIDITY_PROTECTION')
+    LIQUIDITY_PROTECTION: formatBytes32String('LiquidityProtection')
 };
 
 export const Roles = {
