@@ -342,7 +342,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev processes the rewards of a given pool
      */
-    function _processRewards(Token pool, bool skipRecentlyProcessedPrograms) private {
+    function _processRewards(Token pool, bool skipRecent) private {
         ProgramData memory p = _programs[pool];
 
         uint32 currTime = _time();
@@ -351,7 +351,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             return;
         }
 
-        if (skipRecentlyProcessedPrograms && currTime < p.prevDistributionTimestamp + AUTO_TRIGGER_MIN_TIME_DELTA) {
+        if (skipRecent && currTime < p.prevDistributionTimestamp + AUTO_TRIGGER_MIN_TIME_DELTA) {
             return;
         }
 
