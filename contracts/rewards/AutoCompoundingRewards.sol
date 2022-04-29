@@ -28,7 +28,7 @@ import {
     IAutoCompoundingRewards,
     ProgramData,
     FLAT_DISTRIBUTION,
-    EXPONENTIAL_DECAY_DISTRIBUTION
+    EXP_DECAY_DISTRIBUTION
 } from "./interfaces/IAutoCompoundingRewards.sol";
 
 import { RewardsMath } from "./RewardsMath.sol";
@@ -70,15 +70,14 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     uint256[MAX_GAP - 3] private __gap;
 
     /**
-     * @dev triggered when a program is created
+     * @dev triggered when a flat program is created
      */
-    event ProgramCreated(
-        Token indexed pool,
-        uint8 indexed distributionType,
-        uint256 totalRewards,
-        uint32 startTime,
-        uint32 endTime
-    );
+    event FlatProgramCreated(Token indexed pool, uint256 totalRewards, uint32 startTime, uint32 endTime);
+
+    /**
+     * @dev triggered when an exponential-decay program is created
+     */
+    event ExpDecayProgramCreated(Token indexed pool, uint256 totalRewards, uint32 startTime, uint32 halfLife);
 
     /**
      * @dev triggered when a program is terminated prematurely
@@ -197,7 +196,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         uint32 currTime = _time();
 
-        if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
+        if (p.distributionType == EXP_DECAY_DISTRIBUTION) {
             return p.startTime <= currTime;
         }
 
@@ -207,64 +206,41 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function createProgram(
+    function createFlatProgram(
         Token pool,
         uint256 totalRewards,
-        uint8 distributionType,
         uint32 startTime,
         uint32 endTime
-    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
-        if (_doesProgramExist(_programs[pool])) {
-            revert AlreadyExists();
-        }
-
-        IPoolToken poolToken;
-        if (pool.isEqual(_bnt)) {
-            poolToken = _bntPoolToken;
-        } else {
-            if (!_networkSettings.isTokenWhitelisted(pool)) {
-                revert NotWhitelisted();
-            }
-
-            poolToken = _network.collectionByPool(pool).poolToken(pool);
-        }
-
-        uint32 currTime = _time();
-        if (distributionType == FLAT_DISTRIBUTION) {
-            if (!(currTime <= startTime && startTime < endTime)) {
-                revert InvalidParam();
-            }
-        } else if (distributionType == EXPONENTIAL_DECAY_DISTRIBUTION) {
-            if (!(currTime <= startTime && endTime == 0)) {
-                revert InvalidParam();
-            }
-        } else {
+    ) external {
+        if (startTime >= endTime) {
             revert InvalidParam();
         }
 
-        ProgramData memory p = ProgramData({
-            startTime: startTime,
-            endTime: endTime,
-            prevDistributionTimestamp: 0,
-            poolToken: poolToken,
-            isEnabled: true,
-            distributionType: distributionType,
-            totalRewards: totalRewards,
-            remainingRewards: totalRewards
-        });
+        _createProgram(pool, totalRewards, FLAT_DISTRIBUTION, startTime, endTime, 0);
 
-        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, _rewardsVault(pool));
+        emit FlatProgramCreated({ pool: pool, totalRewards: totalRewards, startTime: startTime, endTime: endTime });
+    }
 
-        _programs[pool] = p;
+    /**
+     * @inheritdoc IAutoCompoundingRewards
+     */
+    function createExpDecayProgram(
+        Token pool,
+        uint256 totalRewards,
+        uint32 startTime,
+        uint32 halfLife
+    ) external {
+        if (halfLife == 0) {
+            revert InvalidParam();
+        }
 
-        assert(_pools.add(address(pool)));
+        _createProgram(pool, totalRewards, EXP_DECAY_DISTRIBUTION, startTime, 0, halfLife);
 
-        emit ProgramCreated({
+        emit ExpDecayProgramCreated({
             pool: pool,
-            distributionType: distributionType,
             totalRewards: totalRewards,
             startTime: startTime,
-            endTime: endTime
+            halfLife: halfLife
         });
     }
 
@@ -345,6 +321,55 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
+     * @dev creates a rewards program for a given pool
+     */
+    function _createProgram(
+        Token pool,
+        uint256 totalRewards,
+        uint8 distributionType,
+        uint32 startTime,
+        uint32 endTime,
+        uint32 halfLife
+    ) private validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
+        if (_doesProgramExist(_programs[pool])) {
+            revert AlreadyExists();
+        }
+
+        IPoolToken poolToken;
+        if (pool.isEqual(_bnt)) {
+            poolToken = _bntPoolToken;
+        } else {
+            if (!_networkSettings.isTokenWhitelisted(pool)) {
+                revert NotWhitelisted();
+            }
+
+            poolToken = _network.collectionByPool(pool).poolToken(pool);
+        }
+
+        if (startTime < _time()) {
+            revert InvalidParam();
+        }
+
+        ProgramData memory p = ProgramData({
+            startTime: startTime,
+            endTime: endTime,
+            halfLife: halfLife,
+            prevDistributionTimestamp: 0,
+            poolToken: poolToken,
+            isEnabled: true,
+            distributionType: distributionType,
+            totalRewards: totalRewards,
+            remainingRewards: totalRewards
+        });
+
+        _verifyFunds(_poolTokenAmountToBurn(pool, p, totalRewards), poolToken, _rewardsVault(pool));
+
+        _programs[pool] = p;
+
+        assert(_pools.add(address(pool)));
+    }
+
+    /**
      * @dev returns the amount of tokens to distribute
      */
     function _tokenAmountToDistribute(ProgramData memory p, uint32 currTime) private pure returns (uint256) {
@@ -356,12 +381,11 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             return
                 RewardsMath.calcFlatRewards(p.totalRewards, currTimeElapsed - prevTimeElapsed, p.endTime - p.startTime);
         } else {
-            // if (p.distributionType == EXPONENTIAL_DECAY_DISTRIBUTION)
             uint32 currTimeElapsed = currTime - p.startTime;
             uint32 prevTimeElapsed = prevTime - p.startTime;
             return
-                RewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed) -
-                RewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed);
+                RewardsMath.calcExpDecayRewards(p.totalRewards, currTimeElapsed, p.halfLife) -
+                RewardsMath.calcExpDecayRewards(p.totalRewards, prevTimeElapsed, p.halfLife);
         }
     }
 
