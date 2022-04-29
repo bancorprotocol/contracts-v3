@@ -262,8 +262,7 @@ import { getNamedAccounts } from 'hardhat';
                                 d: liquidity.baseTokenTradingLiquidity
                             },
                             {
-                                maxAbsoluteError: new Decimal(0),
-                                maxRelativeError: new Decimal('0000000000000000000001')
+                                maxRelativeError: new Decimal(i === 0 ? '0.01' : '0.0000000000000000000001')
                             }
                         );
                     }
@@ -284,7 +283,7 @@ import { getNamedAccounts } from 'hardhat';
 
                     const receivedBNBNTAmount = (await getBalance(bnBNT, bntWhale)).sub(prevBNBNTAmount);
 
-                    expect(receivedBNBNTAmount).be.gt(0);
+                    expect(receivedBNBNTAmount).to.be.gt(0);
                     expect(await getBalance(vbnt, bntWhale)).to.equal(prevVBNTTokenAmount.add(receivedBNBNTAmount));
 
                     expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(bntAmount));
@@ -538,15 +537,13 @@ import { getNamedAccounts } from 'hardhat';
                     expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
 
                     expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
-                        maxAbsoluteError: new Decimal(0),
-                        maxRelativeError: new Decimal('0000000000000000000001')
+                        maxRelativeError: new Decimal('0.000000000000000000001')
                     });
 
                     expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
                         prevVaultTokenBalance.add(nativeTokenAmount),
                         {
-                            maxAbsoluteError: new Decimal(0),
-                            maxRelativeError: new Decimal('0000000000000000000001')
+                            maxRelativeError: new Decimal('0.000000000000000000001')
                         }
                     );
                 });

@@ -134,11 +134,11 @@ describe('PoolCollectionWithdrawal', () => {
         });
 
         test('PoolCollectionWithdrawalCoverage8', {
-            p: { maxAbsoluteError: new Decimal(0), maxRelativeError: new Decimal('0') },
-            q: { maxAbsoluteError: new Decimal(0), maxRelativeError: new Decimal('0') },
-            r: { maxAbsoluteError: new Decimal(0), maxRelativeError: new Decimal('0') },
+            p: { maxRelativeError: new Decimal('0') },
+            q: { maxRelativeError: new Decimal('0') },
+            r: { maxRelativeError: new Decimal('0') },
             s: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.LesserOrEqual }, // prettier-ignore
-            t: { maxAbsoluteError: new Decimal(0), maxRelativeError: new Decimal('0') },
+            t: { maxRelativeError: new Decimal('0') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
             v: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0'), relation: Relation.GreaterOrEqual } // prettier-ignore
         });

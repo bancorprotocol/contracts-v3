@@ -1273,7 +1273,6 @@ describe('AutoCompoundingRewards', () => {
                 switch (program.distributionType) {
                     case RewardsDistributionType.Flat:
                         expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
-                            maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('0000000000000000000002'),
                             relation: Relation.LesserOrEqual
                         });
@@ -1286,12 +1285,10 @@ describe('AutoCompoundingRewards', () => {
 
                     case RewardsDistributionType.ExpDecay:
                         expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
-                            maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('0000000000000000000002'),
                             relation: Relation.LesserOrEqual
                         });
                         expect(actualRewardsVaultTokenOwned).to.be.almostEqual(expectedRewardsVaultTokenOwned, {
-                            maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('00000000000000062'),
                             relation: Relation.GreaterOrEqual
                         });

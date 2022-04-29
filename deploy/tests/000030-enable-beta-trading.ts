@@ -116,8 +116,7 @@ describeDeployment(
                             d: liquidity.baseTokenTradingLiquidity
                         },
                         {
-                            maxAbsoluteError: new Decimal(0),
-                            maxRelativeError: new Decimal('0000000000000000000001')
+                            maxRelativeError: new Decimal('0.0000000000000000000001')
                         }
                     );
                 }
@@ -176,7 +175,7 @@ describeDeployment(
 
                 const receivedBNBNTAmount = (await getBalance(bntBNT, bntWhale)).sub(prevBNBNTAmount);
 
-                expect(receivedBNBNTAmount).be.gt(0);
+                expect(receivedBNBNTAmount).to.be.gt(0);
                 expect(await getBalance(vbnt, bntWhale)).to.equal(prevVBNTTokenAmount.add(receivedBNBNTAmount));
 
                 expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(bntAmount));
