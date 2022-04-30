@@ -24,11 +24,9 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
-    const stakingRewards = await DeployedContracts.StakingRewards.deployed();
     const checkpointStore = await DeployedContracts.CheckpointStore.deployed();
     const liquidityProtectionStats = await DeployedContracts.LiquidityProtectionStats.deployed();
     const liquidityProtectionSystemStore = await DeployedContracts.LiquidityProtectionSystemStore.deployed();
-    const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
 
     // if we're running on a live production, just ensure that the deployer received the required roles and permissions
     if (isLive()) {
@@ -44,32 +42,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             throw new Error('Missing vBNT ROLE_GOVERNOR role!');
         }
 
-        if (!(await stakingRewards.hasRole(LegacyRoles.StakingRewards.ROLE_SUPERVISOR, deployer))) {
-            throw new Error('Missing StakingRewards ROLE_SUPERVISOR role!');
-        }
-
-        if (!(await checkpointStore.hasRole(LegacyRoles.CheckpointStore.ROLE_OWNER, deployer))) {
-            throw new Error('Missing CheckpointStore ROLE_OWNER role!');
-        }
-
-        if (!(await stakingRewards.hasRole(LegacyRoles.LiquidityProtectionStats.ROLE_SUPERVISOR, deployer))) {
-            throw new Error('Missing LiquidityProtectionStats ROLE_SUPERVISOR role!');
-        }
-
-        if (!(await stakingRewards.hasRole(LegacyRoles.LiquidityProtectionSystemStore.ROLE_SUPERVISOR, deployer))) {
-            throw new Error('Missing LiquidityProtectionSystemStore ROLE_SUPERVISOR role!');
-        }
-
-        if ((await contractRegistry.owner()) !== deployer) {
-            throw new Error('Missing ownership over the ContractRegistry contract!');
-        }
-
         return true;
     }
 
     // simulate all the required roles and permissions on a mainnet fork
     if (isMainnetFork()) {
-        const { daoMultisig, foundationMultisig, deployer: deployerSigner, deployerV2 } = await getNamedSigners();
+        const { daoMultisig, foundationMultisig, deployer: deployerSigner } = await getNamedSigners();
 
         await fundAccount(daoMultisig);
         await fundAccount(foundationMultisig);
@@ -90,37 +68,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             member: deployer,
             from: foundationMultisig.address
         });
-
-        await grantRole({
-            name: InstanceName.StakingRewards,
-            id: LegacyRoles.StakingRewards.ROLE_SUPERVISOR,
-            member: deployer,
-            from: deployerV2.address
-        });
-
-        await grantRole({
-            name: InstanceName.CheckpointStore,
-            id: LegacyRoles.CheckpointStore.ROLE_OWNER,
-            member: deployer,
-            from: deployerV2.address
-        });
-
-        await grantRole({
-            name: InstanceName.LiquidityProtectionStats,
-            id: LegacyRoles.LiquidityProtectionStats.ROLE_SUPERVISOR,
-            member: deployer,
-            from: deployerV2.address
-        });
-
-        await grantRole({
-            name: InstanceName.LiquidityProtectionSystemStore,
-            id: LegacyRoles.LiquidityProtectionSystemStore.ROLE_SUPERVISOR,
-            member: deployer,
-            from: deployerV2.address
-        });
-
-        await contractRegistry.connect(deployerV2).transferOwnership(deployer);
-        await contractRegistry.connect(deployerSigner).acceptOwnership();
     }
 
     const network = await DeployedContracts.BancorNetwork.deployed();
