@@ -95,8 +95,24 @@ export const Registry = {
 };
 
 export const Roles = {
-    ROLE_OWNER: id('ROLE_OWNER'),
-    ROLE_PUBLISHER: id('ROLE_PUBLISHER')
+    CheckpointStore: {
+        ROLE_OWNER: id('ROLE_OWNER')
+    },
+    LiquidityProtectionSettings: {
+        ROLE_OWNER: id('ROLE_OWNER')
+    },
+    LiquidityProtectionStats: {
+        ROLE_SUPERVISOR: id('ROLE_SUPERVISOR'),
+        ROLE_OWNER: id('ROLE_OWNER')
+    },
+    LiquidityProtectionSystemStore: {
+        ROLE_SUPERVISOR: id('ROLE_SUPERVISOR'),
+        ROLE_OWNER: id('ROLE_OWNER')
+    },
+    StakingRewards: {
+        ROLE_SUPERVISOR: id('ROLE_SUPERVISOR'),
+        ROLE_PUBLISHER: id('ROLE_PUBLISHER')
+    }
 };
 
 export const STANDARD_CONVERTER_TYPE = 3;

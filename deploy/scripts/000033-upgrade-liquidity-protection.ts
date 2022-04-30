@@ -18,12 +18,17 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, deployerV2 } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
 
     const legacyLiquidityProtection = await DeployedContracts.LegacyLiquidityProtection.deployed();
 
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
+    const stakingRewards = await DeployedContracts.StakingRewards.deployed();
+    const checkpointStore = await DeployedContracts.CheckpointStore.deployed();
+    const liquidityProtectionStats = await DeployedContracts.LiquidityProtectionStats.deployed();
+    const liquidityProtectionSystemStore = await DeployedContracts.LiquidityProtectionSystemStore.deployed();
+    const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
 
     // if we're running on a live production, just ensure that the deployer received the required roles and permissions
     if (isLive()) {
@@ -39,12 +44,32 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             throw new Error('Missing vBNT ROLE_GOVERNOR role!');
         }
 
+        if (!(await stakingRewards.hasRole(LegacyRoles.StakingRewards.ROLE_SUPERVISOR, deployer))) {
+            throw new Error('Missing StakingRewards ROLE_SUPERVISOR role!');
+        }
+
+        if (!(await checkpointStore.hasRole(LegacyRoles.CheckpointStore.ROLE_OWNER, deployer))) {
+            throw new Error('Missing CheckpointStore ROLE_OWNER role!');
+        }
+
+        if (!(await stakingRewards.hasRole(LegacyRoles.LiquidityProtectionStats.ROLE_SUPERVISOR, deployer))) {
+            throw new Error('Missing LiquidityProtectionStats ROLE_SUPERVISOR role!');
+        }
+
+        if (!(await stakingRewards.hasRole(LegacyRoles.LiquidityProtectionSystemStore.ROLE_SUPERVISOR, deployer))) {
+            throw new Error('Missing LiquidityProtectionSystemStore ROLE_SUPERVISOR role!');
+        }
+
+        if ((await contractRegistry.owner()) !== deployer) {
+            throw new Error('Missing ownership over the ContractRegistry contract!');
+        }
+
         return true;
     }
 
     // simulate all the required roles and permissions on a mainnet fork
     if (isMainnetFork()) {
-        const { daoMultisig, foundationMultisig, deployer: deployerSigner } = await getNamedSigners();
+        const { daoMultisig, foundationMultisig, deployer: deployerSigner, deployerV2 } = await getNamedSigners();
 
         await fundAccount(daoMultisig);
         await fundAccount(foundationMultisig);
@@ -65,16 +90,44 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             member: deployer,
             from: foundationMultisig.address
         });
+
+        await grantRole({
+            name: InstanceName.StakingRewards,
+            id: LegacyRoles.StakingRewards.ROLE_SUPERVISOR,
+            member: deployer,
+            from: deployerV2.address
+        });
+
+        await grantRole({
+            name: InstanceName.CheckpointStore,
+            id: LegacyRoles.CheckpointStore.ROLE_OWNER,
+            member: deployer,
+            from: deployerV2.address
+        });
+
+        await grantRole({
+            name: InstanceName.LiquidityProtectionStats,
+            id: LegacyRoles.LiquidityProtectionStats.ROLE_SUPERVISOR,
+            member: deployer,
+            from: deployerV2.address
+        });
+
+        await grantRole({
+            name: InstanceName.LiquidityProtectionSystemStore,
+            id: LegacyRoles.LiquidityProtectionSystemStore.ROLE_SUPERVISOR,
+            member: deployer,
+            from: deployerV2.address
+        });
+
+        await contractRegistry.connect(deployerV2).transferOwnership(deployer);
+        await contractRegistry.connect(deployerSigner).acceptOwnership();
     }
 
     const network = await DeployedContracts.BancorNetwork.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
     const liquidityProtectionSettings = await DeployedContracts.LiquidityProtectionSettings.deployed();
-    const liquidityProtectionStats = await DeployedContracts.LiquidityProtectionStats.deployed();
     const liquidityProtectionStore = await DeployedContracts.LiquidityProtectionStore.deployed();
-    const liquidityProtectionSystemStore = await DeployedContracts.LiquidityProtectionSystemStore.deployed();
     const liquidityProtectionWallet = await DeployedContracts.LiquidityProtectionWallet.deployed();
-    const checkpointStore = await DeployedContracts.CheckpointStore.deployed();
 
     // deploy the new LiquidityProtection contract
     const liquidityProtection = await deploy({
@@ -113,33 +166,33 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // grant the StakingRewards ROLE_PUBLISHER role to the contract
     await grantRole({
         name: InstanceName.StakingRewards,
-        id: LegacyRoles.ROLE_PUBLISHER,
+        id: LegacyRoles.StakingRewards.ROLE_PUBLISHER,
         member: liquidityProtection,
-        from: deployerV2
+        from: deployer
     });
 
     // grant the CheckpointStore ROLE_OWNER role to the contract
     await grantRole({
         name: InstanceName.CheckpointStore,
-        id: LegacyRoles.ROLE_OWNER,
+        id: LegacyRoles.CheckpointStore.ROLE_OWNER,
         member: liquidityProtection,
-        from: deployerV2
+        from: deployer
     });
 
     // grant the LiquidityProtectionStats ROLE_OWNER role to the contract
     await grantRole({
         name: InstanceName.LiquidityProtectionStats,
-        id: LegacyRoles.ROLE_OWNER,
+        id: LegacyRoles.LiquidityProtectionStats.ROLE_OWNER,
         member: liquidityProtection,
-        from: deployerV2
+        from: deployer
     });
 
     // grant the LiquidityProtectionSystemStore ROLE_OWNER role to the contract
     await grantRole({
         name: InstanceName.LiquidityProtectionSystemStore,
-        id: LegacyRoles.ROLE_OWNER,
+        id: LegacyRoles.LiquidityProtectionSystemStore.ROLE_OWNER,
         member: liquidityProtection,
-        from: deployerV2
+        from: deployer
     });
 
     // transfer the ownership over the LiquidityProtectionStore to the contract
@@ -170,14 +223,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // replace the the contract registry
-    await execute({
-        name: InstanceName.ContractRegistry,
-        methodName: 'registerAddress',
-        args: [LegacyRegistry.LIQUIDITY_PROTECTION, liquidityProtection],
-        from: deployerV2
-    });
-
     // revoke the BNT ROLE_MINTER role from the legacy contract
     await revokeRole({
         name: InstanceName.BNTGovernance,
@@ -197,33 +242,41 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     // revoke the StakingRewards ROLE_PUBLISHER role from the legacy contract
     await revokeRole({
         name: InstanceName.StakingRewards,
-        id: LegacyRoles.ROLE_PUBLISHER,
+        id: LegacyRoles.StakingRewards.ROLE_PUBLISHER,
         member: legacyLiquidityProtection.address,
-        from: deployerV2
+        from: deployer
     });
 
     // revoke the CheckpointStore ROLE_OWNER role from the legacy contract
     await revokeRole({
         name: InstanceName.CheckpointStore,
-        id: LegacyRoles.ROLE_OWNER,
+        id: LegacyRoles.CheckpointStore.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
-        from: deployerV2
+        from: deployer
     });
 
     // revoke the LiquidityProtectionStats ROLE_OWNER from to the legacy contract
     await revokeRole({
         name: InstanceName.LiquidityProtectionStats,
-        id: LegacyRoles.ROLE_OWNER,
+        id: LegacyRoles.LiquidityProtectionStats.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
-        from: deployerV2
+        from: deployer
     });
 
     // revoke the LiquidityProtectionSystemStore ROLE_OWNER role from the legacy contract
     await revokeRole({
         name: InstanceName.LiquidityProtectionSystemStore,
-        id: LegacyRoles.ROLE_OWNER,
+        id: LegacyRoles.LiquidityProtectionSystemStore.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
-        from: deployerV2
+        from: deployer
+    });
+
+    // replace the the contract registry
+    await execute({
+        name: InstanceName.ContractRegistry,
+        methodName: 'registerAddress',
+        args: [LegacyRegistry.LIQUIDITY_PROTECTION, liquidityProtection],
+        from: deployer
     });
 
     return true;

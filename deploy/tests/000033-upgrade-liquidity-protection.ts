@@ -14,11 +14,12 @@ import { getNamedAccounts } from 'hardhat';
 describeDeployment(
     __filename,
     () => {
+        let deployer: string;
         let deployerV2: string;
         let liquidityProtection: LiquidityProtection;
 
         before(async () => {
-            ({ deployerV2 } = await getNamedAccounts());
+            ({ deployer, deployerV2 } = await getNamedAccounts());
         });
 
         beforeEach(async () => {
@@ -52,27 +53,28 @@ describeDeployment(
 
             await expectRoleMembers(
                 legacyStakingRewards as any as AccessControlEnumerable,
-                LegacyRoles.ROLE_PUBLISHER,
+                LegacyRoles.StakingRewards.ROLE_PUBLISHER,
                 [liquidityProtection.address]
             );
 
             const checkpointStore = await DeployedContracts.CheckpointStore.deployed();
-            await expectRoleMembers(checkpointStore as any as AccessControlEnumerable, LegacyRoles.ROLE_OWNER, [
-                deployerV2,
-                liquidityProtection.address
-            ]);
+            await expectRoleMembers(
+                checkpointStore as any as AccessControlEnumerable,
+                LegacyRoles.CheckpointStore.ROLE_OWNER,
+                [deployer, deployerV2, liquidityProtection.address]
+            );
 
             const liquidityProtectionStats = await DeployedContracts.LiquidityProtectionStats.deployed();
             await expectRoleMembers(
                 liquidityProtectionStats as any as AccessControlEnumerable,
-                LegacyRoles.ROLE_OWNER,
+                LegacyRoles.LiquidityProtectionStats.ROLE_OWNER,
                 [liquidityProtection.address]
             );
 
             const liquidityProtectionSystemStore = await DeployedContracts.LiquidityProtectionSystemStore.deployed();
             await expectRoleMembers(
                 liquidityProtectionSystemStore as any as AccessControlEnumerable,
-                LegacyRoles.ROLE_OWNER,
+                LegacyRoles.LiquidityProtectionSystemStore.ROLE_OWNER,
                 [liquidityProtection.address]
             );
 

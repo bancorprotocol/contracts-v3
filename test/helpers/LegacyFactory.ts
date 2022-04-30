@@ -52,10 +52,16 @@ export const createLegacySystem = async (
         checkpointStore.address
     );
 
-    await checkpointStore.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionSettings.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionStats.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionSystemStore.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
+    await checkpointStore.grantRole(Roles.CheckpointStore.ROLE_OWNER, liquidityProtection.address);
+    await liquidityProtectionSettings.grantRole(
+        Roles.LiquidityProtectionSettings.ROLE_OWNER,
+        liquidityProtection.address
+    );
+    await liquidityProtectionStats.grantRole(Roles.LiquidityProtectionStats.ROLE_OWNER, liquidityProtection.address);
+    await liquidityProtectionSystemStore.grantRole(
+        Roles.LiquidityProtectionSystemStore.ROLE_OWNER,
+        liquidityProtection.address
+    );
     await liquidityProtectionStore.transferOwnership(liquidityProtection.address);
     await liquidityProtection.acceptStoreOwnership();
     await liquidityProtectionWallet.transferOwnership(liquidityProtection.address);
