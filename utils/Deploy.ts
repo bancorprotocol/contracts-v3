@@ -57,7 +57,8 @@ const {
     getNetworkName,
     save: saveContract,
     getExtendedArtifact,
-    getArtifact
+    getArtifact,
+    run
 } = deployments;
 
 interface EnvOptions {
@@ -584,6 +585,7 @@ export const getPreviousDeploymentTag = (tag: string) => {
 
 export const getLatestDeploymentTag = () => {
     const files = fs.readdirSync(config.paths.deploy[0]).sort();
+
     return Number(files[files.length - 1].split('-')[0]).toString();
 };
 
@@ -607,4 +609,14 @@ export const setDeploymentMetadata = (filename: string, func: DeployFunction) =>
     func.dependencies = dependency ? [dependency] : undefined;
 
     return func;
+};
+
+export const runPendingDeployments = async () => {
+    const { tag } = deploymentMetadata(getLatestDeploymentTag());
+
+    return run(tag, {
+        resetMemory: false,
+        deletePreviousDeployments: false,
+        writeDeploymentsToFiles: true
+    });
 };

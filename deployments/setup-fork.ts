@@ -1,6 +1,6 @@
 import Contracts from '../components/Contracts';
 import { MAX_UINT256 } from '../utils/Constants';
-import { DeployedContracts, getNamedSigners, isTenderlyFork } from '../utils/Deploy';
+import { DeployedContracts, getNamedSigners, isTenderlyFork, runPendingDeployments } from '../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
 import '@nomiclabs/hardhat-ethers';
@@ -77,49 +77,9 @@ const fundAccount = async (account: string, fundingRequests: FundingRequest[]) =
     }
 };
 
-const removeDepositLimits = async (tokens: string[]) => {
-    console.log('Removing deposit limits...');
+const fundAccounts = async () => {
+    console.log('Funding test accounts...');
     console.log();
-
-    const { deployer } = await getNamedSigners();
-
-    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
-    for (const token of tokens) {
-        await poolCollection.connect(deployer).setDepositLimit(token, MAX_UINT256);
-    }
-};
-
-const setLockDuration = async (lockDuration: number) => {
-    console.log(`Setting withdrawal lock duration to ${lockDuration} seconds...`);
-    console.log();
-
-    const { deployer } = await getNamedSigners();
-
-    const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
-    await pendingWithdrawals.connect(deployer).setLockDuration(lockDuration);
-};
-
-const archiveArtifacts = async () => {
-    const zip = new AdmZip();
-
-    const srcDir = path.resolve(path.join(__dirname, './tenderly'));
-    const dest = path.resolve(path.join(__dirname, `../fork-${new Date().toISOString()}.zip`));
-
-    zip.addLocalFolder(srcDir);
-    zip.writeZip(dest);
-
-    console.log(`Archived ${srcDir} to ${dest}...`);
-    console.log();
-};
-
-const main = async () => {
-    if (!isTenderlyFork()) {
-        throw new Error('Invalid network');
-    }
-
-    console.log();
-
-    const forkId = await createTenderlyFork();
 
     const { dai, link } = await getNamedAccounts();
     const { ethWhale, bntWhale, daiWhale, linkWhale } = await getNamedSigners();
@@ -160,10 +120,70 @@ const main = async () => {
     }
 
     console.log();
+};
+
+const removeDepositLimits = async (tokens: string[]) => {
+    console.log('Removing deposit limits...');
+    console.log();
+
+    const { daoMultisig } = await getNamedSigners();
+
+    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+    for (const token of tokens) {
+        await poolCollection.connect(daoMultisig).setDepositLimit(token, MAX_UINT256);
+    }
+};
+
+const setLockDuration = async (lockDuration: number) => {
+    console.log(`Setting withdrawal lock duration to ${lockDuration} seconds...`);
+    console.log();
+
+    const { daoMultisig } = await getNamedSigners();
+
+    const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+    await pendingWithdrawals.connect(daoMultisig).setLockDuration(lockDuration);
+};
+
+const runDeployments = async () => {
+    console.log('Running pending deployments...');
+    console.log();
+
+    await runPendingDeployments();
+
+    console.log();
+};
+
+const archiveArtifacts = async () => {
+    const zip = new AdmZip();
+
+    const srcDir = path.resolve(path.join(__dirname, './tenderly'));
+    const dest = path.resolve(path.join(__dirname, `../fork-${new Date().toISOString()}.zip`));
+
+    zip.addLocalFolder(srcDir);
+    zip.writeZip(dest);
+
+    console.log(`Archived ${srcDir} to ${dest}...`);
+    console.log();
+};
+
+const main = async () => {
+    if (!isTenderlyFork()) {
+        throw new Error('Invalid network');
+    }
+
+    console.log();
+
+    const forkId = await createTenderlyFork();
+
+    await runDeployments();
+
+    await fundAccounts();
 
     const lockDuration = 2;
 
     if (isResearch) {
+        const { dai, link } = await getNamedAccounts();
+
         await removeDepositLimits([NATIVE_TOKEN_ADDRESS, dai, link]);
         await setLockDuration(lockDuration);
     }
@@ -182,21 +202,6 @@ const main = async () => {
         console.log();
         console.log(`   * Unlimited deposits`);
         console.log(`   * Withdrawal locking duration was set to ${lockDuration} seconds`);
-    }
-    console.log();
-    console.log('********************************************************************************');
-    console.log();
-    console.log('Funding');
-    console.log('‾‾‾‾‾‾‾');
-    console.log(`   ETH: ${ethAmount}`);
-    console.log(`   BNT: ${bntAmount}`);
-    console.log(`   DAI: ${daiAmount}`);
-    console.log(`   LINK: ${linkAmount}`);
-    console.log();
-    console.log('Funded Addresses');
-    console.log('‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾');
-    for (const address of devAddresses) {
-        console.log(`   ${address}`);
     }
     console.log();
     console.log('********************************************************************************');
