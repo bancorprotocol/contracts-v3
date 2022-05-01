@@ -99,7 +99,7 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function enableProgram(Token pool, bool status) external;
 
     /**
-     * @dev sets the number of programs to process the rewards for, when auto-trigerred
+     * @dev sets the number of programs to process the rewards for, when auto-processed
      *
      * requirements:
      *
