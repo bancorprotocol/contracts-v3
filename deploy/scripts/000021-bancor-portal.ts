@@ -1,4 +1,4 @@
-import { DeployedContracts, deployProxy, InstanceName, isMainnet, setDeploymentMetadata } from '../../utils/Deploy';
+import { DeployedContracts, deployProxy, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -10,38 +10,19 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
 
-    if (isMainnet()) {
-        await deployProxy({
-            name: InstanceName.BancorPortal,
-            from: deployer,
-            args: [
-                network.address,
-                networkSettings.address,
-                bnt.address,
-                uniswapV2Router02,
-                uniswapV2Factory,
-                sushiSwapRouter,
-                sushiSwapFactory
-            ]
-        });
-    } else {
-        const uniswapV2RouterMock = await DeployedContracts.MockUniswapV2Router02.deployed();
-        const uniswapV2FactoryMock = await DeployedContracts.MockUniswapV2Factory.deployed();
-
-        await deployProxy({
-            name: InstanceName.BancorPortal,
-            from: deployer,
-            args: [
-                network.address,
-                networkSettings.address,
-                bnt.address,
-                uniswapV2RouterMock.address,
-                uniswapV2FactoryMock.address,
-                uniswapV2RouterMock.address,
-                uniswapV2FactoryMock.address
-            ]
-        });
-    }
+    await deployProxy({
+        name: InstanceName.BancorPortal,
+        from: deployer,
+        args: [
+            network.address,
+            networkSettings.address,
+            bnt.address,
+            uniswapV2Router02,
+            uniswapV2Factory,
+            sushiSwapRouter,
+            sushiSwapFactory
+        ]
+    });
 
     return true;
 };

@@ -114,30 +114,12 @@ enum NewInstanceName {
     StandardRewards = 'StandardRewards'
 }
 
-enum TestInstanceName {
-    MockUniswapV2Factory = 'MockUniswapV2Factory',
-    MockUniswapV2Pair = 'MockUniswapV2Pair',
-    MockUniswapV2Router02 = 'MockUniswapV2Router02'
-}
-
-export enum TestTokenInstanceName {
-    TestToken1 = 'TestToken1',
-    TestToken2 = 'TestToken2',
-    TestToken3 = 'TestToken3',
-    TestToken4 = 'TestToken4',
-    TestToken5 = 'TestToken5',
-    TestToken6 = 'TestToken6',
-    TestToken7 = 'TestToken7'
-}
-
 export const InstanceName = {
     ...LegacyInstanceName,
-    ...NewInstanceName,
-    ...TestInstanceName,
-    ...TestTokenInstanceName
+    ...NewInstanceName
 };
 
-export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName | TestTokenInstanceName;
+export type InstanceName = LegacyInstanceName | NewInstanceName;
 
 const DeployedLegacyContractsV2 = {
     BNT: deployed<BNT>(InstanceName.BNT),
@@ -187,24 +169,10 @@ const DeployedNewContracts = {
     StandardRewards: deployed<StandardRewards>(InstanceName.StandardRewards)
 };
 
-const DeployedTestContracts = {
-    MockUniswapV2Factory: deployed<MockUniswapV2Factory>(InstanceName.MockUniswapV2Factory),
-    MockUniswapV2Pair: deployed<MockUniswapV2Pair>(InstanceName.MockUniswapV2Pair),
-    MockUniswapV2Router02: deployed<MockUniswapV2Router02>(InstanceName.MockUniswapV2Router02),
-    TestToken1: deployed<TestERC20Token>(InstanceName.TestToken1),
-    TestToken2: deployed<TestERC20Token>(InstanceName.TestToken2),
-    TestToken3: deployed<TestERC20Token>(InstanceName.TestToken3),
-    TestToken4: deployed<TestERC20Token>(InstanceName.TestToken4),
-    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5),
-    TestToken6: deployed<TestERC20Token>(InstanceName.TestToken6),
-    TestToken7: deployed<TestERC20Token>(InstanceName.TestToken7)
-};
-
 export const DeployedContracts = {
     ...DeployedLegacyContractsV2,
     ...DeployedLegacyContracts,
-    ...DeployedNewContracts,
-    ...DeployedTestContracts
+    ...DeployedNewContracts
 };
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
