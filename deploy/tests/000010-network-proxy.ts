@@ -18,6 +18,7 @@ describeDeployment(__filename, () => {
 
         // ensure that the network proxy isn't initialized
         const network = await Contracts.BancorNetwork.attach(networkProxy.address);
+
         expect(await network.getRoleAdmin(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER)).to.equal(
             await network.DEFAULT_ADMIN_ROLE()
         );
