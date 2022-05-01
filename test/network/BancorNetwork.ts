@@ -3322,6 +3322,8 @@ describe('BancorNetwork', () => {
                         await initLegacySystem(isNativeToken);
 
                         await addProtectedLiquidity(poolToken, baseToken, isNativeToken, BigNumber.from(1000), owner);
+
+                        await network.grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, deployer.address);
                     });
 
                     it('verifies that the funds-migrated event is emitted correctly', async () => {
@@ -3343,7 +3345,6 @@ describe('BancorNetwork', () => {
                             ]
                         );
 
-                        await network.grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, deployer.address);
                         await bnt.approve(network.address, MAX_UINT256);
                         await poolToken.approve(network.address, MAX_UINT256);
                         if (!isNativeToken) {
@@ -3371,23 +3372,6 @@ describe('BancorNetwork', () => {
                             );
                     });
 
-                    it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-                        await expect(
-                            liquidityProtection.migratePositions([protectionId, protectionId])
-                        ).to.be.revertedWith('ERR_ACCESS_DENIED');
-                    });
-
-                    it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                        const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                        await liquidityProtection.setTime(now + duration.seconds(1));
-                        await liquidityProtection.migratePositions([protectionId]);
-                        await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
-                            'ERR_ACCESS_DENIED'
-                        );
-                    });
-
                     it('verifies that the caller can migrate positions', async () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                         const protection = await getProtection(protectionId);
@@ -3406,7 +3390,13 @@ describe('BancorNetwork', () => {
                         const prevBalance = await getBalance(baseToken, owner.address);
                         const prevGovBalance = await vbnt.balanceOf(owner.address);
 
-                        const res = await liquidityProtection.migratePositions([protectionId]);
+                        const res = await liquidityProtection.migratePositions([
+                            {
+                                poolToken: poolToken.address,
+                                reserveToken: baseToken.address,
+                                positionIds: [protectionId]
+                            }
+                        ]);
                         const transactionCost = isNativeToken ? await getTransactionCost(res) : BigNumber.from(0);
 
                         // verify event
@@ -3510,9 +3500,15 @@ describe('BancorNetwork', () => {
                                 await liquidityProtectionStore.protectedLiquidityIds(owner.address)
                             )[0];
 
-                            await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
-                                'Pausable: paused'
-                            );
+                            await expect(
+                                liquidityProtection.migratePositions([
+                                    {
+                                        poolToken: poolToken.address,
+                                        reserveToken: baseToken.address,
+                                        positionIds: [protectionId]
+                                    }
+                                ])
+                            ).to.be.revertedWith('Pausable: paused');
                         });
                     });
                 });
@@ -3533,6 +3529,8 @@ describe('BancorNetwork', () => {
 
                     const amount2 = BigNumber.from(1000);
                     await addProtectedLiquidity(poolToken, bnt, false, amount2, owner);
+
+                    await network.grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, deployer.address);
                 });
 
                 it('verifies that the funds-migrated event is emitted correctly', async () => {
@@ -3553,7 +3551,6 @@ describe('BancorNetwork', () => {
                         ]
                     );
 
-                    await network.grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, deployer.address);
                     await bnt.approve(network.address, MAX_UINT256);
                     await poolToken.approve(network.address, MAX_UINT256);
                     await baseToken.approve(network.address, MAX_UINT256);
@@ -3571,23 +3568,6 @@ describe('BancorNetwork', () => {
                         .withArgs(contextId, bnt.address, deployer.address, amount, availableAmount, originalAmount);
                 });
 
-                it('verifies that the caller cannot migrate a position more than once in the same transaction', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-                    await expect(liquidityProtection.migratePositions([protectionId, protectionId])).to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
-                    );
-                });
-
-                it('verifies that the caller cannot migrate a position more than once in different transactions', async () => {
-                    const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
-                    await liquidityProtection.setTime(now + duration.seconds(1));
-                    await liquidityProtection.migratePositions([protectionId]);
-                    await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
-                        'ERR_ACCESS_DENIED'
-                    );
-                });
-
                 it('verifies that the caller can migrate positions', async () => {
                     const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
                     const protection = await getProtection(protectionId);
@@ -3603,7 +3583,13 @@ describe('BancorNetwork', () => {
                     const prevVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
                     await liquidityProtection.setTime(now + duration.seconds(1));
-                    const res = await liquidityProtection.migratePositions([protectionId]);
+                    const res = await liquidityProtection.migratePositions([
+                        {
+                            poolToken: poolToken.address,
+                            reserveToken: bnt.address,
+                            positionIds: [protectionId]
+                        }
+                    ]);
 
                     // verify event
                     await expect(res).to.emit(network, 'FundsMigrated');
@@ -3665,9 +3651,15 @@ describe('BancorNetwork', () => {
                     it('should revert when attempting to migrate positions', async () => {
                         const protectionId = (await liquidityProtectionStore.protectedLiquidityIds(owner.address))[0];
 
-                        await expect(liquidityProtection.migratePositions([protectionId])).to.be.revertedWith(
-                            'Pausable: paused'
-                        );
+                        await expect(
+                            liquidityProtection.migratePositions([
+                                {
+                                    poolToken: poolToken.address,
+                                    reserveToken: bnt.address,
+                                    positionIds: [protectionId]
+                                }
+                            ])
+                        ).to.be.revertedWith('Pausable: paused');
                     });
                 });
             });

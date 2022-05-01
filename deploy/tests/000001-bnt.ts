@@ -1,5 +1,5 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
-import { BNT, TokenGovernance } from '../../components/LegacyContracts';
+import { BNT, LiquidityProtection, StakingRewards, TokenGovernance } from '../../components/LegacyContracts';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts, isMainnet, isMainnetFork } from '../../utils/Deploy';
@@ -12,22 +12,23 @@ describeDeployment(__filename, () => {
     let deployer: string;
     let deployerV2: string;
     let foundationMultisig: string;
-    let liquidityProtection: string;
-    let legacyStakingRewards: string;
     let bnt: BNT;
     let bntGovernance: TokenGovernance;
+    let legacyLiquidityProtection: LiquidityProtection;
+    let legacyStakingRewards: StakingRewards;
 
     const INITIAL_SUPPLY = toWei(1_000_000_000);
     const bntData = new TokenData(TokenSymbol.BNT);
 
     before(async () => {
-        ({ deployer, deployerV2, foundationMultisig, liquidityProtection, legacyStakingRewards } =
-            await getNamedAccounts());
+        ({ deployer, deployerV2, foundationMultisig } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+        legacyLiquidityProtection = await DeployedContracts.LegacyLiquidityProtection.deployed();
+        legacyStakingRewards = await DeployedContracts.StakingRewards.deployed();
     });
 
     it('should deploy the BNT contract', async () => {
@@ -54,7 +55,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             bntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection, legacyStakingRewards] : []
+            isMainnet() ? [legacyLiquidityProtection.address, legacyStakingRewards.address] : []
         );
     });
 

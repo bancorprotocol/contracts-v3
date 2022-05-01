@@ -2187,11 +2187,13 @@ describe('StandardRewards', () => {
                     };
 
                     const getExpectedRewards = (provider: SignerWithAddress, id: number) => {
-                        if (!rewardsData.programRewardsData[id]) {
+                        const programRewardsData = rewardsData.programRewardsData[id];
+
+                        if (!programRewardsData) {
                             return BigNumber.from(0);
                         }
 
-                        return rewardsData.programRewardsData[id].pendingRewards[provider.address] || BigNumber.from(0);
+                        return programRewardsData.pendingRewards[provider.address] || BigNumber.from(0);
                     };
 
                     const increaseStake = (provider: SignerWithAddress, id: number, amount: BigNumberish) => {
@@ -2329,6 +2331,15 @@ describe('StandardRewards', () => {
 
                         expect(claimed.reduce((res, c) => res.add(c), BigNumber.from(0))).to.equal(totalClaimed);
 
+                        // ensure that claiming again yields no pending rewards
+                        const claimed2 = await standardRewards
+                            .connect(provider)
+                            .callStatic.claimRewardsWithAmounts(ids);
+
+                        for (const amount of claimed2) {
+                            expect(amount).to.equal(0);
+                        }
+
                         return { totalClaimed, claimed, poolTokenAmount, res };
                     };
 
@@ -2341,7 +2352,7 @@ describe('StandardRewards', () => {
                             getExpectedRewards(provider, id),
                             {
                                 maxAbsoluteError: new Decimal(1),
-                                maxRelativeError: new Decimal('0000000000000000000001'),
+                                maxRelativeError: new Decimal('0.00000000000000001'),
                                 relation: Relation.LesserOrEqual
                             }
                         );
@@ -2350,7 +2361,7 @@ describe('StandardRewards', () => {
                             getExpectedRewards(provider, id2),
                             {
                                 maxAbsoluteError: new Decimal(1),
-                                maxRelativeError: new Decimal('0000000000000000000001'),
+                                maxRelativeError: new Decimal('0.00000000000000001'),
                                 relation: Relation.LesserOrEqual
                             }
                         );
@@ -2358,8 +2369,7 @@ describe('StandardRewards', () => {
                         expect(await standardRewards.pendingRewards(provider.address, [id, id2])).to.be.almostEqual(
                             getExpectedRewards(provider, id).add(getExpectedRewards(provider, id2)),
                             {
-                                maxAbsoluteError: new Decimal(0),
-                                maxRelativeError: new Decimal('0000000000000000000001'),
+                                maxRelativeError: new Decimal('0.00000000000000001'),
                                 relation: Relation.LesserOrEqual
                             }
                         );
@@ -2382,12 +2392,11 @@ describe('StandardRewards', () => {
                             const expectedProgramReward = getExpectedRewards(p, id);
                             const expectedProgramReward2 = getExpectedRewards(p, id2);
 
-                            const pendingRewards = await standardRewards.pendingRewards(p.address, ids);
-                            expect(pendingRewards).to.be.almostEqual(
+                            expect(await standardRewards.pendingRewards(p.address, ids)).to.be.almostEqual(
                                 expectedProgramReward.add(expectedProgramReward2),
                                 {
                                     maxAbsoluteError: new Decimal(2),
-                                    maxRelativeError: new Decimal('0000000000000000000001')
+                                    maxRelativeError: new Decimal('0.00000000000000001')
                                 }
                             );
 
@@ -2428,8 +2437,7 @@ describe('StandardRewards', () => {
                             }
 
                             expect(totalClaimed).to.be.almostEqual(expectedTotalClaimedReward, {
-                                maxAbsoluteError: new Decimal(0),
-                                maxRelativeError: new Decimal('0000000000000000000001')
+                                maxRelativeError: new Decimal('0.00000000000000001')
                             });
 
                             const programRewards = await standardRewards.programRewards(id);
@@ -2604,9 +2612,6 @@ describe('StandardRewards', () => {
 
                         // ensure that claiming all remaining rewards, from an inactive programs, works properly
                         await testClaimRewards();
-
-                        // ensure that claiming, when no rewards are pending remaining rewards, still works properly
-                        await testClaimRewards();
                     });
 
                     it('should properly stake rewards', async () => {
@@ -2651,9 +2656,6 @@ describe('StandardRewards', () => {
                         await setTime(standardRewards, rewardsData.endTime + duration.weeks(2));
 
                         // ensure that staking all remaining rewards, from an inactive programs, works properly
-                        await testStakeRewards();
-
-                        // ensure that staking, when no rewards are pending remaining rewards, still works properly
                         await testStakeRewards();
                     });
                 });
