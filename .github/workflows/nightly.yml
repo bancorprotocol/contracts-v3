@@ -41,10 +41,10 @@ jobs:
           access_token: ${{ github.token }}
 
       - name: Check out the repository
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
 
       - name: Set up Node.js
-      - uses: actions/setup-node@v2
+        uses: actions/setup-node@v2
         with:
           node-version: '16'
 
@@ -53,7 +53,7 @@ jobs:
         run: echo "::set-output name=dir::$(yarn cache dir)"
 
       - name: Cache dependencies
-      - uses: actions/cache@v3
+        uses: actions/cache@v3
         id: yarn-cache
         with:
           path: |
