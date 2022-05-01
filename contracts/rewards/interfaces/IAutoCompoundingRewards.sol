@@ -40,9 +40,9 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function pools() external view returns (address[] memory);
 
     /**
-     * @dev returns the auto-process count
+     * @dev returns the number of programs to auto-process the rewards for
      */
-    function autoProcessCount() external view returns (uint256);
+    function autoProcessRewardsCount() external view returns (uint256);
 
     /**
      * @dev returns whether a program is currently active
@@ -99,18 +99,18 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function enableProgram(Token pool, bool status) external;
 
     /**
-     * @dev sets the number of programs to process the rewards for, when auto-processed
+     * @dev sets the number of programs to auto-process the rewards for
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
-    function setAutoProcessCount(uint256 autoProcessCount) external;
+    function setAutoProcessRewardsCount(uint256 newAutoProcessRewardsCount) external;
 
     /**
      * @dev processes program rewards based on internal logic, without requiring any input
      */
-    function autoProcess() external;
+    function autoProcessRewards() external;
 
     /**
      * @dev processes program rewards

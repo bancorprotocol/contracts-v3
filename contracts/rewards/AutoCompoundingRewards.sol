@@ -42,8 +42,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     error InsufficientFunds();
 
-    // minimum time elapsed before a program can be auto-processed
-    uint16 private constant AUTO_PROCESS_MIN_TIME_DELTA = 1 hours;
+    // minimum time elapsed before the rewards of a program can be auto-processed
+    uint16 private constant AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = 1 hours;
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -69,11 +69,11 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     // a set of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _pools;
 
-    // number of programs to auto-process
-    uint256 private _autoProcessCount = 1;
+    // the number of programs to auto-process the rewards for
+    uint256 private _autoProcessRewardsCount;
 
-    // index of the next program to auto-process
-    uint256 private _nextProcessIndex;
+    // index of the next program to auto-process the rewards for
+    uint256 private _nextProcessRewardsIndex;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 5] private __gap;
@@ -99,9 +99,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     event ProgramEnabled(Token indexed pool, bool status, uint256 remainingRewards);
 
     /**
-     * @dev triggered when the auto-process count is updated
+     * @dev triggered when the number of programs to auto-process the rewards for is updated
      */
-    event AutoProcessCountUpdated(uint256 prevAutoProcessCount, uint256 newAutoProcessCount);
+    event AutoProcessRewardsCountUpdated(uint256 prevAutoProcessRewardsCount, uint256 newAutoProcessRewardsCount);
 
     /**
      * @dev triggered when rewards are distributed
@@ -159,7 +159,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev performs contract-specific initialization
      */
-    function __AutoCompoundingRewards_init_unchained() internal onlyInitializing {}
+    function __AutoCompoundingRewards_init_unchained() internal onlyInitializing {
+        _autoProcessRewardsCount = 1;
+    }
 
     // solhint-enable func-name-mixedcase
 
@@ -201,8 +203,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function autoProcessCount() external view returns (uint256) {
-        return _autoProcessCount;
+    function autoProcessRewardsCount() external view returns (uint256) {
+        return _autoProcessRewardsCount;
     }
 
     /**
@@ -305,27 +307,31 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function setAutoProcessCount(uint256 newAutoProcessCount) external greaterThanZero(newAutoProcessCount) onlyAdmin {
-        uint256 prevAutoProcessCount = _autoProcessCount;
-        if (prevAutoProcessCount == newAutoProcessCount) {
+    function setAutoProcessRewardsCount(uint256 newAutoProcessRewardsCount)
+        external
+        greaterThanZero(newAutoProcessRewardsCount)
+        onlyAdmin
+    {
+        uint256 prevAutoProcessRewardsCount = _autoProcessRewardsCount;
+        if (prevAutoProcessRewardsCount == newAutoProcessRewardsCount) {
             return;
         }
 
-        _autoProcessCount = newAutoProcessCount;
+        _autoProcessRewardsCount = newAutoProcessRewardsCount;
 
-        emit AutoProcessCountUpdated({
-            prevAutoProcessCount: prevAutoProcessCount,
-            newAutoProcessCount: newAutoProcessCount
+        emit AutoProcessRewardsCountUpdated({
+            prevAutoProcessRewardsCount: prevAutoProcessRewardsCount,
+            newAutoProcessRewardsCount: newAutoProcessRewardsCount
         });
     }
 
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function autoProcess() external nonReentrant {
+    function autoProcessRewards() external nonReentrant {
         uint256 numOfPools = _pools.length();
-        uint256 index = _nextProcessIndex;
-        uint256 count = _autoProcessCount;
+        uint256 index = _nextProcessRewardsIndex;
+        uint256 count = _autoProcessRewardsCount;
         uint256 maxCount = Math.min(count * 2, numOfPools);
 
         for (uint256 i = 0; i < maxCount; i++) {
@@ -338,7 +344,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             }
         }
 
-        _nextProcessIndex = index + 1;
+        _nextProcessRewardsIndex = index + 1;
     }
 
     /**
@@ -360,7 +366,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             return false;
         }
 
-        if (skipRecent && currTime < p.prevDistributionTimestamp + AUTO_PROCESS_MIN_TIME_DELTA) {
+        if (skipRecent && currTime < p.prevDistributionTimestamp + AUTO_PROCESS_REWARDS_MIN_TIME_DELTA) {
             return false;
         }
 
