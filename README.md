@@ -61,8 +61,6 @@ This suite is called “nightly” since it’s scheduled to run every day at mi
 
 ### Deployment Tests
 
-You can run deployment unit-tests (which are also part of the full test suite) via:
-
 You can test new deployments (and the health of the network) against a mainnet fork via:
 
 ```sh
