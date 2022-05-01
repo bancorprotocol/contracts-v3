@@ -319,14 +319,13 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * @inheritdoc IAutoCompoundingRewards
      */
     function trigger() external nonReentrant {
-        address[] memory values = _pools.values();
-        uint256 numOfPools = values.length;
+        uint256 numOfPools = _pools.length();
         uint256 startIndex = _nextTriggerIndex;
         uint256 count = Math.min(numOfPools, _autoTriggerCount);
 
         for (uint256 i = 0; i < count; i++) {
             uint256 index = (startIndex + i) % numOfPools;
-            _processRewards(Token(values[index]), true);
+            _processRewards(Token(_pools.at(index)), true);
         }
 
         _nextTriggerIndex = (startIndex + count) % numOfPools;
