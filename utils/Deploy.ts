@@ -195,7 +195,7 @@ export const getNamedSigners = async (): Promise<Record<string, SignerWithAddres
 
 export const fundAccount = async (account: string | SignerWithAddress) => {
     if (!isMainnetFork()) {
-        return;
+        throw new Error('Unsupported network');
     }
 
     const address = typeof account === 'string' ? account : account.address;
