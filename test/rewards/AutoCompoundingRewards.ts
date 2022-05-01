@@ -634,28 +634,28 @@ describe('AutoCompoundingRewards', () => {
                     });
                 });
 
-                describe('setting auto-trigger count', () => {
-                    it('should revert when a non-admin attempts to set the auto-trigger count', async () => {
-                        await expect(autoCompoundingRewards.connect(user).setAutoTriggerCount(1)).to.be.revertedWith(
+                describe('setting auto-process count', () => {
+                    it('should revert when a non-admin attempts to set the auto-process count', async () => {
+                        await expect(autoCompoundingRewards.connect(user).setAutoProcessCount(1)).to.be.revertedWith(
                             'AccessDenied'
                         );
                     });
 
-                    it('should set the auto-trigger count', async () => {
-                        const prevAutoTriggerCount = await autoCompoundingRewards.autoTriggerCount();
-                        const newAutoTriggerCount = prevAutoTriggerCount.add(1);
+                    it('should set the auto-process count', async () => {
+                        const prevAutoProcessCount = await autoCompoundingRewards.autoProcessCount();
+                        const newAutoProcessCount = prevAutoProcessCount.add(1);
 
-                        const res1 = await autoCompoundingRewards.setAutoTriggerCount(newAutoTriggerCount);
+                        const res1 = await autoCompoundingRewards.setAutoProcessCount(newAutoProcessCount);
 
                         await expect(res1)
-                            .to.emit(autoCompoundingRewards, 'AutoTriggerCountUpdated')
-                            .withArgs(prevAutoTriggerCount, newAutoTriggerCount);
-                        expect(await autoCompoundingRewards.autoTriggerCount()).to.equal(newAutoTriggerCount);
+                            .to.emit(autoCompoundingRewards, 'AutoProcessCountUpdated')
+                            .withArgs(prevAutoProcessCount, newAutoProcessCount);
+                        expect(await autoCompoundingRewards.autoProcessCount()).to.equal(newAutoProcessCount);
 
-                        const res2 = await autoCompoundingRewards.setAutoTriggerCount(newAutoTriggerCount);
+                        const res2 = await autoCompoundingRewards.setAutoProcessCount(newAutoProcessCount);
 
-                        await expect(res2).not.to.emit(autoCompoundingRewards, 'AutoTriggerCountUpdated');
-                        expect(await autoCompoundingRewards.autoTriggerCount()).to.equal(newAutoTriggerCount);
+                        await expect(res2).not.to.emit(autoCompoundingRewards, 'AutoProcessCountUpdated');
+                        expect(await autoCompoundingRewards.autoProcessCount()).to.equal(newAutoProcessCount);
                     });
                 });
 
@@ -712,7 +712,7 @@ describe('AutoCompoundingRewards', () => {
                 });
 
                 describe('trigger processing rewards', () => {
-                    const AUTO_TRIGGER_COUNT = 3;
+                    const AUTO_PROCESS_COUNT = 3;
 
                     const setups = [
                         { tokenSymbol: TokenSymbol.ETH, initialUserStake: toWei(10_000), totalRewards: toWei(11_000) },
@@ -745,17 +745,17 @@ describe('AutoCompoundingRewards', () => {
                             );
                         }
 
-                        await autoCompoundingRewards.setAutoTriggerCount(AUTO_TRIGGER_COUNT);
+                        await autoCompoundingRewards.setAutoProcessCount(AUTO_PROCESS_COUNT);
                     });
 
                     if (distributionType === RewardsDistributionType.Flat) {
                         it('should distribute all tokens', async () => {
                             await autoCompoundingRewards.setTime(programEndTime[distributionType]);
-                            for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT); i++) {
-                                const res = await autoCompoundingRewards.trigger();
+                            for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_COUNT); i++) {
+                                const res = await autoCompoundingRewards.autoProcess();
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
                             }
-                            const res = await autoCompoundingRewards.trigger();
+                            const res = await autoCompoundingRewards.autoProcess();
                             await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
                         });
 
@@ -764,7 +764,7 @@ describe('AutoCompoundingRewards', () => {
                                 await autoCompoundingRewards.setTime(
                                     Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
                                 );
-                                const res = await autoCompoundingRewards.trigger();
+                                const res = await autoCompoundingRewards.autoProcess();
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
                             }
                         });
@@ -773,15 +773,15 @@ describe('AutoCompoundingRewards', () => {
                             await autoCompoundingRewards.setTime(
                                 Math.floor(START_TIME + programDuration[distributionType] / 2)
                             );
-                            for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT); i++) {
-                                const res = await autoCompoundingRewards.trigger();
+                            for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_COUNT); i++) {
+                                const res = await autoCompoundingRewards.autoProcess();
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
                             }
                             await autoCompoundingRewards.setTime(
                                 Math.floor(START_TIME + programDuration[distributionType] / 2) + 60 * 60 - 1
                             );
-                            for (let i = 0; i < Math.ceil(setups.length / AUTO_TRIGGER_COUNT) + 1; i++) {
-                                const res = await autoCompoundingRewards.trigger();
+                            for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_COUNT) + 1; i++) {
+                                const res = await autoCompoundingRewards.autoProcess();
                                 await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
                             }
                         });

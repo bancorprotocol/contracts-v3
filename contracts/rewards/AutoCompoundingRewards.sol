@@ -42,7 +42,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     error InsufficientFunds();
 
-    uint16 private constant AUTO_TRIGGER_MIN_TIME_DELTA = 1 hours;
+    uint16 private constant AUTO_PROCESS_MIN_TIME_DELTA = 1 hours;
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -68,8 +68,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     // a set of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _pools;
 
-    uint256 private _autoTriggerCount;
-    uint256 private _nextTriggerIndex;
+    uint256 private _autoProcessCount;
+    uint256 private _nextProcessIndex;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 5] private __gap;
@@ -95,9 +95,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     event ProgramEnabled(Token indexed pool, bool status, uint256 remainingRewards);
 
     /**
-     * @dev triggered when the auto-trigger count is updated
+     * @dev triggered when the auto-process count is updated
      */
-    event AutoTriggerCountUpdated(uint256 prevAutoTriggerCount, uint256 newAutoTriggerCount);
+    event AutoProcessCountUpdated(uint256 prevAutoProcessCount, uint256 newAutoProcessCount);
 
     /**
      * @dev triggered when rewards are distributed
@@ -197,8 +197,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function autoTriggerCount() external view returns (uint256) {
-        return _autoTriggerCount;
+    function autoProcessCount() external view returns (uint256) {
+        return _autoProcessCount;
     }
 
     /**
@@ -301,34 +301,34 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function setAutoTriggerCount(uint256 newAutoTriggerCount) external onlyAdmin {
-        uint256 prevAutoTriggerCount = _autoTriggerCount;
-        if (prevAutoTriggerCount == newAutoTriggerCount) {
+    function setAutoProcessCount(uint256 newAutoProcessCount) external onlyAdmin {
+        uint256 prevAutoProcessCount = _autoProcessCount;
+        if (prevAutoProcessCount == newAutoProcessCount) {
             return;
         }
 
-        _autoTriggerCount = newAutoTriggerCount;
+        _autoProcessCount = newAutoProcessCount;
 
-        emit AutoTriggerCountUpdated({
-            prevAutoTriggerCount: prevAutoTriggerCount,
-            newAutoTriggerCount: newAutoTriggerCount
+        emit AutoProcessCountUpdated({
+            prevAutoProcessCount: prevAutoProcessCount,
+            newAutoProcessCount: newAutoProcessCount
         });
     }
 
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function trigger() external nonReentrant {
+    function autoProcess() external nonReentrant {
         uint256 numOfPools = _pools.length();
-        uint256 startIndex = _nextTriggerIndex;
-        uint256 count = Math.min(numOfPools, _autoTriggerCount);
+        uint256 startIndex = _nextProcessIndex;
+        uint256 count = Math.min(numOfPools, _autoProcessCount);
 
         for (uint256 i = 0; i < count; i++) {
             uint256 index = (startIndex + i) % numOfPools;
             _processRewards(Token(_pools.at(index)), true);
         }
 
-        _nextTriggerIndex = (startIndex + count) % numOfPools;
+        _nextProcessIndex = (startIndex + count) % numOfPools;
     }
 
     /**
@@ -350,7 +350,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             return;
         }
 
-        if (skipRecent && currTime < p.prevDistributionTimestamp + AUTO_TRIGGER_MIN_TIME_DELTA) {
+        if (skipRecent && currTime < p.prevDistributionTimestamp + AUTO_PROCESS_MIN_TIME_DELTA) {
             return;
         }
 
