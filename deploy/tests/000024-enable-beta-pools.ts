@@ -11,7 +11,6 @@ describeDeployment(__filename, () => {
     let networkSettings: NetworkSettingsV1;
     let poolCollection: PoolCollection;
 
-    // TODO: make sure to update the limits and the rates before running the script in production
     const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.26);
 
     enum BetaTokens {

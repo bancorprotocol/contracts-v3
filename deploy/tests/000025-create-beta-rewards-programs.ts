@@ -8,7 +8,6 @@ import { toWei } from '../../utils/Types';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-// TODO: make sure to update the starting time of all beta programs
 const PROGRAM_DURATION = duration.weeks(4);
 const TOTAL_REWARDS = toWei(44_500);
 
