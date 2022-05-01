@@ -716,7 +716,7 @@ describe('AutoCompoundingRewards', () => {
                     }
                 });
 
-                describe('trigger processing rewards', () => {
+                describe('auto-process rewards', () => {
                     const AUTO_PROCESS_COUNT = 3;
 
                     const setups = [
