@@ -70,7 +70,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     EnumerableSetUpgradeable.AddressSet private _pools;
 
     // number of programs to auto-process
-    uint256 private _autoProcessCount;
+    uint256 private _autoProcessCount = 1;
 
     // index of the next program to auto-process
     uint256 private _nextProcessIndex;
@@ -305,7 +305,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function setAutoProcessCount(uint256 newAutoProcessCount) external onlyAdmin {
+    function setAutoProcessCount(uint256 newAutoProcessCount) external greaterThanZero(newAutoProcessCount) onlyAdmin {
         uint256 prevAutoProcessCount = _autoProcessCount;
         if (prevAutoProcessCount == newAutoProcessCount) {
             return;
@@ -324,15 +324,19 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      */
     function autoProcess() external nonReentrant {
         uint256 numOfPools = _pools.length();
-        uint256 startIndex = _nextProcessIndex;
-        uint256 count = Math.min(numOfPools, _autoProcessCount);
+        uint256 index = _nextProcessIndex;
+        uint256 count = _autoProcessCount;
 
-        for (uint256 i = 0; i < count; i++) {
-            uint256 index = (startIndex + i) % numOfPools;
-            _processRewards(Token(_pools.at(index)), true);
+        for (uint256 i = 0; i < numOfPools; i++) {
+            index = (index + i) % numOfPools;
+            if (_processRewards(Token(_pools.at(index)), true)) {
+                count -= 1;
+                if (count == 0) {
+                    _nextProcessIndex = index + 1;
+                    break;
+                }
+            }
         }
-
-        _nextProcessIndex = (startIndex + count) % numOfPools;
     }
 
     /**
@@ -345,27 +349,27 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev processes the rewards of a given pool
      */
-    function _processRewards(Token pool, bool skipRecent) private {
+    function _processRewards(Token pool, bool skipRecent) private returns (bool) {
         ProgramData memory p = _programs[pool];
 
         uint32 currTime = _time();
 
         if (!p.isEnabled || currTime < p.startTime) {
-            return;
+            return false;
         }
 
         if (skipRecent && currTime < p.prevDistributionTimestamp + AUTO_PROCESS_MIN_TIME_DELTA) {
-            return;
+            return false;
         }
 
         uint256 tokenAmountToDistribute = _tokenAmountToDistribute(p, currTime);
         if (tokenAmountToDistribute == 0) {
-            return;
+            return false;
         }
 
         uint256 poolTokenAmountToBurn = _poolTokenAmountToBurn(pool, p, tokenAmountToDistribute);
         if (poolTokenAmountToBurn == 0) {
-            return;
+            return false;
         }
 
         IVault rewardsVault = _rewardsVault(pool);
@@ -383,6 +387,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             poolTokenAmount: poolTokenAmountToBurn,
             remainingRewards: p.remainingRewards
         });
+
+        return true;
     }
 
     /**
