@@ -11,7 +11,12 @@ import Contracts, {
     TestPoolCollection,
     TestRewardsMath
 } from '../../components/Contracts';
-import { EXP2_INPUT_TOO_HIGH, RewardsDistributionType, ZERO_ADDRESS } from '../../utils/Constants';
+import {
+    AUTO_PROCESS_MIN_TIME_DELTA,
+    EXP2_INPUT_TOO_HIGH,
+    RewardsDistributionType,
+    ZERO_ADDRESS
+} from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, max, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -769,7 +774,7 @@ describe('AutoCompoundingRewards', () => {
                             }
                         });
 
-                        it('should not distribute tokens again after less than 1 hour', async () => {
+                        it('should not distribute tokens again after less than the auto-process minimum time delta', async () => {
                             await autoCompoundingRewards.setTime(
                                 Math.floor(START_TIME + programDuration[distributionType] / 2)
                             );
@@ -778,7 +783,9 @@ describe('AutoCompoundingRewards', () => {
                                 await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
                             }
                             await autoCompoundingRewards.setTime(
-                                Math.floor(START_TIME + programDuration[distributionType] / 2) + 60 * 60 - 1
+                                Math.floor(START_TIME + programDuration[distributionType] / 2) +
+                                    AUTO_PROCESS_MIN_TIME_DELTA -
+                                    1
                             );
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_COUNT) + 1; i++) {
                                 const res = await autoCompoundingRewards.autoProcess();
