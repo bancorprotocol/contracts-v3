@@ -42,6 +42,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     error InsufficientFunds();
 
+    // minimum time elapsed before a program can be auto-processed
     uint16 private constant AUTO_PROCESS_MIN_TIME_DELTA = 1 hours;
 
     // the network contract
@@ -68,7 +69,10 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     // a set of all pools that have a rewards program associated with them
     EnumerableSetUpgradeable.AddressSet private _pools;
 
+    // number of programs to auto-process
     uint256 private _autoProcessCount;
+
+    // index of the next program to auto-process
     uint256 private _nextProcessIndex;
 
     // upgrade forward-compatibility storage gap
