@@ -262,7 +262,7 @@ import { getNamedAccounts } from 'hardhat';
                                 d: liquidity.baseTokenTradingLiquidity
                             },
                             {
-                                maxRelativeError: new Decimal(i === 0 ? '0.01' : '0.0000000000000000000001')
+                                maxRelativeError: new Decimal(i === 0 ? '0.01' : '0.0000000000000000001')
                             }
                         );
                     }
@@ -537,13 +537,13 @@ import { getNamedAccounts } from 'hardhat';
                     expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
 
                     expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
-                        maxRelativeError: new Decimal('0.000000000000000000001')
+                        maxRelativeError: new Decimal('0.0000000000000000001')
                     });
 
                     expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
                         prevVaultTokenBalance.add(nativeTokenAmount),
                         {
-                            maxRelativeError: new Decimal('0.000000000000000000001')
+                            maxRelativeError: new Decimal('0.0000000000000000001')
                         }
                     );
                 });
