@@ -95,7 +95,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     event ProgramEnabled(Token indexed pool, bool status, uint256 remainingRewards);
 
     /**
-     * @dev triggered when the auto trigger count is updated
+     * @dev triggered when the auto-trigger count is updated
      */
     event AutoTriggerCountUpdated(uint256 prevAutoTriggerCount, uint256 newAutoTriggerCount);
 
