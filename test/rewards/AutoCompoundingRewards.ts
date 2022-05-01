@@ -644,7 +644,7 @@ describe('AutoCompoundingRewards', () => {
                         expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.be.gt(0);
                     });
 
-                    it('cannot be set by the admin to zero', async () => {
+                    it('cannot be set to zero', async () => {
                         await expect(autoCompoundingRewards.setAutoProcessRewardsCount(0)).to.be.revertedWith(
                             'ZeroValue'
                         );
