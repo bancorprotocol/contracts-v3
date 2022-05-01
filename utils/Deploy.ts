@@ -10,9 +10,6 @@ import {
     ExternalRewardsVault,
     IVersioned,
     MasterVault,
-    MockUniswapV2Factory,
-    MockUniswapV2Pair,
-    MockUniswapV2Router02,
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
@@ -21,7 +18,6 @@ import {
     PoolTokenFactory,
     ProxyAdmin,
     StandardRewards,
-    TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
 import {
