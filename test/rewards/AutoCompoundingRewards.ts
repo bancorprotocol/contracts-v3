@@ -651,8 +651,11 @@ describe('AutoCompoundingRewards', () => {
                     });
 
                     it('cannot be set by a non-admin', async () => {
+                        const prevAutoProcessRewardsCount = await autoCompoundingRewards.autoProcessRewardsCount();
+                        const newAutoProcessRewardsCount = prevAutoProcessRewardsCount.add(1);
+
                         await expect(
-                            autoCompoundingRewards.connect(user).setAutoProcessRewardsCount(1)
+                            autoCompoundingRewards.connect(user).setAutoProcessRewardsCount(newAutoProcessRewardsCount)
                         ).to.be.revertedWith('AccessDenied');
                     });
 
