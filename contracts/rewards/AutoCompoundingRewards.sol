@@ -356,6 +356,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     /**
      * @dev processes the rewards of a given pool
+     * returns true if the rewards processing was completed, and false if it was skipped
      */
     function _processRewards(Token pool, bool skipRecent) private returns (bool) {
         ProgramData memory p = _programs[pool];
