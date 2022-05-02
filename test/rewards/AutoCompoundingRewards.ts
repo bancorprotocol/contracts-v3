@@ -879,11 +879,9 @@ describe('AutoCompoundingRewards', () => {
 
                     let rewardsMath: TestRewardsMath;
 
-                    before(async () => {
-                        rewardsMath = await Contracts.TestRewardsMath.deploy();
-                    });
-
                     beforeEach(async () => {
+                        rewardsMath = await Contracts.TestRewardsMath.deploy();
+
                         for (const [index, setup] of setups.entries()) {
                             ({ token: tokens[index], poolToken: poolTokens[index] } = await prepareSimplePool(
                                 new TokenData(setup.tokenSymbol),
