@@ -61,16 +61,10 @@ This suite is called “nightly” since it’s scheduled to run every day at mi
 
 ### Deployment Tests
 
-You can run deployment unit-tests (which are also part of the full test suite) via:
+You can test new deployments (and the health of the network) against a mainnet fork via:
 
 ```sh
 yarn test:deploy
-```
-
-You can also run a specialized set of deployment tests against a mainnet fork via:
-
-```sh
-yarn test:deploy:fork
 ```
 
 This will automatically be skipped on an already deployed and configured deployment scripts and will only test the additional changeset resulting by running any new/pending deployment scripts and perform an e2e test against the up to date state. This is especially useful to verify that any future deployments and upgrades, suggested by the DAO, work correctly and preserve the integrity of the system.

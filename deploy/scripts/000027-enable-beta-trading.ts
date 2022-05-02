@@ -1,4 +1,4 @@
-import { execute, InstanceName, isMainnet, setDeploymentMetadata } from '../../utils/Deploy';
+import { execute, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toCents, toWei } from '../../utils/Types';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -52,7 +52,5 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     return true;
 };
-
-func.skip = async () => !isMainnet();
 
 export default setDeploymentMetadata(__filename, func);

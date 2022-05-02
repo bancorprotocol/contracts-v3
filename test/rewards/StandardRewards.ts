@@ -2049,14 +2049,14 @@ describe('StandardRewards', () => {
 
                             beforeEach(async () => {
                                 rewardsData2 = await setupRewardsData({
-                                    rewardsSymbol: TokenSymbol.TKN5,
+                                    rewardsSymbol: TokenSymbol.TKN1,
                                     totalRewards: toWei(100_00),
                                     duration: duration.weeks(12)
                                 });
 
                                 programData2 = await setupProgram(
                                     {
-                                        poolSymbol: TokenSymbol.TKN4,
+                                        poolSymbol: TokenSymbol.TKN2,
                                         initialBalance: toWei(100_000),
                                         providerStakes: [toWei(10_000), toWei(20_000)]
                                     },

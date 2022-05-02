@@ -3,7 +3,6 @@ import {
     grantRole,
     InstanceName,
     isLive,
-    isMainnet,
     renounceRole,
     revokeRole,
     setDeploymentMetadata
@@ -16,14 +15,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, daoMultisig } = await getNamedAccounts();
 
     // initiate ownership transfer of the LiquidityProtection contract to the DAO
-    if (isMainnet()) {
-        await execute({
-            name: InstanceName.LiquidityProtection,
-            methodName: 'transferOwnership',
-            args: [daoMultisig],
-            from: deployer
-        });
-    }
+    await execute({
+        name: InstanceName.LiquidityProtection,
+        methodName: 'transferOwnership',
+        args: [daoMultisig],
+        from: deployer
+    });
 
     // renounce the BNT ROLE_GOVERNOR role from the deployer
     await renounceRole({

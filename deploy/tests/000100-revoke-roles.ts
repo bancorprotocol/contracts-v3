@@ -1,7 +1,7 @@
 import { AccessControlEnumerableUpgradeable } from '../../components/Contracts';
 import { Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
-import { DeployedContracts, InstanceName, isLive, isMainnetFork } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, isLive } from '../../utils/Deploy';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
@@ -16,11 +16,9 @@ describeDeployment(
         });
 
         it('should revoke deployer roles', async () => {
-            if (isMainnetFork()) {
-                // ensure that ownership transfer to the DAO was initiated
-                const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
-                expect(await liquidityProtection.newOwner()).to.equal(daoMultisig);
-            }
+            // ensure that ownership transfer to the DAO was initiated
+            const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+            expect(await liquidityProtection.newOwner()).to.equal(daoMultisig);
 
             for (const name of [
                 InstanceName.BancorNetworkInfo,

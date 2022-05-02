@@ -37,8 +37,7 @@ import {
     fundAccount,
     getLatestDeploymentTag,
     getNamedSigners,
-    isMainnet,
-    isMainnetFork
+    isMainnet
 } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
@@ -111,7 +110,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [isMainnetFork() ? foundationMultisig : deployer]
+                [foundationMultisig]
             );
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
@@ -131,7 +130,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [isMainnetFork() ? foundationMultisig : deployer]
+                [foundationMultisig]
             );
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
