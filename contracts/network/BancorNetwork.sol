@@ -1162,12 +1162,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 networkFeeAmount;
 
         if (tokens.sourceToken.isEqual(_bnt)) {
-            lastHopTradeResult = _tradeBNT(
-                contextId,
-                tokens.targetToken,
-                true,
-                params
-            );
+            lastHopTradeResult = _tradeBNT(contextId, tokens.targetToken, true, params);
 
             firstHopTradeResult = lastHopTradeResult;
 
@@ -1185,12 +1180,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 trader: traderInfo.trader
             });
         } else if (tokens.targetToken.isEqual(_bnt)) {
-            lastHopTradeResult = _tradeBNT(
-                contextId,
-                tokens.sourceToken,
-                false,
-                params
-            );
+            lastHopTradeResult = _tradeBNT(contextId, tokens.sourceToken, false, params);
 
             firstHopTradeResult = lastHopTradeResult;
 
