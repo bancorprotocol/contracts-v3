@@ -295,10 +295,11 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev withdraws pending network fees
+     * returns the amount of fees withdrawn
      *
      * requirements:
      *
      * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
      */
-    function withdrawNetworkFees(address recipient) external;
+    function withdrawNetworkFees(address recipient) external returns (uint256);
 }

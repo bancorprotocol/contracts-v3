@@ -864,10 +864,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
+        returns (uint256)
     {
         uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
         if (currentPendingNetworkFeeAmount == 0) {
-            return;
+            return 0;
         }
 
         _pendingNetworkFeeAmount = 0;
@@ -875,6 +876,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), currentPendingNetworkFeeAmount);
 
         emit NetworkFeesWithdrawn(msg.sender, recipient, currentPendingNetworkFeeAmount);
+
+        return currentPendingNetworkFeeAmount;
     }
 
     /**
