@@ -830,7 +830,12 @@ describe('AutoCompoundingRewards', () => {
                     const tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
                     const poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
 
-                    const autoProcessRewards = async (i: number) => {
+                    const autoProcessNoRewards = async () => {
+                        const res = await autoCompoundingRewards.autoProcessRewards();
+                        await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                    };
+
+                    const autoProcessSomeRewards = async (i: number) => {
                         const tokenAmountToDistributeArray: BigNumber[] = new Array<BigNumber>(
                             AUTO_PROCESS_REWARDS_COUNT
                         );
@@ -904,10 +909,9 @@ describe('AutoCompoundingRewards', () => {
                         it('should distribute all tokens', async () => {
                             await autoCompoundingRewards.setTime(programEndTime[distributionType]);
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
-                                await autoProcessRewards(i);
+                                await autoProcessSomeRewards(i);
                             }
-                            const res = await autoCompoundingRewards.autoProcessRewards();
-                            await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                            await autoProcessNoRewards();
                         });
 
                         it('should distribute some tokens', async () => {
@@ -915,7 +919,7 @@ describe('AutoCompoundingRewards', () => {
                                 await autoCompoundingRewards.setTime(
                                     Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
                                 );
-                                await autoProcessRewards(i);
+                                await autoProcessSomeRewards(i);
                             }
                         });
 
@@ -924,7 +928,7 @@ describe('AutoCompoundingRewards', () => {
                                 Math.floor(START_TIME + programDuration[distributionType] / 2)
                             );
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
-                                await autoProcessRewards(i);
+                                await autoProcessSomeRewards(i);
                             }
                             await autoCompoundingRewards.setTime(
                                 Math.floor(START_TIME + programDuration[distributionType] / 2) +
@@ -932,8 +936,7 @@ describe('AutoCompoundingRewards', () => {
                                     1
                             );
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT) + 1; i++) {
-                                const res = await autoCompoundingRewards.autoProcessRewards();
-                                await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                                await autoProcessNoRewards();
                             }
                         });
                     }
