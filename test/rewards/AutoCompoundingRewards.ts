@@ -822,9 +822,9 @@ describe('AutoCompoundingRewards', () => {
                         { tokenSymbol: TokenSymbol.TKN, initialUserStake: toWei(30_000), totalRewards: toWei(13_000) },
                         { tokenSymbol: TokenSymbol.TKN1, initialUserStake: toWei(40_000), totalRewards: toWei(14_000) },
                         { tokenSymbol: TokenSymbol.TKN2, initialUserStake: toWei(50_000), totalRewards: toWei(15_000) },
-                        { tokenSymbol: TokenSymbol.TKN3, initialUserStake: toWei(60_000), totalRewards: toWei(16_000) },
-                        { tokenSymbol: TokenSymbol.TKN4, initialUserStake: toWei(70_000), totalRewards: toWei(17_000) },
-                        { tokenSymbol: TokenSymbol.TKN5, initialUserStake: toWei(80_000), totalRewards: toWei(18_000) }
+                        { tokenSymbol: TokenSymbol.TKN2, initialUserStake: toWei(60_000), totalRewards: toWei(16_000) },
+                        { tokenSymbol: TokenSymbol.TKN1, initialUserStake: toWei(70_000), totalRewards: toWei(17_000) },
+                        { tokenSymbol: TokenSymbol.TKN, initialUserStake: toWei(80_000), totalRewards: toWei(18_000) }
                     ];
 
                     const tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
@@ -924,8 +924,7 @@ describe('AutoCompoundingRewards', () => {
                                 Math.floor(START_TIME + programDuration[distributionType] / 2)
                             );
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
-                                const res = await autoCompoundingRewards.autoProcessRewards();
-                                await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                                await autoProcessRewards(i);
                             }
                             await autoCompoundingRewards.setTime(
                                 Math.floor(START_TIME + programDuration[distributionType] / 2) +
