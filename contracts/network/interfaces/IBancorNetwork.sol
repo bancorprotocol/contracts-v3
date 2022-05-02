@@ -168,7 +168,7 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev cancels a withdrawal request
-     * returns the value of the position in units of the reserve token
+     * returns the number of reserve tokens associated with the withdrawal request
      *
      * requirements:
      *
