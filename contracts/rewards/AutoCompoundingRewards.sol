@@ -335,8 +335,13 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 maxCount = Math.min(count * 2, numOfPools);
 
         for (uint256 i = 0; i < maxCount; i++) {
-            if (_processRewards(Token(_pools.at(index++ % numOfPools)), true) && --count == 0) {
-                break;
+            bool completed = _processRewards(Token(_pools.at(index % numOfPools)), true);
+            index += 1;
+            if (completed) {
+                count -= 1;
+                if (count == 0) {
+                    break;
+                }
             }
         }
 
