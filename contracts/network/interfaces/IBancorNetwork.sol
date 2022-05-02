@@ -190,6 +190,7 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev performs a trade by providing the input source amount
+     * returns the trade target amount
      *
      * requirements:
      *
@@ -203,11 +204,12 @@ interface IBancorNetwork is IUpgradeable {
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable;
+    ) external payable returns (uint256);
 
     /**
      * @dev performs a trade by providing the input source amount and providing an EIP712 typed signature for an
      * EIP2612 permit request
+     * returns the trade target amount
      *
      * requirements:
      *
@@ -223,10 +225,11 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev performs a trade by providing the output target amount
+     * returns the trade source amount
      *
      * requirements:
      *
@@ -240,11 +243,12 @@ interface IBancorNetwork is IUpgradeable {
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable;
+    ) external payable returns (uint256);
 
     /**
      * @dev performs a trade by providing the output target amount and providing an EIP712 typed signature for an
      * EIP2612 permit request and returns the target amount and fee
+     * returns the trade source amount
      *
      * requirements:
      *
@@ -260,7 +264,7 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev provides a flash-loan
