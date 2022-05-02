@@ -168,12 +168,13 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev cancels a withdrawal request
+     * returns the value of the position in units of the reserve token
      *
      * requirements:
      *
      * - the caller must have already initiated a withdrawal and received the specified id
      */
-    function cancelWithdrawal(uint256 id) external;
+    function cancelWithdrawal(uint256 id) external returns (uint256);
 
     /**
      * @dev withdraws liquidity and returns the withdrawn amount

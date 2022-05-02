@@ -650,8 +650,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function cancelWithdrawal(uint256 id) external whenNotPaused nonReentrant {
-        _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
+    function cancelWithdrawal(uint256 id) external whenNotPaused nonReentrant returns (uint256) {
+        return _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
     }
 
     /**

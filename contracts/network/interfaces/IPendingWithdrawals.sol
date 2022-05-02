@@ -66,13 +66,14 @@ interface IPendingWithdrawals is IUpgradeable {
 
     /**
      * @dev cancels a withdrawal request
+     * returns the value of the position in units of the reserve token
      *
      * requirements:
      *
      * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
      */
-    function cancelWithdrawal(address provider, uint256 id) external;
+    function cancelWithdrawal(address provider, uint256 id) external returns (uint256);
 
     /**
      * @dev completes a withdrawal request and returns the pool token and its transferred amount
