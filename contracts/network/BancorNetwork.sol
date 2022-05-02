@@ -836,18 +836,21 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount,
         uint256 availableAmount,
         uint256 originalAmount
-    ) external payable whenNotPaused onlyRoleMember(ROLE_MIGRATION_MANAGER) nonReentrant {
+    ) external payable whenNotPaused onlyRoleMember(ROLE_MIGRATION_MANAGER) nonReentrant returns (uint256) {
         bytes32 contextId = keccak256(
             abi.encodePacked(msg.sender, _time(), token, provider, amount, availableAmount, originalAmount)
         );
 
+        uint256 poolTokenAmount;
         if (token.isEqual(_bnt)) {
-            _depositBNTFor(contextId, provider, amount, msg.sender, true, originalAmount);
+            poolTokenAmount = _depositBNTFor(contextId, provider, amount, msg.sender, true, originalAmount);
         } else {
-            _depositBaseTokenFor(contextId, provider, token, amount, msg.sender, availableAmount);
+            poolTokenAmount = _depositBaseTokenFor(contextId, provider, token, amount, msg.sender, availableAmount);
         }
 
         emit FundsMigrated(contextId, token, provider, amount, availableAmount, originalAmount);
+
+        return poolTokenAmount;
     }
 
     /**

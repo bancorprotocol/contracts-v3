@@ -282,6 +282,7 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev deposits liquidity during a migration
+     * returns the amount of pool tokens issued
      */
     function migrateLiquidity(
         Token token,
@@ -289,7 +290,7 @@ interface IBancorNetwork is IUpgradeable {
         uint256 amount,
         uint256 availableAmount,
         uint256 originalAmount
-    ) external payable;
+    ) external payable returns (uint256);
 
     /**
      * @dev withdraws pending network fees
