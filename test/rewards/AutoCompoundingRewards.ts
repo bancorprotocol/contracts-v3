@@ -257,6 +257,8 @@ describe('AutoCompoundingRewards', () => {
             await expectRole(autoCompoundingRewards, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
             ]);
+
+            expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.be.gt(0);
         });
     });
 
@@ -715,18 +717,14 @@ describe('AutoCompoundingRewards', () => {
                     });
                 });
 
-                describe('the number of programs to auto-process the rewards for', () => {
-                    it('should initially be larger than zero', async () => {
-                        expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.be.gt(0);
-                    });
-
-                    it('cannot be set to zero', async () => {
+                describe('updating the number of programs to auto-process the rewards for', () => {
+                    it('should revert when the new value is zero', async () => {
                         await expect(autoCompoundingRewards.setAutoProcessRewardsCount(0)).to.be.revertedWith(
                             'ZeroValue'
                         );
                     });
 
-                    it('cannot be set by a non-admin', async () => {
+                    it('should revert when executed by a non-admin', async () => {
                         const prevAutoProcessRewardsCount = await autoCompoundingRewards.autoProcessRewardsCount();
                         const newAutoProcessRewardsCount = prevAutoProcessRewardsCount.add(1);
 
@@ -735,7 +733,7 @@ describe('AutoCompoundingRewards', () => {
                         ).to.be.revertedWith('AccessDenied');
                     });
 
-                    it('can be set by the admin to a value larger than zero', async () => {
+                    it('should complete when executed by the admin with a value larger than zero', async () => {
                         const prevAutoProcessRewardsCount = await autoCompoundingRewards.autoProcessRewardsCount();
                         const newAutoProcessRewardsCount = prevAutoProcessRewardsCount.add(1);
 
@@ -761,7 +759,7 @@ describe('AutoCompoundingRewards', () => {
                     });
                 });
 
-                describe('process rewards', () => {
+                describe('processing rewards', () => {
                     beforeEach(async () => {
                         await createProgram(
                             distributionType,
@@ -813,7 +811,7 @@ describe('AutoCompoundingRewards', () => {
                     }
                 });
 
-                describe('auto-process rewards', () => {
+                describe('auto-processing rewards', () => {
                     const AUTO_PROCESS_REWARDS_COUNT = 3;
 
                     const setups = [
