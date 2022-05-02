@@ -3856,6 +3856,10 @@ describe('BancorNetwork', () => {
             });
 
             it('should cancel a pending withdrawal request', async () => {
+                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                const val = await network.connect(provider).callStatic.cancelWithdrawal(id);
+                expect(val).to.equal(withdrawalRequest.reserveTokenAmount);
+
                 await network.connect(provider).cancelWithdrawal(id);
 
                 const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
@@ -3931,7 +3935,9 @@ describe('BancorNetwork', () => {
             it('should not withdraw any pending network fees', async () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
 
-                const val = await network.connect(networkFeeManager).callStatic.withdrawNetworkFees(networkFeeManager.address);
+                const val = await network
+                    .connect(networkFeeManager)
+                    .callStatic.withdrawNetworkFees(networkFeeManager.address);
                 expect(val).to.equal(0);
 
                 const res = await network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address);
