@@ -830,6 +830,50 @@ describe('AutoCompoundingRewards', () => {
                     const tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
                     const poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
 
+                    const autoProcessRewards = async (i: number) => {
+                        const tokenAmountToDistributeArray: BigNumber[] = new Array<BigNumber>(
+                            AUTO_PROCESS_REWARDS_COUNT
+                        );
+
+                        const poolTokenAmountToBurnArray: BigNumber[] = new Array<BigNumber>(
+                            AUTO_PROCESS_REWARDS_COUNT
+                        );
+
+                        const remainingRewardsArray: BigNumber[] = new Array<BigNumber>(AUTO_PROCESS_REWARDS_COUNT);
+
+                        for (let j = 0; j < AUTO_PROCESS_REWARDS_COUNT; j++) {
+                            const index = (AUTO_PROCESS_REWARDS_COUNT * i + j) % tokens.length;
+                            const prgramData = await autoCompoundingRewards.program(tokens[index].address);
+                            const { tokenAmountToDistribute, poolTokenAmountToBurn } = await getRewards(
+                                prgramData,
+                                tokens[index],
+                                rewardsMath,
+                                new TokenData(setups[index].tokenSymbol),
+                                setups[index].tokenSymbol === TokenSymbol.BNT ? bntPool : externalRewardsVault
+                            );
+                            tokenAmountToDistributeArray[j] = tokenAmountToDistribute;
+                            poolTokenAmountToBurnArray[j] = poolTokenAmountToBurn;
+                            remainingRewardsArray[j] = prgramData.remainingRewards;
+                        }
+
+                        const res = await autoCompoundingRewards.autoProcessRewards();
+
+                        for (let j = 0; j < AUTO_PROCESS_REWARDS_COUNT; j++) {
+                            const index = AUTO_PROCESS_REWARDS_COUNT * i + j;
+                            if (index >= tokens.length) {
+                                break;
+                            }
+                            await expect(res)
+                                .to.emit(autoCompoundingRewards, 'RewardsDistributed')
+                                .withArgs(
+                                    tokens[index].address,
+                                    tokenAmountToDistributeArray[j],
+                                    poolTokenAmountToBurnArray[j],
+                                    remainingRewardsArray[j].sub(tokenAmountToDistributeArray[j])
+                                );
+                        }
+                    };
+
                     let rewardsMath: TestRewardsMath;
 
                     before(async () => {
@@ -860,45 +904,7 @@ describe('AutoCompoundingRewards', () => {
                         it('should distribute all tokens', async () => {
                             await autoCompoundingRewards.setTime(programEndTime[distributionType]);
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
-                                const tokenAmountToDistributeArray: BigNumber[] = new Array<BigNumber>(
-                                    AUTO_PROCESS_REWARDS_COUNT
-                                );
-                                const poolTokenAmountToBurnArray: BigNumber[] = new Array<BigNumber>(
-                                    AUTO_PROCESS_REWARDS_COUNT
-                                );
-                                const remainingRewards: any[] = new Array<BigNumber>(AUTO_PROCESS_REWARDS_COUNT);
-                                for (let j = 0; j < AUTO_PROCESS_REWARDS_COUNT; j++) {
-                                    const index = AUTO_PROCESS_REWARDS_COUNT * i + j;
-                                    if (index == tokens.length) {
-                                        break;
-                                    }
-                                    const prgramData = await autoCompoundingRewards.program(tokens[index].address);
-                                    const { tokenAmountToDistribute, poolTokenAmountToBurn } = await getRewards(
-                                        prgramData,
-                                        tokens[index],
-                                        rewardsMath,
-                                        new TokenData(setups[index].tokenSymbol),
-                                        setups[index].tokenSymbol === TokenSymbol.BNT ? bntPool : externalRewardsVault
-                                    );
-                                    tokenAmountToDistributeArray[j] = tokenAmountToDistribute;
-                                    poolTokenAmountToBurnArray[j] = poolTokenAmountToBurn;
-                                    remainingRewards[j] = prgramData.remainingRewards;
-                                }
-                                const res = await autoCompoundingRewards.autoProcessRewards();
-                                for (let j = 0; j < AUTO_PROCESS_REWARDS_COUNT; j++) {
-                                    const index = AUTO_PROCESS_REWARDS_COUNT * i + j;
-                                    if (index == tokens.length) {
-                                        break;
-                                    }
-                                    await expect(res)
-                                        .to.emit(autoCompoundingRewards, 'RewardsDistributed')
-                                        .withArgs(
-                                            tokens[index].address,
-                                            tokenAmountToDistributeArray[j],
-                                            poolTokenAmountToBurnArray[j],
-                                            remainingRewards[j].sub(tokenAmountToDistributeArray[j])
-                                        );
-                                }
+                                await autoProcessRewards(i);
                             }
                             const res = await autoCompoundingRewards.autoProcessRewards();
                             await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
@@ -909,8 +915,7 @@ describe('AutoCompoundingRewards', () => {
                                 await autoCompoundingRewards.setTime(
                                     Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
                                 );
-                                const res = await autoCompoundingRewards.autoProcessRewards();
-                                await expect(res).to.emit(autoCompoundingRewards, 'RewardsDistributed');
+                                await autoProcessRewards(i);
                             }
                         });
 
