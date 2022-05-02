@@ -4,18 +4,6 @@ import { Suite } from 'mocha';
 
 const { run } = deployments;
 
-export const performTestDeployment = async (tag: string) => {
-    if (isLive()) {
-        throw new Error('Unsupported network');
-    }
-
-    return run(tag, {
-        resetMemory: false,
-        deletePreviousDeployments: false,
-        writeDeploymentsToFiles: true
-    });
-};
-
 export const describeDeployment = async (
     filename: string,
     fn: (this: Suite) => void,
@@ -30,7 +18,15 @@ export const describeDeployment = async (
 
     return describe(id, async function (this: Suite) {
         beforeEach(async () => {
-            await performTestDeployment(tag);
+            if (isLive()) {
+                throw new Error('Unsupported network');
+            }
+
+            return run(tag, {
+                resetMemory: false,
+                deletePreviousDeployments: false,
+                writeDeploymentsToFiles: true
+            });
         });
 
         fn.apply(this);

@@ -28,17 +28,9 @@ import LegacyContracts, {
     VBNT
 } from '../../components/LegacyContracts';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
-import { performTestDeployment } from '../../test/helpers/Deploy';
 import { getBalance, getTransactionCost } from '../../test/helpers/Utils';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
-import {
-    DeployedContracts,
-    deploymentMetadata,
-    fundAccount,
-    getLatestDeploymentTag,
-    getNamedSigners,
-    isMainnet
-} from '../../utils/Deploy';
+import { DeployedContracts, fundAccount, getNamedSigners, isMainnet, runPendingDeployments } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -60,9 +52,7 @@ import { getNamedAccounts } from 'hardhat';
     let pendingWithdrawals: PendingWithdrawals;
 
     beforeEach(async () => {
-        const { tag } = deploymentMetadata(getLatestDeploymentTag());
-
-        await performTestDeployment(tag);
+        await runPendingDeployments();
 
         network = await DeployedContracts.BancorNetwork.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
