@@ -684,12 +684,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) external payable whenNotPaused nonReentrant returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
 
-        return _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
@@ -710,12 +711,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         sourceToken.permit(msg.sender, address(this), sourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
-        return _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
@@ -731,12 +733,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) external payable whenNotPaused nonReentrant returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
 
-        return _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
@@ -757,12 +760,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         sourceToken.permit(msg.sender, address(this), maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
-        return _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
