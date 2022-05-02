@@ -3040,6 +3040,9 @@ describe('BancorNetwork', () => {
 
                 const data = '0x1234';
 
+                const val = network.callStatic.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
+                expect(val).to.equal(FEE_AMOUNT);
+
                 const res = network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
 
                 await expect(res)
