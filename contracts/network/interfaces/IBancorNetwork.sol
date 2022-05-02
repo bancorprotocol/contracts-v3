@@ -283,7 +283,7 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev deposits liquidity during a migration
-     * returns the amount of pool tokens issued
+     * returns the amount of pool tokens minted
      */
     function migrateLiquidity(
         Token token,
