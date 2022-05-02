@@ -203,14 +203,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) {
+    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) returns (uint256) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
         if (request.provider != provider) {
             revert AccessDenied();
         }
 
-        _cancelWithdrawal(request, id);
+        return _cancelWithdrawal(request, id);
     }
 
     /**
