@@ -16,6 +16,10 @@ describeDeployment(
         });
 
         it('should revoke deployer roles', async () => {
+            // ensure that ownership transfer to the DAO was initiated
+            const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+            expect(await liquidityProtection.newOwner()).to.equal(daoMultisig);
+
             for (const name of [
                 InstanceName.BancorNetworkInfo,
                 InstanceName.BancorNetwork,

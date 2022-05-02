@@ -1,0 +1,253 @@
+{
+  "address": "0x9712bb50dc6efb8a3d7d12cea500a50967d2d471",
+  "abi": [
+    { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "indexed": true, "internalType": "bytes32", "name": "previousAdminRole", "type": "bytes32" },
+        { "indexed": true, "internalType": "bytes32", "name": "newAdminRole", "type": "bytes32" }
+      ],
+      "name": "RoleAdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "indexed": true, "internalType": "address", "name": "account", "type": "address" },
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }
+      ],
+      "name": "RoleGranted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "indexed": true, "internalType": "address", "name": "account", "type": "address" },
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }
+      ],
+      "name": "RoleRevoked",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DEFAULT_ADMIN_ROLE",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROLE_OWNER",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROLE_SEEDER",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROLE_SUPERVISOR",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "provider", "type": "address" },
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" }
+      ],
+      "name": "addProviderPool",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "provider", "type": "address" },
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" },
+        { "internalType": "uint256", "name": "poolAmount", "type": "uint256" },
+        { "internalType": "uint256", "name": "reserveAmount", "type": "uint256" }
+      ],
+      "name": "decreaseTotalAmounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "bytes32", "name": "role", "type": "bytes32" }],
+      "name": "getRoleAdmin",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "uint256", "name": "index", "type": "uint256" }
+      ],
+      "name": "getRoleMember",
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "bytes32", "name": "role", "type": "bytes32" }],
+      "name": "getRoleMemberCount",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "grantRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "hasRole",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "provider", "type": "address" },
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" },
+        { "internalType": "uint256", "name": "poolAmount", "type": "uint256" },
+        { "internalType": "uint256", "name": "reserveAmount", "type": "uint256" }
+      ],
+      "name": "increaseTotalAmounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "address", "name": "provider", "type": "address" }],
+      "name": "providerPools",
+      "outputs": [{ "internalType": "contract IDSToken[]", "name": "", "type": "address[]" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "provider", "type": "address" },
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" }
+      ],
+      "name": "removeProviderPool",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "renounceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken[]", "name": "poolTokens", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "poolAmounts", "type": "uint256[]" }
+      ],
+      "name": "seedPoolAmounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address[]", "name": "providers", "type": "address[]" },
+        { "internalType": "contract IDSToken[]", "name": "poolTokens", "type": "address[]" },
+        { "internalType": "contract IERC20Token[]", "name": "reserveTokens", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "reserveAmounts", "type": "uint256[]" }
+      ],
+      "name": "seedProviderAmounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address[]", "name": "providers", "type": "address[]" },
+        { "internalType": "contract IDSToken[]", "name": "poolTokens", "type": "address[]" }
+      ],
+      "name": "seedProviderPools",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken[]", "name": "poolTokens", "type": "address[]" },
+        { "internalType": "contract IERC20Token[]", "name": "reserveTokens", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "reserveAmounts", "type": "uint256[]" }
+      ],
+      "name": "seedReserveAmounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "contract IDSToken", "name": "poolToken", "type": "address" }],
+      "name": "totalPoolAmount",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "provider", "type": "address" },
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" }
+      ],
+      "name": "totalProviderAmount",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" }
+      ],
+      "name": "totalReserveAmount",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "numDeployments": 1
+}

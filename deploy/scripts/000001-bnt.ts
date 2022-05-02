@@ -30,18 +30,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         return true;
     }
 
-    // simulate all the required roles and permissions on a mainnet fork
-    if (isMainnetFork()) {
-        await grantRole({
-            name: InstanceName.BNTGovernance,
-            id: Roles.TokenGovernance.ROLE_GOVERNOR,
-            member: deployer,
-            from: foundationMultisig
-        });
-
-        return true;
-    }
-
     const bntData = new TokenData(TokenSymbol.BNT);
     const bnt = await deploy({
         name: InstanceName.BNT,
@@ -70,15 +58,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         member: deployer,
         from: deployer
     });
-
-    if (isMainnetFork()) {
-        await revokeRole({
-            name: InstanceName.BNTGovernance,
-            id: Roles.TokenGovernance.ROLE_SUPERVISOR,
-            member: deployer,
-            from: deployer
-        });
-    }
 
     await execute({
         name: InstanceName.BNT,

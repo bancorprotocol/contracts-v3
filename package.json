@@ -30,8 +30,7 @@
     "test:coverage:nightly": "NIGHTLY=1 yarn test:coverage",
     "test:ci": "CI=1 yarn test",
     "test:nightly": "NIGHTLY=1 CI=1 NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
-    "test:deploy": "mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 --bail 'deploy/tests/**/*.ts'",
-    "test:deploy:fork": "rm -rf deployments/hardhat && cp -rf deployments/mainnet/. deployments/hardhat && FORKING=1 yarn test:deploy",
+    "test:deploy": "rm -rf deployments/hardhat && cp -rf deployments/mainnet/. deployments/hardhat && FORKING=1 mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 --bail 'deploy/tests/**/*.ts'",
     "deploy:mainnet": "HARDHAT_NETWORK=mainnet hardhat deploy",
     "deploy:rinkeby": "HARDHAT_NETWORK=rinkeby hardhat deploy",
     "deploy:fork": "cp -rf deployments/mainnet/. deployments/tenderly && HARDHAT_NETWORK=tenderly hardhat deploy",
@@ -62,7 +61,7 @@
   },
   "devDependencies": {
     "@anders-t/ethers-ledger": "^1.0.4",
-    "@bancor/contracts-solidity": "^0.7.6",
+    "@bancor/contracts-solidity": "^0.7.7",
     "@bancor/token-governance": "^0.1.8",
     "@metamask/eth-sig-util": "^4.0.1",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
