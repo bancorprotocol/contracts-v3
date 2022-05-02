@@ -1157,16 +1157,15 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         // perform either a single or double hop trade, based on the source and the target pool
-        bool fromBNT = tokens.sourceToken.isEqual(_bnt);
         TradeResult memory firstHopTradeResult;
         TradeResult memory lastHopTradeResult;
         uint256 networkFeeAmount;
 
-        if (fromBNT || tokens.targetToken.isEqual(_bnt)) {
+        if (tokens.sourceToken.isEqual(_bnt)) {
             lastHopTradeResult = _tradeBNT(
                 contextId,
-                fromBNT ? tokens.targetToken : tokens.sourceToken,
-                fromBNT,
+                tokens.targetToken,
+                true,
                 params
             );
 
@@ -1180,9 +1179,32 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 targetToken: tokens.targetToken,
                 sourceAmount: lastHopTradeResult.sourceAmount,
                 targetAmount: lastHopTradeResult.targetAmount,
-                bntAmount: fromBNT ? lastHopTradeResult.sourceAmount : lastHopTradeResult.targetAmount,
+                bntAmount: lastHopTradeResult.sourceAmount,
                 targetFeeAmount: lastHopTradeResult.tradingFeeAmount,
-                bntFeeAmount: fromBNT ? 0 : lastHopTradeResult.tradingFeeAmount,
+                bntFeeAmount: 0,
+                trader: traderInfo.trader
+            });
+        } else if (tokens.targetToken.isEqual(_bnt)) {
+            lastHopTradeResult = _tradeBNT(
+                contextId,
+                tokens.sourceToken,
+                false,
+                params
+            );
+
+            firstHopTradeResult = lastHopTradeResult;
+
+            networkFeeAmount = lastHopTradeResult.networkFeeAmount;
+
+            emit TokensTraded({
+                contextId: contextId,
+                sourceToken: tokens.sourceToken,
+                targetToken: tokens.targetToken,
+                sourceAmount: lastHopTradeResult.sourceAmount,
+                targetAmount: lastHopTradeResult.targetAmount,
+                bntAmount: lastHopTradeResult.targetAmount,
+                targetFeeAmount: lastHopTradeResult.tradingFeeAmount,
+                bntFeeAmount: lastHopTradeResult.tradingFeeAmount,
                 trader: traderInfo.trader
             });
         } else {
