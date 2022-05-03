@@ -21,7 +21,9 @@ describeDeployment(__filename, () => {
 
     it('should deploy and configure the bancor portal contract', async () => {
         expect(await proxyAdmin.getProxyAdmin(bancorPortal.address)).to.equal(proxyAdmin.address);
+
         expect(await bancorPortal.version()).to.equal(1);
+
         await expectRoleMembers(bancorPortal, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
 });

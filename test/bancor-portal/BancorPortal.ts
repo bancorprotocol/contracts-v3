@@ -718,7 +718,7 @@ describe('BancorPortal', () => {
         const { poolToken, token } = await setupFundedPool(
             {
                 tokenData: new TokenData(symbol),
-                balance: balance,
+                balance,
                 requestedLiquidity: balance.mul(1000),
                 bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                 baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE

@@ -1,15 +1,6 @@
 import Contracts from '../../components/Contracts';
-import {
-    DeployedContracts,
-    execute,
-    getNamedSigners,
-    InstanceName,
-    isHardhat,
-    isLocalhost,
-    isMainnet,
-    setDeploymentMetadata
-} from '../../utils/Deploy';
-import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../../utils/TokenData';
+import { DeployedContracts, execute, getNamedSigners, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
+import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toCents, toWei } from '../../utils/Types';
 import { BigNumber } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -58,25 +49,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
         const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
 
-        // since we currently aren't using real ERC20 tokens during local unit testing, we'd use the overrides mechanism
-        // to ensure that these pools can be created (otherwise, the PoolTokenFactory contract will try to call either
-        // symbols() or decimals() and will revert)
-        if (!isNativeToken && (isHardhat() || isLocalhost())) {
-            await execute({
-                name: InstanceName.PoolTokenFactory,
-                methodName: 'setTokenSymbolOverride',
-                args: [address, TokenSymbol.TKN],
-                from: deployer
-            });
-
-            await execute({
-                name: InstanceName.PoolTokenFactory,
-                methodName: 'setTokenDecimalsOverride',
-                args: [address, DEFAULT_DECIMALS],
-                from: deployer
-            });
-        }
-
         const tokenPriceInCents = BETA_TOKEN_PRICES_IN_CENTS[tokenSymbol as BetaTokens];
         const depositLimit = toWei(TKN_DEPOSIT_LIMIT_IN_CENTS).div(tokenPriceInCents);
 
@@ -114,7 +86,5 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     return true;
 };
-
-func.skip = async () => !isMainnet();
 
 export default setDeploymentMetadata(__filename, func);

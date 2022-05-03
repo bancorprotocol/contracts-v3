@@ -1,4 +1,4 @@
-import { DeploymentNetwork, ZERO_ADDRESS } from '../utils/Constants';
+import { DeploymentNetwork } from '../utils/Constants';
 
 interface EnvOptions {
     FORKING?: boolean;
@@ -7,13 +7,11 @@ interface EnvOptions {
 const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
 
 const counters = {
-    [DeploymentNetwork.Hardhat]: 0,
-    [DeploymentNetwork.Localhost]: 0
+    [DeploymentNetwork.Hardhat]: 0
 };
 
 const mainnet = (address: string, fallback?: string) => ({
     [DeploymentNetwork.Hardhat]: isForking ? address : fallback || counters[DeploymentNetwork.Hardhat]++,
-    [DeploymentNetwork.Localhost]: isForking ? address : fallback || counters[DeploymentNetwork.Localhost]++,
     [DeploymentNetwork.Mainnet]: address,
     [DeploymentNetwork.Tenderly]: address
 });
@@ -51,11 +49,6 @@ const TokenNamedAccounts = {
     }
 };
 
-const LegacyNamedAccounts = {
-    liquidityProtection: { ...mainnet('0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e', ZERO_ADDRESS) },
-    legacyStakingRewards: { ...mainnet('0x318fEA7e45A7D3aC5999DA7e1055F5982eEB3E67', ZERO_ADDRESS) }
-};
-
 const UniswapNamedAccounts = {
     uniswapV2Router02: { ...mainnet('0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D') },
     uniswapV2Factory: { ...mainnet('0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f') }
@@ -75,7 +68,6 @@ export const NamedAccounts = {
     foundationMultisig: { ...mainnet('0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83') },
     daoMultisig: { ...mainnet('0x7e3692a6d8c34a762079fa9057aed87be7e67cb8') },
 
-    ...LegacyNamedAccounts,
     ...TokenNamedAccounts,
     ...TestNamedAccounts,
     ...UniswapNamedAccounts,
@@ -93,10 +85,12 @@ export const ExternalContracts = {
     ],
     deployments: {
         [DeploymentNetwork.Hardhat]: [
-            `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Hardhat}`
+            `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Hardhat}`,
+            `deployments/${DeploymentNetwork.Mainnet}/v2`
         ],
-        [DeploymentNetwork.Localhost]: [
-            `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Localhost}`
+        [DeploymentNetwork.Tenderly]: [
+            `deployments/${DeploymentNetwork.Tenderly}`,
+            `deployments/${DeploymentNetwork.Tenderly}/v2`
         ]
     }
 };

@@ -10,9 +10,6 @@ import {
     ExternalRewardsVault,
     IVersioned,
     MasterVault,
-    MockUniswapV2Factory,
-    MockUniswapV2Pair,
-    MockUniswapV2Router02,
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
@@ -21,10 +18,22 @@ import {
     PoolTokenFactory,
     ProxyAdmin,
     StandardRewards,
-    TestERC20Token,
     TransparentUpgradeableProxyImmutable
 } from '../components/Contracts';
-import { BNT, TokenGovernance, VBNT } from '../components/LegacyContracts';
+import {
+    BNT,
+    CheckpointStore,
+    ContractRegistry,
+    LiquidityProtection,
+    LiquidityProtectionSettings,
+    LiquidityProtectionStats,
+    LiquidityProtectionStore,
+    LiquidityProtectionSystemStore,
+    StakingRewards,
+    TokenGovernance,
+    TokenHolder,
+    VBNT
+} from '../components/LegacyContracts';
 import {
     BancorNetworkV1,
     NetworkSettingsV1,
@@ -48,7 +57,8 @@ const {
     getNetworkName,
     save: saveContract,
     getExtendedArtifact,
-    getArtifact
+    getArtifact,
+    run
 } = deployments;
 
 interface EnvOptions {
@@ -66,7 +76,17 @@ enum LegacyInstanceName {
     BNT = 'BNT',
     BNTGovernance = 'BNTGovernance',
     VBNT = 'VBNT',
-    VBNTGovernance = 'VBNTGovernance'
+    VBNTGovernance = 'VBNTGovernance',
+    ContractRegistry = 'ContractRegistry',
+    LiquidityProtection = 'LiquidityProtection',
+    LegacyLiquidityProtection = 'LegacyLiquidityProtection',
+    LiquidityProtectionSettings = 'LiquidityProtectionSettings',
+    LiquidityProtectionStats = 'LiquidityProtectionStats',
+    LiquidityProtectionStore = 'LiquidityProtectionStore',
+    LiquidityProtectionSystemStore = 'LiquidityProtectionSystemStore',
+    LiquidityProtectionWallet = 'LiquidityProtectionWallet',
+    StakingRewards = 'StakingRewards',
+    CheckpointStore = 'CheckpointStore'
 }
 
 enum NewInstanceName {
@@ -91,37 +111,33 @@ enum NewInstanceName {
     StandardRewards = 'StandardRewards'
 }
 
-enum TestInstanceName {
-    MockUniswapV2Factory = 'MockUniswapV2Factory',
-    MockUniswapV2Pair = 'MockUniswapV2Pair',
-    MockUniswapV2Router02 = 'MockUniswapV2Router02'
-}
-
-export enum TestTokenInstanceName {
-    TestToken1 = 'TestToken1',
-    TestToken2 = 'TestToken2',
-    TestToken3 = 'TestToken3',
-    TestToken4 = 'TestToken4',
-    TestToken5 = 'TestToken5',
-    TestToken6 = 'TestToken6',
-    TestToken7 = 'TestToken7'
-}
-
 export const InstanceName = {
     ...LegacyInstanceName,
-    ...NewInstanceName,
-    ...TestInstanceName,
-    ...TestTokenInstanceName
+    ...NewInstanceName
 };
 
-export type InstanceName = LegacyInstanceName | NewInstanceName | TestInstanceName | TestTokenInstanceName;
+export type InstanceName = LegacyInstanceName | NewInstanceName;
 
-const DeployedLegacyContracts = {
+const DeployedLegacyContractsV2 = {
     BNT: deployed<BNT>(InstanceName.BNT),
     BNTGovernance: deployed<TokenGovernance>(InstanceName.BNTGovernance),
     VBNT: deployed<VBNT>(InstanceName.VBNT),
     VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
+    ContractRegistry: deployed<ContractRegistry>(InstanceName.ContractRegistry),
+    LegacyLiquidityProtection: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection),
+    LiquidityProtection: deployed<LiquidityProtection>(InstanceName.LiquidityProtection),
+    LiquidityProtectionSettings: deployed<LiquidityProtectionSettings>(InstanceName.LiquidityProtectionSettings),
+    LiquidityProtectionStats: deployed<LiquidityProtectionStats>(InstanceName.LiquidityProtectionStats),
+    LiquidityProtectionStore: deployed<LiquidityProtectionStore>(InstanceName.LiquidityProtectionStore),
+    LiquidityProtectionSystemStore: deployed<LiquidityProtectionSystemStore>(
+        InstanceName.LiquidityProtectionSystemStore
+    ),
+    LiquidityProtectionWallet: deployed<TokenHolder>(InstanceName.LiquidityProtectionWallet),
+    StakingRewards: deployed<StakingRewards>(InstanceName.StakingRewards),
+    CheckpointStore: deployed<CheckpointStore>(InstanceName.CheckpointStore)
+};
 
+const DeployedLegacyContracts = {
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
     StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
@@ -150,27 +166,13 @@ const DeployedNewContracts = {
     StandardRewards: deployed<StandardRewards>(InstanceName.StandardRewards)
 };
 
-const DeployedTestContracts = {
-    MockUniswapV2Factory: deployed<MockUniswapV2Factory>(InstanceName.MockUniswapV2Factory),
-    MockUniswapV2Pair: deployed<MockUniswapV2Pair>(InstanceName.MockUniswapV2Pair),
-    MockUniswapV2Router02: deployed<MockUniswapV2Router02>(InstanceName.MockUniswapV2Router02),
-    TestToken1: deployed<TestERC20Token>(InstanceName.TestToken1),
-    TestToken2: deployed<TestERC20Token>(InstanceName.TestToken2),
-    TestToken3: deployed<TestERC20Token>(InstanceName.TestToken3),
-    TestToken4: deployed<TestERC20Token>(InstanceName.TestToken4),
-    TestToken5: deployed<TestERC20Token>(InstanceName.TestToken5),
-    TestToken6: deployed<TestERC20Token>(InstanceName.TestToken6),
-    TestToken7: deployed<TestERC20Token>(InstanceName.TestToken7)
-};
-
 export const DeployedContracts = {
+    ...DeployedLegacyContractsV2,
     ...DeployedLegacyContracts,
-    ...DeployedNewContracts,
-    ...DeployedTestContracts
+    ...DeployedNewContracts
 };
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
-export const isLocalhost = () => getNetworkName() === DeploymentNetwork.Localhost;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
@@ -191,12 +193,14 @@ export const getNamedSigners = async (): Promise<Record<string, SignerWithAddres
     return signers;
 };
 
-export const fundAccount = async (account: string) => {
+export const fundAccount = async (account: string | SignerWithAddress) => {
     if (!isMainnetFork()) {
         return;
     }
 
-    const balance = await ethers.provider.getBalance(account);
+    const address = typeof account === 'string' ? account : account.address;
+
+    const balance = await ethers.provider.getBalance(address);
     if (balance.gte(TEST_MINIMUM_BALANCE)) {
         return;
     }
@@ -205,7 +209,7 @@ export const fundAccount = async (account: string) => {
 
     return ethWhale.sendTransaction({
         value: TEST_FUNDING,
-        to: account
+        to: address
     });
 };
 
@@ -449,19 +453,27 @@ interface RolesOptions {
     from: string;
 }
 
-const setRole = async (options: RolesOptions, set: boolean) => {
+interface RenounceRoleOptions {
+    name: InstanceName;
+    id: typeof RoleIds[number];
+    from: string;
+}
+
+const setRole = async (options: RolesOptions, methodName: string) => {
     const { name, id, from, member } = options;
 
     return execute({
         name,
-        methodName: set ? 'grantRole' : 'revokeRole',
+        methodName,
         args: [id, member],
         from
     });
 };
 
-export const grantRole = async (options: RolesOptions) => setRole(options, true);
-export const revokeRole = async (options: RolesOptions) => setRole(options, false);
+export const grantRole = async (options: RolesOptions) => setRole(options, 'grantRole');
+export const revokeRole = async (options: RolesOptions) => setRole(options, 'revokeRole');
+export const renounceRole = async (options: RenounceRoleOptions) =>
+    setRole({ member: options.from, ...options }, 'renounceRole');
 
 interface Deployment {
     name: InstanceName;
@@ -572,6 +584,7 @@ export const getPreviousDeploymentTag = (tag: string) => {
 
 export const getLatestDeploymentTag = () => {
     const files = fs.readdirSync(config.paths.deploy[0]).sort();
+
     return Number(files[files.length - 1].split('-')[0]).toString();
 };
 
@@ -595,4 +608,14 @@ export const setDeploymentMetadata = (filename: string, func: DeployFunction) =>
     func.dependencies = dependency ? [dependency] : undefined;
 
     return func;
+};
+
+export const runPendingDeployments = async () => {
+    const { tag } = deploymentMetadata(getLatestDeploymentTag());
+
+    return run(tag, {
+        resetMemory: false,
+        deletePreviousDeployments: false,
+        writeDeploymentsToFiles: true
+    });
 };
