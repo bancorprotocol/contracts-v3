@@ -3188,14 +3188,11 @@ describe('BancorNetwork', () => {
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
         let network: TestBancorNetwork;
-        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
         let poolCollection: TestPoolCollection;
         let masterVault: MasterVault;
-        let bntPoolToken: PoolToken;
-        let bntPool: TestBNTPool;
 
         let emergencyStopper: SignerWithAddress;
 
@@ -3208,14 +3205,11 @@ describe('BancorNetwork', () => {
                 bntGovernance,
                 vbntGovernance,
                 network,
-                networkInfo,
                 networkSettings,
                 bnt,
                 vbnt,
                 poolCollection,
-                masterVault,
-                bntPoolToken,
-                bntPool
+                masterVault
             } = await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
@@ -3430,18 +3424,6 @@ describe('BancorNetwork', () => {
                             await baseToken.approve(network.address, MAX_UINT256);
                         }
 
-                        const newPoolToken = await Contracts.PoolToken.attach(
-                            await networkInfo.poolToken(baseToken.address)
-                        );
-                        const prevTotalSupply = await newPoolToken.totalSupply();
-                        const poolTokenAmount = await network.callStatic.migrateLiquidity(
-                            baseToken.address,
-                            deployer.address,
-                            amount,
-                            availableAmount,
-                            originalAmount,
-                            { value }
-                        );
                         const res = await network.migrateLiquidity(
                             baseToken.address,
                             deployer.address,
@@ -3450,8 +3432,6 @@ describe('BancorNetwork', () => {
                             originalAmount,
                             { value }
                         );
-                        const currTotalSupply = await newPoolToken.totalSupply();
-                        expect(currTotalSupply).to.equal(prevTotalSupply.add(poolTokenAmount));
 
                         await expect(res)
                             .to.emit(network, 'FundsMigrated')
@@ -3648,14 +3628,6 @@ describe('BancorNetwork', () => {
                     await poolToken.approve(network.address, MAX_UINT256);
                     await baseToken.approve(network.address, MAX_UINT256);
 
-                    const prevProtocolBalance = await bntPoolToken.balanceOf(bntPool.address);
-                    const poolTokenAmount = await network.callStatic.migrateLiquidity(
-                        bnt.address,
-                        deployer.address,
-                        amount,
-                        availableAmount,
-                        originalAmount
-                    );
                     const res = await network.migrateLiquidity(
                         bnt.address,
                         deployer.address,
@@ -3663,8 +3635,6 @@ describe('BancorNetwork', () => {
                         availableAmount,
                         originalAmount
                     );
-                    const currProtocolBalance = await bntPoolToken.balanceOf(bntPool.address);
-                    expect(currProtocolBalance).to.equal(prevProtocolBalance.sub(poolTokenAmount));
 
                     await expect(res)
                         .to.emit(network, 'FundsMigrated')
