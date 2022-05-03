@@ -7,13 +7,11 @@ interface EnvOptions {
 const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
 
 const counters = {
-    [DeploymentNetwork.Hardhat]: 0,
-    [DeploymentNetwork.Localhost]: 0
+    [DeploymentNetwork.Hardhat]: 0
 };
 
 const mainnet = (address: string, fallback?: string) => ({
     [DeploymentNetwork.Hardhat]: isForking ? address : fallback || counters[DeploymentNetwork.Hardhat]++,
-    [DeploymentNetwork.Localhost]: isForking ? address : fallback || counters[DeploymentNetwork.Localhost]++,
     [DeploymentNetwork.Mainnet]: address,
     [DeploymentNetwork.Tenderly]: address
 });
@@ -88,10 +86,6 @@ export const ExternalContracts = {
     deployments: {
         [DeploymentNetwork.Hardhat]: [
             `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Hardhat}`,
-            `deployments/${DeploymentNetwork.Mainnet}/v2`
-        ],
-        [DeploymentNetwork.Localhost]: [
-            `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Localhost}`,
             `deployments/${DeploymentNetwork.Mainnet}/v2`
         ],
         [DeploymentNetwork.Tenderly]: [

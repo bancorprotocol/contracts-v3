@@ -173,7 +173,6 @@ export const DeployedContracts = {
 };
 
 export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
-export const isLocalhost = () => getNetworkName() === DeploymentNetwork.Localhost;
 export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
