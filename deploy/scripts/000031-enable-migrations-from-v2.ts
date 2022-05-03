@@ -26,6 +26,4 @@ const func: DeployFunction = async () => {
     return true;
 };
 
-func.skip = async () => true;
-
 export default setDeploymentMetadata(__filename, func);
