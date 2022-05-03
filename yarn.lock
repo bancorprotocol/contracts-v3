@@ -225,10 +225,10 @@
     "@babel/helper-validator-identifier" "^7.16.7"
     to-fast-properties "^2.0.0"
 
-"@bancor/contracts-solidity@^0.7.7":
-  version "0.7.7"
-  resolved "https://registry.yarnpkg.com/@bancor/contracts-solidity/-/contracts-solidity-0.7.7.tgz#6450d6106b92529f6b8bd85dd25205869a7da137"
-  integrity sha512-ROAxjx6ELcqx7iLd91ANx255dFnVEfe7CPjfrJuCO9lP3MjQv9bH/Or3+WA9WpUz2QPjrHvcEuhSoN/AxoyQqg==
+"@bancor/contracts-solidity@^0.7.8":
+  version "0.7.8"
+  resolved "https://registry.yarnpkg.com/@bancor/contracts-solidity/-/contracts-solidity-0.7.8.tgz#67975f000dce69933417b50cc2a1d07b07509aec"
+  integrity sha512-X71loAJwgRGUMsH8/Y0cKnsSSqb3pp9bPK9p+MAztzqIW3zdbo8UlDsJwlF8eoq7ertvE95h3YcZ97/ZgR3UFg==
   dependencies:
     hardhat "2.9.3"
 
