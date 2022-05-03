@@ -157,7 +157,7 @@ const archiveArtifacts = async () => {
     const zip = new AdmZip();
 
     const srcDir = path.resolve(path.join(__dirname, './tenderly'));
-    const dest = path.resolve(path.join(__dirname, `../fork-${new Date().toISOString()}.zip`));
+    const dest = path.resolve(path.join(__dirname, `../fork-${tenderlyNetwork.getFork()}.zip`));
 
     zip.addLocalFolder(srcDir);
     zip.writeZip(dest);
