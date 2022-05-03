@@ -194,6 +194,26 @@ import { getNamedAccounts } from 'hardhat';
         let pools: Record<string, Pool>;
         let bnBNT: PoolToken;
 
+        const stabilizePool = async (pool: string, sender: SignerWithAddress) => {
+            const isNativeToken = pool === NATIVE_TOKEN_ADDRESS;
+
+            // perform a few small trades to stabilize the EMA
+            const tradeCount = 10;
+            const tradeAmount = toWei(1);
+            if (!isNativeToken) {
+                const tokenContract = await Contracts.ERC20.attach(pool);
+                await tokenContract.connect(sender).approve(network.address, tradeAmount.mul(tradeCount));
+            }
+
+            for (let i = 0; i < tradeCount; i++) {
+                await network
+                    .connect(sender)
+                    .tradeBySourceAmount(pool, bnt.address, tradeAmount, 1, MAX_UINT256, ZERO_ADDRESS, {
+                        value: isNativeToken ? tradeAmount : BigNumber.from(0)
+                    });
+            }
+        };
+
         beforeEach(async () => {
             const { dai, link } = await getNamedAccounts();
             const { daoMultisig, ethWhale, daiWhale, linkWhale } = await getNamedSigners();
@@ -223,6 +243,8 @@ import { getNamedAccounts } from 'hardhat';
         describe('deposits', () => {
             it('should perform deposits', async () => {
                 for (const [tokenSymbol, { token, whale }] of Object.entries(pools)) {
+                    await stabilizePool(token, whale);
+
                     const isNativeToken = tokenSymbol === TestPools.ETH;
 
                     const depositAmount = toWei(1000);
@@ -326,22 +348,8 @@ import { getNamedAccounts } from 'hardhat';
                         isBNT ? initialVBNTAmount.add(poolTokenAmount) : initialVBNTAmount
                     );
 
-                    // perform a few small trades to stabilize the EMA
                     if (!isBNT) {
-                        const tradeCount = 10;
-                        const tradeAmount = toWei(1);
-                        if (!isNativeToken) {
-                            const tokenContract = await Contracts.ERC20.attach(token);
-                            await tokenContract.connect(whale).approve(network.address, tradeAmount.mul(tradeCount));
-                        }
-
-                        for (let i = 0; i < tradeCount; i++) {
-                            await network
-                                .connect(whale)
-                                .tradeBySourceAmount(token, bnt.address, tradeAmount, 1, MAX_UINT256, ZERO_ADDRESS, {
-                                    value: isNativeToken ? tradeAmount : BigNumber.from(0)
-                                });
-                        }
+                        await stabilizePool(token, whale);
                     }
 
                     // initiate withdrawal
