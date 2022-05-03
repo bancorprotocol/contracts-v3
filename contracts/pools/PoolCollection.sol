@@ -173,16 +173,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     event PoolCreated(IPoolToken indexed poolToken, Token indexed token);
 
     /**
-     * @dev triggered when a pool is migrated into this pool collection
-     */
-    event PoolMigratedIn(Token indexed token);
-
-    /**
-     * @dev triggered when a pool is migrated out of this pool collection
-     */
-    event PoolMigratedOut(Token indexed token);
-
-    /**
      * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
@@ -809,8 +799,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _addPool(pool, data);
 
         data.poolToken.acceptOwnership();
-
-        emit PoolMigratedIn({ token: pool });
     }
 
     /**
@@ -830,8 +818,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _removePool(pool);
 
         cachedPoolToken.transferOwnership(address(targetPoolCollection));
-
-        emit PoolMigratedOut({ token: pool });
     }
 
     /**
