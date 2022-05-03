@@ -2129,34 +2129,19 @@ describe('BancorNetwork', () => {
 
             value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
-            return {
-                val: await network
-                    .connect(trader)
-                    .callStatic.tradeBySourceAmount(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        minReturnAmount,
-                        deadline,
-                        beneficiary,
-                        {
-                            value
-                        }
-                    ),
-                res: await network
-                    .connect(trader)
-                    .tradeBySourceAmount(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        minReturnAmount,
-                        deadline,
-                        beneficiary,
-                        {
-                            value
-                        }
-                    )
-            };
+            return network
+                .connect(trader)
+                .tradeBySourceAmount(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    minReturnAmount,
+                    deadline,
+                    beneficiary,
+                    {
+                        value
+                    }
+                );
         };
 
         const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
@@ -2186,34 +2171,19 @@ describe('BancorNetwork', () => {
                 }
             }
 
-            return {
-                val: await network
-                    .connect(trader)
-                    .callStatic.tradeByTargetAmount(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        maxSourceAmount,
-                        deadline,
-                        beneficiary,
-                        {
-                            value
-                        }
-                    ),
-                res: await network
-                    .connect(trader)
-                    .tradeByTargetAmount(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        maxSourceAmount,
-                        deadline,
-                        beneficiary,
-                        {
-                            value
-                        }
-                    )
-            };
+            return network
+                .connect(trader)
+                .tradeByTargetAmount(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    maxSourceAmount,
+                    deadline,
+                    beneficiary,
+                    {
+                        value
+                    }
+                );
         };
 
         interface TradePermittedOverrides {
@@ -2237,34 +2207,19 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            return {
-                val: await network
-                    .connect(trader)
-                    .callStatic.tradeBySourceAmountPermitted(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        minReturnAmount,
-                        deadline,
-                        beneficiary,
-                        signature.v,
-                        signature.r,
-                        signature.s
-                    ),
-                res: await network
-                    .connect(trader)
-                    .tradeBySourceAmountPermitted(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        minReturnAmount,
-                        deadline,
-                        beneficiary,
-                        signature.v,
-                        signature.r,
-                        signature.s
-                    )
-            };
+            return network
+                .connect(trader)
+                .tradeBySourceAmountPermitted(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    minReturnAmount,
+                    deadline,
+                    beneficiary,
+                    signature.v,
+                    signature.r,
+                    signature.s
+                );
         };
 
         const tradeByTargetAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
@@ -2287,34 +2242,19 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            return {
-                val: await network
-                    .connect(trader)
-                    .callStatic.tradeByTargetAmountPermitted(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        maxSourceAmount,
-                        deadline,
-                        beneficiary,
-                        signature.v,
-                        signature.r,
-                        signature.s
-                    ),
-                res: await network
-                    .connect(trader)
-                    .tradeByTargetAmountPermitted(
-                        sourceTokenAddress,
-                        targetTokenAddress,
-                        amount,
-                        maxSourceAmount,
-                        deadline,
-                        beneficiary,
-                        signature.v,
-                        signature.r,
-                        signature.s
-                    )
-            };
+            return network
+                .connect(trader)
+                .tradeByTargetAmountPermitted(
+                    sourceTokenAddress,
+                    targetTokenAddress,
+                    amount,
+                    maxSourceAmount,
+                    deadline,
+                    beneficiary,
+                    signature.v,
+                    signature.r,
+                    signature.s
+                );
         };
 
         const verifyTrade = async (
@@ -2324,7 +2264,7 @@ describe('BancorNetwork', () => {
             tradeFunc: (
                 amount: BigNumberish,
                 options: TradeOverrides | TradePermittedOverrides
-            ) => Promise<{ val: BigNumber; res: ContractTransaction }>
+            ) => Promise<ContractTransaction>
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
             const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
@@ -2454,13 +2394,11 @@ describe('BancorNetwork', () => {
                 pendingNetworkFeeAmount = pendingNetworkFeeAmount.add(hop1.networkFeeAmount.add(hop2.networkFeeAmount));
             }
 
-            const { val, res } = await tradeFunc(amount, {
+            const res = await tradeFunc(amount, {
                 limit,
                 beneficiary: beneficiaryAddress,
                 deadline
             });
-
-            expect(val).to.equal(hop2.amount);
 
             const transactionCost = await getTransactionCost(res);
 
@@ -2643,7 +2581,7 @@ describe('BancorNetwork', () => {
                                     const extraAmount = 100_000;
                                     const prevTraderBalance = await getBalance(sourceToken, trader);
 
-                                    const { res } = await tradeDirectFunc(testAmount, {
+                                    const res = await tradeDirectFunc(testAmount, {
                                         value: sourceAmount.add(extraAmount)
                                     });
 
