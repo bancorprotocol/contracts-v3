@@ -2702,15 +2702,17 @@ describe('BancorNetwork', () => {
                                     const tradeFunc = permitted ? tradeBySourceAmountPermittedFunc : tradeDirectFunc;
 
                                     it('should revert when attempting to trade using an invalid source token', async () => {
-                                        await expect(
-                                            tradeFunc(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
-                                        ).to.be.revertedWith('InvalidAddress');
+                                        const { res } = await tradeFunc(testAmount, {
+                                            sourceTokenAddress: ZERO_ADDRESS
+                                        });
+                                        await expect(res).to.be.revertedWith('InvalidAddress');
                                     });
 
                                     it('should revert when attempting to trade using an invalid target token', async () => {
-                                        await expect(
-                                            tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
-                                        ).to.be.revertedWith('InvalidAddress');
+                                        const { res } = await tradeFunc(testAmount, {
+                                            targetTokenAddress: ZERO_ADDRESS
+                                        });
+                                        await expect(res).to.be.revertedWith('InvalidAddress');
                                     });
 
                                     it('should revert when attempting to trade using an invalid amount', async () => {
@@ -2719,9 +2721,8 @@ describe('BancorNetwork', () => {
                                     });
 
                                     it('should revert when attempting to trade using an invalid limit', async () => {
-                                        await expect(
-                                            tradeFunc(testAmount, { limit: BigNumber.from(0) })
-                                        ).to.be.revertedWith('ZeroValue');
+                                        const { res } = await tradeFunc(testAmount, { limit: BigNumber.from(0) });
+                                        await expect(res).to.be.revertedWith('ZeroValue');
                                     });
 
                                     it('should revert when attempting to trade using an expired deadline', async () => {
@@ -2740,20 +2741,23 @@ describe('BancorNetwork', () => {
                                         }
 
                                         // unknown source token
-                                        await expect(
-                                            tradeFunc(testAmount, { sourceTokenAddress: reserveToken2.address })
-                                        ).to.be.revertedWith('InvalidToken');
+                                        const { res: res1 } = await tradeFunc(testAmount, {
+                                            sourceTokenAddress: reserveToken2.address
+                                        });
+                                        await expect(res1).to.be.revertedWith('InvalidToken');
 
                                         // unknown target token
-                                        await expect(
-                                            tradeFunc(testAmount, { targetTokenAddress: reserveToken2.address })
-                                        ).to.be.revertedWith('InvalidToken');
+                                        const { res: res2 } = await tradeFunc(testAmount, {
+                                            targetTokenAddress: reserveToken2.address
+                                        });
+                                        await expect(res2).to.be.revertedWith('InvalidToken');
                                     });
 
                                     it('should revert when attempting to trade using same source and target tokens', async () => {
-                                        await expect(
-                                            tradeFunc(testAmount, { targetTokenAddress: sourceToken.address })
-                                        ).to.be.revertedWith('InvalidToken');
+                                        const { res } = await tradeFunc(testAmount, {
+                                            targetTokenAddress: sourceToken.address
+                                        });
+                                        await expect(res).to.be.revertedWith('InvalidToken');
                                     });
 
                                     it('should support a custom beneficiary', async () => {
@@ -2782,11 +2786,12 @@ describe('BancorNetwork', () => {
                                                 if (permitted) {
                                                     // perform a permitted trade while signing a permit over an amount lower
                                                     // than the required amount
-                                                    await expect(
-                                                        tradeBySourceAmountPermittedFunc(testAmount, {
-                                                            approvedAmount: sourceAmount.sub(missingAmount)
-                                                        })
-                                                    ).to.be.revertedWith('ERC20Permit: invalid signature');
+                                                    const { res } = await tradeBySourceAmountPermittedFunc(testAmount, {
+                                                        approvedAmount: sourceAmount.sub(missingAmount)
+                                                    });
+                                                    await expect(res).to.be.revertedWith(
+                                                        'ERC20Permit: invalid signature'
+                                                    );
                                                 } else {
                                                     // reduce the approved amount and perform a trade by providing the source
                                                     // amount
