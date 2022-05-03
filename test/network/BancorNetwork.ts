@@ -2688,9 +2688,8 @@ describe('BancorNetwork', () => {
                                 });
                             } else {
                                 it('should revert when passing the native token with a non native token trade', async () => {
-                                    await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWith(
-                                        'NativeTokenAmountMismatch'
-                                    );
+                                    const { res } = await tradeDirectFunc(testAmount, { value: 100 });
+                                    await expect(res).to.be.revertedWith('NativeTokenAmountMismatch');
                                 });
                             }
 
@@ -2715,7 +2714,8 @@ describe('BancorNetwork', () => {
                                     });
 
                                     it('should revert when attempting to trade using an invalid amount', async () => {
-                                        await expect(tradeFunc(BigNumber.from(0))).to.be.revertedWith('ZeroValue');
+                                        const { res } = await tradeFunc(BigNumber.from(0));
+                                        await expect(res).to.be.revertedWith('ZeroValue');
                                     });
 
                                     it('should revert when attempting to trade using an invalid limit', async () => {
@@ -2727,9 +2727,8 @@ describe('BancorNetwork', () => {
                                     it('should revert when attempting to trade using an expired deadline', async () => {
                                         const deadline = (await latest()) - 1000;
 
-                                        await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWith(
-                                            'DeadlineExpired'
-                                        );
+                                        const { res } = await tradeFunc(testAmount, { deadline });
+                                        await expect(res).to.be.revertedWith('DeadlineExpired');
                                     });
 
                                     it('should revert when attempting to trade unsupported tokens', async () => {
@@ -2799,7 +2798,8 @@ describe('BancorNetwork', () => {
                                                         .connect(trader)
                                                         .approve(network.address, sourceAmount.sub(missingAmount));
 
-                                                    await expect(tradeFunc(testAmount)).to.be.revertedWith(
+                                                    const { res } = await tradeFunc(testAmount);
+                                                    await expect(res).to.be.revertedWith(
                                                         source.tokenData.errors().exceedsAllowance
                                                     );
                                                 }
@@ -2813,7 +2813,8 @@ describe('BancorNetwork', () => {
                                         });
 
                                         it('should revert when attempting to trade', async () => {
-                                            await expect(tradeFunc(testAmount)).to.be.revertedWith('Pausable: paused');
+                                            const { res } = await tradeFunc(testAmount);
+                                            await expect(res).to.be.revertedWith('Pausable: paused');
                                         });
                                     });
                                 });
@@ -2890,7 +2891,8 @@ describe('BancorNetwork', () => {
 
                             if (isSourceNativeToken || isSourceBNT) {
                                 it('should revert when attempting a permitted trade', async () => {
-                                    await expect(tradeFunc(amount)).to.be.revertedWith(
+                                    const { res } = await tradeFunc(amount);
+                                    await expect(res).to.be.revertedWith(
                                         isSourceNativeToken ? 'PermitUnsupported' : ''
                                     );
                                 });
