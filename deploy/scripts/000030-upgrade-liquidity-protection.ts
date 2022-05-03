@@ -228,4 +228,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     return true;
 };
 
+func.skip = async () => true;
+
 export default setDeploymentMetadata(__filename, func);
