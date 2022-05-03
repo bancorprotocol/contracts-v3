@@ -304,7 +304,7 @@ describe('PoolCollection', () => {
                 poolTokenFactory.address,
                 poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(1);
+            expect(await poolCollection.version()).to.equal(2);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -3412,7 +3412,7 @@ describe('PoolCollection', () => {
         });
 
         context('initial', () => {
-            it('should report intial amounts', async () => {
+            it('should report initial amounts', async () => {
                 expect(await poolCollection.underlyingToPoolToken(reserveToken.address, 1234)).to.equal(1234);
                 expect(await poolCollection.poolTokenToUnderlying(reserveToken.address, 5678)).to.equal(5678);
             });

@@ -37,6 +37,7 @@ import {
 import {
     BancorNetworkV1,
     NetworkSettingsV1,
+    PoolCollectionType1V1,
     StandardRewardsV1,
     StandardRewardsV2
 } from '../components/LegacyContractsV3';
@@ -72,7 +73,7 @@ const deployed = <F extends Contract>(name: InstanceName) => ({
     deployed: async () => ethers.getContract<F>(name)
 });
 
-enum LegacyInstanceName {
+enum LegacyInstanceNameV2 {
     BNT = 'BNT',
     BNTGovernance = 'BNTGovernance',
     VBNT = 'VBNT',
@@ -87,6 +88,10 @@ enum LegacyInstanceName {
     LiquidityProtectionWallet = 'LiquidityProtectionWallet',
     StakingRewards = 'StakingRewards',
     CheckpointStore = 'CheckpointStore'
+}
+
+enum LegacyInstanceName {
+    PoolCollectionType1V1 = 'PoolCollectionType1V1'
 }
 
 enum NewInstanceName {
@@ -104,7 +109,7 @@ enum NewInstanceName {
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V1 = 'PoolCollectionType1V1',
+    PoolCollectionType1V2 = 'PoolCollectionType1V2',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -112,11 +117,12 @@ enum NewInstanceName {
 }
 
 export const InstanceName = {
+    ...LegacyInstanceNameV2,
     ...LegacyInstanceName,
     ...NewInstanceName
 };
 
-export type InstanceName = LegacyInstanceName | NewInstanceName;
+export type InstanceName = NewInstanceName | LegacyInstanceName | LegacyInstanceNameV2;
 
 const DeployedLegacyContractsV2 = {
     BNT: deployed<BNT>(InstanceName.BNT),
@@ -141,7 +147,8 @@ const DeployedLegacyContracts = {
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
     StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
-    StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards)
+    StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards),
+    PoolCollectionType1V1: deployed<PoolCollectionType1V1>(InstanceName.PoolCollectionType1V1)
 };
 
 const DeployedNewContracts = {
@@ -159,7 +166,7 @@ const DeployedNewContracts = {
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V1: deployed<PoolCollection>(InstanceName.PoolCollectionType1V1),
+    PoolCollectionType1V2: deployed<PoolCollection>(InstanceName.PoolCollectionType1V2),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),

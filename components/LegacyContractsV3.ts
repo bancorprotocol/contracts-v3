@@ -4,6 +4,8 @@ import {
     BancorNetworkV1__factory,
     NetworkSettingsV1,
     NetworkSettingsV1__factory,
+    PoolCollectionType1V1,
+    PoolCollectionType1V1__factory,
     StandardRewardsV1,
     StandardRewardsV1__factory,
     StandardRewardsV2,
@@ -12,7 +14,7 @@ import {
 import { deployOrAttach } from './ContractBuilder';
 import { Signer } from 'ethers';
 
-export { BancorNetworkV1, NetworkSettingsV1, StandardRewardsV1, StandardRewardsV2 };
+export { BancorNetworkV1, NetworkSettingsV1, StandardRewardsV1, StandardRewardsV2, PoolCollectionType1V1 };
 
 /* eslint-enable camelcase */
 
@@ -22,7 +24,8 @@ const getContracts = (signer?: Signer) => ({
     BancorNetworkV1: deployOrAttach('BancorNetwork', BancorNetworkV1__factory, signer),
     NetworkSettingsV1: deployOrAttach('NetworkSettings', NetworkSettingsV1__factory, signer),
     StandardRewardsV1: deployOrAttach('StandardRewards', StandardRewardsV1__factory, signer),
-    StandardRewardsV2: deployOrAttach('StandardRewards', StandardRewardsV2__factory, signer)
+    StandardRewardsV2: deployOrAttach('StandardRewards', StandardRewardsV2__factory, signer),
+    PoolCollectionType1V1: deployOrAttach('PoolCollection', PoolCollectionType1V1__factory, signer)
 });
 
 export default getContracts();
