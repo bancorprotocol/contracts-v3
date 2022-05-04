@@ -34,7 +34,6 @@
     "deploy:mainnet": "HARDHAT_NETWORK=mainnet hardhat deploy",
     "deploy:rinkeby": "HARDHAT_NETWORK=rinkeby hardhat deploy",
     "deploy:fork": "cp -rf deployments/mainnet/. deployments/tenderly && HARDHAT_NETWORK=tenderly hardhat deploy",
-    "deploy:local": "HARDHAT_NETWORK=localhost hardhat deploy",
     "verify:mainnet": "HARDHAT_NETWORK=mainnet hardhat etherscan-verify --license None --force-license",
     "verify:rinkeby": "HARDHAT_NETWORK=rinkeby hardhat etherscan-verify --license None --force-license",
     "setup:fork": "rm -rf deployments/tenderly && cp -rf deployments/mainnet/. deployments/tenderly && yarn run:fork deployments/setup-fork.ts",
@@ -61,7 +60,7 @@
   },
   "devDependencies": {
     "@anders-t/ethers-ledger": "^1.0.4",
-    "@bancor/contracts-solidity": "^0.7.7",
+    "@bancor/contracts-solidity": "^0.7.8",
     "@bancor/token-governance": "^0.1.8",
     "@metamask/eth-sig-util": "^4.0.1",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",

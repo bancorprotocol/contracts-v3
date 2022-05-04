@@ -1,6 +1,6 @@
 import Contracts from '../../components/Contracts';
 import { DeployedContracts, execute, getNamedSigners, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
-import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../../utils/TokenData';
+import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { toCents, toWei } from '../../utils/Types';
 import { BigNumber } from 'ethers';
 import { DeployFunction } from 'hardhat-deploy/types';

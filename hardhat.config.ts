@@ -95,12 +95,6 @@ const config: HardhatUserConfig = {
                   live: false
               },
         /* eslint-enable indent */
-        [DeploymentNetwork.Localhost]: {
-            chainId: 31337,
-            url: 'http://127.0.0.1:8545',
-            saveDeployments: true,
-            live: false
-        },
         [DeploymentNetwork.Mainnet]: {
             chainId: 1,
             url: ETHEREUM_PROVIDER_URL,

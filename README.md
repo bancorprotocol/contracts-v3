@@ -80,7 +80,6 @@ You can find historic test coverage reports in [releases](https://github.com/ban
 - 100% Functions 446/446
 - 99.31% Lines 1580/1591
 
-
 ![Coverage Report](./docs/images/coverage.png)
 
 ```sh
@@ -206,20 +205,6 @@ It can be run via:
 
 ```sh
 yarn deploy:fork
-```
-
-### Local Deployment
-
-It’s also possible to test the deployment to a local persistent node for further testing or simulations via:
-
-```sh
-yarn deploy:local
-```
-
-Please note that the framework will look for a local RPC node running on port 8545 with chainId 31337. One way to achieve this is to run a local hardhat node via:
-
-```sh
-yarn dev
 ```
 
 ## Community
