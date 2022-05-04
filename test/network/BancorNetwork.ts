@@ -2705,31 +2705,31 @@ describe('BancorNetwork', () => {
                                         const { res } = await tradeFunc(testAmount, {
                                             sourceTokenAddress: ZERO_ADDRESS
                                         });
-                                        await expect(await res).to.be.revertedWith('InvalidAddress');
+                                        await expect(res).to.be.revertedWith('InvalidAddress');
                                     });
 
                                     it('should revert when attempting to trade using an invalid target token', async () => {
                                         const { res } = await tradeFunc(testAmount, {
                                             targetTokenAddress: ZERO_ADDRESS
                                         });
-                                        await expect(await res).to.be.revertedWith('InvalidAddress');
+                                        await expect(res).to.be.revertedWith('InvalidAddress');
                                     });
 
                                     it('should revert when attempting to trade using an invalid amount', async () => {
                                         const { res } = await tradeFunc(BigNumber.from(0));
-                                        await expect(await res).to.be.revertedWith('ZeroValue');
+                                        await expect(res).to.be.revertedWith('ZeroValue');
                                     });
 
                                     it('should revert when attempting to trade using an invalid limit', async () => {
                                         const { res } = await tradeFunc(testAmount, { limit: BigNumber.from(0) });
-                                        await expect(await res).to.be.revertedWith('ZeroValue');
+                                        await expect(res).to.be.revertedWith('ZeroValue');
                                     });
 
                                     it('should revert when attempting to trade using an expired deadline', async () => {
                                         const deadline = (await latest()) - 1000;
 
                                         const { res } = await tradeFunc(testAmount, { deadline });
-                                        await expect(await res).to.be.revertedWith('DeadlineExpired');
+                                        await expect(res).to.be.revertedWith('DeadlineExpired');
                                     });
 
                                     it('should revert when attempting to trade unsupported tokens', async () => {
@@ -2744,20 +2744,20 @@ describe('BancorNetwork', () => {
                                         const { res: res1 } = await tradeFunc(testAmount, {
                                             sourceTokenAddress: reserveToken2.address
                                         });
-                                        await expect(await res1).to.be.revertedWith('InvalidToken');
+                                        await expect(res1).to.be.revertedWith('InvalidToken');
 
                                         // unknown target token
                                         const { res: res2 } = await tradeFunc(testAmount, {
                                             targetTokenAddress: reserveToken2.address
                                         });
-                                        await expect(await res2).to.be.revertedWith('InvalidToken');
+                                        await expect(res2).to.be.revertedWith('InvalidToken');
                                     });
 
                                     it('should revert when attempting to trade using same source and target tokens', async () => {
                                         const { res } = await tradeFunc(testAmount, {
                                             targetTokenAddress: sourceToken.address
                                         });
-                                        await expect(await res).to.be.revertedWith('InvalidToken');
+                                        await expect(res).to.be.revertedWith('InvalidToken');
                                     });
 
                                     it('should support a custom beneficiary', async () => {
@@ -2789,7 +2789,7 @@ describe('BancorNetwork', () => {
                                                     const { res } = await tradeBySourceAmountPermittedFunc(testAmount, {
                                                         approvedAmount: sourceAmount.sub(missingAmount)
                                                     });
-                                                    await expect(await res).to.be.revertedWith(
+                                                    await expect(res).to.be.revertedWith(
                                                         'ERC20Permit: invalid signature'
                                                     );
                                                 } else {
@@ -2804,7 +2804,7 @@ describe('BancorNetwork', () => {
                                                         .approve(network.address, sourceAmount.sub(missingAmount));
 
                                                     const { res } = await tradeFunc(testAmount);
-                                                    await expect(await res).to.be.revertedWith(
+                                                    await expect(res).to.be.revertedWith(
                                                         source.tokenData.errors().exceedsAllowance
                                                     );
                                                 }
@@ -2819,7 +2819,7 @@ describe('BancorNetwork', () => {
 
                                         it('should revert when attempting to trade', async () => {
                                             const { res } = await tradeFunc(testAmount);
-                                            await expect(await res).to.be.revertedWith('Pausable: paused');
+                                            await expect(res).to.be.revertedWith('Pausable: paused');
                                         });
                                     });
                                 });
@@ -2897,7 +2897,7 @@ describe('BancorNetwork', () => {
                             if (isSourceNativeToken || isSourceBNT) {
                                 it('should revert when attempting a permitted trade', async () => {
                                     const { res } = await tradeFunc(amount);
-                                    await expect(await res).to.be.revertedWith(
+                                    await expect(res).to.be.revertedWith(
                                         isSourceNativeToken ? 'PermitUnsupported' : ''
                                     );
                                 });
