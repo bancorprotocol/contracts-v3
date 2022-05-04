@@ -36,7 +36,7 @@ interface PoolStats {
 interface GlobalStats {
     blockNumber: number;
     masterVaultBntBalance: BigNumber;
-    bntPoolBntBalance: BigNumber;
+    bntPoolBnBntBalance: BigNumber;
     bntPoolStakedAmount: BigNumber;
     vortexBntBalance: BigNumber;
     networkFeePPM: number;
@@ -81,7 +81,7 @@ const saveGlobalStats = async () => {
     const stats: GlobalStats = {
         blockNumber: await ethers.provider.getBlockNumber(),
         masterVaultBntBalance: await bnt.balanceOf(masterVault.address),
-        bntPoolBntBalance: await bnt.balanceOf(bntPool.address),
+        bntPoolBnBntBalance: await bnBNT.balanceOf(bntPool.address),
         bntPoolStakedAmount: await bntPool.stakedBalance(),
         vortexBntBalance: await network.pendingNetworkFeeAmount(),
         networkFeePPM: await settings.networkFeePPM(),
