@@ -2045,7 +2045,7 @@ describe('BancorNetwork', () => {
         }
     });
 
-    describe('trade', () => {
+    describe.only('trade', () => {
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
@@ -2117,7 +2117,7 @@ describe('BancorNetwork', () => {
             targetTokenAddress?: string;
         }
 
-        const tradeBySourceAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeBySourceAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}, callStatic = false) => {
             let {
                 value,
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
@@ -2129,8 +2129,9 @@ describe('BancorNetwork', () => {
 
             value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
-            return network
-                .connect(trader)
+            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+
+            return caller
                 .tradeBySourceAmount(
                     sourceTokenAddress,
                     targetTokenAddress,
@@ -2144,7 +2145,7 @@ describe('BancorNetwork', () => {
                 );
         };
 
-        const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}, callStatic = false) => {
             let {
                 value,
                 limit: maxSourceAmount,
@@ -2171,8 +2172,9 @@ describe('BancorNetwork', () => {
                 }
             }
 
-            return network
-                .connect(trader)
+            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+
+            return caller
                 .tradeByTargetAmount(
                     sourceTokenAddress,
                     targetTokenAddress,
@@ -2195,7 +2197,7 @@ describe('BancorNetwork', () => {
             approvedAmount?: BigNumberish;
         }
 
-        const tradeBySourceAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeBySourceAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}, callStatic = false) => {
             const {
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
@@ -2207,8 +2209,9 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            return network
-                .connect(trader)
+            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+
+            return caller
                 .tradeBySourceAmountPermitted(
                     sourceTokenAddress,
                     targetTokenAddress,
@@ -2222,7 +2225,7 @@ describe('BancorNetwork', () => {
                 );
         };
 
-        const tradeByTargetAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeByTargetAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}, callStatic = false) => {
             let {
                 limit: maxSourceAmount,
                 deadline = MAX_UINT256,
@@ -2242,8 +2245,9 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            return network
-                .connect(trader)
+            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+
+            return caller
                 .tradeByTargetAmountPermitted(
                     sourceTokenAddress,
                     targetTokenAddress,
@@ -2263,8 +2267,9 @@ describe('BancorNetwork', () => {
             amount: BigNumberish,
             tradeFunc: (
                 amount: BigNumberish,
-                options: TradeOverrides | TradePermittedOverrides
-            ) => Promise<ContractTransaction>
+                options: TradeOverrides | TradePermittedOverrides,
+                callStatic: boolean
+            ) => Promise<ContractTransaction | BigNumber>
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
             const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
@@ -2394,13 +2399,21 @@ describe('BancorNetwork', () => {
                 pendingNetworkFeeAmount = pendingNetworkFeeAmount.add(hop1.networkFeeAmount.add(hop2.networkFeeAmount));
             }
 
+            const retVal = await tradeFunc(amount, {
+                limit,
+                beneficiary: beneficiaryAddress,
+                deadline,
+            }, true);
+
+            expect(retVal).to.equal(hop2.amount);
+
             const res = await tradeFunc(amount, {
                 limit,
                 beneficiary: beneficiaryAddress,
-                deadline
-            });
+                deadline,
+            }, false);
 
-            const transactionCost = await getTransactionCost(res);
+            const transactionCost = await getTransactionCost(res as ContractTransaction);
 
             const contextId = solidityKeccak256(
                 ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'bool', 'uint256', 'address'],
@@ -2585,7 +2598,7 @@ describe('BancorNetwork', () => {
                                         value: sourceAmount.add(extraAmount)
                                     });
 
-                                    const transactionCost = await getTransactionCost(res);
+                                    const transactionCost = await getTransactionCost(res as ContractTransaction);
 
                                     expect(await getBalance(sourceToken, trader)).equal(
                                         prevTraderBalance.sub(sourceAmount).sub(transactionCost)
