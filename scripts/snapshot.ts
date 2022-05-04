@@ -103,7 +103,7 @@ const savePoolStats = async () => {
     };
 
     const settings = await DeployedContracts.NetworkSettings.deployed();
-    const poolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
+    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
     const bntPool = await DeployedContracts.BNTPool.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
@@ -115,7 +115,7 @@ const savePoolStats = async () => {
         const poolData = await poolCollection.poolData(pool);
         const { liquidity, averageRate } = poolData;
         const emaGCD = gcd(averageRate.rate.n, averageRate.rate.d);
-        const poolToken = await Contracts.ERC20.attach(poolData.poolToken);
+        const poolToken = await Contracts.PoolToken.attach(poolData.poolToken);
 
         poolStats.push({
             symbol,
