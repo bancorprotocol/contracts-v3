@@ -75,7 +75,7 @@ interface IPendingWithdrawals is IUpgradeable {
     function cancelWithdrawal(address provider, uint256 id) external returns (uint256);
 
     /**
-     * @dev completes a withdrawal request and returns the pool token and its transferred amount
+     * @dev completes a withdrawal request, and returns the pool token and its transferred amount
      *
      * requirements:
      *

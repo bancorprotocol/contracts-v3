@@ -3073,8 +3073,13 @@ describe('BancorNetwork', () => {
 
                 const data = '0x1234';
 
-                const val = await network.callStatic.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
-                expect(val).to.equal(FEE_AMOUNT);
+                const feeAmount = await network.callStatic.flashLoan(
+                    token.address,
+                    LOAN_AMOUNT,
+                    recipient.address,
+                    data
+                );
+                expect(feeAmount).to.equal(FEE_AMOUNT);
 
                 const res = await network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
 
@@ -3890,8 +3895,8 @@ describe('BancorNetwork', () => {
 
             it('should cancel a pending withdrawal request', async () => {
                 const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-                const val = await network.connect(provider).callStatic.cancelWithdrawal(id);
-                expect(val).to.equal(withdrawalRequest.reserveTokenAmount);
+                const reserveTokenAmount = await network.connect(provider).callStatic.cancelWithdrawal(id);
+                expect(reserveTokenAmount).to.equal(withdrawalRequest.reserveTokenAmount);
 
                 await network.connect(provider).cancelWithdrawal(id);
 
@@ -3968,10 +3973,10 @@ describe('BancorNetwork', () => {
             it('should not withdraw any pending network fees', async () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
 
-                const val = await network
+                const withdrawNetworkFees = await network
                     .connect(networkFeeManager)
                     .callStatic.withdrawNetworkFees(networkFeeManager.address);
-                expect(val).to.equal(0);
+                expect(withdrawNetworkFees).to.equal(0);
 
                 const res = await network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address);
 
@@ -4005,8 +4010,10 @@ describe('BancorNetwork', () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
                 const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
 
-                const val = await network.connect(networkFeeManager).callStatic.withdrawNetworkFees(recipient);
-                expect(val).to.equal(pendingNetworkFeeAmount);
+                const withdrawNetworkFees = await network
+                    .connect(networkFeeManager)
+                    .callStatic.withdrawNetworkFees(recipient);
+                expect(withdrawNetworkFees).to.equal(pendingNetworkFeeAmount);
 
                 const res = await network.connect(networkFeeManager).withdrawNetworkFees(recipient);
 
