@@ -72,8 +72,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     // the number of programs to auto-process the rewards for
     uint256 private _autoProcessRewardsCount;
 
-    // index of the next program to auto-process the rewards for
-    uint256 private _nextProcessRewardsIndex;
+    // the index of the next program to auto-process the rewards for
+    uint256 private _autoProcessRewardsIndex;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 5] private __gap;
@@ -330,7 +330,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      */
     function autoProcessRewards() external nonReentrant {
         uint256 numOfPools = _pools.length();
-        uint256 index = _nextProcessRewardsIndex;
+        uint256 index = _autoProcessRewardsIndex;
         uint256 count = _autoProcessRewardsCount;
         uint256 maxCount = Math.min(count * 2, numOfPools);
 
@@ -345,7 +345,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             }
         }
 
-        _nextProcessRewardsIndex = index;
+        _autoProcessRewardsIndex = index;
     }
 
     /**
