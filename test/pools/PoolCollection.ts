@@ -3588,11 +3588,7 @@ describe('PoolCollection', () => {
                     targetPoolCollection.address
                 );
 
-                const res = await poolMigrator.migratePoolInT(
-                    targetPoolCollection.address,
-                    reserveToken.address,
-                    poolData
-                );
+                await poolMigrator.migratePoolInT(targetPoolCollection.address, reserveToken.address, poolData);
 
                 newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData).to.deep.equal(poolData);
@@ -3659,7 +3655,7 @@ describe('PoolCollection', () => {
 
                 expect(await poolToken.owner()).to.equal(poolCollection.address);
 
-                const res = await poolMigrator.migratePoolOutT(
+                await poolMigrator.migratePoolOutT(
                     poolCollection.address,
                     reserveToken.address,
                     targetPoolCollection.address
