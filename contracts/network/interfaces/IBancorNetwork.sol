@@ -167,8 +167,7 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev cancels a withdrawal request
-     * returns the number of reserve tokens associated with the withdrawal request
+     * @dev cancels a withdrawal request, and returns the number of reserve tokens associated with the withdrawal request
      *
      * requirements:
      *
@@ -189,8 +188,7 @@ interface IBancorNetwork is IUpgradeable {
     function withdraw(uint256 id) external returns (uint256);
 
     /**
-     * @dev performs a trade by providing the input source amount
-     * returns the trade target amount
+     * @dev performs a trade by providing the input source amount, and returns the trade target amount
      *
      * requirements:
      *
@@ -208,8 +206,7 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev performs a trade by providing the input source amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request
-     * returns the trade target amount
+     * EIP2612 permit request, and returns the trade target amount
      *
      * requirements:
      *
@@ -228,8 +225,7 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev performs a trade by providing the output target amount
-     * returns the trade source amount
+     * @dev performs a trade by providing the output target amount, and returns the trade source amount
      *
      * requirements:
      *
@@ -247,8 +243,7 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev performs a trade by providing the output target amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request and returns the target amount and fee
-     * returns the trade source amount
+     * EIP2612 permit request and returns the target amount and fee, and returns the trade source amount
      *
      * requirements:
      *
@@ -267,8 +262,7 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev provides a flash-loan
-     * returns the amount of fee paid
+     * @dev provides a flash-loan, and returns the amount of fee paid
      *
      * requirements:
      *
@@ -293,8 +287,7 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable;
 
     /**
-     * @dev withdraws pending network fees
-     * returns the amount of fees withdrawn
+     * @dev withdraws pending network fees, and returns the amount of fees withdrawn
      *
      * requirements:
      *
