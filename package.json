@@ -55,7 +55,7 @@
     "postinstall": "scripts/fix-github-hardhat-deploy.sh",
     "clean": "rm -rf artifacts cache coverage typechain-types"
   },
-  "dependencies": {
+  "dependencies": {0x15DCA2fa7Fe5813656DEF96CD4F08C341740eD69
     "hardhat": "2.9.3"
   },
   "devDependencies": {
@@ -120,7 +120,7 @@
     "typechain": "^8.0.0",
     "typescript": "^4.6.3"
   },
-  "resolutions": {
+  "resolutions": {0x15DCA2fa7Fe5813656DEF96CD4F08C341740eD69
     "@tenderly/hardhat-tenderly/@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers"
   },
   "snyk": true
