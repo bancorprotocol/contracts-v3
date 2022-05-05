@@ -31,13 +31,14 @@ const {
 }: EnvOptions = process.env as any as EnvOptions;
 
 const tenderlyNetwork = tenderly.network();
+let forkId: string;
 
 const createTenderlyFork = async () => {
     console.log('Setting up new fork...');
 
     await tenderlyNetwork.initializeFork();
 
-    const forkId = tenderlyNetwork.getFork()!;
+    forkId = tenderlyNetwork.getFork()!;
 
     setForkId(forkId);
 
@@ -157,7 +158,7 @@ const archiveArtifacts = async () => {
     const zip = new AdmZip();
 
     const srcDir = path.resolve(path.join(__dirname, './tenderly'));
-    const dest = path.resolve(path.join(__dirname, `../fork-${tenderlyNetwork.getFork()}.zip`));
+    const dest = path.resolve(path.join(__dirname, `../fork-${forkId}.zip`));
 
     zip.addLocalFolder(srcDir);
     zip.writeZip(dest);
@@ -173,7 +174,7 @@ const main = async () => {
 
     console.log();
 
-    const forkId = await createTenderlyFork();
+    await createTenderlyFork();
 
     await runDeployments();
 
