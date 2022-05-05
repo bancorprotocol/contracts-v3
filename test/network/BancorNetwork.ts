@@ -2117,11 +2117,7 @@ describe('BancorNetwork', () => {
             targetTokenAddress?: string;
         }
 
-        const tradeBySourceAmount = async (
-            amount: BigNumberish,
-            overrides: TradeOverrides = {},
-            callStatic = false
-        ) => {
+        const tradeBySourceAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
             let {
                 value,
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
@@ -2133,9 +2129,9 @@ describe('BancorNetwork', () => {
 
             value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
-            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
-            return caller.tradeBySourceAmount(
+            return method.tradeBySourceAmount(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount,
@@ -2148,11 +2144,7 @@ describe('BancorNetwork', () => {
             );
         };
 
-        const tradeByTargetAmount = async (
-            amount: BigNumberish,
-            overrides: TradeOverrides = {},
-            callStatic = false
-        ) => {
+        const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
             let {
                 value,
                 limit: maxSourceAmount,
@@ -2179,9 +2171,9 @@ describe('BancorNetwork', () => {
                 }
             }
 
-            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
-            return caller.tradeByTargetAmount(
+            return method.tradeByTargetAmount(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount,
@@ -2206,7 +2198,7 @@ describe('BancorNetwork', () => {
         const tradeBySourceAmountPermitted = async (
             amount: BigNumberish,
             overrides: TradePermittedOverrides = {},
-            callStatic = false
+            simulate = false
         ) => {
             const {
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
@@ -2219,9 +2211,9 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
-            return caller.tradeBySourceAmountPermitted(
+            return method.tradeBySourceAmountPermitted(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount,
@@ -2237,7 +2229,7 @@ describe('BancorNetwork', () => {
         const tradeByTargetAmountPermitted = async (
             amount: BigNumberish,
             overrides: TradePermittedOverrides = {},
-            callStatic = false
+            simulate = false
         ) => {
             let {
                 limit: maxSourceAmount,
@@ -2258,9 +2250,9 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            const caller = callStatic ? network.connect(trader).callStatic : network.connect(trader);
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
-            return caller.tradeByTargetAmountPermitted(
+            return method.tradeByTargetAmountPermitted(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount,
@@ -2280,7 +2272,7 @@ describe('BancorNetwork', () => {
             tradeFunc: (
                 amount: BigNumberish,
                 options: TradeOverrides | TradePermittedOverrides,
-                callStatic: boolean
+                simulate: boolean
             ) => Promise<ContractTransaction | BigNumber | void>
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
