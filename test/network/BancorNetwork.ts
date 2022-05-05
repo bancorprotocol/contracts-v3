@@ -2120,7 +2120,7 @@ describe('BancorNetwork', () => {
             targetTokenAddress?: string;
         }
 
-        const tradeBySourceAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeBySourceAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
             let {
                 value,
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
@@ -2132,22 +2132,22 @@ describe('BancorNetwork', () => {
 
             value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
-            return network
-                .connect(trader)
-                .tradeBySourceAmount(
-                    sourceTokenAddress,
-                    targetTokenAddress,
-                    amount,
-                    minReturnAmount,
-                    deadline,
-                    beneficiary,
-                    {
-                        value
-                    }
-                );
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeBySourceAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                minReturnAmount,
+                deadline,
+                beneficiary,
+                {
+                    value
+                }
+            );
         };
 
-        const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}) => {
+        const tradeByTargetAmount = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
             let {
                 value,
                 limit: maxSourceAmount,
@@ -2174,19 +2174,19 @@ describe('BancorNetwork', () => {
                 }
             }
 
-            return network
-                .connect(trader)
-                .tradeByTargetAmount(
-                    sourceTokenAddress,
-                    targetTokenAddress,
-                    amount,
-                    maxSourceAmount,
-                    deadline,
-                    beneficiary,
-                    {
-                        value
-                    }
-                );
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                maxSourceAmount,
+                deadline,
+                beneficiary,
+                {
+                    value
+                }
+            );
         };
 
         interface TradePermittedOverrides {
@@ -2198,7 +2198,11 @@ describe('BancorNetwork', () => {
             approvedAmount?: BigNumberish;
         }
 
-        const tradeBySourceAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeBySourceAmountPermitted = async (
+            amount: BigNumberish,
+            overrides: TradePermittedOverrides = {},
+            simulate = false
+        ) => {
             const {
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
                 deadline = MAX_UINT256,
@@ -2210,22 +2214,26 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            return network
-                .connect(trader)
-                .tradeBySourceAmountPermitted(
-                    sourceTokenAddress,
-                    targetTokenAddress,
-                    amount,
-                    minReturnAmount,
-                    deadline,
-                    beneficiary,
-                    signature.v,
-                    signature.r,
-                    signature.s
-                );
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeBySourceAmountPermitted(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                minReturnAmount,
+                deadline,
+                beneficiary,
+                signature.v,
+                signature.r,
+                signature.s
+            );
         };
 
-        const tradeByTargetAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
+        const tradeByTargetAmountPermitted = async (
+            amount: BigNumberish,
+            overrides: TradePermittedOverrides = {},
+            simulate = false
+        ) => {
             let {
                 limit: maxSourceAmount,
                 deadline = MAX_UINT256,
@@ -2245,19 +2253,19 @@ describe('BancorNetwork', () => {
 
             const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
 
-            return network
-                .connect(trader)
-                .tradeByTargetAmountPermitted(
-                    sourceTokenAddress,
-                    targetTokenAddress,
-                    amount,
-                    maxSourceAmount,
-                    deadline,
-                    beneficiary,
-                    signature.v,
-                    signature.r,
-                    signature.s
-                );
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeByTargetAmountPermitted(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                maxSourceAmount,
+                deadline,
+                beneficiary,
+                signature.v,
+                signature.r,
+                signature.s
+            );
         };
 
         const verifyTrade = async (
@@ -2266,8 +2274,9 @@ describe('BancorNetwork', () => {
             amount: BigNumberish,
             tradeFunc: (
                 amount: BigNumberish,
-                options: TradeOverrides | TradePermittedOverrides
-            ) => Promise<ContractTransaction>
+                options: TradeOverrides | TradePermittedOverrides,
+                simulate: boolean
+            ) => Promise<ContractTransaction | BigNumber | void>
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
             const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
@@ -2397,13 +2406,29 @@ describe('BancorNetwork', () => {
                 pendingNetworkFeeAmount = pendingNetworkFeeAmount.add(hop1.networkFeeAmount.add(hop2.networkFeeAmount));
             }
 
-            const res = await tradeFunc(amount, {
-                limit,
-                beneficiary: beneficiaryAddress,
-                deadline
-            });
+            const retVal = await tradeFunc(
+                amount,
+                {
+                    limit,
+                    beneficiary: beneficiaryAddress,
+                    deadline
+                },
+                true
+            );
 
-            const transactionCost = await getTransactionCost(res);
+            expect(retVal).to.equal(hop2.amount);
+
+            const res = await tradeFunc(
+                amount,
+                {
+                    limit,
+                    beneficiary: beneficiaryAddress,
+                    deadline
+                },
+                false
+            );
+
+            const transactionCost = await getTransactionCost(res as ContractTransaction);
 
             const contextId = solidityKeccak256(
                 ['address', 'uint32', 'address', 'address', 'uint256', 'uint256', 'bool', 'uint256', 'address'],
@@ -2588,7 +2613,7 @@ describe('BancorNetwork', () => {
                                         value: sourceAmount.add(extraAmount)
                                     });
 
-                                    const transactionCost = await getTransactionCost(res);
+                                    const transactionCost = await getTransactionCost(res as ContractTransaction);
 
                                     expect(await getBalance(sourceToken, trader)).equal(
                                         prevTraderBalance.sub(sourceAmount).sub(transactionCost)
@@ -3043,7 +3068,7 @@ describe('BancorNetwork', () => {
 
                 const data = '0x1234';
 
-                const res = network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
+                const res = await network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
 
                 await expect(res)
                     .to.emit(network, 'FlashLoanCompleted')
@@ -3856,6 +3881,10 @@ describe('BancorNetwork', () => {
             });
 
             it('should cancel a pending withdrawal request', async () => {
+                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                const poolTokenAmount = await network.connect(provider).callStatic.cancelWithdrawal(id);
+                expect(poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
+
                 await network.connect(provider).cancelWithdrawal(id);
 
                 const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
@@ -3931,6 +3960,11 @@ describe('BancorNetwork', () => {
             it('should not withdraw any pending network fees', async () => {
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
 
+                const withdrawNetworkFees = await network
+                    .connect(networkFeeManager)
+                    .callStatic.withdrawNetworkFees(networkFeeManager.address);
+                expect(withdrawNetworkFees).to.equal(0);
+
                 const res = await network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address);
 
                 await expect(res).to.not.emit(network, 'NetworkFeesWithdrawn');
@@ -3962,6 +3996,11 @@ describe('BancorNetwork', () => {
                 const recipient = nonOwner.address;
                 const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
                 const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
+
+                const withdrawNetworkFees = await network
+                    .connect(networkFeeManager)
+                    .callStatic.withdrawNetworkFees(recipient);
+                expect(withdrawNetworkFees).to.equal(pendingNetworkFeeAmount);
 
                 const res = await network.connect(networkFeeManager).withdrawNetworkFees(recipient);
 

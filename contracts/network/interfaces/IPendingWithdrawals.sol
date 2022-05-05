@@ -65,17 +65,17 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev cancels a withdrawal request
+     * @dev cancels a withdrawal request, and returns the number of pool tokens which were sent back to the provider
      *
      * requirements:
      *
      * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
      */
-    function cancelWithdrawal(address provider, uint256 id) external;
+    function cancelWithdrawal(address provider, uint256 id) external returns (uint256);
 
     /**
-     * @dev completes a withdrawal request and returns the pool token and its transferred amount
+     * @dev completes a withdrawal request, and returns the pool token and its transferred amount
      *
      * requirements:
      *

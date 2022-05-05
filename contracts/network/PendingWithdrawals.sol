@@ -203,14 +203,14 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @inheritdoc IPendingWithdrawals
      */
-    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) {
+    function cancelWithdrawal(address provider, uint256 id) external only(address(_network)) returns (uint256) {
         WithdrawalRequest memory request = _withdrawalRequests[id];
 
         if (request.provider != provider) {
             revert AccessDenied();
         }
 
-        _cancelWithdrawal(request, id);
+        return _cancelWithdrawal(request, id);
     }
 
     /**
@@ -353,7 +353,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
     /**
      * @dev cancels a withdrawal request
      */
-    function _cancelWithdrawal(WithdrawalRequest memory request, uint256 id) private {
+    function _cancelWithdrawal(WithdrawalRequest memory request, uint256 id) private returns (uint256) {
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(request.provider, id);
 
@@ -368,6 +368,8 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
             reserveTokenAmount: request.reserveTokenAmount,
             timeElapsed: _time() - request.createdAt
         });
+
+        return request.poolTokenAmount;
     }
 
     /**
