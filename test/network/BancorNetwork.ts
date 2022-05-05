@@ -2281,7 +2281,7 @@ describe('BancorNetwork', () => {
                 amount: BigNumberish,
                 options: TradeOverrides | TradePermittedOverrides,
                 callStatic: boolean
-            ) => Promise<ContractTransaction | BigNumber>
+            ) => Promise<ContractTransaction | BigNumber | void>
         ) => {
             const isSourceNativeToken = sourceToken.address === NATIVE_TOKEN_ADDRESS;
             const isTargetNativeToken = targetToken.address === NATIVE_TOKEN_ADDRESS;
@@ -3072,14 +3072,6 @@ describe('BancorNetwork', () => {
                 const prevBNTBalance = await getBalance(token, network.address);
 
                 const data = '0x1234';
-
-                const feeAmount = await network.callStatic.flashLoan(
-                    token.address,
-                    LOAN_AMOUNT,
-                    recipient.address,
-                    data
-                );
-                expect(feeAmount).to.equal(FEE_AMOUNT);
 
                 const res = await network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, data);
 

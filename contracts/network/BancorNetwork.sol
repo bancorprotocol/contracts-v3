@@ -784,7 +784,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(recipient))
         whenNotPaused
         nonReentrant
-        returns (uint256)
     {
         if (!token.isEqual(_bnt) && !_networkSettings.isTokenWhitelisted(token)) {
             revert NotWhitelisted();
@@ -826,8 +825,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         emit FlashLoanCompleted({ token: token, borrower: msg.sender, amount: amount, feeAmount: feeAmount });
-
-        return feeAmount;
     }
 
     /**

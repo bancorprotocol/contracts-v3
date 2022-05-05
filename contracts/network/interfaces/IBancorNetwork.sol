@@ -262,7 +262,7 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev provides a flash-loan, and returns the amount of fee paid
+     * @dev provides a flash-loan
      *
      * requirements:
      *
@@ -273,7 +273,7 @@ interface IBancorNetwork is IUpgradeable {
         uint256 amount,
         IFlashLoanRecipient recipient,
         bytes calldata data
-    ) external returns (uint256);
+    ) external;
 
     /**
      * @dev deposits liquidity during a migration
