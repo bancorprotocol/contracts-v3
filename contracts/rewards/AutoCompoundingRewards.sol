@@ -374,12 +374,12 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         uint256 tokenAmountToDistribute = _tokenAmountToDistribute(p, currTime);
         if (tokenAmountToDistribute == 0) {
-            return false;
+            return true;
         }
 
         uint256 poolTokenAmountToBurn = _poolTokenAmountToBurn(pool, p, tokenAmountToDistribute);
         if (poolTokenAmountToBurn == 0) {
-            return false;
+            return true;
         }
 
         IVault rewardsVault = _rewardsVault(pool);
