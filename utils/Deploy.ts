@@ -229,7 +229,7 @@ const saveTypes = async (options: SaveTypeOptions) => {
     const { name, contract } = options;
 
     // don't attempt to save the types for legacy contracts
-    if (Object.keys(LegacyInstanceName).includes(name)) {
+    if (Object.keys(LegacyInstanceNameV2).includes(name) || Object.keys(LegacyInstanceName).includes(name)) {
         return;
     }
 
