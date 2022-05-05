@@ -167,7 +167,8 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev cancels a withdrawal request, and returns the number of reserve tokens associated with the withdrawal request
+     * @dev cancels a withdrawal request, and returns the number of pool token amount associated with the withdrawal
+     * request
      *
      * requirements:
      *
