@@ -36,7 +36,9 @@ import {
 } from '../components/LegacyContracts';
 import {
     BancorNetworkV1,
+    BancorNetworkV2,
     NetworkSettingsV1,
+    PendingWithdrawalsV1,
     PoolCollectionType1V1,
     StandardRewardsV1,
     StandardRewardsV2
@@ -149,9 +151,11 @@ const DeployedLegacyContractsV2 = {
 
 const DeployedLegacyContracts = {
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
+    BancorNetworkV2: deployed<BancorNetworkV2>(InstanceName.BancorNetwork),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
     StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
     StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards),
+    PendingWithdrawalsV1: deployed<PendingWithdrawalsV1>(InstanceName.PendingWithdrawals),
     PoolCollectionType1V1: deployed<PoolCollectionType1V1>(InstanceName.PoolCollectionType1V1)
 };
 

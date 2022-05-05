@@ -1,6 +1,6 @@
-import Contracts, { BancorNetwork, PoolCollection, PoolToken } from '../../components/Contracts';
+import Contracts, { PoolCollection, PoolToken } from '../../components/Contracts';
 import { BNT, VBNT } from '../../components/LegacyContracts';
-import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
+import { BancorNetworkV2, NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { getBalance, getTransactionCost } from '../../test/helpers/Utils';
 import { DEFAULT_TRADING_FEE_PPM, MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
@@ -15,7 +15,7 @@ import { getNamedAccounts } from 'hardhat';
 describeDeployment(__filename, () => {
     let bnt: BNT;
     let vbnt: VBNT;
-    let network: BancorNetwork;
+    let network: BancorNetworkV2;
     let networkSettings: NetworkSettingsV1;
     let poolCollection: PoolCollection;
     let bntBNT: PoolToken;
@@ -40,7 +40,7 @@ describeDeployment(__filename, () => {
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        network = await DeployedContracts.BancorNetwork.deployed();
+        network = await DeployedContracts.BancorNetworkV2.deployed();
         networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
         poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
         bntBNT = await DeployedContracts.bnBNT.deployed();

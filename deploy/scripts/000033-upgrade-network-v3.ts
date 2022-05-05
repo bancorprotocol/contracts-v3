@@ -5,22 +5,22 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetworkV2.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
-    const vbnt = await DeployedContracts.VBNT.deployed();
-    const bntPool = await DeployedContracts.BNTPool.deployed();
-    const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+    const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettings.deployed();
+    const masterVault = await DeployedContracts.MasterVault.deployed();
+    const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
+    const bntBNT = await DeployedContracts.bnBNT.deployed();
 
     await upgradeProxy({
-        name: InstanceName.StandardRewards,
+        name: InstanceName.BancorNetwork,
         args: [
-            network.address,
-            networkSettings.address,
             bntGovernance.address,
-            vbnt.address,
-            bntPool.address,
-            externalRewardsVault.address
+            vbntGovernance.address,
+            networkSettings.address,
+            masterVault.address,
+            externalProtectionVault.address,
+            bntBNT.address
         ],
         from: deployer
     });

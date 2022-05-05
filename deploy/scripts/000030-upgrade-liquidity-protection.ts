@@ -69,7 +69,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         });
     }
 
-    const network = await DeployedContracts.BancorNetwork.deployed();
+    const network = await DeployedContracts.BancorNetworkV2.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
     const liquidityProtectionSettings = await DeployedContracts.LiquidityProtectionSettings.deployed();
     const liquidityProtectionStore = await DeployedContracts.LiquidityProtectionStore.deployed();

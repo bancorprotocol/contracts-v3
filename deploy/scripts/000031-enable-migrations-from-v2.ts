@@ -17,7 +17,7 @@ const func: DeployFunction = async () => {
 
     await fundAccount(foundationMultisig.address);
 
-    const network = await DeployedContracts.BancorNetwork.deployed();
+    const network = await DeployedContracts.BancorNetworkV2.deployed();
     const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
 
     // grant the BancorNetwork ROLE_MIGRATION_MANAGER role to the contract

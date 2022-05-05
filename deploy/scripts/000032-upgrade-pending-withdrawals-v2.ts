@@ -6,22 +6,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     const network = await DeployedContracts.BancorNetworkV2.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-    const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
-    const vbnt = await DeployedContracts.VBNT.deployed();
+    const bnt = await DeployedContracts.BNT.deployed();
     const bntPool = await DeployedContracts.BNTPool.deployed();
-    const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
 
     await upgradeProxy({
-        name: InstanceName.StandardRewards,
-        args: [
-            network.address,
-            networkSettings.address,
-            bntGovernance.address,
-            vbnt.address,
-            bntPool.address,
-            externalRewardsVault.address
-        ],
+        name: InstanceName.PendingWithdrawals,
+        args: [network.address, bnt.address, bntPool.address],
         from: deployer
     });
 

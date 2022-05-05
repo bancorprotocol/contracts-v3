@@ -13,7 +13,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
     const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
     const bntPool = await DeployedContracts.BNTPool.deployed();
-    const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+    const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
     const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
 
     await deployProxy({
