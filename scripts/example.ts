@@ -14,7 +14,7 @@ const main = async () => {
     const { linkWhale } = await getNamedSigners();
     const { link } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetworkV1.deployed();
+    const network = await DeployedContracts.BancorNetwork.deployed();
 
     const bnt = await DeployedContracts.BNT.deployed();
     const linkToken = await Contracts.ERC20.attach(link);
