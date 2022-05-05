@@ -128,7 +128,7 @@ const removeDepositLimits = async (tokens: string[]) => {
 
     const { daoMultisig } = await getNamedSigners();
 
-    const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+    const poolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
     for (const token of tokens) {
         await poolCollection.connect(daoMultisig).setDepositLimit(token, MAX_UINT256);
     }
@@ -157,7 +157,7 @@ const archiveArtifacts = async () => {
     const zip = new AdmZip();
 
     const srcDir = path.resolve(path.join(__dirname, './tenderly'));
-    const dest = path.resolve(path.join(__dirname, `../fork-${new Date().toISOString()}.zip`));
+    const dest = path.resolve(path.join(__dirname, `../fork-${tenderlyNetwork.getFork()}.zip`));
 
     zip.addLocalFolder(srcDir);
     zip.writeZip(dest);

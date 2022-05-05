@@ -27,7 +27,7 @@ import {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
-import LegacyContractsV3, { BancorNetworkV1 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { BancorNetworkV1, PoolCollectionType1V1 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
 import { MAX_UINT256, PoolType, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
@@ -984,9 +984,8 @@ describe('BancorNetwork', () => {
         });
     });
 
-    describe('migrate pool', () => {
+    describe('migrate pools', () => {
         let network: TestBancorNetwork;
-        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let bntPool: TestBNTPool;
@@ -994,9 +993,9 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let poolCollection: TestPoolCollection;
+        let prevPoolCollection: PoolCollectionType1V1;
         let poolMigrator: TestPoolMigrator;
-        let targetPoolCollection: TestPoolCollection;
+        let newPoolCollection: PoolCollection;
 
         const reserveTokenSymbol = [TokenSymbol.TKN, TokenSymbol.ETH, TokenSymbol.TKN];
         let reserveTokenAddresses: string[];
@@ -1011,14 +1010,12 @@ describe('BancorNetwork', () => {
         beforeEach(async () => {
             ({
                 network,
-                networkInfo,
                 networkSettings,
                 bnt,
                 bntPool,
                 masterVault,
                 externalProtectionVault,
                 pendingWithdrawals,
-                poolCollection,
                 poolMigrator,
                 poolTokenFactory
             } = await createSystem());
@@ -1027,39 +1024,45 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V1.deploy(
+                network.address,
+                bnt.address,
+                networkSettings.address,
+                masterVault.address,
+                bntPool.address,
+                externalProtectionVault.address,
+                poolTokenFactory.address,
+                poolMigrator.address
+            );
+
+            await network.addPoolCollection(prevPoolCollection.address);
+
             for (const symbol of reserveTokenSymbol) {
-                const { token } = await setupFundedPool(
-                    {
-                        tokenData: new TokenData(symbol),
-                        balance: INITIAL_LIQUIDITY,
-                        requestedLiquidity: INITIAL_LIQUIDITY.mul(1000),
-                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
-                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
-                    },
-                    deployer,
-                    network,
-                    networkInfo,
-                    networkSettings,
-                    poolCollection
-                );
+                const token = await createToken(new TokenData(symbol));
+                await createPool(token, network, networkSettings, prevPoolCollection);
+
+                await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                await prevPoolCollection.setDepositLimit(token.address, MAX_UINT256);
+
+                await depositToPool(deployer, token, INITIAL_LIQUIDITY, network);
+
+                await prevPoolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
 
                 reserveTokenAddresses.push(token.address);
             }
 
-            targetPoolCollection = await createPoolCollection(
-                network,
-                bnt,
-                networkSettings,
-                masterVault,
-                bntPool,
-                externalProtectionVault,
-                poolTokenFactory,
-                poolMigrator,
-                (await poolCollection.version()) + 1
+            newPoolCollection = await Contracts.PoolCollection.deploy(
+                network.address,
+                bnt.address,
+                networkSettings.address,
+                masterVault.address,
+                bntPool.address,
+                externalProtectionVault.address,
+                poolTokenFactory.address,
+                poolMigrator.address
             );
 
-            await network.addPoolCollection(targetPoolCollection.address);
-            await network.setLatestPoolCollection(targetPoolCollection.address);
+            await network.addPoolCollection(newPoolCollection.address);
 
             await network.setTime(await latest());
         });
@@ -1076,26 +1079,26 @@ describe('BancorNetwork', () => {
         });
 
         it('should migrate pools', async () => {
-            expect(await poolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
-            expect(await targetPoolCollection.poolCount()).to.equal(0);
+            expect(await prevPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
+            expect(await newPoolCollection.poolCount()).to.equal(0);
 
             for (const reserveTokenAddress of reserveTokenAddresses) {
-                expect(await network.collectionByPool(reserveTokenAddress)).to.equal(poolCollection.address);
+                expect(await network.collectionByPool(reserveTokenAddress)).to.equal(prevPoolCollection.address);
             }
 
             await network.migratePools(reserveTokenAddresses);
 
-            expect(await poolCollection.poolCount()).to.equal(0);
-            expect(await targetPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
+            expect(await prevPoolCollection.poolCount()).to.equal(0);
+            expect(await newPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
 
             for (const reserveTokenAddress of reserveTokenAddresses) {
                 const isNativeToken = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
 
-                expect(await network.collectionByPool(reserveTokenAddress)).to.equal(targetPoolCollection.address);
+                expect(await network.collectionByPool(reserveTokenAddress)).to.equal(newPoolCollection.address);
 
                 // perform deposit, withdraw, and trade sanity checks
                 const token = { address: reserveTokenAddress };
-                const pool = await targetPoolCollection.poolData(reserveTokenAddress);
+                const pool = await newPoolCollection.poolData(reserveTokenAddress);
                 const poolToken = await Contracts.PoolToken.attach(pool.poolToken);
 
                 const prevPoolTokenBalance = await poolToken.balanceOf(deployer.address);
@@ -4307,6 +4310,7 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario2');
         test('BancorNetworkSimpleFinancialScenario3');
         test('BancorNetworkSimpleFinancialScenario4');
+        test('BancorNetworkSimpleFinancialScenario5');
     });
 
     describe('@stress test', () => {

@@ -6,6 +6,7 @@ import Contracts, {
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
+    IPoolCollection,
     MasterVault,
     NetworkSettings,
     PoolMigrator,
@@ -277,7 +278,7 @@ export const createPool = async (
     reserveToken: TokenWithAddress,
     network: TestBancorNetwork,
     networkSettings: NetworkSettings,
-    poolCollection: TestPoolCollection
+    poolCollection: IPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 

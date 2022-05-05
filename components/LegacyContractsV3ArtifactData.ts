@@ -1,6 +1,7 @@
 import {
     BancorNetworkV1__factory,
     NetworkSettingsV1__factory,
+    PoolCollectionType1V1__factory,
     StandardRewardsV1__factory,
     StandardRewardsV2__factory
 } from '../deployments/mainnet/types';
@@ -27,6 +28,11 @@ const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
     StandardRewardsV2: {
         abi: StandardRewardsV2__factory.abi,
         bytecode: StandardRewardsV2__factory.bytecode
+    },
+
+    PoolCollectionType1V1: {
+        abi: PoolCollectionType1V1__factory.abi,
+        bytecode: PoolCollectionType1V1__factory.bytecode
     }
 };
 
