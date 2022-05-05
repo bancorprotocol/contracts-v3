@@ -18,7 +18,7 @@ describeDeployment(__filename, () => {
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
     });
 
-    it.only('should upgrade and configure the pending withdrawals contract', async () => {
+    it('should upgrade and configure the pending withdrawals contract', async () => {
         expect(await pendingWithdrawals.version()).to.equal(2);
 
         await expectRoleMembers(pendingWithdrawals, Roles.Upgradeable.ROLE_ADMIN, [deployer]);

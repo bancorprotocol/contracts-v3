@@ -13,10 +13,10 @@ describeDeployment(__filename, () => {
         network = await DeployedContracts.BancorNetwork.deployed();
     });
 
-    it.only('should upgrade and configure the network contract', async () => {
+    it('should upgrade and configure the network contract', async () => {
         expect(await network.version()).to.equal(3);
 
-        const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+        const poolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
 
         expect(await network.poolCollections()).to.include(poolCollection.address);
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);
