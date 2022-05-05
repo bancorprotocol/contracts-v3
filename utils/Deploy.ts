@@ -90,7 +90,7 @@ enum LegacyInstanceNameV2 {
     CheckpointStore = 'CheckpointStore'
 }
 
-enum LegacyInstanceName {
+enum LegacyInstanceNameV3 {
     PoolCollectionType1V1 = 'PoolCollectionType1V1'
 }
 
@@ -116,13 +116,17 @@ enum NewInstanceName {
     StandardRewards = 'StandardRewards'
 }
 
-export const InstanceName = {
+export const LegacyInstanceName = {
     ...LegacyInstanceNameV2,
+    ...LegacyInstanceNameV3
+};
+
+export const InstanceName = {
     ...LegacyInstanceName,
     ...NewInstanceName
 };
 
-export type InstanceName = NewInstanceName | LegacyInstanceName | LegacyInstanceNameV2;
+export type InstanceName = NewInstanceName | LegacyInstanceNameV2 | LegacyInstanceNameV3;
 
 const DeployedLegacyContractsV2 = {
     BNT: deployed<BNT>(InstanceName.BNT),

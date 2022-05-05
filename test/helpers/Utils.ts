@@ -26,7 +26,7 @@ export const getBalance = async (token: TokenWithAddress, account: string | Addr
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
         return ethers.provider.getBalance(accountAddress);
     }
-    return await (await Contracts.TestERC20Token.attach(tokenAddress)).balanceOf(accountAddress);
+    return await (await Contracts.ERC20.attach(tokenAddress)).balanceOf(accountAddress);
 };
 
 export const getBalances = async (tokens: TokenWithAddress[], account: string | Addressable) => {
@@ -49,9 +49,7 @@ export const transfer = async (
     if (tokenAddress === NATIVE_TOKEN_ADDRESS) {
         return await sourceAccount.sendTransaction({ to: targetAddress, value: amount });
     }
-    return await (await Contracts.TestERC20Token.attach(tokenAddress))
-        .connect(sourceAccount)
-        .transfer(targetAddress, amount);
+    return await (await Contracts.ERC20.attach(tokenAddress)).connect(sourceAccount).transfer(targetAddress, amount);
 };
 
 export const createWallet = async () => {
