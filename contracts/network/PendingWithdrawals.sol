@@ -369,7 +369,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
             timeElapsed: _time() - request.createdAt
         });
 
-        return request.reserveTokenAmount;
+        return request.poolTokenAmount;
     }
 
     /**

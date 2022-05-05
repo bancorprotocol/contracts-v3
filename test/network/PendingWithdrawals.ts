@@ -341,8 +341,8 @@ describe('PendingWithdrawals', () => {
                         );
                         const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
 
-                        const val = await network.connect(provider).callStatic.cancelWithdrawal(id);
-                        expect(val).to.equal(withdrawalRequest.reserveTokenAmount);
+                        const poolTokenAmount = await network.connect(provider).callStatic.cancelWithdrawal(id);
+                        expect(poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
 
                         const res = await network.connect(provider).cancelWithdrawal(id);
                         await expect(res)

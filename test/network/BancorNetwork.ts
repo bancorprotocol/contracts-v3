@@ -3879,8 +3879,8 @@ describe('BancorNetwork', () => {
 
             it('should cancel a pending withdrawal request', async () => {
                 const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-                const reserveTokenAmount = await network.connect(provider).callStatic.cancelWithdrawal(id);
-                expect(reserveTokenAmount).to.equal(withdrawalRequest.reserveTokenAmount);
+                const poolTokenAmount = await network.connect(provider).callStatic.cancelWithdrawal(id);
+                expect(poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
 
                 await network.connect(provider).cancelWithdrawal(id);
 

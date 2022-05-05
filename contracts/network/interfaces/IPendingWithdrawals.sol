@@ -65,7 +65,7 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev cancels a withdrawal request, and returns the number of reserve tokens associated with the withdrawal request
+     * @dev cancels a withdrawal request, and returns the number of pool tokens which were sent back to the provider
      *
      * requirements:
      *
