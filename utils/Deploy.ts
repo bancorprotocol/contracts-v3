@@ -384,8 +384,6 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
     };
 
-    console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
-
     const res = await deployContract(name, {
         contract: contractArtifactData || contractName,
         from,
@@ -395,6 +393,10 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
+
+    const newVersion = await (deployed as IVersioned).version();
+
+    console.log(`upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
     const data = { name, contract: contractName };
     saveTypes(data);
