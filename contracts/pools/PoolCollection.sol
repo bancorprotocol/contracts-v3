@@ -938,9 +938,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             assert(amounts.bntProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
 
             _bntPool.renounceFunding(contextId, pool, amounts.bntProtocolHoldingsDelta.value);
-        }
-
-        if (amounts.bntTradingLiquidityDelta.value > 0) {
+        } else if (amounts.bntTradingLiquidityDelta.value > 0) {
             if (amounts.bntTradingLiquidityDelta.isNeg) {
                 _bntPool.burnFromVault(amounts.bntTradingLiquidityDelta.value);
             } else {
