@@ -3,12 +3,9 @@ import {
     deploy,
     DeployedContracts,
     execute,
-    fundAccount,
-    getNamedSigners,
     grantRole,
     InstanceName,
     isLive,
-    isMainnetFork,
     revokeRole,
     setDeploymentMetadata
 } from '../../utils/Deploy';
@@ -42,31 +39,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         }
 
         return true;
-    }
-
-    // simulate all the required roles and permissions on a mainnet fork
-    if (isMainnetFork()) {
-        const { daoMultisig, foundationMultisig, deployer: deployerSigner } = await getNamedSigners();
-
-        await fundAccount(daoMultisig);
-        await fundAccount(foundationMultisig);
-
-        await legacyLiquidityProtection.connect(daoMultisig).transferOwnership(deployer);
-        await legacyLiquidityProtection.connect(deployerSigner).acceptOwnership();
-
-        await grantRole({
-            name: InstanceName.BNTGovernance,
-            id: Roles.TokenGovernance.ROLE_GOVERNOR,
-            member: deployer,
-            from: foundationMultisig.address
-        });
-
-        await grantRole({
-            name: InstanceName.VBNTGovernance,
-            id: Roles.TokenGovernance.ROLE_GOVERNOR,
-            member: deployer,
-            from: foundationMultisig.address
-        });
     }
 
     const network = await DeployedContracts.BancorNetworkV2.deployed();
@@ -169,6 +141,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
+    // replace the the contract registry
+    await execute({
+        name: InstanceName.ContractRegistry,
+        methodName: 'registerAddress',
+        args: [LegacyRegistry.LIQUIDITY_PROTECTION, liquidityProtection],
+        from: deployer
+    });
+
     // revoke the BNT ROLE_MINTER role from the legacy contract
     await revokeRole({
         name: InstanceName.BNTGovernance,
@@ -214,14 +194,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: InstanceName.LiquidityProtectionSystemStore,
         id: LegacyRoles.LiquidityProtectionSystemStore.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
-        from: deployer
-    });
-
-    // replace the the contract registry
-    await execute({
-        name: InstanceName.ContractRegistry,
-        methodName: 'registerAddress',
-        args: [LegacyRegistry.LIQUIDITY_PROTECTION, liquidityProtection],
         from: deployer
     });
 
