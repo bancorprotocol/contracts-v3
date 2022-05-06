@@ -1,6 +1,5 @@
 import {
     DeployedContracts,
-    fundAccount,
     getNamedSigners,
     setDeploymentMetadata
 } from '../../utils/Deploy';
@@ -8,9 +7,7 @@ import { Roles } from '../../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 
 const func: DeployFunction = async () => {
-    const { deployer, foundationMultisig } = await getNamedSigners();
-
-    await fundAccount(foundationMultisig.address);
+    const { deployer } = await getNamedSigners();
 
     const network = await DeployedContracts.BancorNetwork.deployed();
     const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
