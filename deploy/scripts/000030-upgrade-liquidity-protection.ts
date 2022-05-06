@@ -169,6 +169,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
+    // replace the the contract registry
+    await execute({
+        name: InstanceName.ContractRegistry,
+        methodName: 'registerAddress',
+        args: [LegacyRegistry.LIQUIDITY_PROTECTION, liquidityProtection],
+        from: deployer
+    });
+
     // revoke the BNT ROLE_MINTER role from the legacy contract
     await revokeRole({
         name: InstanceName.BNTGovernance,
@@ -214,14 +222,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: InstanceName.LiquidityProtectionSystemStore,
         id: LegacyRoles.LiquidityProtectionSystemStore.ROLE_OWNER,
         member: legacyLiquidityProtection.address,
-        from: deployer
-    });
-
-    // replace the the contract registry
-    await execute({
-        name: InstanceName.ContractRegistry,
-        methodName: 'registerAddress',
-        args: [LegacyRegistry.LIQUIDITY_PROTECTION, liquidityProtection],
         from: deployer
     });
 
