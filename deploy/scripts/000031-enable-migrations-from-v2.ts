@@ -2,17 +2,12 @@ import {
     DeployedContracts,
     fundAccount,
     getNamedSigners,
-    isMainnetFork,
     setDeploymentMetadata
 } from '../../utils/Deploy';
 import { Roles } from '../../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 
 const func: DeployFunction = async () => {
-    if (!isMainnetFork()) {
-        throw new Error('Unsupported network');
-    }
-
     const { deployer, foundationMultisig } = await getNamedSigners();
 
     await fundAccount(foundationMultisig.address);

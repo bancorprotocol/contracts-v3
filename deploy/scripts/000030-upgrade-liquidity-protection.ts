@@ -3,12 +3,9 @@ import {
     deploy,
     DeployedContracts,
     execute,
-    fundAccount,
-    getNamedSigners,
     grantRole,
     InstanceName,
     isLive,
-    isMainnetFork,
     revokeRole,
     setDeploymentMetadata
 } from '../../utils/Deploy';
@@ -40,8 +37,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         if (!(await vbntGovernance.hasRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer))) {
             throw new Error('Missing vBNT ROLE_GOVERNOR role!');
         }
-
-        return true;
     }
 
     const network = await DeployedContracts.BancorNetwork.deployed();
