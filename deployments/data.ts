@@ -73,6 +73,10 @@ export const ExternalContracts = {
         }
     ],
     deployments: {
+        [DeploymentNetwork.Mainnet]: [
+            `deployments/${DeploymentNetwork.Mainnet}`,
+            `deployments/${DeploymentNetwork.Mainnet}/v2`
+        ],
         [DeploymentNetwork.Tenderly]: [
             `deployments/${DeploymentNetwork.Tenderly}`,
             `deployments/${DeploymentNetwork.Tenderly}/v2`
