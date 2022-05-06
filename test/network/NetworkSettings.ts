@@ -1,17 +1,9 @@
 import Contracts, { IERC20, NetworkSettings, TestERC20Token } from '../../components/Contracts';
-import LegacyContractsV3, { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DEFAULT_FLASH_LOAN_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import {
-    createProxy,
-    createSystem,
-    createTestToken,
-    createToken,
-    TokenWithAddress,
-    upgradeProxy
-} from '../helpers/Factory';
+import { createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -66,53 +58,6 @@ describe('NetworkSettings', () => {
             const vortexRewards = await networkSettings.vortexRewards();
             expect(vortexRewards.burnRewardPPM).to.equal(0);
             expect(vortexRewards.burnRewardMaxAmount).to.equal(0);
-        });
-    });
-
-    describe('upgrade', () => {
-        const networkFeePPM = toPPM(33);
-        const withdrawalFeePPM = toPPM(1);
-        const minLiquidityForTrading = toWei(500_000);
-        const flashLoanPPM = toPPM(20);
-        const vortexRewards = {
-            burnRewardPPM: toPPM(10),
-            burnRewardMaxAmount: toWei(100)
-        };
-        const fundingLimit = toWei(100_000);
-
-        let networkSettings: NetworkSettingsV1;
-
-        beforeEach(async () => {
-            networkSettings = await createProxy(LegacyContractsV3.NetworkSettingsV1);
-
-            await networkSettings.setNetworkFeePPM(networkFeePPM);
-            await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
-            await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
-            await networkSettings.setFlashLoanFeePPM(flashLoanPPM);
-            await networkSettings.setVortexRewards(vortexRewards);
-            await networkSettings.addTokenToWhitelist(reserveToken.address);
-            await networkSettings.setFundingLimit(reserveToken.address, fundingLimit);
-        });
-
-        it('should upgrade and preserve existing settings', async () => {
-            const upgradedNetworkSettings = await upgradeProxy(networkSettings, Contracts.NetworkSettings, {
-                ctorArgs: [bnt.address]
-            });
-
-            expect(await upgradedNetworkSettings.networkFeePPM()).to.equal(networkFeePPM);
-            expect(await upgradedNetworkSettings.withdrawalFeePPM()).to.equal(withdrawalFeePPM);
-            expect(await upgradedNetworkSettings.minLiquidityForTrading()).to.equal(minLiquidityForTrading);
-
-            const newVortexRewards = await upgradedNetworkSettings.vortexRewards();
-            expect(newVortexRewards.burnRewardPPM).to.equal(vortexRewards.burnRewardPPM);
-            expect(newVortexRewards.burnRewardMaxAmount).to.equal(vortexRewards.burnRewardMaxAmount);
-
-            expect(await upgradedNetworkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
-            expect(await upgradedNetworkSettings.poolFundingLimit(reserveToken.address)).to.equal(fundingLimit);
-            expect(await upgradedNetworkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
-            expect(await upgradedNetworkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(
-                DEFAULT_FLASH_LOAN_FEE_PPM
-            );
         });
     });
 
