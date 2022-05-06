@@ -1,19 +1,25 @@
 import {
     DeployedContracts,
-    getNamedSigners,
+    grantRole,
+    InstanceName,
     setDeploymentMetadata
 } from '../../utils/Deploy';
 import { Roles } from '../../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { getNamedAccounts } from 'hardhat';
 
 const func: DeployFunction = async () => {
-    const { deployer } = await getNamedSigners();
+    const { deployer } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetwork.deployed();
     const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
 
-    // grant the BancorNetwork ROLE_MIGRATION_MANAGER role to the contract
-    await network.connect(deployer).grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
+    // grant the ROLE_MIGRATION_MANAGER role to the contract
+    await grantRole({
+        name: InstanceName.BancorNetwork,
+        id: Roles.BancorNetwork.ROLE_MIGRATION_MANAGER,
+        member: liquidityProtection.address,
+        from: deployer
+    });
 
     return true;
 };
