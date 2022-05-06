@@ -45,3 +45,5 @@ jobs:
 
       - name: Test deployment and network health
         run: yarn test:deploy
+        env:
+          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
