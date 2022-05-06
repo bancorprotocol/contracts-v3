@@ -88,6 +88,10 @@ export const ExternalContracts = {
             `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Hardhat}`,
             `deployments/${DeploymentNetwork.Mainnet}/v2`
         ],
+        [DeploymentNetwork.Mainnet]: [
+            `deployments/${DeploymentNetwork.Mainnet}`,
+            `deployments/${DeploymentNetwork.Mainnet}/v2`
+        ],
         [DeploymentNetwork.Tenderly]: [
             `deployments/${DeploymentNetwork.Tenderly}`,
             `deployments/${DeploymentNetwork.Tenderly}/v2`
