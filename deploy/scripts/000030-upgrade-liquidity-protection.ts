@@ -44,31 +44,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         return true;
     }
 
-    // simulate all the required roles and permissions on a mainnet fork
-    if (isMainnetFork()) {
-        const { daoMultisig, foundationMultisig, deployer: deployerSigner } = await getNamedSigners();
-
-        await fundAccount(daoMultisig);
-        await fundAccount(foundationMultisig);
-
-        await legacyLiquidityProtection.connect(daoMultisig).transferOwnership(deployer);
-        await legacyLiquidityProtection.connect(deployerSigner).acceptOwnership();
-
-        await grantRole({
-            name: InstanceName.BNTGovernance,
-            id: Roles.TokenGovernance.ROLE_GOVERNOR,
-            member: deployer,
-            from: foundationMultisig.address
-        });
-
-        await grantRole({
-            name: InstanceName.VBNTGovernance,
-            id: Roles.TokenGovernance.ROLE_GOVERNOR,
-            member: deployer,
-            from: foundationMultisig.address
-        });
-    }
-
     const network = await DeployedContracts.BancorNetwork.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
     const liquidityProtectionSettings = await DeployedContracts.LiquidityProtectionSettings.deployed();
