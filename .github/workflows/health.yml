@@ -45,5 +45,3 @@ jobs:
 
       - name: Test deployment and network health
         run: yarn test:deploy
-        env:
-          ETHEREUM_PROVIDER_URL: ${{ secrets.HEALTH_CHECKS_ETHEREUM_PROVIDER_URL }}

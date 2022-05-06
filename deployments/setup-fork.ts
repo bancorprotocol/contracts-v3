@@ -51,7 +51,8 @@ const createTenderlyFork = async () => {
 const setForkId = (forkId: string) => {
     tenderlyNetwork.setFork(forkId);
 
-    (network.config as HttpNetworkUserConfig).url = `https://rpc.tenderly.co/fork/${forkId}`;
+    const networkConfig = network.config as HttpNetworkUserConfig;
+    networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
 };
 
 interface FundingRequest {

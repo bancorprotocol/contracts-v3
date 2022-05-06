@@ -65,11 +65,11 @@ const {
 } = deployments;
 
 interface EnvOptions {
-    FORKING?: boolean;
     TENDERLY_FORK_ID?: string;
+    TEMP_FORK?: boolean;
 }
 
-const { FORKING: isForking, TENDERLY_FORK_ID }: EnvOptions = process.env as any as EnvOptions;
+const { TENDERLY_FORK_ID: forkId, TEMP_FORK: isTempFork }: EnvOptions = process.env as any as EnvOptions;
 
 const deployed = <F extends Contract>(name: InstanceName) => ({
     deployed: async () => ethers.getContract<F>(name)
@@ -187,10 +187,8 @@ export const DeployedContracts = {
     ...DeployedNewContracts
 };
 
-export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
-export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
-export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
+export const isMainnetFork = () => isTenderlyFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
 export const isRinkeby = () => getNetworkName() === DeploymentNetwork.Rinkeby;
 export const isLive = () => (isMainnet() && !isMainnetFork()) || isRinkeby();
@@ -534,12 +532,12 @@ interface ContractData {
 
 const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isTenderlyFork()) {
+    if (!isTenderlyFork() || isTempFork) {
         return;
     }
 
     const tenderlyNetwork = tenderly.network();
-    tenderlyNetwork.setFork(TENDERLY_FORK_ID);
+    tenderlyNetwork.setFork(forkId);
 
     const { name, contract, address, proxy, implementation } = deployment;
 
@@ -561,7 +559,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
     });
 
     for (const contract of contracts) {
-        console.log('verifying (Tenderly fork)', contract.name, 'at', contract.address);
+        console.log('verifying on tenderly', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }
