@@ -1,27 +1,20 @@
-import {
-    DeployedContracts,
-    fundAccount,
-    getNamedSigners,
-    isMainnetFork,
-    setDeploymentMetadata
-} from '../../utils/Deploy';
+import { DeployedContracts, grantRole, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
 import { Roles } from '../../utils/Roles';
+import { getNamedAccounts } from 'hardhat';
 import { DeployFunction } from 'hardhat-deploy/types';
 
 const func: DeployFunction = async () => {
-    if (!isMainnetFork()) {
-        throw new Error('Unsupported network');
-    }
+    const { deployer } = await getNamedAccounts();
 
-    const { deployer, foundationMultisig } = await getNamedSigners();
-
-    await fundAccount(foundationMultisig.address);
-
-    const network = await DeployedContracts.BancorNetworkV2.deployed();
     const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
 
-    // grant the BancorNetwork ROLE_MIGRATION_MANAGER role to the contract
-    await network.connect(deployer).grantRole(Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, liquidityProtection.address);
+    // grant the ROLE_MIGRATION_MANAGER role to the contract
+    await grantRole({
+        name: InstanceName.BancorNetwork,
+        id: Roles.BancorNetwork.ROLE_MIGRATION_MANAGER,
+        member: liquidityProtection.address,
+        from: deployer
+    });
 
     return true;
 };

@@ -31,7 +31,7 @@
     "test:ci": "CI=1 yarn test",
     "test:nightly": "NIGHTLY=1 CI=1 NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
     "test:deploy": "yarn deploy:prepare:fork && TEMP_FORK=1 HARDHAT_NETWORK=tenderly mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 --bail 'deploy/tests/**/*.ts'",
-    "deploy:prepare": "rm -rf ./node_modules && yarn && yarn rebuild",
+    "deploy:prepare": "rm -rf ./node_modules && rm yarn.lock && yarn && yarn rebuild",
     "deploy:prepare:fork": "rm -rf deployments/tenderly && cp -rf deployments/mainnet/. deployments/tenderly",
     "deploy:mainnet": "HARDHAT_NETWORK=mainnet hardhat deploy",
     "deploy:rinkeby": "HARDHAT_NETWORK=rinkeby hardhat deploy",
