@@ -258,8 +258,6 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         const depositTKN = async (token: string, tokenWhale: SignerWithAddress, depositAmount: BigNumber) => {
-            await stabilizePool(token, tokenWhale);
-
             const isNativeToken = token === NATIVE_TOKEN_ADDRESS;
 
             if (!isNativeToken) {
@@ -312,6 +310,8 @@ import { getNamedAccounts } from 'hardhat';
                     const tknDepositAmount = toWei(1000);
 
                     for (const { token, whale } of Object.values(pools)) {
+                        await stabilizePool(token, whale);
+
                         for (let i = 0; i < 5; i++) {
                             const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
 
@@ -329,7 +329,7 @@ import { getNamedAccounts } from 'hardhat';
                                     d: liquidity.baseTokenTradingLiquidity
                                 },
                                 {
-                                    maxRelativeError: new Decimal('0.0000000000000000001')
+                                    maxRelativeError: new Decimal(i === 0 ? '0.01' : '0.0000000000000000001')
                                 }
                             );
                         }
@@ -567,6 +567,8 @@ import { getNamedAccounts } from 'hardhat';
                 context('with some deposits', () => {
                     beforeEach(async () => {
                         const { ethWhale } = await getNamedSigners();
+
+                        await stabilizePool(NATIVE_TOKEN_ADDRESS, ethWhale);
 
                         await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(1000));
                     });
