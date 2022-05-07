@@ -6,7 +6,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetworkV1.deployed();
+    const network = await DeployedContracts.BancorNetworkV2.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();

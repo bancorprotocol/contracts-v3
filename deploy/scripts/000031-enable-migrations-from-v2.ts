@@ -1,12 +1,7 @@
-import {
-    DeployedContracts,
-    grantRole,
-    InstanceName,
-    setDeploymentMetadata
-} from '../../utils/Deploy';
+import { DeployedContracts, grantRole, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
 import { Roles } from '../../utils/Roles';
-import { DeployFunction } from 'hardhat-deploy/types';
 import { getNamedAccounts } from 'hardhat';
+import { DeployFunction } from 'hardhat-deploy/types';
 
 const func: DeployFunction = async () => {
     const { deployer } = await getNamedAccounts();

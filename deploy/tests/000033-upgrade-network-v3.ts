@@ -1,4 +1,4 @@
-import { BancorNetworkV2 } from '../../components/LegacyContractsV3';
+import { BancorNetwork } from '../../components/Contracts';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { PoolType } from '../../utils/Constants';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -7,16 +7,16 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
-    let network: BancorNetworkV2;
+    let network: BancorNetwork;
 
     beforeEach(async () => {
-        network = await DeployedContracts.BancorNetworkV2.deployed();
+        network = await DeployedContracts.BancorNetwork.deployed();
     });
 
     it('should upgrade and configure the network contract', async () => {
-        expect(await network.version()).to.equal(2);
+        expect(await network.version()).to.equal(3);
 
-        const poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+        const poolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
 
         expect(await network.poolCollections()).to.include(poolCollection.address);
         expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(poolCollection.address);

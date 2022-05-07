@@ -1,15 +1,15 @@
-import { BancorNetwork } from '../../components/Contracts';
 import { LiquidityProtection } from '../../components/LegacyContracts';
+import { BancorNetworkV2 } from '../../components/LegacyContractsV3';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts } from '../../utils/Deploy';
 
 describeDeployment(__filename, () => {
-    let network: BancorNetwork;
+    let network: BancorNetworkV2;
     let liquidityProtection: LiquidityProtection;
 
     beforeEach(async () => {
-        network = await DeployedContracts.BancorNetwork.deployed();
+        network = await DeployedContracts.BancorNetworkV2.deployed();
         liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
     });
 

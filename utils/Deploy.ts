@@ -36,7 +36,9 @@ import {
 } from '../components/LegacyContracts';
 import {
     BancorNetworkV1,
+    BancorNetworkV2,
     NetworkSettingsV1,
+    PendingWithdrawalsV1,
     PoolCollectionType1V1,
     StandardRewardsV1,
     StandardRewardsV2
@@ -63,11 +65,11 @@ const {
 } = deployments;
 
 interface EnvOptions {
-    FORKING?: boolean;
     TENDERLY_FORK_ID?: string;
+    TEMP_FORK?: boolean;
 }
 
-const { FORKING: isForking, TENDERLY_FORK_ID }: EnvOptions = process.env as any as EnvOptions;
+const { TENDERLY_FORK_ID: forkId, TEMP_FORK: isTempFork }: EnvOptions = process.env as any as EnvOptions;
 
 const deployed = <F extends Contract>(name: InstanceName) => ({
     deployed: async () => ethers.getContract<F>(name)
@@ -149,9 +151,11 @@ const DeployedLegacyContractsV2 = {
 
 const DeployedLegacyContracts = {
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
+    BancorNetworkV2: deployed<BancorNetworkV2>(InstanceName.BancorNetwork),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
     StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
     StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards),
+    PendingWithdrawalsV1: deployed<PendingWithdrawalsV1>(InstanceName.PendingWithdrawals),
     PoolCollectionType1V1: deployed<PoolCollectionType1V1>(InstanceName.PoolCollectionType1V1)
 };
 
@@ -183,10 +187,8 @@ export const DeployedContracts = {
     ...DeployedNewContracts
 };
 
-export const isHardhat = () => getNetworkName() === DeploymentNetwork.Hardhat;
-export const isHardhatMainnetFork = () => isHardhat() && isForking!;
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
-export const isMainnetFork = () => isHardhatMainnetFork() || isTenderlyFork();
+export const isMainnetFork = () => isTenderlyFork();
 export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
 export const isRinkeby = () => getNetworkName() === DeploymentNetwork.Rinkeby;
 export const isLive = () => (isMainnet() && !isMainnetFork()) || isRinkeby();
@@ -380,8 +382,6 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
     };
 
-    console.log(`upgrading proxy ${contractName} V${prevVersion} as ${name}`);
-
     const res = await deployContract(name, {
         contract: contractArtifactData || contractName,
         from,
@@ -391,6 +391,10 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         waitConfirmations: WAIT_CONFIRMATIONS,
         log: true
     });
+
+    const newVersion = await (deployed as IVersioned).version();
+
+    console.log(`upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
     const data = { name, contract: contractName };
     saveTypes(data);
@@ -528,12 +532,12 @@ interface ContractData {
 
 const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isTenderlyFork()) {
+    if (!isTenderlyFork() || isTempFork) {
         return;
     }
 
     const tenderlyNetwork = tenderly.network();
-    tenderlyNetwork.setFork(TENDERLY_FORK_ID);
+    tenderlyNetwork.setFork(forkId);
 
     const { name, contract, address, proxy, implementation } = deployment;
 
@@ -555,7 +559,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
     });
 
     for (const contract of contracts) {
-        console.log('verifying (Tenderly fork)', contract.name, 'at', contract.address);
+        console.log('verifying on tenderly', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }

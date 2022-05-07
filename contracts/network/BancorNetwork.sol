@@ -297,7 +297,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**

@@ -1,17 +1,6 @@
 import { DeploymentNetwork } from '../utils/Constants';
 
-interface EnvOptions {
-    FORKING?: boolean;
-}
-
-const { FORKING: isForking }: EnvOptions = process.env as any as EnvOptions;
-
-const counters = {
-    [DeploymentNetwork.Hardhat]: 0
-};
-
-const mainnet = (address: string, fallback?: string) => ({
-    [DeploymentNetwork.Hardhat]: isForking ? address : fallback || counters[DeploymentNetwork.Hardhat]++,
+const mainnet = (address: string) => ({
     [DeploymentNetwork.Mainnet]: address,
     [DeploymentNetwork.Tenderly]: address
 });
@@ -84,10 +73,6 @@ export const ExternalContracts = {
         }
     ],
     deployments: {
-        [DeploymentNetwork.Hardhat]: [
-            `deployments/${isForking ? DeploymentNetwork.Mainnet : DeploymentNetwork.Hardhat}`,
-            `deployments/${DeploymentNetwork.Mainnet}/v2`
-        ],
         [DeploymentNetwork.Mainnet]: [
             `deployments/${DeploymentNetwork.Mainnet}`,
             `deployments/${DeploymentNetwork.Mainnet}/v2`

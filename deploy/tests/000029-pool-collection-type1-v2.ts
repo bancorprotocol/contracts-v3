@@ -17,7 +17,7 @@ describeDeployment(__filename, () => {
     let newPoolCollection: PoolCollection;
 
     beforeEach(async () => {
-        network = await DeployedContracts.BancorNetworkV1.deployed();
+        network = await DeployedContracts.BancorNetworkV2.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
