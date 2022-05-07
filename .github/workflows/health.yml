@@ -47,4 +47,5 @@ jobs:
         run: yarn test:deploy
         env:
           TENDERLY_TEMP_PROJECT: v3-temp-forks
+          TENDERLY_USERNAME: bancor
           TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
