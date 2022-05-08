@@ -879,13 +879,24 @@ describe('AutoCompoundingRewards', () => {
                         }
                     };
 
-                    const createPrograms = async (overrideTotalRewards = false) => {
+                    const createPrograms = async (overrideTotalRewards = false, overrideStakedBalance = false) => {
                         for (const [index, setup] of setups.entries()) {
                             ({ token: tokens[index], poolToken: poolTokens[index] } = await prepareSimplePool(
                                 new TokenData(setup.tokenSymbol),
                                 setup.initialUserStake,
                                 setup.totalRewards
                             ));
+
+                            // overriding the staked balance of each pool with a value twice as large
+                            // reduces the amount of pool tokens which will be burned when rewards are processed
+                            if (overrideStakedBalance) {
+                                const poolData = await poolCollection.poolData(tokens[index].address);
+                                await poolCollection.setTradingLiquidityT(tokens[index].address, {
+                                    bntTradingLiquidity: poolData.liquidity.bntTradingLiquidity,
+                                    baseTokenTradingLiquidity: poolData.liquidity.baseTokenTradingLiquidity,
+                                    stakedBalance: poolData.liquidity.stakedBalance.mul(2)
+                                });
+                            }
 
                             // when `overrideTotalRewards == true`, using `index + 1` as the total rewards value
                             // yields some cases where the total amount of tokens to distribute is equal to zero
@@ -927,8 +938,21 @@ describe('AutoCompoundingRewards', () => {
                             }
                         });
 
-                        it('should distribute tokens only when the distribution amount is larger than zero', async () => {
-                            await createPrograms(true); // override the total rewards of each program with a very small value
+                        it('should distribute tokens only when the amount of tokens to distribute is larger than zero', async () => {
+                            // override the total rewards of each program with a very small value
+                            await createPrograms(true);
+                            for (let i = 0; i < 5; i++) {
+                                await autoCompoundingRewards.setTime(
+                                    Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
+                                );
+                                await autoProcessSomeRewards(i);
+                            }
+                        });
+
+                        it('should distribute tokens only when the amount of pool tokens to burn is larger than zero', async () => {
+                            // override the total rewards of each program with a very small value
+                            // override the staked balance of each pool with a much larger value
+                            await createPrograms(true, true);
                             for (let i = 0; i < 5; i++) {
                                 await autoCompoundingRewards.setTime(
                                     Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
