@@ -15,7 +15,7 @@ describeDeployment(
         });
 
         beforeEach(async () => {
-            poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+            poolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
         });
 
         it('should transfer the ownership of the pool collection contract', async () => {

@@ -174,16 +174,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     event PoolCreated(IPoolToken indexed poolToken, Token indexed token);
 
     /**
-     * @dev triggered when a pool is migrated into this pool collection
-     */
-    event PoolMigratedIn(Token indexed token);
-
-    /**
-     * @dev triggered when a pool is migrated out of this pool collection
-     */
-    event PoolMigratedOut(Token indexed token);
-
-    /**
      * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
@@ -304,7 +294,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 1;
+        return 2;
     }
 
     /**
@@ -868,8 +858,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _addPool(pool, data);
 
         data.poolToken.acceptOwnership();
-
-        emit PoolMigratedIn({ token: pool });
     }
 
     /**
@@ -889,8 +877,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _removePool(pool);
 
         cachedPoolToken.transferOwnership(address(targetPoolCollection));
-
-        emit PoolMigratedOut({ token: pool });
     }
 
     /**
@@ -1011,9 +997,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             assert(amounts.bntProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
 
             _bntPool.renounceFunding(contextId, pool, amounts.bntProtocolHoldingsDelta.value);
-        }
-
-        if (amounts.bntTradingLiquidityDelta.value > 0) {
+        } else if (amounts.bntTradingLiquidityDelta.value > 0) {
             if (amounts.bntTradingLiquidityDelta.isNeg) {
                 _bntPool.burnFromVault(amounts.bntTradingLiquidityDelta.value);
             } else {

@@ -6,6 +6,7 @@ import Contracts, {
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
+    IPoolCollection,
     MasterVault,
     NetworkSettings,
     PoolMigrator,
@@ -277,7 +278,7 @@ export const createPool = async (
     reserveToken: TokenWithAddress,
     network: TestBancorNetwork,
     networkSettings: NetworkSettings,
-    poolCollection: TestPoolCollection
+    poolCollection: IPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 
@@ -530,10 +531,7 @@ export const createToken = async (
 
         case TokenSymbol.TKN:
         case TokenSymbol.TKN1:
-        case TokenSymbol.TKN2:
-        case TokenSymbol.TKN3:
-        case TokenSymbol.TKN4:
-        case TokenSymbol.TKN5: {
+        case TokenSymbol.TKN2: {
             const token = await (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
                 tokenData.name(),
                 tokenData.symbol(),

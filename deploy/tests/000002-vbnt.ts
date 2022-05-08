@@ -1,8 +1,8 @@
 import { AccessControlEnumerable } from '../../components/Contracts';
-import { TokenGovernance, VBNT } from '../../components/LegacyContracts';
+import { LiquidityProtection, TokenGovernance, VBNT } from '../../components/LegacyContracts';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
-import { DeployedContracts, isMainnet, isMainnetFork } from '../../utils/Deploy';
+import { DeployedContracts, isMainnet } from '../../utils/Deploy';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expect } from 'chai';
@@ -12,7 +12,7 @@ describeDeployment(__filename, () => {
     let deployer: string;
     let deployerV2: string;
     let foundationMultisig: string;
-    let liquidityProtection: string;
+    let legacyLiquidityProtection: LiquidityProtection;
     let vbnt: VBNT;
     let vbntGovernance: TokenGovernance;
 
@@ -20,12 +20,13 @@ describeDeployment(__filename, () => {
     const vbntData = new TokenData(TokenSymbol.vBNT);
 
     before(async () => {
-        ({ deployer, deployerV2, foundationMultisig, liquidityProtection } = await getNamedAccounts());
+        ({ deployer, deployerV2, foundationMultisig } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
         vbnt = await DeployedContracts.VBNT.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
+        legacyLiquidityProtection = await DeployedContracts.LegacyLiquidityProtection.deployed();
     });
 
     it('should deploy the VBNT contract', async () => {
@@ -41,7 +42,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_SUPERVISOR,
-            [isMainnetFork() ? foundationMultisig : deployer]
+            [foundationMultisig]
         );
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
@@ -51,7 +52,7 @@ describeDeployment(__filename, () => {
         await expectRoleMembers(
             vbntGovernance as any as AccessControlEnumerable,
             Roles.TokenGovernance.ROLE_MINTER,
-            isMainnet() ? [liquidityProtection] : []
+            isMainnet() ? [legacyLiquidityProtection.address] : []
         );
     });
 

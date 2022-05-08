@@ -1,10 +1,40 @@
-import { grantRole, InstanceName, isLive, revokeRole, setDeploymentMetadata } from '../../utils/Deploy';
+import {
+    execute,
+    grantRole,
+    InstanceName,
+    isLive,
+    renounceRole,
+    revokeRole,
+    setDeploymentMetadata
+} from '../../utils/Deploy';
 import { Roles } from '../../utils/Roles';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, daoMultisig } = await getNamedAccounts();
+
+    // initiate ownership transfer of the LiquidityProtection contract to the DAO
+    await execute({
+        name: InstanceName.LiquidityProtection,
+        methodName: 'transferOwnership',
+        args: [daoMultisig],
+        from: deployer
+    });
+
+    // renounce the BNT ROLE_GOVERNOR role from the deployer
+    await renounceRole({
+        name: InstanceName.BNTGovernance,
+        id: Roles.TokenGovernance.ROLE_GOVERNOR,
+        from: deployer
+    });
+
+    // renounce the VBNT ROLE_GOVERNOR role from the deployer
+    await renounceRole({
+        name: InstanceName.VBNTGovernance,
+        id: Roles.TokenGovernance.ROLE_GOVERNOR,
+        from: deployer
+    });
 
     for (const name of [
         InstanceName.BancorNetworkInfo,

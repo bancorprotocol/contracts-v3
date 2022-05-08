@@ -19,7 +19,6 @@ interface EnvOptions {
     ETHEREUM_PROVIDER_URL?: string;
     ETHEREUM_RINKEBY_PROVIDER_URL?: string;
     ETHERSCAN_API_KEY?: string;
-    FORKING?: boolean;
     GAS_PRICE?: number | 'auto';
     NIGHTLY?: boolean;
     PROFILE?: boolean;
@@ -32,7 +31,6 @@ const {
     ETHEREUM_PROVIDER_URL = '',
     ETHEREUM_RINKEBY_PROVIDER_URL = '',
     ETHERSCAN_API_KEY,
-    FORKING: isForking,
     GAS_PRICE: gasPrice = 'auto',
     NIGHTLY: isNightly,
     PROFILE: isProfiling,
@@ -74,31 +72,13 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        [DeploymentNetwork.Hardhat]: isForking
-            ? /* eslint-disable indent */
-              {
-                  chainId: 1,
-                  forking: {
-                      enabled: true,
-                      url: ETHEREUM_PROVIDER_URL
-                  },
-                  saveDeployments: true,
-                  live: true
-              }
-            : {
-                  accounts: {
-                      count: 20,
-                      accountsBalance: '10000000000000000000000000000000000000000000000'
-                  },
-                  allowUnlimitedContractSize: true,
-                  saveDeployments: false,
-                  live: false
-              },
-        /* eslint-enable indent */
-        [DeploymentNetwork.Localhost]: {
-            chainId: 31337,
-            url: 'http://127.0.0.1:8545',
-            saveDeployments: true,
+        [DeploymentNetwork.Hardhat]: {
+            accounts: {
+                count: 20,
+                accountsBalance: '10000000000000000000000000000000000000000000000'
+            },
+            allowUnlimitedContractSize: true,
+            saveDeployments: false,
             live: false
         },
         [DeploymentNetwork.Mainnet]: {

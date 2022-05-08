@@ -4,13 +4,12 @@ import {
     ExternalProtectionVault,
     ExternalRewardsVault,
     MasterVault,
-    PendingWithdrawals,
     PoolMigrator,
     PoolToken,
     ProxyAdmin
 } from '../../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
-import { BancorNetworkV1, NetworkSettingsV1 } from '../../components/LegacyContractsV3';
+import { BancorNetworkV1, NetworkSettingsV1, PendingWithdrawalsV1 } from '../../components/LegacyContractsV3';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -31,7 +30,7 @@ describeDeployment(__filename, () => {
     let externalRewardsVault: ExternalRewardsVault;
     let bntPool: BNTPool;
     let bnBNT: PoolToken;
-    let pendingWithdrawals: PendingWithdrawals;
+    let pendingWithdrawals: PendingWithdrawalsV1;
     let poolMigrator: PoolMigrator;
 
     let networkInfo: BancorNetworkInfo;
@@ -53,7 +52,7 @@ describeDeployment(__filename, () => {
         externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         bnBNT = await DeployedContracts.bnBNT.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
         poolMigrator = await DeployedContracts.PoolMigrator.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
     });
