@@ -1954,7 +1954,8 @@ describe('PoolCollection', () => {
             balanceOfMasterVault: BigNumber,
             balanceOfExternalProtectionVault: BigNumber,
             tradingFeePPM: number,
-            withdrawalFeePPM: number
+            withdrawalFeePPM: number,
+            tradingLiquidityState = TradingLiquidityState.Update
         ) => {
             ({ network, bnt, networkSettings, masterVault, externalProtectionVault, bntPool, poolCollection } =
                 await createSystem());
@@ -1996,7 +1997,11 @@ describe('PoolCollection', () => {
 
             await poolCollection.enableTrading(token.address, bntTradingLiquidity, baseTokenTradingLiquidity);
 
-            await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, TradingLiquidityState.Update);
+            if (tradingLiquidityState === TradingLiquidityState.Reset) {
+                await networkSettings.setMinLiquidityForTrading(bntTradingLiquidity.mul(2));
+            }
+
+            await withdrawAndVerifyState(poolTokenAmount, withdrawalFeePPM, tradingLiquidityState);
         };
 
         describe('quick withdrawal test', async () => {
@@ -2012,6 +2017,22 @@ describe('PoolCollection', () => {
                     toWei(1).div(10),
                     toPPM(1),
                     toPPM(1)
+                );
+            });
+
+            it('BNT - mint for provider, renounce all from protocol; TKN - transfer from MV and from EPV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1).div(10),
+                    toPPM(1),
+                    toPPM(1),
+                    TradingLiquidityState.Reset
                 );
             });
 
@@ -2042,6 +2063,22 @@ describe('PoolCollection', () => {
                     toWei(1000),
                     toPPM(1),
                     toPPM(1)
+                );
+            });
+
+            it('BNT - renounce all from protocol; TKN - transfer from MV and from EPV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(1).div(10),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toWei(1000),
+                    toPPM(1),
+                    toPPM(1),
+                    TradingLiquidityState.Reset
                 );
             });
 
