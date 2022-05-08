@@ -51,8 +51,9 @@ import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
-import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
+import { config, deployments, ethers, getNamedAccounts, network, tenderly } from 'hardhat';
 import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
+import { HttpNetworkUserConfig } from 'hardhat/types';
 import path from 'path';
 
 const {
@@ -65,16 +66,19 @@ const {
     run
 } = deployments;
 
+const tenderlyNetwork = tenderly.network();
+
 interface EnvOptions {
     TENDERLY_FORK_ID?: string;
+    TENDERLY_PROJECT: string;
     TEMP_FORK?: boolean;
 }
 
-const { TENDERLY_FORK_ID: forkId, TEMP_FORK: isTempFork }: EnvOptions = process.env as any as EnvOptions;
-
-const deployed = <F extends Contract>(name: InstanceName) => ({
-    deployed: async () => ethers.getContract<F>(name)
-});
+let {
+    TENDERLY_FORK_ID: forkId,
+    TENDERLY_PROJECT,
+    TEMP_FORK: isTempFork
+}: EnvOptions = process.env as any as EnvOptions;
 
 enum LegacyInstanceNameV2 {
     BNT = 'BNT',
@@ -132,6 +136,10 @@ export const InstanceName = {
 };
 
 export type InstanceName = NewInstanceName | LegacyInstanceNameV2 | LegacyInstanceNameV3;
+
+const deployed = <F extends Contract>(name: InstanceName) => ({
+    deployed: async () => ethers.getContract<F>(name)
+});
 
 const DeployedLegacyContractsV2 = {
     BNT: deployed<BNT>(InstanceName.BNT),
@@ -191,6 +199,22 @@ export const DeployedContracts = {
     ...DeployedLegacyContracts,
     ...DeployedNewContracts
 };
+
+export const createTenderlyFork = async (projectName?: string) => {
+    config.tenderly.project = projectName || TENDERLY_PROJECT;
+
+    await tenderlyNetwork.initializeFork();
+    forkId = tenderlyNetwork.getFork()!;
+    tenderlyNetwork.setFork(forkId);
+
+    console.log(`Created temporary fork: ${forkId}`);
+    console.log();
+
+    const networkConfig = network.config as HttpNetworkUserConfig;
+    networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
+};
+
+export const getForkId = () => forkId;
 
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isTenderlyFork();
@@ -537,14 +561,11 @@ interface ContractData {
     address: Address;
 }
 
-const verifyTenderlyFork = async (deployment: Deployment) => {
+export const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
     if (!isTenderlyFork() || isTempFork) {
         return;
     }
-
-    const tenderlyNetwork = tenderly.network();
-    tenderlyNetwork.setFork(forkId);
 
     const { name, contract, address, proxy, implementation } = deployment;
 
