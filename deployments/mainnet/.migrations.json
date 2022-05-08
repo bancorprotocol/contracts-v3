@@ -14,7 +14,7 @@
   "000013-pool-collection-upgrader": 1650288159,
   "000014-network": 1650288370,
   "000015-network-info": 1650288471,
-  "000016-pool-collection-type-1": 1650288570,
+  "000016-pool-collection-type1-v1": 1650288570,
   "000017-v1-migration": 1650288602,
   "000018-bancor-portal": 1650288721,
   "000019-standard-staking-rewards": 1650288850,
@@ -26,5 +26,8 @@
   "000025-create-beta-rewards-programs": 1650315105,
   "000026-upgrade-standard-rewards-v2": 1650347434,
   "000027-enable-beta-trading": 1650475289,
-  "000028-upgrade-standard-rewards-v3": 1650484275
+  "000028-upgrade-standard-rewards-v3": 1650484275,
+  "000029-pool-collection-type1-v2": 1651709798,
+  "000030-upgrade-liquidity-protection": 1651861607,
+  "000031-enable-migrations-from-v2": 1651861848
 }

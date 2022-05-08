@@ -41,7 +41,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         }
     };
 
-    const network = await DeployedContracts.BancorNetwork.deployed();
+    const network = await DeployedContracts.BancorNetworkV2.deployed();
     const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
 
     for (const [tokenSymbol, { address, whale }] of Object.entries(BETA_TOKENS)) {

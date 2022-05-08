@@ -71,7 +71,7 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await pendingWithdrawals.version()).to.equal(1);
+            expect(await pendingWithdrawals.version()).to.equal(2);
 
             await expectRoles(pendingWithdrawals, Roles.Upgradeable);
 
@@ -340,6 +340,9 @@ describe('PendingWithdrawals', () => {
                             provider.address
                         );
                         const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+
+                        const poolTokenAmount = await network.connect(provider).callStatic.cancelWithdrawal(id);
+                        expect(poolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
 
                         const res = await network.connect(provider).cancelWithdrawal(id);
                         await expect(res)

@@ -304,7 +304,7 @@ describe('PoolCollection', () => {
                 poolTokenFactory.address,
                 poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(1);
+            expect(await poolCollection.version()).to.equal(2);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -1569,6 +1569,7 @@ describe('PoolCollection', () => {
             const prevPoolTokenTotalSupply = await poolToken.totalSupply();
             const prevNetworkPoolTokenBalance = await poolToken.balanceOf(network.address);
             const prevProviderBalance = await getBalance(token, provider);
+            const prevMasterVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
             const expectedStakedBalance = prevLiquidity.stakedBalance
                 .mul(prevPoolTokenTotalSupply.sub(poolTokenAmount))
@@ -1578,6 +1579,12 @@ describe('PoolCollection', () => {
             const expectedWithdrawalFee = underlyingAmount.mul(withdrawalFeePPM).div(PPM_RESOLUTION);
 
             const poolWithdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
+
+            const bntAmountRenouncedOnResetLiquidity = poolWithdrawalAmounts.newBNTTradingLiquidity.lt(
+                await networkSettings.minLiquidityForTrading()
+            )
+                ? poolWithdrawalAmounts.newBNTTradingLiquidity
+                : BigNumber.from(0);
 
             expect(expectedWithdrawalFee).to.almostEqual(poolWithdrawalAmounts.baseTokensWithdrawalFee, {
                 maxAbsoluteError: new Decimal(1)
@@ -1618,6 +1625,32 @@ describe('PoolCollection', () => {
                     poolWithdrawalAmounts.bntToMintForProvider,
                     poolWithdrawalAmounts.baseTokensWithdrawalFee
                 );
+
+            const currMasterVaultBNTBalance = await getBalance(bnt, masterVault.address);
+            if (poolWithdrawalAmounts.bntProtocolHoldingsDelta.value.gt(0)) {
+                expect(poolWithdrawalAmounts.bntProtocolHoldingsDelta.isNeg).to.be.true;
+                expect(currMasterVaultBNTBalance).eq(
+                    prevMasterVaultBNTBalance
+                        .sub(poolWithdrawalAmounts.bntProtocolHoldingsDelta.value)
+                        .sub(bntAmountRenouncedOnResetLiquidity)
+                );
+            } else if (poolWithdrawalAmounts.bntTradingLiquidityDelta.value.gt(0)) {
+                if (poolWithdrawalAmounts.bntTradingLiquidityDelta.isNeg) {
+                    expect(currMasterVaultBNTBalance).eq(
+                        prevMasterVaultBNTBalance
+                            .sub(poolWithdrawalAmounts.bntTradingLiquidityDelta.value)
+                            .sub(bntAmountRenouncedOnResetLiquidity)
+                    );
+                } else {
+                    expect(currMasterVaultBNTBalance).eq(
+                        prevMasterVaultBNTBalance
+                            .add(poolWithdrawalAmounts.bntTradingLiquidityDelta.value)
+                            .sub(bntAmountRenouncedOnResetLiquidity)
+                    );
+                }
+            } else {
+                expect(currMasterVaultBNTBalance).eq(prevMasterVaultBNTBalance.sub(bntAmountRenouncedOnResetLiquidity));
+            }
 
             const { liquidity } = await poolCollection.poolData(token.address);
 
@@ -1967,7 +2000,7 @@ describe('PoolCollection', () => {
         };
 
         describe('quick withdrawal test', async () => {
-            it('BNT - renounce funding, burn from MV, mint for provider; TKN - transfer from MV and from EPV to provider', async () => {
+            it('BNT - mint for provider, renounce from protocol; TKN - transfer from MV and from EPV to provider', async () => {
                 await testWithdrawalPermutations(
                     new TokenData(TokenSymbol.TKN),
                     toWei(1),
@@ -1982,7 +2015,7 @@ describe('PoolCollection', () => {
                 );
             });
 
-            it('BNT - mint for MV; TKN - transfer from EPV to provider', async () => {
+            it('BNT - mint for MV; TKN - transfer from MV to provider', async () => {
                 await testWithdrawalPermutations(
                     new TokenData(TokenSymbol.TKN),
                     toWei(1),
@@ -1997,7 +2030,7 @@ describe('PoolCollection', () => {
                 );
             });
 
-            it('BNT - renounce funding, burn from MV; TKN - transfer from MV and from EPV to provider', async () => {
+            it('BNT - renounce from protocol; TKN - transfer from MV and from EPV to provider', async () => {
                 await testWithdrawalPermutations(
                     new TokenData(TokenSymbol.TKN),
                     toWei(1).div(10),
@@ -2009,6 +2042,21 @@ describe('PoolCollection', () => {
                     toWei(1000),
                     toPPM(1),
                     toPPM(1)
+                );
+            });
+
+            it('BNT - mint for MV; TKN - transfer from MV to provider', async () => {
+                await testWithdrawalPermutations(
+                    new TokenData(TokenSymbol.TKN),
+                    toWei(new Decimal('4')),
+                    toWei(new Decimal('478.997563393863')),
+                    toWei(new Decimal('74500.81896317')),
+                    toWei(new Decimal('53.729912946654')),
+                    toWei(new Decimal('479.034055294121')),
+                    toWei(new Decimal('474.412365076241')),
+                    toWei(new Decimal('0')),
+                    toPPM(0.2),
+                    toPPM(0.25)
                 );
             });
         });
@@ -3412,7 +3460,7 @@ describe('PoolCollection', () => {
         });
 
         context('initial', () => {
-            it('should report intial amounts', async () => {
+            it('should report initial amounts', async () => {
                 expect(await poolCollection.underlyingToPoolToken(reserveToken.address, 1234)).to.equal(1234);
                 expect(await poolCollection.poolTokenToUnderlying(reserveToken.address, 5678)).to.equal(5678);
             });
@@ -3588,13 +3636,7 @@ describe('PoolCollection', () => {
                     targetPoolCollection.address
                 );
 
-                const res = await poolMigrator.migratePoolInT(
-                    targetPoolCollection.address,
-                    reserveToken.address,
-                    poolData
-                );
-
-                await expect(res).to.emit(targetPoolCollection, 'PoolMigratedIn').withArgs(reserveToken.address);
+                await poolMigrator.migratePoolInT(targetPoolCollection.address, reserveToken.address, poolData);
 
                 newPoolData = await targetPoolCollection.poolData(reserveToken.address);
                 expect(newPoolData).to.deep.equal(poolData);
@@ -3661,13 +3703,11 @@ describe('PoolCollection', () => {
 
                 expect(await poolToken.owner()).to.equal(poolCollection.address);
 
-                const res = await poolMigrator.migratePoolOutT(
+                await poolMigrator.migratePoolOutT(
                     poolCollection.address,
                     reserveToken.address,
                     targetPoolCollection.address
                 );
-
-                await expect(res).to.emit(poolCollection, 'PoolMigratedOut').withArgs(reserveToken.address);
 
                 poolData = await poolCollection.poolData(reserveToken.address);
                 expect(poolData.poolToken).to.equal(ZERO_ADDRESS);

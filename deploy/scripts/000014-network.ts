@@ -7,7 +7,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer } = await getNamedAccounts();
 
     const bntPool = await DeployedContracts.BNTPool.deployed();
-    const pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+    const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
     const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
 
     const networkAddress = await initializeProxy({
