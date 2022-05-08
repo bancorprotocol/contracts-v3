@@ -199,17 +199,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     event DepositLimitUpdated(Token indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
 
     /**
-     * @dev triggered when a pool's trading liquidity is reduced
-     */
-    event TradingLiquidityReduced(
-        Token indexed pool,
-        uint256 prevBNTTradingLiquidity,
-        uint256 newBNTTradingLiquidity,
-        uint256 prevBaseTokenTradingLiquidity,
-        uint256 newBaseTokenTradingLiquidity
-    );
-
-    /**
      * @dev triggered when new liquidity is deposited into a pool
      */
     event TokensDeposited(
@@ -575,26 +564,31 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function reduceTradingLiquidity(Token pool, uint256 bntAmount) external onlyOwner {
         Pool storage data = _poolStorage(pool);
-        uint256 bntTradingLiquidity = data.liquidity.bntTradingLiquidity;
+        PoolLiquidity memory prevLiquidity = data.liquidity;
+        uint256 bntTradingLiquidity = prevLiquidity.bntTradingLiquidity;
 
+        // if the requested trading liquidity is equal to or larger than the current trading liquidity, then return
         if (bntAmount >= bntTradingLiquidity) {
             return;
         }
 
+        // if the requested trading liquidity is zero, then reset the current trading liquidity and return
         if (bntAmount == 0) {
             _resetTradingLiquidity(bytes32(0), pool, data, TRADING_STATUS_UPDATE_ADMIN);
             return;
         }
 
+        // if the requested trading liquidity is smaller than the funding limit, then revert (funding limit should be increased first)
         if (bntAmount < _networkSettings.poolFundingLimit(pool)) {
             revert FundingLimitTooHigh();
         }
 
+        // deplete the extra amount of funding currently available
         uint256 bntRenounced = bntTradingLiquidity - bntAmount;
         _bntPool.renounceFunding(bytes32(0), pool, bntRenounced);
 
         Fraction memory averageRate = data.averageRate.rate.fromFraction112();
-        uint256 baseTokenTradingLiquidity = data.liquidity.baseTokenTradingLiquidity;
+        uint256 baseTokenTradingLiquidity = prevLiquidity.baseTokenTradingLiquidity;
 
         // this is safe because we reduce `baseTokenTradingLiquidity` to `baseTokenTradingLiquidity - bntRenounced / averageRate`
         data.liquidity.baseTokenTradingLiquidity = uint128(
@@ -604,13 +598,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // this is safe because we reduce `bntTradingLiquidity` to `bntAmount`
         data.liquidity.bntTradingLiquidity = uint128(bntAmount);
 
-        emit TradingLiquidityReduced({
-            pool: pool,
-            prevBNTTradingLiquidity: bntTradingLiquidity,
-            newBNTTradingLiquidity: data.liquidity.bntTradingLiquidity,
-            prevBaseTokenTradingLiquidity: baseTokenTradingLiquidity,
-            newBaseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity
-        });
+        _dispatchTradingLiquidityEvents(bytes32(0), pool, prevLiquidity, data.liquidity);
     }
 
     /**
