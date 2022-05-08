@@ -710,46 +710,51 @@ describe('PoolCollection', () => {
             });
 
             context('should reduce the current trading liquidity to the new amount', () => {
+                const prevLiquidityExpected = {
+                    bntTradingLiquidity,
+                    baseTokenTradingLiquidity,
+                    stakedBalance
+                } as PoolLiquidityStructOutput;
+
+                const newLiquidityExpected = {
+                    bntTradingLiquidity: bntAmount,
+                    baseTokenTradingLiquidity: baseTokenTradingLiquidity
+                        .mul(averageRate.n)
+                        .sub(bntTradingLiquidity.sub(bntAmount).mul(averageRate.d))
+                        .div(averageRate.n),
+                    stakedBalance
+                } as PoolLiquidityStructOutput;
+
                 it('when the current funding is smaller than the funding limit', async () => {
                     await networkSettings.setFundingLimit(reserveToken.address, bntFundingLimit);
                     await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, bntFundingLimit.sub(1));
                     const res = await poolCollection.reduceTradingLiquidity(reserveToken.address, bntAmount);
-                    await expect(res)
-                        .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                        .withArgs(BigNumber.from(0), reserveToken.address, bnt.address, bntTradingLiquidity, bntAmount);
-                    await expect(res)
-                        .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                        .withArgs(
-                            BigNumber.from(0),
-                            reserveToken.address,
-                            reserveToken.address,
-                            baseTokenTradingLiquidity,
-                            baseTokenTradingLiquidity
-                                .mul(averageRate.n)
-                                .sub(bntTradingLiquidity.sub(bntAmount).mul(averageRate.d))
-                                .div(averageRate.n)
-                        );
+                    await testTradingLiquidityEvents(
+                        reserveToken,
+                        poolCollection,
+                        masterVault,
+                        bnt,
+                        prevLiquidityExpected,
+                        newLiquidityExpected,
+                        formatBytes32String(''),
+                        res
+                    );
                 });
 
                 it('when the current funding is equal to the funding limit', async () => {
                     await networkSettings.setFundingLimit(reserveToken.address, bntFundingLimit);
                     await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, bntFundingLimit);
                     const res = await poolCollection.reduceTradingLiquidity(reserveToken.address, bntAmount);
-                    await expect(res)
-                        .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                        .withArgs(BigNumber.from(0), reserveToken.address, bnt.address, bntTradingLiquidity, bntAmount);
-                    await expect(res)
-                        .to.emit(poolCollection, 'TradingLiquidityUpdated')
-                        .withArgs(
-                            BigNumber.from(0),
-                            reserveToken.address,
-                            reserveToken.address,
-                            baseTokenTradingLiquidity,
-                            baseTokenTradingLiquidity
-                                .mul(averageRate.n)
-                                .sub(bntTradingLiquidity.sub(bntAmount).mul(averageRate.d))
-                                .div(averageRate.n)
-                        );
+                    await testTradingLiquidityEvents(
+                        reserveToken,
+                        poolCollection,
+                        masterVault,
+                        bnt,
+                        prevLiquidityExpected,
+                        newLiquidityExpected,
+                        formatBytes32String(''),
+                        res
+                    );
                 });
             });
         });
