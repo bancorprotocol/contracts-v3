@@ -628,7 +628,7 @@ export interface PendingWithdrawals extends BaseContract {
       provider: string,
       id: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
 
     completeWithdrawal(
       contextId: BytesLike,
