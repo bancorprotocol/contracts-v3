@@ -1,0 +1,356 @@
+{
+  "address": "0x891aff26593da95e574e3f62619dad6624fb5693",
+  "abi": [
+    { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "startTime", "type": "uint256" },
+        { "indexed": false, "internalType": "uint256", "name": "endTime", "type": "uint256" },
+        { "indexed": false, "internalType": "uint256", "name": "rewardRate", "type": "uint256" }
+      ],
+      "name": "PoolProgramAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [{ "indexed": true, "internalType": "contract IDSToken", "name": "poolToken", "type": "address" }],
+      "name": "PoolProgramRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "address", "name": "provider", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "claimTime", "type": "uint256" }
+      ],
+      "name": "ProviderLastClaimTimeUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "indexed": true, "internalType": "bytes32", "name": "previousAdminRole", "type": "bytes32" },
+        { "indexed": true, "internalType": "bytes32", "name": "newAdminRole", "type": "bytes32" }
+      ],
+      "name": "RoleAdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "indexed": true, "internalType": "address", "name": "account", "type": "address" },
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }
+      ],
+      "name": "RoleGranted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true, "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "indexed": true, "internalType": "address", "name": "account", "type": "address" },
+        { "indexed": true, "internalType": "address", "name": "sender", "type": "address" }
+      ],
+      "name": "RoleRevoked",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DEFAULT_ADMIN_ROLE",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROLE_MANAGER",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROLE_OWNER",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROLE_SEEDER",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "ROLE_SUPERVISOR",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken[]", "name": "poolTokens", "type": "address[]" },
+        { "internalType": "contract IERC20Token[2][]", "name": "reserveTokens", "type": "address[2][]" },
+        { "internalType": "uint32[2][]", "name": "rewardShares", "type": "uint32[2][]" },
+        { "internalType": "uint256[]", "name": "startTime", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "endTimes", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "rewardRates", "type": "uint256[]" }
+      ],
+      "name": "addPastPoolPrograms",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token[2]", "name": "reserveTokens", "type": "address[2]" },
+        { "internalType": "uint32[2]", "name": "rewardShares", "type": "uint32[2]" },
+        { "internalType": "uint256", "name": "endTime", "type": "uint256" },
+        { "internalType": "uint256", "name": "rewardRate", "type": "uint256" }
+      ],
+      "name": "addPoolProgram",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "bytes32", "name": "role", "type": "bytes32" }],
+      "name": "getRoleAdmin",
+      "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "uint256", "name": "index", "type": "uint256" }
+      ],
+      "name": "getRoleMember",
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "bytes32", "name": "role", "type": "bytes32" }],
+      "name": "getRoleMemberCount",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "grantRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "hasRole",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "contract IDSToken", "name": "poolToken", "type": "address" }],
+      "name": "isPoolParticipating",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" }
+      ],
+      "name": "isReserveParticipating",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "contract IDSToken", "name": "poolToken", "type": "address" }],
+      "name": "poolProgram",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "contract IERC20Token[2]", "name": "", "type": "address[2]" },
+        { "internalType": "uint32[2]", "name": "", "type": "uint32[2]" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "poolPrograms",
+      "outputs": [
+        { "internalType": "contract IDSToken[]", "name": "", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
+        { "internalType": "contract IERC20Token[2][]", "name": "", "type": "address[2][]" },
+        { "internalType": "uint32[2][]", "name": "", "type": "uint32[2][]" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" }
+      ],
+      "name": "poolRewards",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "address", "name": "provider", "type": "address" }],
+      "name": "providerLastClaimTime",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "provider", "type": "address" },
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" }
+      ],
+      "name": "providerRewards",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint32", "name": "", "type": "uint32" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "contract IDSToken", "name": "poolToken", "type": "address" }],
+      "name": "removePoolProgram",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "renounceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes32", "name": "role", "type": "bytes32" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "uint256", "name": "newEndTime", "type": "uint256" }
+      ],
+      "name": "setPoolProgramEndTime",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken[]", "name": "poolTokens", "type": "address[]" },
+        { "internalType": "contract IERC20Token[]", "name": "reserveTokens", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "lastUpdateTimes", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "rewardsPerToken", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "totalClaimedRewards", "type": "uint256[]" }
+      ],
+      "name": "setPoolsRewardData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" },
+        { "internalType": "address[]", "name": "providers", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "rewardsPerToken", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "pendingBaseRewards", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "totalClaimedRewards", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "effectiveStakingTimes", "type": "uint256[]" },
+        { "internalType": "uint256[]", "name": "baseRewardsDebts", "type": "uint256[]" },
+        { "internalType": "uint32[]", "name": "baseRewardsDebtMultipliers", "type": "uint32[]" }
+      ],
+      "name": "setProviderRewardData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" },
+        { "internalType": "uint256", "name": "lastUpdateTime", "type": "uint256" },
+        { "internalType": "uint256", "name": "rewardPerToken", "type": "uint256" },
+        { "internalType": "uint256", "name": "totalClaimedRewards", "type": "uint256" }
+      ],
+      "name": "updatePoolRewardsData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [{ "internalType": "address", "name": "provider", "type": "address" }],
+      "name": "updateProviderLastClaimTime",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "provider", "type": "address" },
+        { "internalType": "contract IDSToken", "name": "poolToken", "type": "address" },
+        { "internalType": "contract IERC20Token", "name": "reserveToken", "type": "address" },
+        { "internalType": "uint256", "name": "rewardPerToken", "type": "uint256" },
+        { "internalType": "uint256", "name": "pendingBaseRewards", "type": "uint256" },
+        { "internalType": "uint256", "name": "totalClaimedRewards", "type": "uint256" },
+        { "internalType": "uint256", "name": "effectiveStakingTime", "type": "uint256" },
+        { "internalType": "uint256", "name": "baseRewardsDebt", "type": "uint256" },
+        { "internalType": "uint32", "name": "baseRewardsDebtMultiplier", "type": "uint32" }
+      ],
+      "name": "updateProviderRewardsData",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "numDeployments": 1
+}

@@ -30,6 +30,7 @@ import {
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
     StakingRewards,
+    StakingRewardsStore,
     TokenGovernance,
     TokenHolder,
     VBNT
@@ -90,6 +91,7 @@ enum LegacyInstanceNameV2 {
     LiquidityProtectionSystemStore = 'LiquidityProtectionSystemStore',
     LiquidityProtectionWallet = 'LiquidityProtectionWallet',
     StakingRewards = 'StakingRewards',
+    StakingRewardsStore = 'StakingRewardsStore',
     CheckpointStore = 'CheckpointStore'
 }
 
@@ -148,6 +150,7 @@ const DeployedLegacyContractsV2 = {
     ),
     LiquidityProtectionWallet: deployed<TokenHolder>(InstanceName.LiquidityProtectionWallet),
     StakingRewards: deployed<StakingRewards>(InstanceName.StakingRewards),
+    StakingRewardsStore: deployed<StakingRewardsStore>(InstanceName.StakingRewardsStore),
     CheckpointStore: deployed<CheckpointStore>(InstanceName.CheckpointStore)
 };
 
