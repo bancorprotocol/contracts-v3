@@ -29,5 +29,8 @@
   "000028-upgrade-standard-rewards-v3": 1650484275,
   "000029-pool-collection-type1-v2": 1651709798,
   "000030-upgrade-liquidity-protection": 1651861607,
-  "000031-enable-migrations-from-v2": 1651861848
+  "000031-enable-migrations-from-v2": 1651861848,
+  "000032-upgrade-pending-withdrawals-v2": 1652038898,
+  "000033-upgrade-network-v3": 1652039004,
+  "000090-increase-limits": 1652039283
 }

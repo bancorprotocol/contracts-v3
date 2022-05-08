@@ -120,7 +120,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     });
 
     await execute({
-        name: InstanceName.LegacyLiquidityProtection,
+        name: InstanceName.LegacyLiquidityProtection2,
         methodName: 'acceptStoreOwnership',
         from: deployer
     });
