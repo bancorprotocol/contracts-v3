@@ -109,6 +109,37 @@
         "averageRateN": "1",
         "averageRateD": "1"
       }
+    },
+    {
+      "type": "reduceTradingLiquidity",
+      "userId": "",
+      "mined": false,
+      "amount": "900",
+      "expected": {
+        "tknBalances": {
+          "provider": "9999000",
+          "masterVault": "1000",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "provider": "0",
+          "masterVault": "900"
+        },
+        "bntknBalances": {
+          "provider": "1000"
+        },
+        "bnbntBalances": {
+          "provider": "0",
+          "bntPool": "900"
+        },
+        "bntCurrentPoolFunding": "900",
+        "tknStakedBalance": "1000",
+        "bntStakedBalance": "900",
+        "tknTradingLiquidity": "900",
+        "bntTradingLiquidity": "900",
+        "averageRateN": "1",
+        "averageRateD": "1"
+      }
     }
   ]
 }
