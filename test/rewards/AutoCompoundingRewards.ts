@@ -866,22 +866,20 @@ describe('AutoCompoundingRewards', () => {
                             if (index >= tokens.length) {
                                 break;
                             }
-                            await expect(res)
-                                .to.emit(autoCompoundingRewards, 'RewardsDistributed')
-                                .withArgs(
-                                    tokens[index].address,
-                                    tokenAmountToDistributeArray[j],
-                                    poolTokenAmountToBurnArray[j],
-                                    remainingRewardsArray[j].sub(tokenAmountToDistributeArray[j])
-                                );
+                            if (tokenAmountToDistributeArray[j].gt(0) && poolTokenAmountToBurnArray[j].gt(0)) {
+                                await expect(res)
+                                    .to.emit(autoCompoundingRewards, 'RewardsDistributed')
+                                    .withArgs(
+                                        tokens[index].address,
+                                        tokenAmountToDistributeArray[j],
+                                        poolTokenAmountToBurnArray[j],
+                                        remainingRewardsArray[j].sub(tokenAmountToDistributeArray[j])
+                                    );
+                            }
                         }
                     };
 
-                    let rewardsMath: TestRewardsMath;
-
-                    beforeEach(async () => {
-                        rewardsMath = await Contracts.TestRewardsMath.deploy();
-
+                    const createPrograms = async (overrideTotalRewards = false) => {
                         for (const [index, setup] of setups.entries()) {
                             ({ token: tokens[index], poolToken: poolTokens[index] } = await prepareSimplePool(
                                 new TokenData(setup.tokenSymbol),
@@ -889,20 +887,29 @@ describe('AutoCompoundingRewards', () => {
                                 setup.totalRewards
                             ));
 
+                            // when `overrideTotalRewards == true`, using `index + 1` as the total rewards value
+                            // yields some cases where the total amount of tokens to distribute is equal to zero
+                            // and some cases where the total amount of tokens to distribute is larger than zero
                             await createProgram(
                                 distributionType,
                                 autoCompoundingRewards,
                                 tokens[index].address,
-                                setup.totalRewards,
+                                overrideTotalRewards ? index + 1 : setup.totalRewards,
                                 START_TIME
                             );
                         }
+                    };
 
+                    let rewardsMath: TestRewardsMath;
+
+                    beforeEach(async () => {
+                        rewardsMath = await Contracts.TestRewardsMath.deploy();
                         await autoCompoundingRewards.setAutoProcessRewardsCount(AUTO_PROCESS_REWARDS_COUNT);
                     });
 
                     if (distributionType === RewardsDistributionType.Flat) {
                         it('should distribute all tokens', async () => {
+                            await createPrograms();
                             await autoCompoundingRewards.setTime(programEndTime[distributionType]);
                             for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
                                 await autoProcessSomeRewards(i);
@@ -911,6 +918,7 @@ describe('AutoCompoundingRewards', () => {
                         });
 
                         it('should distribute some tokens', async () => {
+                            await createPrograms();
                             for (let i = 0; i < 5; i++) {
                                 await autoCompoundingRewards.setTime(
                                     Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
@@ -919,7 +927,18 @@ describe('AutoCompoundingRewards', () => {
                             }
                         });
 
-                        it('should not redistribute tokens before the minimum time has elapsed', async () => {
+                        it('should distribute tokens only when the distribution amount is larger than zero', async () => {
+                            await createPrograms(true); // override the total rewards of each program with a very small value
+                            for (let i = 0; i < 5; i++) {
+                                await autoCompoundingRewards.setTime(
+                                    Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
+                                );
+                                await autoProcessSomeRewards(i);
+                            }
+                        });
+
+                        it('should distribute tokens only when the minimum time period has elapsed', async () => {
+                            await createPrograms();
                             await autoCompoundingRewards.setTime(
                                 Math.floor(START_TIME + programDuration[distributionType] / 2)
                             );
