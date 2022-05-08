@@ -710,25 +710,32 @@ describe('PoolCollection', () => {
             });
 
             context('should reduce the current trading liquidity to the new amount', () => {
-                const prevLiquidityExpected = {
-                    bntTradingLiquidity,
-                    baseTokenTradingLiquidity,
-                    stakedBalance
-                } as PoolLiquidityStructOutput;
+                const reduceTradingLiquidityTest = async (fundingLimitDelta: BigNumberish) => {
+                    const prevLiquidityExpected = {
+                        bntTradingLiquidity,
+                        baseTokenTradingLiquidity,
+                        stakedBalance
+                    } as PoolLiquidityStructOutput;
 
-                const newLiquidityExpected = {
-                    bntTradingLiquidity: bntAmount,
-                    baseTokenTradingLiquidity: baseTokenTradingLiquidity
-                        .mul(averageRate.n)
-                        .sub(bntTradingLiquidity.sub(bntAmount).mul(averageRate.d))
-                        .div(averageRate.n),
-                    stakedBalance
-                } as PoolLiquidityStructOutput;
+                    const newLiquidityExpected = {
+                        bntTradingLiquidity: bntAmount,
+                        baseTokenTradingLiquidity: baseTokenTradingLiquidity
+                            .mul(averageRate.n)
+                            .sub(bntTradingLiquidity.sub(bntAmount).mul(averageRate.d))
+                            .div(averageRate.n),
+                        stakedBalance
+                    } as PoolLiquidityStructOutput;
 
-                it('when the current funding is smaller than the funding limit', async () => {
                     await networkSettings.setFundingLimit(reserveToken.address, bntFundingLimit);
-                    await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, bntFundingLimit.sub(1));
+
+                    await poolCollection.requestFundingT(
+                        CONTEXT_ID,
+                        reserveToken.address,
+                        bntFundingLimit.sub(fundingLimitDelta)
+                    );
+
                     const res = await poolCollection.reduceTradingLiquidity(reserveToken.address, bntAmount);
+
                     await testTradingLiquidityEvents(
                         reserveToken,
                         poolCollection,
@@ -739,22 +746,14 @@ describe('PoolCollection', () => {
                         formatBytes32String(''),
                         res
                     );
+                };
+
+                it('when the current funding is smaller than the funding limit', async () => {
+                    await reduceTradingLiquidityTest(1);
                 });
 
                 it('when the current funding is equal to the funding limit', async () => {
-                    await networkSettings.setFundingLimit(reserveToken.address, bntFundingLimit);
-                    await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, bntFundingLimit);
-                    const res = await poolCollection.reduceTradingLiquidity(reserveToken.address, bntAmount);
-                    await testTradingLiquidityEvents(
-                        reserveToken,
-                        poolCollection,
-                        masterVault,
-                        bnt,
-                        prevLiquidityExpected,
-                        newLiquidityExpected,
-                        formatBytes32String(''),
-                        res
-                    );
+                    await reduceTradingLiquidityTest(0);
                 });
             });
         });
