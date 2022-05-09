@@ -18,12 +18,6 @@ interface IPoolCollectionBase {
 }
 
 interface IPoolCollectionV2 is IPoolCollectionBase {
-    struct PoolLiquidityV2 {
-        uint128 bntTradingLiquidity; // the BNT trading liquidity
-        uint128 baseTokenTradingLiquidity; // the base token trading liquidity
-        uint256 stakedBalance; // the staked balance
-    }
-
     struct PoolV2 {
         IPoolToken poolToken; // the pool token of a given pool
         uint32 tradingFeePPM; // the trading fee (in units of PPM)
@@ -31,7 +25,7 @@ interface IPoolCollectionV2 is IPoolCollectionBase {
         bool depositingEnabled; // whether depositing is enabled
         AverageRate averageRate; // the recent average rate
         uint256 depositLimit; // the deposit limit
-        PoolLiquidityV2 liquidity; // the overall liquidity in the pool
+        PoolLiquidity liquidity; // the overall liquidity in the pool
     }
 
     function poolData(Token token) external view returns (PoolV2 memory);

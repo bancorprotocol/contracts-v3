@@ -80,13 +80,13 @@ describe('PoolCollection', () => {
             await expect(res).to.emit(poolCollection, 'TradingEnabled').withArgs(token.address, false, expectedReason);
         }
 
-        const data = await poolCollection.poolData(token.address);
-        const { liquidity } = data;
+        expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
 
-        expect(data.tradingEnabled).to.be.false;
+        const data = await poolCollection.poolData(token.address);
         expect(data.averageRate.blockNumber).to.equal(0);
         expect(data.averageRate.rate).to.equal(ZERO_FRACTION);
 
+        const liquidity = await poolCollection.poolLiquidity(token.address);
         expect(liquidity.bntTradingLiquidity).to.equal(0);
         expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
         expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
@@ -359,8 +359,7 @@ describe('PoolCollection', () => {
             // ensure that the new default trading fee is used during the creation of newer pools
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
-            const pool = await poolCollection.poolData(reserveToken.address);
-            expect(pool.tradingFeePPM).to.equal(newDefaultTradingFee);
+            expect(await poolCollection.tradingFeePPM(reserveToken.address)).to.equal(newDefaultTradingFee);
         });
     });
 
@@ -422,9 +421,7 @@ describe('PoolCollection', () => {
                     await expect(res)
                         .to.emit(poolCollection, 'TradingEnabled')
                         .withArgs(reserveToken.address, false, TradingStatusUpdateReason.Default);
-                    await expect(res)
-                        .to.emit(poolCollection, 'DepositingEnabled')
-                        .withArgs(reserveToken.address, pool.depositingEnabled);
+                    await expect(res).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, true);
 
                     expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
                     expect(await poolCollection.pools()).to.include(reserveToken.address);
@@ -435,9 +432,10 @@ describe('PoolCollection', () => {
                     expect(await poolCollection.poolToken(reserveToken.address)).to.equal(pool.poolToken);
                     expect(await poolToken.reserveToken()).to.equal(reserveToken.address);
 
-                    expect(pool.tradingFeePPM).to.equal(DEFAULT_TRADING_FEE_PPM);
-                    expect(pool.tradingEnabled).to.be.false;
-                    expect(pool.depositingEnabled).to.be.true;
+                    expect(await poolCollection.tradingFeePPM(reserveToken.address)).to.equal(DEFAULT_TRADING_FEE_PPM);
+                    expect(await poolCollection.tradingEnabled(reserveToken.address)).to.be.false;
+                    expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
+
                     expect(pool.averageRate.blockNumber).to.equal(0);
                     expect(pool.averageRate.rate).to.equal(ZERO_FRACTION);
 
@@ -553,23 +551,17 @@ describe('PoolCollection', () => {
             });
 
             it('should allow enabling and disabling depositing', async () => {
-                let pool = await poolCollection.poolData(reserveToken.address);
-                let { depositingEnabled } = pool;
-                expect(depositingEnabled).to.be.true;
+                expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
 
                 const res = await poolCollection.enableDepositing(reserveToken.address, false);
                 await expect(res).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, false);
 
-                pool = await poolCollection.poolData(reserveToken.address);
-                ({ depositingEnabled } = pool);
-                expect(depositingEnabled).to.be.false;
+                expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.false;
 
                 const res2 = await poolCollection.enableDepositing(reserveToken.address, true);
                 await expect(res2).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, true);
 
-                pool = await poolCollection.poolData(reserveToken.address);
-                ({ depositingEnabled } = pool);
-                expect(depositingEnabled).to.be.true;
+                expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
             });
         });
     });
@@ -613,7 +605,7 @@ describe('PoolCollection', () => {
                 expect(data.averageRate.blockNumber).to.equal(await poolCollection.currentBlockNumber());
                 expect(data.averageRate.rate).to.equal({ n: BNT_VIRTUAL_BALANCE, d: BASE_TOKEN_VIRTUAL_BALANCE });
 
-                expect(data.tradingEnabled).to.be.true;
+                expect(await poolCollection.tradingEnabled(token.address)).to.be.true;
 
                 expect(liquidity.bntTradingLiquidity).to.equal(
                     MIN_LIQUIDITY_FOR_TRADING.mul(BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR)
@@ -846,10 +838,9 @@ describe('PoolCollection', () => {
 
             context('when trading is disabled', () => {
                 beforeEach(async () => {
-                    const data = await poolCollection.poolData(token.address);
-                    const { liquidity } = data;
+                    expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
 
-                    expect(data.tradingEnabled).to.be.false;
+                    const liquidity = await poolCollection.poolLiquidity(token.address);
                     expect(liquidity.bntTradingLiquidity).to.equal(0);
                     expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
                     expect(liquidity.stakedBalance).to.equal(0);

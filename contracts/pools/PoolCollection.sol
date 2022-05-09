@@ -388,6 +388,27 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @inheritdoc IPoolCollection
      */
+    function tradingFeePPM(Token pool) external view returns (uint32) {
+        return _poolData[pool].tradingFeePPM;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function tradingEnabled(Token pool) external view returns (bool) {
+        return _poolData[pool].tradingEnabled;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function depositingEnabled(Token pool) external view returns (bool) {
+        return _poolData[pool].depositingEnabled;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256) {
         Pool storage data = _poolData[pool];
 
