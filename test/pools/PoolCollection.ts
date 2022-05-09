@@ -14,7 +14,7 @@ import Contracts, {
     TestPoolCollection,
     TestPoolMigrator
 } from '../../components/Contracts';
-import { PoolLiquidityStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
+import { PoolLiquidityStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,

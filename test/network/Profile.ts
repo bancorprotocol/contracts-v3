@@ -17,7 +17,7 @@ import Contracts, {
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
-import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
     EXP2_INPUT_TOO_HIGH,
     MAX_UINT256,

@@ -1321,7 +1321,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function _tradeAmountAndFeeBySourceAmount(
         uint256 sourceBalance,
         uint256 targetBalance,
-        uint32 tradingFeePPM,
+        uint32 feePPM,
         uint256 sourceAmount
     ) private pure returns (TradeAmountAndTradingFee memory) {
         if (sourceBalance == 0 || targetBalance == 0) {
@@ -1329,7 +1329,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         }
 
         uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance + sourceAmount);
-        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
+        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, feePPM, PPM_RESOLUTION);
 
         return
             TradeAmountAndTradingFee({ amount: targetAmount - tradingFeeAmount, tradingFeeAmount: tradingFeeAmount });
@@ -1341,14 +1341,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function _tradeAmountAndFeeByTargetAmount(
         uint256 sourceBalance,
         uint256 targetBalance,
-        uint32 tradingFeePPM,
+        uint32 feePPM,
         uint256 targetAmount
     ) private pure returns (TradeAmountAndTradingFee memory) {
         if (sourceBalance == 0) {
             revert InsufficientLiquidity();
         }
 
-        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
+        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, feePPM, PPM_RESOLUTION - feePPM);
         uint256 fullTargetAmount = targetAmount + tradingFeeAmount;
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 
