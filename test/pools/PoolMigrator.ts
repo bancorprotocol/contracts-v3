@@ -21,7 +21,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe.only('PoolMigrator', () => {
+describe('PoolMigrator', () => {
     let deployer: SignerWithAddress;
 
     shouldHaveGap('PoolMigrator');

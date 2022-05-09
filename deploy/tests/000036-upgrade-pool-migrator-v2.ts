@@ -17,7 +17,7 @@ describeDeployment(__filename, () => {
         poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
     });
 
-    it.only('should  upgrade and configure the pool migrator contract', async () => {
+    it('should  upgrade and configure the pool migrator contract', async () => {
         expect(await poolMigrator.version()).to.equal(2);
 
         await expectRoleMembers(poolMigrator, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
