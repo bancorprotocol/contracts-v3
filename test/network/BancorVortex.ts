@@ -127,7 +127,7 @@ describe('BancorVortex', () => {
             await expect(bancorVortex.execute()).to.be.revertedWith('AccessDenied');
         });
 
-        context('successful execution', () => {
+        context.only('successful execution', () => {
             beforeEach(async () => {
                 await networkSettings.addTokenToWhitelist(vbnt.address);
                 await network.addPoolCollection(poolCollection.address);
@@ -145,21 +145,29 @@ describe('BancorVortex', () => {
                 await poolCollection.enableTrading(vbnt.address, tradingLiquidity, tradingLiquidity);
             });
 
-            for (const burnReward of [1, 5, 10]) {
+            for (const burnRewardPortion of [1, 5, 10]) {
                 for (const burnRewardMaxAmount of [1, 1000, 1_000_000]) {
                     for (const pendingNetworkFeeAmount of [1, 1000, 1_000_000]) {
-                        const burnRewardInPPM = toPPM(burnReward);
+                        const burnRewardPortionInPPM = toPPM(burnRewardPortion);
                         const burnRewardMaxAmountInWei = toWei(burnRewardMaxAmount);
                         const pendingNetworkFeeAmountInWei = toWei(pendingNetworkFeeAmount);
-                        const amount1 = pendingNetworkFeeAmountInWei.mul(burnRewardInPPM).div(PPM_RESOLUTION);
+                        const amount1 = pendingNetworkFeeAmountInWei.mul(burnRewardPortionInPPM).div(PPM_RESOLUTION);
                         const amount2 = burnRewardMaxAmountInWei;
-                        const expectedRewards = amount1.lt(amount2) ? amount1 : amount2;
+                        const bntExpectedRewardsAmount = amount1.lt(amount2) ? amount1 : amount2;
 
-                        it(`burnReward = ${burnReward}%, burnRewardMaxAmount = ${burnRewardMaxAmount}, pendingNetworkFeeAmount = ${pendingNetworkFeeAmount}`, async () => {
+                        it(`burnRewardPortion = ${burnRewardPortion}%, burnRewardMaxAmount = ${burnRewardMaxAmount} tokens, pendingNetworkFeeAmount = ${pendingNetworkFeeAmount} tokens`, async () => {
+                            const vbntExpectedRewardsAmount = (
+                                await poolCollection.tradeOutputAndFeeBySourceAmount(
+                                    bnt.address,
+                                    vbnt.address,
+                                    bntExpectedRewardsAmount
+                                )
+                            ).amount;
+
                             await bnt.transfer(masterVault.address, pendingNetworkFeeAmountInWei);
                             await network.setPendingNetworkFeeAmountT(pendingNetworkFeeAmountInWei);
                             await bancorVortex.setVortexRewards({
-                                burnRewardPPM: burnRewardInPPM,
+                                burnRewardPPM: burnRewardPortionInPPM,
                                 burnRewardMaxAmount: burnRewardMaxAmountInWei
                             });
 
@@ -185,17 +193,18 @@ describe('BancorVortex', () => {
                             expect(bntCurrTotalSupply).to.equal(bntPrevTotalSupply);
                             expect(vbntCurrTotalSupply).to.equal(vbntPrevTotalSupply.sub(vbntRewardsAmount));
                             expect(bntExecutorCurrBalance).to.equal(
-                                bntExecutorPrevBalance.add(pendingNetworkFeeAmountInWei).sub(expectedRewards)
+                                bntExecutorPrevBalance.add(pendingNetworkFeeAmountInWei).sub(bntExpectedRewardsAmount)
                             );
                             expect(vbntExecutorCurrBalance).to.equal(vbntExecutorPrevBalance);
                             expect(bntContractCurrBalance).to.equal(bntContractPrevBalance);
                             expect(vbntContractCurrBalance).to.equal(vbntContractPrevBalance);
 
-                            expect(bntRewardsAmount).to.equal(expectedRewards);
-                            // expect(vbntRewardsAmount).to.equal(???);
+                            expect(bntRewardsAmount).to.equal(bntExpectedRewardsAmount);
+                            expect(vbntRewardsAmount).to.equal(vbntExpectedRewardsAmount);
+
                             await expect(res)
                                 .to.emit(bancorVortex, 'Burned')
-                                .withArgs(pendingNetworkFeeAmountInWei, vbntRewardsAmount, expectedRewards);
+                                .withArgs(pendingNetworkFeeAmountInWei, vbntRewardsAmount, bntExpectedRewardsAmount);
                         });
                     }
                 }
