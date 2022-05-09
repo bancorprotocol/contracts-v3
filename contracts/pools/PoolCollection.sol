@@ -365,7 +365,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @inheritdoc IPoolCollection
+     * @dev returns specific pool's data
+     *
+     * notes:
+     *
+     * - there is no guarantee that this function will remains forward compatible, so please avoid relying on it and
+     *   rely on specific getters from the IPoolCollection interface instead
      */
     function poolData(Token pool) external view returns (Pool memory) {
         return _poolData[pool];

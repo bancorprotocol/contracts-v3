@@ -288,8 +288,8 @@ export const createPool = async (
     }
     await network.createPool(await poolCollection.poolType(), reserveToken.address);
 
-    const pool = await poolCollection.poolData(reserveToken.address);
-    return Contracts.PoolToken.attach(pool.poolToken);
+    const poolToken = await poolCollection.poolToken(reserveToken.address);
+    return Contracts.PoolToken.attach(poolToken);
 };
 
 const createNetwork = async (

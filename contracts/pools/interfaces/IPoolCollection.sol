@@ -75,11 +75,6 @@ interface IPoolCollection is IVersioned {
     function isPoolValid(Token pool) external view returns (bool);
 
     /**
-     * @dev returns specific pool's data
-     */
-    function poolData(Token pool) external view returns (Pool memory);
-
-    /**
      * @dev returns the overall liquidity in the pool
      */
     function poolLiquidity(Token pool) external view returns (PoolLiquidity memory);
