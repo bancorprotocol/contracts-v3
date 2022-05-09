@@ -57,6 +57,10 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.createPool(token);
     }
 
+    function setPendingNetworkFeeAmountT(uint256 pendingNetworkFeeAmount) external {
+        _pendingNetworkFeeAmount = pendingNetworkFeeAmount;
+    }
+
     function migratePoolT(IPoolMigrator poolMigrator, Token pool) external returns (IPoolCollection) {
         return poolMigrator.migratePool(pool);
     }

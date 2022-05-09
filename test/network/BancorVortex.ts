@@ -1,4 +1,4 @@
-import Contracts, { BancorNetwork, BancorVortex, IERC20 } from '../../components/Contracts';
+import Contracts, { BancorVortex, IERC20, MasterVault, TestBancorNetwork } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
@@ -11,9 +11,10 @@ import { ethers } from 'hardhat';
 
 describe('BancorVortex', () => {
     let bancorVortex: BancorVortex;
-    let network: BancorNetwork;
+    let network: TestBancorNetwork;
     let bnt: IERC20;
     let vbntGovernance: TokenGovernance;
+    let masterVault: MasterVault;
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
@@ -25,7 +26,7 @@ describe('BancorVortex', () => {
     });
 
     beforeEach(async () => {
-        ({ bancorVortex, network, bnt, vbntGovernance } = await createSystem());
+        ({ bancorVortex, network, bnt, vbntGovernance, masterVault } = await createSystem());
     });
 
     describe('construction', () => {
@@ -114,17 +115,26 @@ describe('BancorVortex', () => {
             await expect(bancorVortex.execute()).to.be.revertedWith('AccessDenied');
         });
 
-        for (const burnReward of [1, 5, 10]) {
-            for (const burnRewardMaxAmount of [1, 1000, 1_000_000]) {
-                it.skip(`execute(burnReward = ${burnReward}%, burnRewardMaxAmount = ${burnRewardMaxAmount} tokens`, async () => {
-                    await network.grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, bancorVortex.address);
-                    await bancorVortex.setVortexRewards({
-                        burnRewardPPM: toPPM(burnReward),
-                        burnRewardMaxAmount: toWei(burnRewardMaxAmount)
-                    });
-                    await bancorVortex.execute();
-                });
+        context('successful execution', () => {
+            beforeEach(async () => {
+                await network.grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, bancorVortex.address);
+            });
+
+            for (const burnReward of [1, 5, 10]) {
+                for (const burnRewardMaxAmount of [1, 1000, 1_000_000]) {
+                    for (const pendingNetworkFeeAmount of [1, 1000, 1_000_000]) {
+                        it.only(`burnReward = ${burnReward}%, burnRewardMaxAmount = ${burnRewardMaxAmount}, pendingNetworkFeeAmount = ${pendingNetworkFeeAmount}`, async () => {
+                            await bnt.transfer(masterVault.address, toWei(pendingNetworkFeeAmount));
+                            await network.setPendingNetworkFeeAmountT(toWei(pendingNetworkFeeAmount));
+                            await bancorVortex.setVortexRewards({
+                                burnRewardPPM: toPPM(burnReward),
+                                burnRewardMaxAmount: toWei(burnRewardMaxAmount)
+                            });
+                            await bancorVortex.execute();
+                        });
+                    }
+                }
             }
-        }
+        });
     });
 });
