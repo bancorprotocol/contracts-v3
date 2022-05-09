@@ -1,5 +1,5 @@
-import { BNTPool, ExternalProtectionVault, MasterVault, PoolCollection } from '../../components/Contracts';
-import { BancorNetworkV1 } from '../../components/LegacyContractsV3';
+import { BNTPool, ExternalProtectionVault, MasterVault } from '../../components/Contracts';
+import { BancorNetworkV1, PoolCollectionType1V1 } from '../../components/LegacyContractsV3';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
@@ -11,7 +11,7 @@ describeDeployment(__filename, () => {
     let bntPool: BNTPool;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
-    let poolCollection: PoolCollection;
+    let poolCollection: PoolCollectionType1V1;
 
     beforeEach(async () => {
         network = await DeployedContracts.BancorNetworkV1.deployed();

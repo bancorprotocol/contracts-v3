@@ -25,7 +25,6 @@ struct Pool {
     bool tradingEnabled; // whether trading is enabled
     bool depositingEnabled; // whether depositing is enabled
     AverageRate averageRate; // the recent average rate
-    uint256 depositLimit; // the deposit limit
     PoolLiquidity liquidity; // the overall liquidity in the pool
 }
 

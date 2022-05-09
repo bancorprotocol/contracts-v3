@@ -93,7 +93,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     error AlreadyEnabled();
-    error DepositLimitExceeded();
     error DepositingDisabled();
     error InsufficientLiquidity();
     error InsufficientSourceAmount();
@@ -193,11 +192,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     event DepositingEnabled(Token indexed pool, bool indexed newStatus);
 
     /**
-     * @dev triggered when a pool's deposit limit is updated
-     */
-    event DepositLimitUpdated(Token indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
-
-    /**
      * @dev triggered when new liquidity is deposited into a pool
      */
     event TokensDeposited(
@@ -282,7 +276,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**
@@ -351,7 +345,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             tradingEnabled: false,
             depositingEnabled: true,
             averageRate: AverageRate({ blockNumber: 0, rate: zeroFraction112() }),
-            depositLimit: 0,
             liquidity: PoolLiquidity({ bntTradingLiquidity: 0, baseTokenTradingLiquidity: 0, stakedBalance: 0 })
         });
 
@@ -362,7 +355,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         emit TradingEnabled({ pool: token, newStatus: false, reason: TRADING_STATUS_UPDATE_DEFAULT });
         emit TradingFeePPMUpdated({ pool: token, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: token, newStatus: newPool.depositingEnabled });
-        emit DepositLimitUpdated({ pool: token, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
     }
 
     /**
@@ -535,26 +527,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @dev sets the deposit limit of a given pool
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function setDepositLimit(Token pool, uint256 newDepositLimit) external onlyOwner {
-        Pool storage data = _poolStorage(pool);
-
-        uint256 prevDepositLimit = data.depositLimit;
-        if (prevDepositLimit == newDepositLimit) {
-            return;
-        }
-
-        data.depositLimit = newDepositLimit;
-
-        emit DepositLimitUpdated({ pool: pool, prevDepositLimit: prevDepositLimit, newDepositLimit: newDepositLimit });
-    }
-
-    /**
      * @inheritdoc IPoolCollection
      */
     function depositFor(
@@ -574,16 +546,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
         uint256 poolTokenAmount = _underlyingToPoolToken(tokenAmount, prevPoolTokenTotalSupply, currentStakedBalance);
 
-        // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
-        uint256 newStakedBalance = currentStakedBalance + tokenAmount;
-        if (newStakedBalance > data.depositLimit) {
-            revert DepositLimitExceeded();
-        }
-
         PoolLiquidity memory prevLiquidity = data.liquidity;
 
         // update the staked balance with the full base token amount
-        data.liquidity.stakedBalance = newStakedBalance;
+        data.liquidity.stakedBalance = currentStakedBalance + tokenAmount;
 
         // mint pool tokens to the provider
         data.poolToken.mint(provider, poolTokenAmount);

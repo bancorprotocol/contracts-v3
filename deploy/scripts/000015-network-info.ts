@@ -14,7 +14,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
     const bntPool = await DeployedContracts.BNTPool.deployed();
     const pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-    const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+    const poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
 
     await deployProxy({
         name: InstanceName.BancorNetworkInfo,

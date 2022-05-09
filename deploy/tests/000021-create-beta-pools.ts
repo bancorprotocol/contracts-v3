@@ -1,5 +1,4 @@
-import { PoolCollection } from '../../components/Contracts';
-import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
+import { NetworkSettingsV1, PoolCollectionType1V1 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DEFAULT_TRADING_FEE_PPM } from '../../utils/Constants';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -9,7 +8,7 @@ import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
     let networkSettings: NetworkSettingsV1;
-    let poolCollection: PoolCollection;
+    let poolCollection: PoolCollectionType1V1;
 
     enum BetaTokens {
         ETH = 'ETH',

@@ -14,7 +14,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntPool = await DeployedContracts.BNTPool.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
     const poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
-    const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+    const poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
 
     const poolCollectionAddress = await deploy({
         name: InstanceName.PoolCollectionType1V1,

@@ -10,6 +10,10 @@ import {
     PendingWithdrawalsV1__factory,
     PoolCollectionType1V1,
     PoolCollectionType1V1__factory,
+    PoolCollectionType1V2,
+    PoolCollectionType1V2__factory,
+    PoolMigratorV1,
+    PoolMigratorV1__factory,
     StandardRewardsV1,
     StandardRewardsV1__factory,
     StandardRewardsV2,
@@ -24,6 +28,8 @@ export {
     NetworkSettingsV1,
     PendingWithdrawalsV1,
     PoolCollectionType1V1,
+    PoolCollectionType1V2,
+    PoolMigratorV1,
     StandardRewardsV1,
     StandardRewardsV2
 };
@@ -38,6 +44,8 @@ const getContracts = (signer?: Signer) => ({
     NetworkSettingsV1: deployOrAttach('NetworkSettings', NetworkSettingsV1__factory, signer),
     PendingWithdrawalsV1: deployOrAttach('PendingWithdrawals', PendingWithdrawalsV1__factory, signer),
     PoolCollectionType1V1: deployOrAttach('PoolCollection', PoolCollectionType1V1__factory, signer),
+    PoolCollectionType1V2: deployOrAttach('PoolCollection', PoolCollectionType1V2__factory, signer),
+    PoolMigratorV1: deployOrAttach('PoolMigrator', PoolMigratorV1__factory, signer),
     StandardRewardsV1: deployOrAttach('StandardRewards', StandardRewardsV1__factory, signer),
     StandardRewardsV2: deployOrAttach('StandardRewards', StandardRewardsV2__factory, signer)
 });

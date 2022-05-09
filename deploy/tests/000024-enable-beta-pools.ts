@@ -1,5 +1,4 @@
-import { PoolCollection } from '../../components/Contracts';
-import { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
+import { NetworkSettingsV1, PoolCollectionType1V1 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
@@ -9,7 +8,7 @@ import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
     let networkSettings: NetworkSettingsV1;
-    let poolCollection: PoolCollection;
+    let poolCollection: PoolCollectionType1V1;
 
     const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.26);
 

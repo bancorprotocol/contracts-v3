@@ -34,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const V1 = 1;
+const V3 = 3;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -215,7 +215,7 @@ export const createPoolCollection = async (
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
-    version: number = V1
+    version: number = V3
 ) =>
     Contracts.TestPoolCollection.deploy(
         version,
@@ -479,7 +479,6 @@ const setupPool = async (
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
     await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);
 
     await depositToPool(provider, token, spec.balance, network);

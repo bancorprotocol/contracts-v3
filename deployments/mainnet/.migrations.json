@@ -11,7 +11,7 @@
   "000010-network-proxy": 1650287631,
   "000011-bnt-pool": 1650287947,
   "000012-pending-withdrawals": 1650288069,
-  "000013-pool-collection-upgrader": 1650288159,
+  "000013-pool-migrator": 1650288159,
   "000014-network": 1650288370,
   "000015-network-info": 1650288471,
   "000016-pool-collection-type1-v1": 1650288570,

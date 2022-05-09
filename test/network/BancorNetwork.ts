@@ -2,6 +2,7 @@ import Contracts, {
     BancorNetworkInfo,
     ExternalProtectionVault,
     IERC20,
+    IPoolCollection,
     MasterVault,
     NetworkSettings,
     PoolCollection,
@@ -26,7 +27,7 @@ import {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
-import LegacyContractsV3, { PoolCollectionType1V1 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V2 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
@@ -73,7 +74,6 @@ describe('BancorNetwork', () => {
     const FUNDING_LIMIT = toWei(10_000_000);
     const WITHDRAWAL_FEE = toPPM(5);
     const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
-    const DEPOSIT_LIMIT = toWei(1_000_000_000);
     const CONTEXT_ID = formatBytes32String('CTX');
     const MIN_RETURN_AMOUNT = BigNumber.from(1);
     const MAX_SOURCE_AMOUNT = MAX_UINT256;
@@ -899,7 +899,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let prevPoolCollection: PoolCollectionType1V1;
+        let prevPoolCollection: PoolCollectionType1V2;
         let poolMigrator: TestPoolMigrator;
         let newPoolCollection: PoolCollection;
 
@@ -930,7 +930,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V1.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V2.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -945,7 +945,7 @@ describe('BancorNetwork', () => {
 
             for (const symbol of reserveTokenSymbol) {
                 const token = await createToken(new TokenData(symbol));
-                await createPool(token, network, networkSettings, prevPoolCollection);
+                await createPool(token, network, networkSettings, prevPoolCollection as any as IPoolCollection);
 
                 await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                 await prevPoolCollection.setDepositLimit(token.address, MAX_UINT256);
@@ -1138,7 +1138,6 @@ describe('BancorNetwork', () => {
                     poolToken = await createPool(token, network, networkSettings, poolCollection);
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
                     // ensure that the trading is enabled with sufficient funding
                     if (tokenData.isNative()) {
@@ -1735,7 +1734,6 @@ describe('BancorNetwork', () => {
                     poolToken = await createPool(token, network, networkSettings, poolCollection);
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
                 }
 
                 await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
@@ -3213,7 +3211,6 @@ describe('BancorNetwork', () => {
                 await createPool(baseToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setFundingLimit(baseToken.address, FUNDING_LIMIT);
-                await poolCollection.setDepositLimit(baseToken.address, DEPOSIT_LIMIT);
 
                 // ensure that the trading is enabled with sufficient funding
                 if (isNativeToken) {
@@ -4167,7 +4164,6 @@ describe('BancorNetwork Financial Verification', () => {
         await pendingWithdrawals.setLockDuration(0);
 
         await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
-        await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 

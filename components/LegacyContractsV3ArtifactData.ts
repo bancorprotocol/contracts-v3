@@ -4,6 +4,7 @@ import {
     NetworkSettingsV1__factory,
     PendingWithdrawalsV1__factory,
     PoolCollectionType1V1__factory,
+    PoolMigratorV1__factory,
     StandardRewardsV1__factory,
     StandardRewardsV2__factory
 } from '../deployments/mainnet/types';
@@ -35,6 +36,11 @@ const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
     PoolCollectionType1V1: {
         abi: PoolCollectionType1V1__factory.abi,
         bytecode: PoolCollectionType1V1__factory.bytecode
+    },
+
+    PoolMigratorV1: {
+        abi: PoolMigratorV1__factory.abi,
+        bytecode: PoolMigratorV1__factory.bytecode
     },
 
     StandardRewardsV1: {

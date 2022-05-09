@@ -1,6 +1,6 @@
-import Contracts, { PoolCollection, PoolToken } from '../../components/Contracts';
+import Contracts, { PoolToken } from '../../components/Contracts';
 import { BNT, VBNT } from '../../components/LegacyContracts';
-import { BancorNetworkV2, NetworkSettingsV1 } from '../../components/LegacyContractsV3';
+import { BancorNetworkV2, NetworkSettingsV1, PoolCollectionType1V1 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { getBalance, getTransactionCost } from '../../test/helpers/Utils';
 import { DEFAULT_TRADING_FEE_PPM, MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
@@ -17,7 +17,7 @@ describeDeployment(__filename, () => {
     let vbnt: VBNT;
     let network: BancorNetworkV2;
     let networkSettings: NetworkSettingsV1;
-    let poolCollection: PoolCollection;
+    let poolCollection: PoolCollectionType1V1;
     let bntBNT: PoolToken;
 
     const BNT_TOKEN_PRICE_IN_CENTS = toCents(2.29);

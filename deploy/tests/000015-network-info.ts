@@ -53,7 +53,7 @@ describeDeployment(__filename, () => {
         bntPool = await DeployedContracts.BNTPool.deployed();
         bnBNT = await DeployedContracts.bnBNT.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-        poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+        poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
     });
 

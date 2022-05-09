@@ -1,5 +1,4 @@
 import Contracts from '../components/Contracts';
-import { MAX_UINT256 } from '../utils/Constants';
 import { DeployedContracts, getNamedSigners, isTenderlyFork, runPendingDeployments } from '../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
@@ -124,18 +123,6 @@ const fundAccounts = async () => {
     console.log();
 };
 
-const removeDepositLimits = async (tokens: string[]) => {
-    console.log('Removing deposit limits...');
-    console.log();
-
-    const { daoMultisig } = await getNamedSigners();
-
-    const poolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
-    for (const token of tokens) {
-        await poolCollection.connect(daoMultisig).setDepositLimit(token, MAX_UINT256);
-    }
-};
-
 const setLockDuration = async (lockDuration: number) => {
     console.log(`Setting withdrawal lock duration to ${lockDuration} seconds...`);
     console.log();
@@ -184,9 +171,6 @@ const main = async () => {
     const lockDuration = 2;
 
     if (isResearch) {
-        const { dai, link } = await getNamedAccounts();
-
-        await removeDepositLimits([NATIVE_TOKEN_ADDRESS, dai, link]);
         await setLockDuration(lockDuration);
     }
 
@@ -202,7 +186,6 @@ const main = async () => {
     console.log(`   Dashboard: https://dashboard.tenderly.co/${TENDERLY_USERNAME}/${TENDERLY_PROJECT}/fork/${forkId}`);
     if (isResearch) {
         console.log();
-        console.log(`   * Unlimited deposits`);
         console.log(`   * Withdrawal locking duration was set to ${lockDuration} seconds`);
     }
     console.log();

@@ -41,6 +41,7 @@ import {
     NetworkSettingsV1,
     PendingWithdrawalsV1,
     PoolCollectionType1V1,
+    PoolMigratorV1,
     StandardRewardsV1,
     StandardRewardsV2
 } from '../components/LegacyContractsV3';
@@ -161,7 +162,8 @@ const DeployedLegacyContracts = {
     StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
     StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards),
     PendingWithdrawalsV1: deployed<PendingWithdrawalsV1>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V1: deployed<PoolCollectionType1V1>(InstanceName.PoolCollectionType1V1)
+    PoolCollectionType1V1: deployed<PoolCollectionType1V1>(InstanceName.PoolCollectionType1V1),
+    PoolMigratorV1: deployed<PoolMigratorV1>(InstanceName.PoolMigrator)
 };
 
 const DeployedNewContracts = {

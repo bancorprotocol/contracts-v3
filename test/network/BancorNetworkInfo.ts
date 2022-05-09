@@ -632,8 +632,6 @@ describe('BancorNetworkInfo', () => {
 
                     await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                    await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-
                     await network.depositToPoolCollectionForT(
                         poolCollection.address,
                         CONTEXT_ID,
