@@ -96,6 +96,13 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     }
 
     /**
+     * @dev returns the settings of the Vortex
+     */
+    function vortexRewards() external view returns (VortexRewards memory) {
+        return _vortexRewards;
+    }
+
+    /**
      * @dev sets the settings of the Vortex
      *
      * requirements:
@@ -126,13 +133,6 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
             prevBurnRewardMaxAmount: prevVortexBurnRewardMaxAmount,
             newBurnRewardMaxAmount: rewards.burnRewardMaxAmount
         });
-    }
-
-    /**
-     * @dev returns the settings of the Vortex
-     */
-    function vortexRewards() external view returns (VortexRewards memory) {
-        return _vortexRewards;
     }
 
     function execute() external nonReentrant whenNotPaused returns (uint256 bntAmountTraded, uint256 vbntAmountBurned) {
