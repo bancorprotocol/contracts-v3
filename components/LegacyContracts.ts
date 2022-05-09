@@ -30,6 +30,8 @@ import {
     Owned__factory,
     StakingRewards,
     StakingRewards__factory,
+    StakingRewardsStore,
+    StakingRewardsStore__factory,
     TestCheckpointStore,
     TestCheckpointStore__factory,
     TestLiquidityProtection,
@@ -72,6 +74,7 @@ export {
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
     StakingRewards,
+    StakingRewardsStore,
     TestCheckpointStore,
     TestLiquidityProtection,
     TestStandardPoolConverter,
@@ -112,6 +115,10 @@ export const Roles = {
     StakingRewards: {
         ROLE_SUPERVISOR: id('ROLE_SUPERVISOR'),
         ROLE_PUBLISHER: id('ROLE_PUBLISHER')
+    },
+    StakingRewardsStore: {
+        ROLE_MANAGER: id('ROLE_MANAGER'),
+        ROLE_SEEDER: id('ROLE_SEEDER')
     }
 };
 
@@ -148,6 +155,7 @@ const getContracts = (signer?: Signer) => ({
         signer
     ),
     StakingRewards: deployOrAttach('StakingRewards', StakingRewards__factory, signer),
+    StakingRewardsStore: deployOrAttach('StakingRewardsStore', StakingRewardsStore__factory, signer),
     TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
     TestLiquidityProtection: deployOrAttach('TestLiquidityProtection', TestLiquidityProtection__factory, signer),
     TestStandardPoolConverter: deployOrAttach('TestStandardPoolConverter', TestStandardPoolConverter__factory, signer),

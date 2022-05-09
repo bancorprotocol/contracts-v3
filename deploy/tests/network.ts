@@ -57,6 +57,8 @@ import { getNamedAccounts } from 'hardhat';
 
     before(async () => {
         ({ daoMultisig, bntWhale } = await getNamedSigners());
+
+        await fundAccount(bntWhale);
     });
 
     beforeEach(async () => {
@@ -255,6 +257,24 @@ import { getNamedAccounts } from 'hardhat';
             }
         };
 
+        const depositTKN = async (token: string, tokenWhale: SignerWithAddress, depositAmount: BigNumber) => {
+            const isNativeToken = token === NATIVE_TOKEN_ADDRESS;
+
+            if (!isNativeToken) {
+                const tokenContract = await Contracts.ERC20.attach(token);
+                await tokenContract.connect(tokenWhale).approve(network.address, depositAmount);
+            }
+
+            await network.connect(tokenWhale).deposit(token, depositAmount, {
+                value: isNativeToken ? depositAmount : BigNumber.from(0)
+            });
+        };
+
+        const depositBNT = async (depositAmount: BigNumber) => {
+            await bnt.connect(bntWhale).approve(network.address, depositAmount);
+            await network.connect(bntWhale).deposit(bnt.address, depositAmount);
+        };
+
         beforeEach(async () => {
             const { dai, link } = await getNamedAccounts();
             const { ethWhale, daiWhale, linkWhale } = await getNamedSigners();
@@ -286,27 +306,19 @@ import { getNamedAccounts } from 'hardhat';
 
             describe('deposits', () => {
                 it('should perform deposits', async () => {
-                    for (const [tokenSymbol, { token, whale }] of Object.entries(pools)) {
+                    // perform a few TKN deposit tests
+                    const tknDepositAmount = toWei(1000);
+
+                    for (const { token, whale } of Object.values(pools)) {
                         await stabilizePool(token, whale);
-
-                        const isNativeToken = tokenSymbol === TestPools.ETH;
-
-                        const depositAmount = toWei(1000);
 
                         for (let i = 0; i < 5; i++) {
                             const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
 
-                            if (!isNativeToken) {
-                                const tokenContract = await Contracts.ERC20.attach(token);
-                                await tokenContract.connect(whale).approve(network.address, depositAmount);
-                            }
-
-                            await network.connect(whale).deposit(token, depositAmount, {
-                                value: isNativeToken ? depositAmount : BigNumber.from(0)
-                            });
+                            await depositTKN(token, whale, tknDepositAmount);
 
                             const { liquidity } = await poolCollection.poolData(token);
-                            expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(depositAmount));
+                            expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(tknDepositAmount));
 
                             expect({
                                 n: prevLiquidity.bntTradingLiquidity,
@@ -324,15 +336,14 @@ import { getNamedAccounts } from 'hardhat';
                     }
 
                     // perform a few BNT deposit tests
-                    const bntAmount = toWei(10);
+                    const bntDepositAmount = toWei(10);
 
                     for (let i = 0; i < 5; i++) {
                         const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);
                         const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhale.address);
                         const prevTotalSupply = await bnt.totalSupply();
 
-                        await bnt.connect(bntWhale).approve(network.address, bntAmount);
-                        await network.connect(bntWhale).deposit(bnt.address, bntAmount);
+                        await depositBNT(bntDepositAmount);
 
                         const receivedBNBNTAmount = (await bnBNT.balanceOf(bntWhale.address)).sub(prevBNBNTAmount);
 
@@ -341,7 +352,7 @@ import { getNamedAccounts } from 'hardhat';
                             prevVBNTTokenAmount.add(receivedBNBNTAmount)
                         );
 
-                        expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(bntAmount));
+                        expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(bntDepositAmount));
                     }
                 });
             });
@@ -553,118 +564,130 @@ import { getNamedAccounts } from 'hardhat';
             });
 
             describe('migrations', () => {
-                context('from v2', () => {
-                    let liquidityProtection: LiquidityProtection;
-                    let liquidityProtectionStore: LiquidityProtectionStore;
-                    let anchor: Owned;
-                    let bnTKN: PoolToken;
-
+                context('with some deposits', () => {
                     beforeEach(async () => {
-                        await fundAccount(bntWhale);
+                        const { ethWhale } = await getNamedSigners();
 
-                        liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
-                        liquidityProtectionStore = await DeployedContracts.LiquidityProtectionStore.deployed();
+                        await stabilizePool(NATIVE_TOKEN_ADDRESS, ethWhale);
 
-                        bnTKN = await Contracts.PoolToken.attach(await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS));
-
-                        const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
-                        const converterRegistryAddress = await contractRegistry.getAddress(
-                            LegacyRegistry.CONVERTER_REGISTRY
-                        );
-                        const converterRegistry = await LegacyContracts.ConverterRegistry.attach(
-                            converterRegistryAddress
-                        );
-
-                        const anchorAddress = await converterRegistry.getLiquidityPoolByConfig(
-                            STANDARD_CONVERTER_TYPE,
-                            [bnt.address, NATIVE_TOKEN_ADDRESS],
-                            [STANDARD_POOL_CONVERTER_WEIGHT, STANDARD_POOL_CONVERTER_WEIGHT]
-                        );
-
-                        anchor = await LegacyContracts.Owned.attach(anchorAddress);
+                        await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(1000));
                     });
 
-                    it('should migrate positions from V2', async () => {
-                        const initialTotalSupply = await bnt.totalSupply();
+                    context('from v2', () => {
+                        let liquidityProtection: LiquidityProtection;
+                        let liquidityProtectionStore: LiquidityProtectionStore;
+                        let anchor: Owned;
+                        let bnTKN: PoolToken;
 
-                        // add some BNT to the V2 ETH-BNT pool
-                        const bntAmount = toWei(100);
-                        await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
-                        const id1 = await liquidityProtection
-                            .connect(bntWhale)
-                            .callStatic.addLiquidity(anchor.address, bnt.address, bntAmount);
-                        await liquidityProtection
-                            .connect(bntWhale)
-                            .addLiquidity(anchor.address, bnt.address, bntAmount);
+                        beforeEach(async () => {
+                            liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+                            liquidityProtectionStore = await DeployedContracts.LiquidityProtectionStore.deployed();
 
-                        // add some ETH to the V2 ETH-BNT pool
-                        const nativeTokenAmount = toWei(100);
-                        const id2 = await liquidityProtection
-                            .connect(bntWhale)
-                            .callStatic.addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
-                                value: nativeTokenAmount
-                            });
-                        await liquidityProtection
-                            .connect(bntWhale)
-                            .addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
-                                value: nativeTokenAmount
-                            });
+                            bnTKN = await Contracts.PoolToken.attach(
+                                await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS)
+                            );
 
-                        const ids = [id1, id2].map((i) => i.toNumber());
-                        const prevIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map(
-                            (i) => i.toNumber()
-                        );
-                        expect(prevIds).to.include.members(ids);
+                            const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
+                            const converterRegistryAddress = await contractRegistry.getAddress(
+                                LegacyRegistry.CONVERTER_REGISTRY
+                            );
+                            const converterRegistry = await LegacyContracts.ConverterRegistry.attach(
+                                converterRegistryAddress
+                            );
 
-                        const nativeToken = { address: NATIVE_TOKEN_ADDRESS };
+                            const anchorAddress = await converterRegistry.getLiquidityPoolByConfig(
+                                STANDARD_CONVERTER_TYPE,
+                                [bnt.address, NATIVE_TOKEN_ADDRESS],
+                                [STANDARD_POOL_CONVERTER_WEIGHT, STANDARD_POOL_CONVERTER_WEIGHT]
+                            );
 
-                        const prevBNTBalance = await bnt.balanceOf(bntWhale.address);
-                        const prevTokenBalance = await getBalance(nativeToken, bntWhale);
-
-                        const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);
-                        const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhale.address);
-                        const prevBNTKNAmount = await getBalance(bnTKN, bntWhale);
-
-                        const prevVaultTokenBalance = await getBalance(nativeToken, masterVault.address);
-
-                        // migration both the BNT and ETH positions
-                        const res = await liquidityProtection.connect(bntWhale).migratePositions([
-                            {
-                                poolToken: anchor.address,
-                                reserveToken: bnt.address,
-                                positionIds: [id1]
-                            },
-                            {
-                                poolToken: anchor.address,
-                                reserveToken: NATIVE_TOKEN_ADDRESS,
-                                positionIds: [id2]
-                            }
-                        ]);
-
-                        const transactionCost = await getTransactionCost(res);
-
-                        const newIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map(
-                            (i) => i.toNumber()
-                        );
-                        expect(newIds).not.to.include.members(ids);
-
-                        expect(await bnt.balanceOf(bntWhale.address)).to.equal(prevBNTBalance);
-                        expect(await getBalance(nativeToken, bntWhale)).to.equal(prevTokenBalance.sub(transactionCost));
-
-                        expect(await bnBNT.balanceOf(bntWhale.address)).to.be.gt(prevBNBNTAmount);
-                        expect(await vbnt.balanceOf(bntWhale.address)).to.equal(prevVBNTTokenAmount);
-                        expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
-
-                        expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
-                            maxRelativeError: new Decimal('0.0000000000000000001')
+                            anchor = await LegacyContracts.Owned.attach(anchorAddress);
                         });
 
-                        expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
-                            prevVaultTokenBalance.add(nativeTokenAmount),
-                            {
-                                maxRelativeError: new Decimal('0.0000000000000000001')
-                            }
-                        );
+                        it('should migrate positions from V2', async () => {
+                            const initialTotalSupply = await bnt.totalSupply();
+
+                            // add some BNT to the V2 ETH-BNT pool
+                            const bntAmount = toWei(100);
+                            await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
+                            const id1 = await liquidityProtection
+                                .connect(bntWhale)
+                                .callStatic.addLiquidity(anchor.address, bnt.address, bntAmount);
+                            await liquidityProtection
+                                .connect(bntWhale)
+                                .addLiquidity(anchor.address, bnt.address, bntAmount);
+
+                            // add some ETH to the V2 ETH-BNT pool
+                            const nativeTokenAmount = toWei(100);
+                            const id2 = await liquidityProtection
+                                .connect(bntWhale)
+                                .callStatic.addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
+                                    value: nativeTokenAmount
+                                });
+                            await liquidityProtection
+                                .connect(bntWhale)
+                                .addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
+                                    value: nativeTokenAmount
+                                });
+
+                            const ids = [id1, id2].map((i) => i.toNumber());
+                            const prevIds = (
+                                await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)
+                            ).map((i) => i.toNumber());
+                            expect(prevIds).to.include.members(ids);
+
+                            const nativeToken = { address: NATIVE_TOKEN_ADDRESS };
+
+                            const prevBNTBalance = await bnt.balanceOf(bntWhale.address);
+                            const prevTokenBalance = await getBalance(nativeToken, bntWhale);
+
+                            const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);
+                            const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhale.address);
+                            const prevBNTKNAmount = await getBalance(bnTKN, bntWhale);
+
+                            const prevVaultTokenBalance = await getBalance(nativeToken, masterVault.address);
+
+                            // migration both the BNT and ETH positions
+                            const res = await liquidityProtection.connect(bntWhale).migratePositions([
+                                {
+                                    poolToken: anchor.address,
+                                    reserveToken: bnt.address,
+                                    positionIds: [id1]
+                                },
+                                {
+                                    poolToken: anchor.address,
+                                    reserveToken: NATIVE_TOKEN_ADDRESS,
+                                    positionIds: [id2]
+                                }
+                            ]);
+
+                            const transactionCost = await getTransactionCost(res);
+
+                            const newIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map(
+                                (i) => i.toNumber()
+                            );
+                            expect(newIds).not.to.include.members(ids);
+
+                            expect(await bnt.balanceOf(bntWhale.address)).to.equal(prevBNTBalance);
+                            expect(await getBalance(nativeToken, bntWhale)).to.equal(
+                                prevTokenBalance.sub(transactionCost)
+                            );
+
+                            expect(await bnBNT.balanceOf(bntWhale.address)).to.be.gt(prevBNBNTAmount);
+                            expect(await vbnt.balanceOf(bntWhale.address)).to.equal(prevVBNTTokenAmount);
+                            expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
+
+                            expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
+                                maxRelativeError: new Decimal('0.0001')
+                            });
+
+                            expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
+                                prevVaultTokenBalance.add(nativeTokenAmount),
+                                {
+                                    maxRelativeError: new Decimal('0.0001')
+                                }
+                            );
+                        });
                     });
                 });
             });

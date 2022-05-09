@@ -10,7 +10,7 @@ describeDeployment(__filename, () => {
 
     beforeEach(async () => {
         network = await DeployedContracts.BancorNetworkV2.deployed();
-        liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+        liquidityProtection = await DeployedContracts.LegacyLiquidityProtection2.deployed();
     });
 
     it('should allow the liquidity protection contract to migrate liquidity', async () => {
