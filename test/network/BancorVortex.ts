@@ -9,7 +9,7 @@ import Contracts, {
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
-import { Roles } from '../helpers/AccessControl';
+import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -68,6 +68,12 @@ describe('BancorVortex', () => {
 
         it('should be properly initialized', async () => {
             expect(await bancorVortex.version()).to.equal(1);
+
+            await expectRoles(bancorVortex, Roles.Upgradeable);
+
+            await expectRole(bancorVortex, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
+                deployer.address
+            ]);
 
             const vortexRewards = await bancorVortex.vortexRewards();
             expect(vortexRewards.burnRewardPPM).to.equal(0);
