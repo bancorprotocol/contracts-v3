@@ -101,7 +101,7 @@ describeDeployment(__filename, () => {
                     .connect(whale)
                     .deposit(address, tokenAmount, { value: isNativeToken ? tokenAmount : BigNumber.from(0) });
 
-                const { liquidity } = await poolCollection.poolData(address);
+                const liquidity = await poolCollection.poolLiquidity(address);
                 expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(tokenAmount));
 
                 expect({

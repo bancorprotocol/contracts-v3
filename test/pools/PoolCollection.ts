@@ -1048,8 +1048,7 @@ describe('PoolCollection', () => {
                         .to.emit(poolCollection, 'TokensDeposited')
                         .withArgs(CONTEXT_ID, provider.address, token.address, tokenAmount, expectedPoolTokenAmount);
 
-                    const poolData = await poolCollection.poolData(token.address);
-                    const { liquidity } = poolData;
+                    const liquidity = await poolCollection.poolLiquidity(token.address);
 
                     await testTradingLiquidityEvents(
                         token,
@@ -1279,6 +1278,8 @@ describe('PoolCollection', () => {
                                         d: liquidity.bntTradingLiquidity
                                     }
                                 });
+
+                                expect(await poolCollection.isPoolRateStable(token.address)).to.be.false;
                             });
 
                             it('should deposit without resetting the trading liquidity', async () => {
@@ -1297,6 +1298,8 @@ describe('PoolCollection', () => {
                                         d: liquidity.baseTokenTradingLiquidity
                                     }
                                 });
+
+                                expect(await poolCollection.isPoolRateStable(token.address)).to.be.true;
                             });
 
                             it('should deposit and update the trading liquidity', async () => {
@@ -1338,7 +1341,7 @@ describe('PoolCollection', () => {
 
                     context('when the pool is stable', () => {
                         beforeEach(async () => {
-                            const { liquidity } = await poolCollection.poolData(token.address);
+                            const liquidity = await poolCollection.poolLiquidity(token.address);
 
                             await poolCollection.setAverageRateT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
@@ -1526,7 +1529,7 @@ describe('PoolCollection', () => {
                 expect(currMasterVaultBNTBalance).eq(prevMasterVaultBNTBalance.sub(bntAmountRenouncedOnResetLiquidity));
             }
 
-            const { liquidity } = await poolCollection.poolData(token.address);
+            const liquidity = await poolCollection.poolLiquidity(token.address);
 
             await testTradingLiquidityEvents(
                 token,
@@ -1737,7 +1740,7 @@ describe('PoolCollection', () => {
 
                                             context(`ns=${ns}, nx=${nx}, dx=${dx}`, () => {
                                                 beforeEach(async () => {
-                                                    const { liquidity } = await poolCollection.poolData(token.address);
+                                                    const liquidity = await poolCollection.poolLiquidity(token.address);
 
                                                     await poolCollection.setAverageRateT(token.address, {
                                                         blockNumber: 1,
@@ -1752,6 +1755,9 @@ describe('PoolCollection', () => {
                                                     if (ok) {
                                                         await testMultipleWithdrawals(TradingLiquidityState.Update);
                                                     } else {
+                                                        expect(await poolCollection.isPoolRateStable(token.address)).to
+                                                            .be.false;
+
                                                         await expect(
                                                             withdrawAndVerifyState(
                                                                 totalBasePoolTokenAmount,
@@ -2493,7 +2499,7 @@ describe('PoolCollection', () => {
                                 deployer.address
                             );
 
-                            const { liquidity } = await poolCollection.poolData(reserveToken.address);
+                            const liquidity = await poolCollection.poolLiquidity(reserveToken.address);
 
                             await poolCollection.setAverageRateT(reserveToken.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),

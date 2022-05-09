@@ -125,6 +125,11 @@ interface IPoolCollection is IVersioned {
     ) external view returns (uint256);
 
     /**
+     * @dev returns whether the pool is stable
+     */
+    function isPoolStable(Token pool) external view returns (bool);
+
+    /**
      * @dev creates a new pool
      *
      * requirements:

@@ -310,7 +310,7 @@ import { getNamedAccounts } from 'hardhat';
 
                         await depositTKN(token, whale, tknDepositAmount);
 
-                        const { liquidity } = await poolCollection.poolData(token);
+                        const liquidity = await poolCollection.poolLiquidity(token);
                         expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(tknDepositAmount));
 
                         expect({

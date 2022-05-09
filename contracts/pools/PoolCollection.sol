@@ -450,6 +450,15 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
+     * @inheritdoc IPoolCollection
+     */
+    function isPoolStable(Token pool) external view returns (bool) {
+        Pool storage data = _poolData[pool];
+
+        return _poolRateState(data.liquidity, data.averageRate) == PoolRateState.Stable;
+    }
+
+    /**
      * @dev sets the trading fee of a given pool
      *
      * requirements:
