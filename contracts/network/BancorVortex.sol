@@ -39,10 +39,10 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     // the address of the BNT contract
     IERC20 private immutable _bnt;
 
-    // the address of the VBNT token
+    // the address of the VBNT contract
     IERC20 private immutable _vbnt;
 
-    // the address of the VBNT token governance
+    // the address of the VBNT Governance contract
     ITokenGovernance private immutable _vbntGovernance;
 
     // vortex-rewards configuration
@@ -64,7 +64,7 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     /**
      * @dev triggered when vBNT is burned
      */
-    event Burned(uint256 bntAmount, uint256 vbntTokenAmount, uint256 rewards);
+    event Burned(uint256 bntAmount, uint256 vbntAmount, uint256 rewards);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -177,9 +177,10 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
             address(this)
         );
 
+        uint256 rewards = bntTotalAmount - bntRewardsAmount;
+
         _vbntGovernance.burn(vbntRewardsAmount);
 
-        uint256 rewards = bntTotalAmount - bntRewardsAmount;
         _bnt.safeTransfer(msg.sender, rewards);
 
         emit Burned(bntRewardsAmount, vbntRewardsAmount, rewards);
