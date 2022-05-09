@@ -16,9 +16,5 @@ describeDeployment(__filename, () => {
         expect(await networkSettings.networkFeePPM()).to.equal(toPPM(15));
         expect(await networkSettings.withdrawalFeePPM()).to.equal(toPPM(0.25));
         expect(await networkSettings.flashLoanFeePPM()).to.equal(toPPM(0.09));
-
-        const vortexRewards = await networkSettings.vortexRewards();
-        expect(vortexRewards.burnRewardPPM).to.equal(toPPM(10));
-        expect(vortexRewards.burnRewardMaxAmount).to.equal(toWei(100));
     });
 });

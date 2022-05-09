@@ -1,4 +1,5 @@
 import Contracts, { BancorNetwork, BancorVortex, IERC20 } from '../../components/Contracts';
+import { TokenGovernance } from '../../components/LegacyContracts';
 import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
 import { createSystem } from '../helpers/Factory';
@@ -7,10 +8,11 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe('BancorVortex', () => {
+describe.only('BancorVortex', () => {
     let bancorVortex: BancorVortex;
     let network: BancorNetwork;
     let bnt: IERC20;
+    let vbntGovernance: TokenGovernance;
 
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
@@ -22,18 +24,26 @@ describe('BancorVortex', () => {
     });
 
     beforeEach(async () => {
-        ({ bancorVortex, network, bnt } = await createSystem());
+        ({ bancorVortex, network, bnt, vbntGovernance } = await createSystem());
     });
 
     describe('construction', () => {
-        it('should revert when attempting to create with an invalid BNT contract', async () => {
-            await expect(Contracts.BancorVortex.deploy(network.address, ZERO_ADDRESS)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+        it('should revert when attempting to create with an invalid Bancor Network contract', async () => {
+            await expect(
+                Contracts.BancorVortex.deploy(ZERO_ADDRESS, bnt.address, vbntGovernance.address)
+            ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid Bancor Network contract', async () => {
-            await expect(Contracts.BancorVortex.deploy(ZERO_ADDRESS, bnt.address)).to.be.revertedWith('InvalidAddress');
+        it('should revert when attempting to create with an invalid BNT contract', async () => {
+            await expect(
+                Contracts.BancorVortex.deploy(network.address, ZERO_ADDRESS, vbntGovernance.address)
+            ).to.be.revertedWith('InvalidAddress');
+        });
+
+        it('should revert when attempting to create with an invalid VBNT Governance contract', async () => {
+            await expect(Contracts.BancorVortex.deploy(network.address, bnt.address, ZERO_ADDRESS)).to.be.revertedWith(
+                'InvalidAddress'
+            );
         });
 
         it('should revert when attempting to reinitialize', async () => {

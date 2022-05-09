@@ -1,21 +1,31 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
+import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
+
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
+import { Token } from "../token/Token.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { IBancorVortex } from "./interfaces/IBancorVortex.sol";
+import { Time } from "../utility/Time.sol";
+import { MathEx } from "../utility/MathEx.sol";
 
 /**
  * @dev Bancor Vortex contract
  */
-contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, Utils {
+contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, Utils, Time {
+    using SafeERC20 for IERC20;
+
     struct VortexRewards {
         // the percentage of converted BNT to be sent to the initiator of the burning event (in units of PPM)
         uint32 burnRewardPPM;
@@ -28,6 +38,12 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
 
     // the address of the BNT contract
     IERC20 private immutable _bnt;
+
+    // the address of the VBNT token
+    IERC20 private immutable _vbnt;
+
+    // the address of the VBNT token governance
+    ITokenGovernance private immutable _vbntGovernance;
 
     // vortex-rewards configuration
     VortexRewards private _vortexRewards;
@@ -46,19 +62,26 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     );
 
     /**
-     * @dev triggered when BNT is traded and vBNT is burned
+     * @dev triggered when vBNT is burned
      */
-    event Burned(uint256 bntAmount, uint256 vbntTokenAmount, uint256 reward);
+    event Burned(uint256 bntAmount, uint256 vbntTokenAmount, uint256 rewards);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(IBancorNetwork initBancorNetwork, IERC20 initBNT)
+    constructor(
+        IBancorNetwork initBancorNetwork,
+        IERC20 initBNT,
+        ITokenGovernance initVBNTGovernance
+    )
         validAddress(address(initBancorNetwork))
         validAddress(address(initBNT))
+        validAddress(address(initVBNTGovernance))
     {
         _bancorNetwork = initBancorNetwork;
         _bnt = initBNT;
+        _vbntGovernance = initVBNTGovernance;
+        _vbnt = initVBNTGovernance.token();
     }
 
     /**
@@ -135,20 +158,32 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
         });
     }
 
-    function execute() external nonReentrant whenNotPaused returns (uint256 bntAmountTraded, uint256 vbntAmountBurned) {
+    function execute() external nonReentrant whenNotPaused returns (uint256, uint256) {
         uint256 currentPendingNetworkFeeAmount = _bancorNetwork.withdrawNetworkFees(address(this));
 
-        // temporary, in order to mask out compilation warnings
-        bntAmountTraded += currentPendingNetworkFeeAmount;
-        vbntAmountBurned += currentPendingNetworkFeeAmount;
+        uint256 bntTotalAmount = _bnt.balanceOf(address(this));
 
-        // TODO:
-        // note the BNT balance (vortex burn amount)
-        // calculate the reward amount using the vortex burn amount as input, along with the reward settings
-        // reduce the vortex burn amount by the reward amount
-        // perform a trade from BNT to vBNT using the vortex burn amount as input (requires approval)
-        // burn the resulting vBNT
-        // transfer the remaining BNT balance to the caller
-        // emit the Burned event
+        uint256 bntRewardsAmount = Math.min(
+            MathEx.mulDivF(bntTotalAmount, _vortexRewards.burnRewardPPM, PPM_RESOLUTION),
+            _vortexRewards.burnRewardMaxAmount
+        );
+
+        uint256 vbntRewardsAmount = _bancorNetwork.tradeBySourceAmount(
+            Token(address(_bnt)),
+            Token(address(_vbnt)),
+            bntRewardsAmount,
+            0,
+            _time(),
+            address(this)
+        );
+
+        _vbntGovernance.burn(vbntRewardsAmount);
+
+        uint256 rewards = bntTotalAmount - bntRewardsAmount;
+        _bnt.safeTransfer(msg.sender, rewards);
+
+        emit Burned(bntRewardsAmount, vbntRewardsAmount, rewards);
+
+        return (bntRewardsAmount, vbntRewardsAmount);
     }
 }
