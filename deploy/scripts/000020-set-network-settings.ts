@@ -34,13 +34,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    await execute({
-        name: InstanceName.NetworkSettings,
-        methodName: 'setVortexRewards',
-        args: [{ burnRewardPPM: toPPM(10), burnRewardMaxAmount: toWei(100) }],
-        from: deployer
-    });
-
     return true;
 };
 

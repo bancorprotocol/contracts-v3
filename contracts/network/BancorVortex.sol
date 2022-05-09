@@ -16,25 +16,31 @@ import { IBancorVortex } from "./interfaces/IBancorVortex.sol";
  * @dev Bancor Vortex contract
  */
 contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, Utils {
+    struct VortexRewards {
+        // the percentage of converted BNT to be sent to the initiator of the burning event (in units of PPM)
+        uint32 burnRewardPPM;
+        // the maximum burn reward to be sent to the initiator of the burning event
+        uint256 burnRewardMaxAmount;
+    }
+
     // the address of the Bancor Network contract
     IBancorNetwork private immutable _bancorNetwork;
 
     // the address of the BNT contract
     IERC20 private immutable _bnt;
 
-    // burn-reward configuration
-    uint32 private _burnRewardPPM;
-    uint256 private _burnRewardMaxAmount;
+    // vortex-rewards configuration
+    VortexRewards private _vortexRewards;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 2] private __gap;
 
     /**
-     * @dev triggered when the burn-reward configuration is updated
+     * @dev triggered when the settings of the Vortex are updated
      */
     event VortexBurnRewardUpdated(
-        uint256 prevBurnRewardPPM,
-        uint256 newBurnRewardPPM,
+        uint32 prevBurnRewardPPM,
+        uint32 newBurnRewardPPM,
         uint256 prevBurnRewardMaxAmount,
         uint256 newBurnRewardMaxAmount
     );
@@ -58,7 +64,7 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     /**
      * @dev fully initializes the contract and its parents
      */
-    function initialize() external {
+    function initialize() external initializer {
         __BancorVortex_init();
     }
 
@@ -90,39 +96,53 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     }
 
     /**
-     * @dev set burn-reward portion and maximum amount
+     * @dev sets the settings of the Vortex
+     *
+     * requirements:
+     *s
+     * - the caller must be the admin of the contract
      */
-    function setVortexBurnReward(uint32 newBurnRewardPPM, uint256 newBurnRewardMaxAmount)
+    function setVortexRewards(VortexRewards calldata rewards)
         external
-        validFee(newBurnRewardPPM)
         onlyAdmin
+        validFee(rewards.burnRewardPPM)
+        greaterThanZero(rewards.burnRewardMaxAmount)
     {
-        uint256 prevBurnRewardPPM = _burnRewardPPM;
-        uint256 prevBurnRewardMaxAmount = _burnRewardMaxAmount;
+        uint32 prevVortexBurnRewardPPM = _vortexRewards.burnRewardPPM;
+        uint256 prevVortexBurnRewardMaxAmount = _vortexRewards.burnRewardMaxAmount;
 
-        if (prevBurnRewardPPM == newBurnRewardPPM && prevBurnRewardMaxAmount == newBurnRewardMaxAmount) {
+        if (
+            prevVortexBurnRewardPPM == rewards.burnRewardPPM &&
+            prevVortexBurnRewardMaxAmount == rewards.burnRewardMaxAmount
+        ) {
             return;
         }
 
-        if (prevBurnRewardPPM != newBurnRewardPPM) {
-            _burnRewardPPM = newBurnRewardPPM;
-        }
-
-        if (prevBurnRewardMaxAmount != newBurnRewardMaxAmount) {
-            _burnRewardMaxAmount = newBurnRewardMaxAmount;
-        }
+        _vortexRewards = rewards;
 
         emit VortexBurnRewardUpdated({
-            prevBurnRewardPPM: prevBurnRewardPPM,
-            newBurnRewardPPM: newBurnRewardPPM,
-            prevBurnRewardMaxAmount: prevBurnRewardMaxAmount,
-            newBurnRewardMaxAmount: newBurnRewardMaxAmount
+            prevBurnRewardPPM: prevVortexBurnRewardPPM,
+            newBurnRewardPPM: rewards.burnRewardPPM,
+            prevBurnRewardMaxAmount: prevVortexBurnRewardMaxAmount,
+            newBurnRewardMaxAmount: rewards.burnRewardMaxAmount
         });
     }
 
+    /**
+     * @dev returns the settings of the Vortex
+     */
+    function vortexRewards() external view returns (VortexRewards memory) {
+        return _vortexRewards;
+    }
+
     function execute() external nonReentrant whenNotPaused returns (uint256 bntAmountTraded, uint256 vbntAmountBurned) {
-        // get the vortex burn reward settings from the network settings contract
-        // call withdrawNetworkFees on the network
+        uint256 currentPendingNetworkFeeAmount = _bancorNetwork.withdrawNetworkFees(address(this));
+
+        // temporary, in order to mask out compilation warnings
+        bntAmountTraded += currentPendingNetworkFeeAmount;
+        vbntAmountBurned += currentPendingNetworkFeeAmount;
+
+        // TODO:
         // note the BNT balance (vortex burn amount)
         // calculate the reward amount using the vortex burn amount as input, along with the reward settings
         // reduce the vortex burn amount by the reward amount

@@ -395,7 +395,10 @@ const createSystemFixture = async () => {
         poolMigrator
     );
 
+    const bancorVortex = await createProxy(Contracts.BancorVortex, { ctorArgs: [network.address, bnt.address] });
+
     return {
+        bancorVortex,
         networkSettings,
         networkInfo,
         network,

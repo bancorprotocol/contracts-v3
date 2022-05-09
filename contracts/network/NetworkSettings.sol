@@ -11,7 +11,7 @@ import { Utils, AlreadyExists, DoesNotExist, InvalidParam } from "../utility/Uti
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 
 /**
  * @dev Network Settings contract
@@ -48,14 +48,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // the default flash-loan fee (in units of PPM)
     uint32 private _defaultFlashLoanFeePPM;
 
-    // the settings of the Vortex
-    VortexRewards private _vortexRewards;
-
     // a mapping between pools and their flash-loan fees
     mapping(Token => FlashLoanFee) private _flashLoanFees;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 8] private __gap;
+    uint256[MAX_GAP - 6] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
@@ -86,16 +83,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when the withdrawal fee is updated
      */
     event WithdrawalFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
-
-    /**
-     * @dev triggered when the settings of the Vortex are updated
-     */
-    event VortexBurnRewardUpdated(
-        uint32 prevBurnRewardPPM,
-        uint32 newBurnRewardPPM,
-        uint256 prevBurnRewardMaxAmount,
-        uint256 newBurnRewardMaxAmount
-    );
 
     /**
      * @dev triggered when the default flash-loan fee is updated
@@ -412,46 +399,6 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
         _flashLoanFees[pool] = FlashLoanFee({ initialized: true, feePPM: newFlashLoanFeePPM });
 
         emit FlashLoanFeePPMUpdated({ pool: pool, prevFeePPM: prevFlashLoanFeePPM, newFeePPM: newFlashLoanFeePPM });
-    }
-
-    /**
-     * @inheritdoc INetworkSettings
-     */
-    function vortexRewards() external view returns (VortexRewards memory) {
-        return _vortexRewards;
-    }
-
-    /**
-     * @dev sets the settings of the Vortex
-     *
-     * requirements:
-     *s
-     * - the caller must be the admin of the contract
-     */
-    function setVortexRewards(VortexRewards calldata rewards)
-        external
-        onlyAdmin
-        validFee(rewards.burnRewardPPM)
-        greaterThanZero(rewards.burnRewardMaxAmount)
-    {
-        uint32 prevVortexBurnRewardPPM = _vortexRewards.burnRewardPPM;
-        uint256 prevVortexBurnRewardMaxAmount = _vortexRewards.burnRewardMaxAmount;
-
-        if (
-            prevVortexBurnRewardPPM == rewards.burnRewardPPM &&
-            prevVortexBurnRewardMaxAmount == rewards.burnRewardMaxAmount
-        ) {
-            return;
-        }
-
-        _vortexRewards = rewards;
-
-        emit VortexBurnRewardUpdated({
-            prevBurnRewardPPM: prevVortexBurnRewardPPM,
-            newBurnRewardPPM: rewards.burnRewardPPM,
-            prevBurnRewardMaxAmount: prevVortexBurnRewardMaxAmount,
-            newBurnRewardMaxAmount: rewards.burnRewardMaxAmount
-        });
     }
 
     /**
