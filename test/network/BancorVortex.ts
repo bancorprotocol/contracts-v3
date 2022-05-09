@@ -2,13 +2,14 @@ import Contracts, { BancorNetwork, BancorVortex, IERC20 } from '../../components
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
+import { Roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe.only('BancorVortex', () => {
+describe('BancorVortex', () => {
     let bancorVortex: BancorVortex;
     let network: BancorNetwork;
     let bnt: IERC20;
@@ -106,5 +107,24 @@ describe.only('BancorVortex', () => {
             expect(vortexRewards.burnRewardPPM).to.equal(newVortexRewards.burnRewardPPM);
             expect(vortexRewards.burnRewardMaxAmount).to.equal(newVortexRewards.burnRewardMaxAmount);
         });
+    });
+
+    describe('vortex execution', () => {
+        it('should revert if the network fee manager role has not been granted to this contract', async () => {
+            await expect(bancorVortex.execute()).to.be.revertedWith('AccessDenied');
+        });
+
+        for (const burnReward of [1, 5, 10]) {
+            for (const burnRewardMaxAmount of [1, 1000, 1_000_000]) {
+                it.skip(`execute(burnReward = ${burnReward}%, burnRewardMaxAmount = ${burnRewardMaxAmount} tokens`, async () => {
+                    await network.grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, bancorVortex.address);
+                    await bancorVortex.setVortexRewards({
+                        burnRewardPPM: toPPM(burnReward),
+                        burnRewardMaxAmount: toWei(burnRewardMaxAmount)
+                    });
+                    await bancorVortex.execute();
+                });
+            }
+        }
     });
 });
