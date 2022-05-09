@@ -16,7 +16,7 @@ export const describeDeployment = async (
 ): Promise<Suite | void> => {
     const { id, tag } = deploymentMetadata(filename);
 
-    const { skip = () => false, beforeDeployments = () => new Promise(() => true) } = options;
+    const { skip = () => false, beforeDeployments = () => Promise.resolve() } = options;
 
     // if we're running against a mainnet fork, ensure to skip tests for already existing deployments
     if (skip() || (await deploymentTagExists(tag))) {
