@@ -6,15 +6,15 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetworkV2.deployed();
+    const network = await DeployedContracts.BancorNetwork.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettings.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
 
     const bntPool = await DeployedContracts.BNTPool.deployed();
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
     const poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
-    const poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
+    const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
 
     const newPoolCollectionAddress = await deploy({
         name: InstanceName.PoolCollectionType1V3,
