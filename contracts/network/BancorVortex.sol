@@ -168,11 +168,13 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
             _vortexRewards.burnRewardMaxAmount
         );
 
+        _bnt.safeApprove(address(_bancorNetwork), bntRewardsAmount);
+
         uint256 vbntRewardsAmount = _bancorNetwork.tradeBySourceAmount(
             Token(address(_bnt)),
             Token(address(_vbnt)),
             bntRewardsAmount,
-            0,
+            1,
             _time(),
             address(this)
         );

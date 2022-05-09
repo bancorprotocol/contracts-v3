@@ -1,6 +1,13 @@
-import Contracts, { BancorVortex, IERC20, MasterVault, TestBancorNetwork } from '../../components/Contracts';
+import Contracts, {
+    BancorVortex,
+    IERC20,
+    MasterVault,
+    NetworkSettings,
+    TestBancorNetwork,
+    TestPoolCollection
+} from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { toPPM, toWei } from '../../utils/Types';
 import { Roles } from '../helpers/AccessControl';
 import { createSystem } from '../helpers/Factory';
@@ -13,7 +20,10 @@ describe('BancorVortex', () => {
     let bancorVortex: BancorVortex;
     let network: TestBancorNetwork;
     let bnt: IERC20;
+    let vbnt: IERC20;
     let vbntGovernance: TokenGovernance;
+    let poolCollection: TestPoolCollection;
+    let networkSettings: NetworkSettings;
     let masterVault: MasterVault;
 
     let deployer: SignerWithAddress;
@@ -26,7 +36,8 @@ describe('BancorVortex', () => {
     });
 
     beforeEach(async () => {
-        ({ bancorVortex, network, bnt, vbntGovernance, masterVault } = await createSystem());
+        ({ bancorVortex, network, bnt, vbnt, vbntGovernance, poolCollection, networkSettings, masterVault } =
+            await createSystem());
     });
 
     describe('construction', () => {
@@ -117,7 +128,20 @@ describe('BancorVortex', () => {
 
         context('successful execution', () => {
             beforeEach(async () => {
+                await networkSettings.addTokenToWhitelist(vbnt.address);
+                await network.addPoolCollection(poolCollection.address);
+                await network.createPool(await poolCollection.poolType(), vbnt.address);
                 await network.grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, bancorVortex.address);
+                await poolCollection.setDepositLimit(vbnt.address, MAX_UINT256);
+                const tradingLiquidity = toWei(1_000_000);
+                await vbnt.approve(network.address, tradingLiquidity);
+                await network.deposit(vbnt.address, tradingLiquidity);
+                await poolCollection.setTradingLiquidityT(vbnt.address, {
+                    bntTradingLiquidity: tradingLiquidity,
+                    baseTokenTradingLiquidity: tradingLiquidity,
+                    stakedBalance: tradingLiquidity
+                });
+                await poolCollection.enableTrading(vbnt.address, tradingLiquidity, tradingLiquidity);
             });
 
             for (const burnReward of [1, 5, 10]) {
