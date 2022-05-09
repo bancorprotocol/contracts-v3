@@ -1,5 +1,5 @@
-import { BNTPool, ExternalProtectionVault, MasterVault, PoolCollection } from '../../components/Contracts';
-import { BancorNetworkV1, PoolCollectionType1V1 } from '../../components/LegacyContractsV3';
+import { BNTPool, ExternalProtectionVault, MasterVault } from '../../components/Contracts';
+import { BancorNetworkV2, PoolCollectionType1V1, PoolCollectionType1V2 } from '../../components/LegacyContractsV3';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
@@ -9,12 +9,12 @@ import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
-    let network: BancorNetworkV1;
+    let network: BancorNetworkV2;
     let bntPool: BNTPool;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let prevPoolCollection: PoolCollectionType1V1;
-    let newPoolCollection: PoolCollection;
+    let newPoolCollection: PoolCollectionType1V2;
 
     beforeEach(async () => {
         network = await DeployedContracts.BancorNetworkV2.deployed();

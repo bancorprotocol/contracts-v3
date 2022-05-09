@@ -1,4 +1,3 @@
-import LegacyContractsV3ArtifactData from '../../components/LegacyContractsV3ArtifactData';
 import { deploy, DeployedContracts, execute, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { DeployFunction } from 'hardhat-deploy/types';
@@ -18,8 +17,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
 
     const newPoolCollectionAddress = await deploy({
-        name: InstanceName.PoolCollectionType1V2,
-        contractArtifactData: LegacyContractsV3ArtifactData.PoolCollectionType1V2,
+        name: InstanceName.PoolCollectionType1V3,
+        contract: 'PoolCollection',
         from: deployer,
         args: [
             network.address,
@@ -49,7 +48,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
 
     await execute({
         name: InstanceName.BancorNetwork,

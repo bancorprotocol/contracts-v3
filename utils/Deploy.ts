@@ -41,6 +41,7 @@ import {
     NetworkSettingsV1,
     PendingWithdrawalsV1,
     PoolCollectionType1V1,
+    PoolCollectionType1V2,
     PoolMigratorV1,
     StandardRewardsV1,
     StandardRewardsV2
@@ -97,7 +98,8 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V1 = 'PoolCollectionType1V1'
+    PoolCollectionType1V1 = 'PoolCollectionType1V1',
+    PoolCollectionType1V2 = 'PoolCollectionType1V2'
 }
 
 enum NewInstanceName {
@@ -115,7 +117,7 @@ enum NewInstanceName {
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V2 = 'PoolCollectionType1V2',
+    PoolCollectionType1V3 = 'PoolCollectionType1V3',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -163,6 +165,7 @@ const DeployedLegacyContracts = {
     StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards),
     PendingWithdrawalsV1: deployed<PendingWithdrawalsV1>(InstanceName.PendingWithdrawals),
     PoolCollectionType1V1: deployed<PoolCollectionType1V1>(InstanceName.PoolCollectionType1V1),
+    PoolCollectionType1V2: deployed<PoolCollectionType1V2>(InstanceName.PoolCollectionType1V2),
     PoolMigratorV1: deployed<PoolMigratorV1>(InstanceName.PoolMigrator)
 };
 
@@ -181,7 +184,7 @@ const DeployedNewContracts = {
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V2: deployed<PoolCollection>(InstanceName.PoolCollectionType1V2),
+    PoolCollectionType1V3: deployed<PoolCollection>(InstanceName.PoolCollectionType1V3),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
