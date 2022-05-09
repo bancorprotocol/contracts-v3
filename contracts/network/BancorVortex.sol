@@ -7,7 +7,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
@@ -23,7 +22,7 @@ import { MathEx } from "../utility/MathEx.sol";
 /**
  * @dev Bancor Vortex contract
  */
-contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, Utils, Time {
+contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable, Utils, Time {
     using SafeERC20 for IERC20;
 
     struct VortexRewards {
@@ -164,7 +163,7 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
      *
      * returns the amount of BNT transferred to the caller, and the corresponding amount of VBNT burned
      */
-    function execute() external nonReentrant whenNotPaused returns (uint256, uint256) {
+    function execute() external nonReentrant returns (uint256, uint256) {
         uint256 currentPendingNetworkFeeAmount = _bancorNetwork.withdrawNetworkFees(address(this));
 
         uint256 bntTotalAmount = _bnt.balanceOf(address(this));
