@@ -1,5 +1,6 @@
 import Contracts, {
     BancorNetworkInfo,
+    BancorVortex,
     ExternalRewardsVault,
     IERC20,
     IPoolToken,
@@ -28,6 +29,7 @@ import {
 import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, max, toPPM, toWei } from '../../utils/Types';
+import { Roles } from '../helpers/AccessControl';
 import {
     createAutoCompoundingRewards,
     createPool,
@@ -1635,6 +1637,59 @@ describe('Profile @profile', () => {
                     totalRewards: toWei(50_000)
                 });
             });
+        }
+    });
+
+    describe('vortex', () => {
+        let bancorVortex: BancorVortex;
+        let network: TestBancorNetwork;
+        let bnt: IERC20;
+        let vbnt: IERC20;
+        let poolCollection: TestPoolCollection;
+        let networkSettings: NetworkSettings;
+        let masterVault: MasterVault;
+
+        beforeEach(async () => {
+            ({ bancorVortex, network, bnt, vbnt, poolCollection, networkSettings, masterVault } = await createSystem());
+            await networkSettings.addTokenToWhitelist(vbnt.address);
+            await network.addPoolCollection(poolCollection.address);
+            await network.createPool(await poolCollection.poolType(), vbnt.address);
+            await network.grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, bancorVortex.address);
+            await poolCollection.setDepositLimit(vbnt.address, MAX_UINT256);
+            const tradingLiquidity = toWei(1_000_000);
+            await vbnt.approve(network.address, tradingLiquidity);
+            await network.deposit(vbnt.address, tradingLiquidity);
+            await poolCollection.setTradingLiquidityT(vbnt.address, {
+                bntTradingLiquidity: tradingLiquidity,
+                baseTokenTradingLiquidity: tradingLiquidity,
+                stakedBalance: tradingLiquidity
+            });
+            await poolCollection.enableTrading(vbnt.address, tradingLiquidity, tradingLiquidity);
+        });
+
+        for (const burnRewardPortion of [1, 10]) {
+            for (const burnRewardMaxAmount of [1, 1_000_000]) {
+                for (const pendingNetworkFeeAmount of [1, 1_000_000]) {
+                    const burnRewardPortionInPPM = toPPM(burnRewardPortion);
+                    const burnRewardMaxAmountInWei = toWei(burnRewardMaxAmount);
+                    const pendingNetworkFeeAmountInWei = toWei(pendingNetworkFeeAmount);
+
+                    it('should properly execute', async () => {
+                        await bnt.transfer(masterVault.address, pendingNetworkFeeAmountInWei);
+                        await network.setPendingNetworkFeeAmountT(pendingNetworkFeeAmountInWei);
+                        await bancorVortex.setVortexRewards({
+                            burnRewardPPM: burnRewardPortionInPPM,
+                            burnRewardMaxAmount: burnRewardMaxAmountInWei
+                        });
+
+                        await profiler.profile(
+                            // eslint-disable-next-line max-len
+                            `burnRewardPortion = ${burnRewardPortion}%, burnRewardMaxAmount = ${burnRewardMaxAmount} tokens, pendingNetworkFeeAmount = ${pendingNetworkFeeAmount} tokens`,
+                            bancorVortex.execute()
+                        );
+                    });
+                }
+            }
         }
     });
 });
