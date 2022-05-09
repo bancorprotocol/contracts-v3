@@ -22,8 +22,22 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     // the address of the BNT contract
     IERC20 private immutable _bnt;
 
+    // burn-reward configuration
+    uint32 private _burnRewardPPM;
+    uint256 private _burnRewardMaxAmount;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 0] private __gap;
+    uint256[MAX_GAP - 2] private __gap;
+
+    /**
+     * @dev triggered when the burn-reward configuration is updated
+     */
+    event VortexBurnRewardUpdated(
+        uint256 prevBurnRewardPPM,
+        uint256 newBurnRewardPPM,
+        uint256 prevBurnRewardMaxAmount,
+        uint256 newBurnRewardMaxAmount
+    );
 
     /**
      * @dev triggered when BNT is traded and vBNT is burned
@@ -75,7 +89,38 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
         return 1;
     }
 
-    function execute() public nonReentrant whenNotPaused returns (uint256 bntAmountTraded, uint256 vbntAmountBurned) {
+    /**
+     * @dev set burn-reward portion and maximum amount
+     */
+    function setVortexBurnReward(uint32 newBurnRewardPPM, uint256 newBurnRewardMaxAmount)
+        external
+        validFee(newBurnRewardPPM)
+        onlyAdmin
+    {
+        uint256 prevBurnRewardPPM = _burnRewardPPM;
+        uint256 prevBurnRewardMaxAmount = _burnRewardMaxAmount;
+
+        if (prevBurnRewardPPM == newBurnRewardPPM && prevBurnRewardMaxAmount == newBurnRewardMaxAmount) {
+            return;
+        }
+
+        if (prevBurnRewardPPM != newBurnRewardPPM) {
+            _burnRewardPPM = newBurnRewardPPM;
+        }
+
+        if (prevBurnRewardMaxAmount != newBurnRewardMaxAmount) {
+            _burnRewardMaxAmount = newBurnRewardMaxAmount;
+        }
+
+        emit VortexBurnRewardUpdated({
+            prevBurnRewardPPM: prevBurnRewardPPM,
+            newBurnRewardPPM: newBurnRewardPPM,
+            prevBurnRewardMaxAmount: prevBurnRewardMaxAmount,
+            newBurnRewardMaxAmount: newBurnRewardMaxAmount
+        });
+    }
+
+    function execute() external nonReentrant whenNotPaused returns (uint256 bntAmountTraded, uint256 vbntAmountBurned) {
         // get the vortex burn reward settings from the network settings contract
         // call withdrawNetworkFees on the network
         // note the BNT balance (vortex burn amount)
