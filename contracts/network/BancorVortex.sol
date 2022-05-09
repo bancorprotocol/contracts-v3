@@ -98,7 +98,6 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     function __BancorVortex_init() internal onlyInitializing {
         __Upgradeable_init();
         __ReentrancyGuard_init();
-        __Pausable_init();
 
         __BancorVortex_init_unchained();
     }
