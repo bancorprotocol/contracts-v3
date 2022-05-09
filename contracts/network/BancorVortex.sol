@@ -158,10 +158,18 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
         });
     }
 
+    /**
+     * @dev withdraws BNT network fees from the BancorNetwork contract into this contract, and
+     * transfers a portion of them to the caller (while burning the equivalent amount of VBNT)
+     *
+     * returns the amount of BNT transferred to the caller, and the corresponding amount of VBNT burned
+     */
     function execute() external nonReentrant whenNotPaused returns (uint256, uint256) {
         uint256 currentPendingNetworkFeeAmount = _bancorNetwork.withdrawNetworkFees(address(this));
 
         uint256 bntTotalAmount = _bnt.balanceOf(address(this));
+
+        assert(bntTotalAmount >= currentPendingNetworkFeeAmount);
 
         uint256 bntRewardsAmount = Math.min(
             MathEx.mulDivF(bntTotalAmount, _vortexRewards.burnRewardPPM, PPM_RESOLUTION),
