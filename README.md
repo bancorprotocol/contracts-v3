@@ -29,6 +29,13 @@ See the details [here](./docs/bug-bounty.md).
 
 The security policy is available [here](./SECURITY.md).
 
+### Security Audits
+
+- [PeckShield](docs/audits/PeckShield-Audit-Report-BancorV3-v1.0.pdf)
+- OpenZeppelin (coming soon...)
+- Certora (coming soon...)
+- ChainSecurity (coming soon...)
+
 ## Setup
 
 As a first step of contributing to the repo, you should install all the required dependencies via:
