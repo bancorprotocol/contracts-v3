@@ -9633,9 +9633,9 @@ trim-right@^1.0.1:
   integrity sha512-0z3j8R7MCjy10kc/g+qg7Ln3alJTodw9aDuVWZa3uiWqfuBMKeAeP2ocWcxoyM3D73yz3Jt/Pu4qPr4wHSdB/Q==
 
 ts-command-line-args@^2.2.0:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/ts-command-line-args/-/ts-command-line-args-2.2.2.tgz#1e9e739ffb846e8f8a0319e2cc21ffebab31062b"
-  integrity sha512-+1z9GnsvhVmd043iIb5swoyv6nj9Dh4d/R4VzhMAQrrVGthgol9QktXLHID5r/CaT1C+yrzKga5pKcAePGVkoA==
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/ts-command-line-args/-/ts-command-line-args-2.3.0.tgz#9db823193bdfeb1fcce91717864a8dfe8199a2e4"
+  integrity sha512-soWzRi3ALL0qQIkWSR45yOItr1fT8XL0+J0/GJsukh1V5QUEd6RXyWsSSl3ae2pcRqgDFxsenN13LyuntVZh8Q==
   dependencies:
     chalk "^4.1.0"
     command-line-args "^5.1.1"
