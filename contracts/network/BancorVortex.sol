@@ -179,13 +179,11 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
             address(this)
         );
 
-        uint256 rewards = bntTotalAmount - bntRewardsAmount;
-
         _vbntGovernance.burn(vbntRewardsAmount);
 
-        _bnt.safeTransfer(msg.sender, rewards);
+        _bnt.safeTransfer(msg.sender, bntTotalAmount - bntRewardsAmount);
 
-        emit Burned(bntRewardsAmount, vbntRewardsAmount, rewards);
+        emit Burned(bntTotalAmount, vbntRewardsAmount, bntRewardsAmount);
 
         return (bntRewardsAmount, vbntRewardsAmount);
     }
