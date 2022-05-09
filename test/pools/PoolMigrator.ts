@@ -48,7 +48,7 @@ describe('PoolMigrator', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await poolMigrator.version()).to.equal(1);
+            expect(await poolMigrator.version()).to.equal(2);
 
             await expectRoles(poolMigrator, Roles.Upgradeable);
 
