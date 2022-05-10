@@ -6,7 +6,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 const func: DeployFunction = async () => {
     const { deployer } = await getNamedAccounts();
 
-    const liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+    const liquidityProtection = await DeployedContracts.LegacyLiquidityProtection2.deployed();
 
     // grant the ROLE_MIGRATION_MANAGER role to the contract
     await grantRole({

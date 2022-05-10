@@ -21,7 +21,6 @@ import {
     LiquidityProtectionStats,
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
-    TestCheckpointStore,
     TestLiquidityProtection,
     TestStandardPoolConverter,
     TokenGovernance,
@@ -3088,7 +3087,6 @@ describe('BancorNetwork', () => {
             maxOffset: { negative: number; positive: number }
         ) => {
             let now: number;
-            let checkpointStore: TestCheckpointStore;
             let liquidityProtectionSettings: LiquidityProtectionSettings;
             let liquidityProtectionStore: LiquidityProtectionStore;
             let liquidityProtectionStats: LiquidityProtectionStats;
@@ -3185,7 +3183,6 @@ describe('BancorNetwork', () => {
                 )) as IERC20;
 
                 ({
-                    checkpointStore,
                     liquidityProtectionStore,
                     liquidityProtectionStats,
                     liquidityProtectionSystemStore,
@@ -3246,7 +3243,6 @@ describe('BancorNetwork', () => {
 
                 now = await latest();
                 await converter.setTime(now);
-                await checkpointStore.setTime(now);
                 await liquidityProtection.setTime(now);
             };
 

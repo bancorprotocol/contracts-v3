@@ -30,6 +30,7 @@ import {
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
     StakingRewards,
+    StakingRewardsStore,
     TokenGovernance,
     TokenHolder,
     VBNT
@@ -83,12 +84,14 @@ enum LegacyInstanceNameV2 {
     ContractRegistry = 'ContractRegistry',
     LiquidityProtection = 'LiquidityProtection',
     LegacyLiquidityProtection = 'LegacyLiquidityProtection',
+    LegacyLiquidityProtection2 = 'LegacyLiquidityProtection2',
     LiquidityProtectionSettings = 'LiquidityProtectionSettings',
     LiquidityProtectionStats = 'LiquidityProtectionStats',
     LiquidityProtectionStore = 'LiquidityProtectionStore',
     LiquidityProtectionSystemStore = 'LiquidityProtectionSystemStore',
     LiquidityProtectionWallet = 'LiquidityProtectionWallet',
     StakingRewards = 'StakingRewards',
+    StakingRewardsStore = 'StakingRewardsStore',
     CheckpointStore = 'CheckpointStore'
 }
 
@@ -137,6 +140,7 @@ const DeployedLegacyContractsV2 = {
     VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
     ContractRegistry: deployed<ContractRegistry>(InstanceName.ContractRegistry),
     LegacyLiquidityProtection: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection),
+    LegacyLiquidityProtection2: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection2),
     LiquidityProtection: deployed<LiquidityProtection>(InstanceName.LiquidityProtection),
     LiquidityProtectionSettings: deployed<LiquidityProtectionSettings>(InstanceName.LiquidityProtectionSettings),
     LiquidityProtectionStats: deployed<LiquidityProtectionStats>(InstanceName.LiquidityProtectionStats),
@@ -146,6 +150,7 @@ const DeployedLegacyContractsV2 = {
     ),
     LiquidityProtectionWallet: deployed<TokenHolder>(InstanceName.LiquidityProtectionWallet),
     StakingRewards: deployed<StakingRewards>(InstanceName.StakingRewards),
+    StakingRewardsStore: deployed<StakingRewardsStore>(InstanceName.StakingRewardsStore),
     CheckpointStore: deployed<CheckpointStore>(InstanceName.CheckpointStore)
 };
 
@@ -311,6 +316,8 @@ export const deploy = async (options: DeployOptions) => {
 
     let proxyOptions: DeployProxyOptions = {};
 
+    const customAlias = contractName === name ? '' : ` as ${name};`;
+
     if (isProxy) {
         const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
 
@@ -321,9 +328,9 @@ export const deploy = async (options: DeployOptions) => {
             execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
 
-        console.log(`deploying proxy ${contractName} as ${name}`);
+        console.log(`deploying proxy ${contractName}${customAlias}`);
     } else {
-        console.log(`deploying ${contractName} as ${name}`);
+        console.log(`deploying ${contractName}${customAlias}`);
     }
 
     const res = await deployContract(name, {

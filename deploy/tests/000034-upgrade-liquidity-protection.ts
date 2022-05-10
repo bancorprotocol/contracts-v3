@@ -1,4 +1,4 @@
-import { AccessControlEnumerable } from '../../components/Contracts';
+import { AccessControlEnumerable, BancorNetwork } from '../../components/Contracts';
 import {
     Registry as LegacyRegistry,
     Roles as LegacyRoles,
@@ -14,6 +14,7 @@ import { getNamedAccounts } from 'hardhat';
 describeDeployment(__filename, () => {
     let deployer: string;
     let deployerV2: string;
+    let network: BancorNetwork;
     let liquidityProtection: LiquidityProtection;
 
     before(async () => {
@@ -21,11 +22,12 @@ describeDeployment(__filename, () => {
     });
 
     beforeEach(async () => {
-        liquidityProtection = await DeployedContracts.LegacyLiquidityProtection2.deployed();
+        network = await DeployedContracts.BancorNetwork.deployed();
+        liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
     });
 
     it('should upgrade V2 liquidity protection contract', async () => {
-        const legacyLiquidityProtection = await DeployedContracts.LegacyLiquidityProtection.deployed();
+        const legacyLiquidityProtection = await DeployedContracts.LegacyLiquidityProtection2.deployed();
         expect(liquidityProtection.address).not.to.equal(legacyLiquidityProtection.address);
 
         const standardRewards = await DeployedContracts.StandardRewards.deployed();
@@ -49,17 +51,19 @@ describeDeployment(__filename, () => {
             isMainnet() ? [bntPool.address, liquidityProtection.address] : [bntPool.address]
         );
 
+        // ensure that the new contract didn't receive the StakingRewards ROLE_PUBLISHER role
         await expectRoleMembers(
             legacyStakingRewards as any as AccessControlEnumerable,
             LegacyRoles.StakingRewards.ROLE_PUBLISHER,
-            [liquidityProtection.address]
+            []
         );
 
+        // ensure that the new contract didn't receive the CheckpointStore ROLE_OWNER role
         const checkpointStore = await DeployedContracts.CheckpointStore.deployed();
         await expectRoleMembers(
             checkpointStore as any as AccessControlEnumerable,
             LegacyRoles.CheckpointStore.ROLE_OWNER,
-            [deployer, deployerV2, liquidityProtection.address]
+            [deployer, deployerV2]
         );
 
         const liquidityProtectionStats = await DeployedContracts.LiquidityProtectionStats.deployed();
@@ -88,5 +92,7 @@ describeDeployment(__filename, () => {
         expect(await contractRegistry.getAddress(LegacyRegistry.LIQUIDITY_PROTECTION)).to.equal(
             liquidityProtection.address
         );
+
+        await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, [liquidityProtection.address]);
     });
 });
