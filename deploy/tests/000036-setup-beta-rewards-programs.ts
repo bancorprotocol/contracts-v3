@@ -36,7 +36,7 @@ describeDeployment(
             standardRewards = await DeployedContracts.StandardRewards.deployed();
         });
 
-        it.only('should deploy and migrate the new pool collection contract', async () => {
+        it('should deploy and migrate the new pool collection contract', async () => {
             const { dai, link } = await getNamedAccounts();
 
             const { timestamp: now } = await ethers.provider.getBlock('latest');
