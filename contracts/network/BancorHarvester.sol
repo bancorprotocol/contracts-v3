@@ -10,9 +10,9 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
-import { IBancorHarvester } from "./interfaces/IBancorHarvester.sol";
-import { IBancorVortex } from "./interfaces/IBancorVortex.sol";
 import { IAutoCompoundingRewards } from "../rewards/interfaces/IAutoCompoundingRewards.sol";
+import { IBancorVortex } from "./interfaces/IBancorVortex.sol";
+import { IBancorHarvester } from "./interfaces/IBancorHarvester.sol";
 
 /**
  * @dev Bancor Harvester contract
@@ -27,11 +27,11 @@ contract BancorHarvester is IBancorHarvester, Upgradeable, ReentrancyGuardUpgrad
         uint256 vortexRewardsAmount;
     }
 
-    // the address of the Bancor Vortex contract
-    IBancorVortex private immutable _bancorVortex;
-
     // the address of the Auto Compounding Rewards contract
     IAutoCompoundingRewards private immutable _autoCompoundingRewards;
+
+    // the address of the Bancor Vortex contract
+    IBancorVortex private immutable _bancorVortex;
 
     // the address of the BNT contract
     IERC20 private immutable _bnt;
@@ -61,16 +61,16 @@ contract BancorHarvester is IBancorHarvester, Upgradeable, ReentrancyGuardUpgrad
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(
-        IBancorVortex initBancorVortex,
         IAutoCompoundingRewards initAutoCompoundingRewards,
+        IBancorVortex initBancorVortex,
         IERC20 initBNT
     )
-        validAddress(address(initBancorVortex))
         validAddress(address(initAutoCompoundingRewards))
+        validAddress(address(initBancorVortex))
         validAddress(address(initBNT))
     {
-        _bancorVortex = initBancorVortex;
         _autoCompoundingRewards = initAutoCompoundingRewards;
+        _bancorVortex = initBancorVortex;
         _bnt = initBNT;
     }
 
@@ -124,11 +124,11 @@ contract BancorHarvester is IBancorHarvester, Upgradeable, ReentrancyGuardUpgrad
     function setHarvesterThresholds(HarvesterThresholds calldata thresholds)
         external
         onlyAdmin
-        greaterThanZero(thresholds.vortexRewardsAmount)
         greaterThanZero(thresholds.processRewardsDuration)
+        greaterThanZero(thresholds.vortexRewardsAmount)
     {
-        uint32 prevProcessRewardsDuration = thresholds.processRewardsDuration;
-        uint256 prevVortexRewardsAmount = thresholds.vortexRewardsAmount;
+        uint32 prevProcessRewardsDuration = _harvesterThresholds.processRewardsDuration;
+        uint256 prevVortexRewardsAmount = _harvesterThresholds.vortexRewardsAmount;
 
         if (
             prevProcessRewardsDuration == thresholds.processRewardsDuration &&
@@ -153,9 +153,9 @@ contract BancorHarvester is IBancorHarvester, Upgradeable, ReentrancyGuardUpgrad
     function execute() external nonReentrant {
         uint256 prevBalance = _bnt.balanceOf(address(this));
 
-        _bancorVortex.execute();
-
         //_autoCompoundingRewards.autoProcessRewards();
+
+        _bancorVortex.execute();
 
         uint256 currBalance = _bnt.balanceOf(address(this));
 

@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import {
     AutoCompoundingRewards__factory,
+    BancorHarvester__factory,
     BancorNetwork__factory,
     BancorNetworkInfo__factory,
     BancorPortal__factory,
@@ -70,6 +71,7 @@ const getContracts = (signer?: Signer) => ({
     MockUniswapV2Pair: deployOrAttach('MockUniswapV2Pair', MockUniswapV2Pair__factory, signer),
     MockUniswapV2Router02: deployOrAttach('MockUniswapV2Router02', MockUniswapV2Router02__factory, signer),
     BancorVortex: deployOrAttach('BancorVortex', BancorVortex__factory, signer),
+    BancorHarvester: deployOrAttach('BancorHarvester', BancorHarvester__factory, signer),
     NetworkSettings: deployOrAttach('NetworkSettings', NetworkSettings__factory, signer),
     PendingWithdrawals: deployOrAttach('PendingWithdrawals', PendingWithdrawals__factory, signer),
     PoolCollection: deployOrAttach('PoolCollection', PoolCollection__factory, signer),

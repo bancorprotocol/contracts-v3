@@ -395,12 +395,26 @@ const createSystemFixture = async () => {
         poolMigrator
     );
 
+    const autoCompoundingRewards = await createAutoCompoundingRewards(
+        network,
+        networkSettings,
+        bnt,
+        bntPool,
+        externalRewardsVault
+    );
+
     const bancorVortex = await createProxy(Contracts.BancorVortex, {
         ctorArgs: [network.address, bnt.address, vbntGovernance.address]
     });
 
+    const bancorHarvester = await createProxy(Contracts.BancorHarvester, {
+        ctorArgs: [bancorVortex.address, autoCompoundingRewards.address, bnt.address]
+    });
+
     return {
+        autoCompoundingRewards,
         bancorVortex,
+        bancorHarvester,
         networkSettings,
         networkInfo,
         network,
