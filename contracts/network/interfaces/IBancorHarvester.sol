@@ -4,8 +4,7 @@ pragma solidity 0.8.13;
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 
 /**
- * @dev Bancor Vortex interface
+ * @dev Bancor Harvester interface
  */
-interface IBancorVortex is IUpgradeable {
-    function execute() external returns (uint256, uint256);
+interface IBancorHarvester is IUpgradeable {
 }
