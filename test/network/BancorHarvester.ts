@@ -78,7 +78,7 @@ describe('BancorHarvester', () => {
             ).to.be.revertedWith('AccessDenied');
         });
 
-        it('should revert when updating the harvester configuration to an invalid value', async () => {
+        it('should revert when updating the harvester configuration with an invalid value', async () => {
             await expect(
                 bancorHarvester.setHarvesterThresholds({
                     processRewardsDuration: 0,
