@@ -40,7 +40,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             ],
             from: deployer
         });
-        console.log('CCC');
     }
 
     return true;
