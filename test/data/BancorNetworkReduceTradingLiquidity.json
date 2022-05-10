@@ -140,6 +140,192 @@
         "averageRateN": "1",
         "averageRateD": "1"
       }
+    },
+    {
+      "type": "tradeTKN",
+      "userId": "provider",
+      "mined": true,
+      "amount": "10%",
+      "expected": {
+        "tknBalances": {
+          "provider": "8999100",
+          "masterVault": "1000900",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "provider": "899.190647482014388489",
+          "masterVault": "0.809352517985611511"
+        },
+        "bntknBalances": {
+          "provider": "1000"
+        },
+        "bnbntBalances": {
+          "provider": "0",
+          "bntPool": "900"
+        },
+        "bntCurrentPoolFunding": "900",
+        "tknStakedBalance": "1000",
+        "bntStakedBalance": "900",
+        "tknTradingLiquidity": "1000800",
+        "bntTradingLiquidity": "0.809352517985611511",
+        "averageRateN": "4500000000000000000000",
+        "averageRateD": "4500000000000000000000"
+      }
+    },
+    {
+      "type": "tradeBNT",
+      "userId": "provider",
+      "mined": true,
+      "amount": "10%",
+      "expected": {
+        "tknBalances": {
+          "provider": "9990972.256913470115965514",
+          "masterVault": "9027.743086529884034486",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "provider": "809.271582733812949641",
+          "masterVault": "90.728417266187050359"
+        },
+        "bntknBalances": {
+          "provider": "1000"
+        },
+        "bnbntBalances": {
+          "provider": "0",
+          "bntPool": "900"
+        },
+        "bntCurrentPoolFunding": "900",
+        "tknStakedBalance": "1000",
+        "bntStakedBalance": "900",
+        "tknTradingLiquidity": "8927.743086529884034486",
+        "bntTradingLiquidity": "90.728417266187050359",
+        "averageRateN": "4153838326634935517937894986644093",
+        "averageRateD": "5192296858533843112663574464352049"
+      }
+    },
+    {
+      "type": "depositTKN",
+      "userId": "provider",
+      "mined": true,
+      "amount": "10%",
+      "expected": {
+        "tknBalances": {
+          "provider": "8991875.031222123104368963",
+          "masterVault": "1008124.968777876895631037",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "provider": "809.271582733812949641",
+          "masterVault": "90.728417266187050359"
+        },
+        "bntknBalances": {
+          "provider": "1000097.225691347011596551"
+        },
+        "bnbntBalances": {
+          "provider": "0",
+          "bntPool": "900"
+        },
+        "bntCurrentPoolFunding": "900",
+        "tknStakedBalance": "1000097.225691347011596551",
+        "bntStakedBalance": "900",
+        "tknTradingLiquidity": "8927.743086529884034486",
+        "bntTradingLiquidity": "90.728417266187050359",
+        "averageRateN": "4153838326634935517937894986644093",
+        "averageRateD": "5192296858533843112663574464352049"
+      }
+    },
+    {
+      "type": "depositBNT",
+      "userId": "provider",
+      "mined": true,
+      "amount": "10%",
+      "expected": {
+        "tknBalances": {
+          "provider": "8991875.031222123104368963",
+          "masterVault": "1008124.968777876895631037",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "provider": "728.344424460431654677",
+          "masterVault": "90.728417266187050359"
+        },
+        "bntknBalances": {
+          "provider": "1000097.225691347011596551"
+        },
+        "bnbntBalances": {
+          "provider": "80.927158273381294964",
+          "bntPool": "819.072841726618705036"
+        },
+        "bntCurrentPoolFunding": "900",
+        "tknStakedBalance": "1000097.225691347011596551",
+        "bntStakedBalance": "900",
+        "tknTradingLiquidity": "8927.743086529884034486",
+        "bntTradingLiquidity": "90.728417266187050359",
+        "averageRateN": "4153838326634935517937894986644093",
+        "averageRateD": "5192296858533843112663574464352049"
+      }
+    },
+    {
+      "type": "tradeBNT",
+      "userId": "provider",
+      "mined": true,
+      "amount": "100%",
+      "expected": {
+        "tknBalances": {
+          "provider": "8999813.851274295620392996",
+          "masterVault": "1000186.148725704379607004",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "provider": "0",
+          "masterVault": "819.072841726618705036"
+        },
+        "bntknBalances": {
+          "provider": "1000097.225691347011596551"
+        },
+        "bnbntBalances": {
+          "provider": "80.927158273381294964",
+          "bntPool": "819.072841726618705036"
+        },
+        "bntCurrentPoolFunding": "900",
+        "tknStakedBalance": "1000097.225691347011596551",
+        "bntStakedBalance": "900",
+        "tknTradingLiquidity": "988.923034357368010453",
+        "bntTradingLiquidity": "819.072841726618705036",
+        "averageRateN": "3333624031211478950268325306868395",
+        "averageRateD": "5192296858534827628530424814854972"
+      }
+    },
+    {
+      "type": "reduceTradingLiquidity",
+      "userId": "",
+      "mined": true,
+      "amount": "800",
+      "expected": {
+        "tknBalances": {
+          "provider": "8999813.851274295620392996",
+          "masterVault": "1000186.148725704379607004",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "provider": "0",
+          "masterVault": "800"
+        },
+        "bntknBalances": {
+          "provider": "1000097.225691347011596551"
+        },
+        "bnbntBalances": {
+          "provider": "80.927158273381294964",
+          "bntPool": "800"
+        },
+        "bntCurrentPoolFunding": "880.927158273381294964",
+        "tknStakedBalance": "1000097.225691347011596551",
+        "bntStakedBalance": "880.927158273381294964",
+        "tknTradingLiquidity": "959.21606822883763875",
+        "bntTradingLiquidity": "800",
+        "averageRateN": "3333624031211478950268325306868395",
+        "averageRateD": "5192296858534827628530424814854972"
+      }
     }
   ]
 }
