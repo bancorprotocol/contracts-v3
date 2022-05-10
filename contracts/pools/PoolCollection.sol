@@ -598,6 +598,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             _networkSettings.minLiquidityForTrading()
         );
 
+        // if trading is enabled, then update the recent average rate
+        if (data.tradingEnabled) {
+            _updateAverageRate(
+                data,
+                Fraction({ n: data.liquidity.bntTradingLiquidity, d: data.liquidity.baseTokenTradingLiquidity })
+            );
+        }
+
         emit TokensDeposited({
             contextId: contextId,
             provider: provider,
@@ -633,6 +641,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // execute the actual withdrawal
         _executeWithdrawal(contextId, provider, pool, data, poolTokenAmount, amounts);
+
+        // if trading is enabled, then update the recent average rate
+        if (data.tradingEnabled) {
+            _updateAverageRate(
+                data,
+                Fraction({ n: data.liquidity.bntTradingLiquidity, d: data.liquidity.baseTokenTradingLiquidity })
+            );
+        }
 
         return amounts.baseTokensToTransferFromMasterVault;
     }
@@ -1536,6 +1552,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         pure
         returns (Fraction112 memory)
     {
+        if (spotRate.n * averageRate.d == spotRate.d * averageRate.n) {
+            return averageRate;
+        }
+
         return
             MathEx
                 .weightedAverage(averageRate.fromFraction112(), spotRate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
