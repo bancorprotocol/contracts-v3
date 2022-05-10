@@ -84,7 +84,6 @@ import { getNamedAccounts } from 'hardhat';
         let poolMigrator: PoolMigrator;
         let standardRewards: StandardRewards;
         let bancorPortal: BancorPortal;
-        let legacyStakingRewards: StakingRewards;
         let liquidityProtection: LiquidityProtection;
 
         beforeEach(async () => {
@@ -94,7 +93,6 @@ import { getNamedAccounts } from 'hardhat';
             poolMigrator = await DeployedContracts.PoolMigrator.deployed();
             standardRewards = await DeployedContracts.StandardRewards.deployed();
             bancorPortal = await DeployedContracts.BancorPortal.deployed();
-            legacyStakingRewards = await DeployedContracts.StakingRewards.deployed();
             liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
         });
 
@@ -116,7 +114,7 @@ import { getNamedAccounts } from 'hardhat';
             );
 
             const expectedRoles = isMainnet()
-                ? [standardRewards.address, bntPool.address, liquidityProtection.address, legacyStakingRewards.address]
+                ? [standardRewards.address, bntPool.address, liquidityProtection.address]
                 : [standardRewards.address, bntPool.address];
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
