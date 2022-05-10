@@ -87,13 +87,13 @@ describe('BancorVortex', () => {
             burnRewardMaxAmount: toWei(100)
         };
 
-        it('should revert when a non-admin attempts to set the vortex settings', async () => {
+        it('should revert when a non-admin attempts to update the vortex configuration', async () => {
             await expect(bancorVortex.connect(nonOwner).setVortexRewards(newVortexRewards)).to.be.revertedWith(
                 'AccessDenied'
             );
         });
 
-        it('should revert when setting the vortex settings to an invalid value', async () => {
+        it('should revert when updating the vortex configuration with an invalid value', async () => {
             await expect(
                 bancorVortex.setVortexRewards({
                     burnRewardPPM: PPM_RESOLUTION + 1,
@@ -109,14 +109,14 @@ describe('BancorVortex', () => {
             ).to.be.revertedWith('ZeroValue');
         });
 
-        it('should ignore updating to the same vortex settings', async () => {
+        it('should ignore updating to the same vortex configuration', async () => {
             await bancorVortex.setVortexRewards(newVortexRewards);
 
             const res = await bancorVortex.setVortexRewards(newVortexRewards);
             await expect(res).not.to.emit(bancorVortex, 'VortexBurnRewardUpdated');
         });
 
-        it('should be able to set and update the vortex settings', async () => {
+        it('should be able to update the vortex configuration', async () => {
             const res = await bancorVortex.connect(deployer).setVortexRewards(newVortexRewards);
             await expect(res)
                 .to.emit(bancorVortex, 'VortexBurnRewardUpdated')
