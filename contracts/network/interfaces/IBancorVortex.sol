@@ -7,4 +7,5 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
  * @dev Bancor Vortex interface
  */
 interface IBancorVortex is IUpgradeable {
+    function execute() external returns (uint256, uint256);
 }
