@@ -51,7 +51,7 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     uint256[MAX_GAP - 2] private __gap;
 
     /**
-     * @dev triggered when the settings of the Vortex are updated
+     * @dev triggered when the configuration of the Vortex is updated
      */
     event VortexBurnRewardUpdated(
         uint32 prevBurnRewardPPM,
@@ -117,14 +117,14 @@ contract BancorVortex is IBancorVortex, Upgradeable, ReentrancyGuardUpgradeable,
     }
 
     /**
-     * @dev returns the settings of the Vortex
+     * @dev returns the configuration of the Vortex
      */
     function vortexRewards() external view returns (VortexRewards memory) {
         return _vortexRewards;
     }
 
     /**
-     * @dev sets the settings of the Vortex
+     * @dev updates the configuration of the Vortex
      *
      * requirements:
      *s
