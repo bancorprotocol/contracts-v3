@@ -36,7 +36,7 @@ describeDeployment(
             standardRewards = await DeployedContracts.StandardRewards.deployed();
         });
 
-        it('should deploy and migrate the new pool collection contract', async () => {
+        it('should terminate the beta reward programs and create launch reward programs', async () => {
             const { dai, link } = await getNamedAccounts();
 
             const { timestamp: now } = await ethers.provider.getBlock('latest');
