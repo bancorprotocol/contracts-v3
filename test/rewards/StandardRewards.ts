@@ -1948,7 +1948,7 @@ describe('StandardRewards', () => {
         };
 
         describe('claiming/staking', () => {
-            const testBasicClaiming = async (programSpec: ProgramSpec, rewardsSpec: RewardsSpec) => {
+            const testBasicClaiming = (programSpec: ProgramSpec, rewardsSpec: RewardsSpec) => {
                 describe('basic tests', () => {
                     let rewardsData: RewardsData;
                     let programData: ProgramData;

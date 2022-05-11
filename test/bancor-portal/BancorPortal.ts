@@ -145,7 +145,7 @@ describe('BancorPortal', () => {
                 { reserveToken: whitelistedToken1, poolToken: poolToken1 },
                 { reserveToken: whitelistedToken2, poolToken: poolToken2 }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -316,7 +316,7 @@ describe('BancorPortal', () => {
                 { reserveToken: whitelistedToken, poolToken },
                 { reserveToken: unlistedToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -339,7 +339,7 @@ describe('BancorPortal', () => {
                 { reserveToken: unlistedToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -362,7 +362,7 @@ describe('BancorPortal', () => {
                 { reserveToken: token1, poolToken: poolToken1 },
                 { reserveToken: token2, poolToken: poolToken2 }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -385,7 +385,7 @@ describe('BancorPortal', () => {
                 { reserveToken: whitelistedToken, poolToken },
                 { reserveToken: unlistedToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -408,7 +408,7 @@ describe('BancorPortal', () => {
                 { reserveToken: whitelistedToken1, poolToken: poolToken1 },
                 { reserveToken: whitelistedToken2, poolToken: poolToken2 }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -431,7 +431,7 @@ describe('BancorPortal', () => {
                 { reserveToken: unlistedToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -454,7 +454,7 @@ describe('BancorPortal', () => {
                 { reserveToken: whitelistedToken1, poolToken: poolToken1 },
                 { reserveToken: whitelistedToken2, poolToken: poolToken2 }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -479,7 +479,7 @@ describe('BancorPortal', () => {
                 { reserveToken: bnt, poolToken: bntPoolToken },
                 { reserveToken: unlistedToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -504,7 +504,7 @@ describe('BancorPortal', () => {
                 { reserveToken: unlistedToken },
                 { reserveToken: bnt, poolToken: bntPoolToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -528,7 +528,7 @@ describe('BancorPortal', () => {
                 { reserveToken: bnt, poolToken: bntPoolToken },
                 { reserveToken: whitelistedToken, poolToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -552,7 +552,7 @@ describe('BancorPortal', () => {
                 { reserveToken: whitelistedToken, poolToken },
                 { reserveToken: bnt, poolToken: bntPoolToken }
             ]);
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'UniswapV2PositionMigrated')
                 .withArgs(
                     user.address,
@@ -583,7 +583,7 @@ describe('BancorPortal', () => {
                 [{ reserveToken: whitelistedToken, poolToken }, { reserveToken: unlistedToken }],
                 true
             );
-            expect(res)
+            await expect(res)
                 .to.emit(bancorPortal, 'SushiSwapV2PositionMigrated')
                 .withArgs(
                     user.address,

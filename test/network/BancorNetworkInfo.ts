@@ -592,7 +592,7 @@ describe('BancorNetworkInfo', () => {
     });
 
     describe('pool token calculations', () => {
-        const testPoolTokenCalculations = async (tokenData: TokenData) => {
+        const testPoolTokenCalculations = (tokenData: TokenData) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
             let bnt: IERC20;
