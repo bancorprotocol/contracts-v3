@@ -5,8 +5,8 @@ import { MathEx, Uint512 } from "../utility/MathEx.sol";
 import { Fraction } from "../utility/FractionLibrary.sol";
 
 contract TestMathEx {
-    function exp(Fraction memory f) external pure returns (Fraction memory) {
-        return MathEx.exp(f);
+    function exp2(Fraction memory f) external pure returns (Fraction memory) {
+        return MathEx.exp2(f);
     }
 
     function reducedFraction(Fraction memory fraction, uint256 max) external pure returns (Fraction memory) {

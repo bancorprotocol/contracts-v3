@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import {
-    AutoCompoundingStakingRewards__factory,
+    AutoCompoundingRewards__factory,
     BancorNetwork__factory,
     BancorNetworkInfo__factory,
     BancorPortal__factory,
@@ -20,9 +20,10 @@ import {
     PoolToken__factory,
     PoolTokenFactory__factory,
     ProxyAdmin__factory,
-    StandardStakingRewards__factory,
-    TestAutoCompoundingStakingRewards__factory,
+    StandardRewards__factory,
+    TestAutoCompoundingRewards__factory,
     TestBancorNetwork__factory,
+    TestBlockNumber__factory,
     TestBNTPool__factory,
     TestERC20Burnable__factory,
     TestERC20Token__factory,
@@ -36,9 +37,10 @@ import {
     TestPoolCollection__factory,
     TestPoolCollectionWithdrawal__factory,
     TestPoolMigrator__factory,
+    TestRewardsMath__factory,
     TestSafeERC20Ex__factory,
-    TestStakingRewardsMath__factory,
-    TestStandardStakingRewards__factory,
+    TestStandardRewards__factory,
+    TestTime__factory,
     TestTokenGovernance__factory,
     TestTokenLibrary__factory,
     TestUpgradeable__factory,
@@ -53,11 +55,7 @@ export * from '../typechain-types';
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
-    AutoCompoundingStakingRewards: deployOrAttach(
-        'AutoCompoundingStakingRewards',
-        AutoCompoundingStakingRewards__factory,
-        signer
-    ),
+    AutoCompoundingRewards: deployOrAttach('AutoCompoundingRewards', AutoCompoundingRewards__factory, signer),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorNetworkInfo: deployOrAttach('BancorNetworkInfo', BancorNetworkInfo__factory, signer),
     BancorPortal: deployOrAttach('BancorPortal', BancorPortal__factory, signer),
@@ -77,13 +75,14 @@ const getContracts = (signer?: Signer) => ({
     PoolToken: deployOrAttach('PoolToken', PoolToken__factory, signer),
     PoolTokenFactory: deployOrAttach('PoolTokenFactory', PoolTokenFactory__factory, signer),
     ProxyAdmin: deployOrAttach('ProxyAdmin', ProxyAdmin__factory, signer),
-    StandardStakingRewards: deployOrAttach('StandardStakingRewards', StandardStakingRewards__factory, signer),
-    TestAutoCompoundingStakingRewards: deployOrAttach(
-        'TestAutoCompoundingStakingRewards',
-        TestAutoCompoundingStakingRewards__factory,
+    StandardRewards: deployOrAttach('StandardRewards', StandardRewards__factory, signer),
+    TestAutoCompoundingRewards: deployOrAttach(
+        'TestAutoCompoundingRewards',
+        TestAutoCompoundingRewards__factory,
         signer
     ),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
+    TestBlockNumber: deployOrAttach('TestBlockNumber', TestBlockNumber__factory, signer),
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
     TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
     TestFlashLoanRecipient: deployOrAttach('TestFlashLoanRecipient', TestFlashLoanRecipient__factory, signer),
@@ -101,12 +100,9 @@ const getContracts = (signer?: Signer) => ({
         signer
     ),
     TestSafeERC20Ex: deployOrAttach('TestSafeERC20Ex', TestSafeERC20Ex__factory, signer),
-    TestStakingRewardsMath: deployOrAttach('TestStakingRewardsMath', TestStakingRewardsMath__factory, signer),
-    TestStandardStakingRewards: deployOrAttach(
-        'TestStandardStakingRewards',
-        TestStandardStakingRewards__factory,
-        signer
-    ),
+    TestRewardsMath: deployOrAttach('TestRewardsMath', TestRewardsMath__factory, signer),
+    TestStandardRewards: deployOrAttach('TestStandardRewards', TestStandardRewards__factory, signer),
+    TestTime: deployOrAttach('TestTime', TestTime__factory, signer),
     TestTokenGovernance: deployOrAttach('TestTokenGovernance', TestTokenGovernance__factory, signer),
     TestTokenLibrary: deployOrAttach('TestTokenLibrary', TestTokenLibrary__factory, signer),
     TestFractionLibrary: deployOrAttach('TestFractionLibrary', TestFractionLibrary__factory, signer),

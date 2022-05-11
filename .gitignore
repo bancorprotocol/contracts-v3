@@ -13,21 +13,21 @@ artifacts
 typechain-types
 
 contracts/hardhat-dependency-compiler
-deployments/localhost/*
+
+deployments/mainnet/solcInputs/*
 deployments/hardhat/*
-deployments/tenderly/solcInputs
-!deployments/data.ts
-!deployments/mainnet
-!deployments/tenderly
-!deployments/localhost/.chainId
+deployments/tenderly/*
+
+fork-*.zip
 
 .coverage_artifacts
 .coverage_contracts
-coverage
-coverageEnv
-coverage.json
+/coverage
+/coverage.json
 allFiredEvents
 scTopics
 
 .env
 tenderly.yaml
+
+scripts/test-network.ts

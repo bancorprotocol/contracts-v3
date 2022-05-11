@@ -3,21 +3,12 @@ pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
-
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-import { IExternalProtectionVault } from "../../vaults/interfaces/IExternalProtectionVault.sol";
-import { IMasterVault } from "./../../vaults/interfaces/IMasterVault.sol";
 
 import { Token } from "../../token/Token.sol";
 
 import { IPoolCollection } from "../../pools/interfaces/IPoolCollection.sol";
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
-import { IPoolMigrator } from "../../pools/interfaces/IPoolMigrator.sol";
-
-import { INetworkSettings } from "./INetworkSettings.sol";
-import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
 /**
  * @dev Flash-loan recipient interface
@@ -176,13 +167,14 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev cancels a withdrawal request
+     * @dev cancels a withdrawal request, and returns the number of pool token amount associated with the withdrawal
+     * request
      *
      * requirements:
      *
      * - the caller must have already initiated a withdrawal and received the specified id
      */
-    function cancelWithdrawal(uint256 id) external;
+    function cancelWithdrawal(uint256 id) external returns (uint256);
 
     /**
      * @dev withdraws liquidity and returns the withdrawn amount
@@ -197,7 +189,7 @@ interface IBancorNetwork is IUpgradeable {
     function withdraw(uint256 id) external returns (uint256);
 
     /**
-     * @dev performs a trade by providing the input source amount
+     * @dev performs a trade by providing the input source amount, and returns the trade target amount
      *
      * requirements:
      *
@@ -211,11 +203,11 @@ interface IBancorNetwork is IUpgradeable {
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable;
+    ) external payable returns (uint256);
 
     /**
      * @dev performs a trade by providing the input source amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request
+     * EIP2612 permit request, and returns the trade target amount
      *
      * requirements:
      *
@@ -231,10 +223,10 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    ) external returns (uint256);
 
     /**
-     * @dev performs a trade by providing the output target amount
+     * @dev performs a trade by providing the output target amount, and returns the trade source amount
      *
      * requirements:
      *
@@ -248,11 +240,11 @@ interface IBancorNetwork is IUpgradeable {
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable;
+    ) external payable returns (uint256);
 
     /**
      * @dev performs a trade by providing the output target amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request and returns the target amount and fee
+     * EIP2612 permit request and returns the target amount and fee, and returns the trade source amount
      *
      * requirements:
      *
@@ -268,7 +260,7 @@ interface IBancorNetwork is IUpgradeable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external;
+    ) external returns (uint256);
 
     /**
      * @dev provides a flash-loan
@@ -296,11 +288,11 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable;
 
     /**
-     * @dev withdraws pending network fees
+     * @dev withdraws pending network fees, and returns the amount of fees withdrawn
      *
      * requirements:
      *
      * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
      */
-    function withdrawNetworkFees(address recipient) external;
+    function withdrawNetworkFees(address recipient) external returns (uint256);
 }

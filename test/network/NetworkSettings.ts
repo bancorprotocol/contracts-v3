@@ -1,17 +1,9 @@
 import Contracts, { IERC20, NetworkSettings, TestERC20Token } from '../../components/Contracts';
-import LegacyContractsV3, { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DEFAULT_FLASH_LOAN_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import {
-    createProxy,
-    createSystem,
-    createTestToken,
-    createToken,
-    TokenWithAddress,
-    upgradeProxy
-} from '../helpers/Factory';
+import { createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -69,53 +61,6 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('upgrade', () => {
-        const networkFeePPM = toPPM(33);
-        const withdrawalFeePPM = toPPM(1);
-        const minLiquidityForTrading = toWei(500_000);
-        const flashLoanPPM = toPPM(20);
-        const vortexRewards = {
-            burnRewardPPM: toPPM(10),
-            burnRewardMaxAmount: toWei(100)
-        };
-        const fundingLimit = toWei(100_000);
-
-        let networkSettings: NetworkSettingsV1;
-
-        beforeEach(async () => {
-            networkSettings = await createProxy(LegacyContractsV3.NetworkSettingsV1);
-
-            await networkSettings.setNetworkFeePPM(networkFeePPM);
-            await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
-            await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
-            await networkSettings.setFlashLoanFeePPM(flashLoanPPM);
-            await networkSettings.setVortexRewards(vortexRewards);
-            await networkSettings.addTokenToWhitelist(reserveToken.address);
-            await networkSettings.setFundingLimit(reserveToken.address, fundingLimit);
-        });
-
-        it('should upgrade and preserve existing settings', async () => {
-            const upgradedNetworkSettings = await upgradeProxy(networkSettings, Contracts.NetworkSettings, {
-                ctorArgs: [bnt.address]
-            });
-
-            expect(await upgradedNetworkSettings.networkFeePPM()).to.equal(networkFeePPM);
-            expect(await upgradedNetworkSettings.withdrawalFeePPM()).to.equal(withdrawalFeePPM);
-            expect(await upgradedNetworkSettings.minLiquidityForTrading()).to.equal(minLiquidityForTrading);
-
-            const newVortexRewards = await upgradedNetworkSettings.vortexRewards();
-            expect(newVortexRewards.burnRewardPPM).to.equal(vortexRewards.burnRewardPPM);
-            expect(newVortexRewards.burnRewardMaxAmount).to.equal(vortexRewards.burnRewardMaxAmount);
-
-            expect(await upgradedNetworkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
-            expect(await upgradedNetworkSettings.poolFundingLimit(reserveToken.address)).to.equal(fundingLimit);
-            expect(await upgradedNetworkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
-            expect(await upgradedNetworkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(
-                DEFAULT_FLASH_LOAN_FEE_PPM
-            );
-        });
-    });
-
     describe('protected tokens whitelist', () => {
         beforeEach(async () => {
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
@@ -143,11 +88,13 @@ describe('NetworkSettings', () => {
 
             it('should whitelist a token', async () => {
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+                expect(await networkSettings.protectedTokenWhitelist()).not.to.include(reserveToken.address);
 
                 const res = await networkSettings.addTokenToWhitelist(reserveToken.address);
                 await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+                expect(await networkSettings.protectedTokenWhitelist()).to.include(reserveToken.address);
             });
 
             it('should revert when a non-admin attempts to add tokens', async () => {
@@ -179,6 +126,10 @@ describe('NetworkSettings', () => {
                 const reserveToken2 = await createTestToken();
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
                 expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.false;
+                expect(await networkSettings.protectedTokenWhitelist()).not.to.have.members([
+                    reserveToken.address,
+                    reserveToken2.address
+                ]);
 
                 const res = await networkSettings.addTokensToWhitelist([reserveToken.address, reserveToken2.address]);
                 await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
@@ -186,6 +137,10 @@ describe('NetworkSettings', () => {
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
                 expect(await networkSettings.isTokenWhitelisted(reserveToken2.address)).to.be.true;
+                expect(await networkSettings.protectedTokenWhitelist()).to.have.members([
+                    reserveToken.address,
+                    reserveToken2.address
+                ]);
             });
         });
 
@@ -211,11 +166,13 @@ describe('NetworkSettings', () => {
 
             it('should remove a token', async () => {
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+                expect(await networkSettings.protectedTokenWhitelist()).to.include(reserveToken.address);
 
                 const res = await networkSettings.removeTokenFromWhitelist(reserveToken.address);
                 await expect(res).to.emit(networkSettings, 'TokenRemovedFromWhitelist').withArgs(reserveToken.address);
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+                expect(await networkSettings.protectedTokenWhitelist()).not.to.include(reserveToken.address);
             });
         });
     });
@@ -361,6 +318,7 @@ describe('NetworkSettings', () => {
 
         it('should whitelist a token with funding limit', async () => {
             expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
+            expect(await networkSettings.protectedTokenWhitelist()).not.to.include(reserveToken.address);
 
             const res = await networkSettings.addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit);
             await expect(res).to.emit(networkSettings, 'TokenAddedToWhitelist').withArgs(reserveToken.address);
@@ -369,6 +327,7 @@ describe('NetworkSettings', () => {
                 .withArgs(reserveToken.address, 0, poolFundingLimit);
 
             expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
+            expect(await networkSettings.protectedTokenWhitelist()).to.include(reserveToken.address);
             expect(await networkSettings.poolFundingLimit(reserveToken.address)).to.equal(poolFundingLimit);
         });
     });

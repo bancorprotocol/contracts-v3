@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import { IPoolToken } from "../../pools/interfaces/IPoolToken.sol";
-import { IBNTPool } from "../../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../../token/Token.sol";
 
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
-
-import { INetworkSettings } from "./INetworkSettings.sol";
-import { IBancorNetwork } from "./IBancorNetwork.sol";
 
 /**
  * @dev the data struct representing a pending withdrawal request
@@ -71,17 +65,17 @@ interface IPendingWithdrawals is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev cancels a withdrawal request
+     * @dev cancels a withdrawal request, and returns the number of pool tokens which were sent back to the provider
      *
      * requirements:
      *
      * - the caller must be the network contract
      * - the provider must have already initiated a withdrawal and received the specified id
      */
-    function cancelWithdrawal(address provider, uint256 id) external;
+    function cancelWithdrawal(address provider, uint256 id) external returns (uint256);
 
     /**
-     * @dev completes a withdrawal request and returns the pool token and its transferred amount
+     * @dev completes a withdrawal request, and returns the pool token and its transferred amount
      *
      * requirements:
      *
