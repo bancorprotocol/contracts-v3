@@ -5,10 +5,13 @@ import { increaseTime } from '../../test/helpers/Time';
 import { DeployedContracts } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { PROGRAM_DURATION, PROGRAM_START_DELAY, TOTAL_REWARDS } from '../scripts/000036-setup-beta-rewards-programs';
+import { toWei } from '../../utils/Types';
 import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers, getNamedAccounts } from 'hardhat';
+
+const PROGRAM_START_DELAY = duration.hours(1);
+const PROGRAM_DURATION = duration.weeks(4);
 
 const prevIds: Record<string, BigNumber> = {};
 
@@ -39,6 +42,13 @@ describeDeployment(
         it('should terminate the beta reward programs and create launch reward programs', async () => {
             const { dai, link } = await getNamedAccounts();
 
+            const programRewards = {
+                [bnt.address]: toWei(35_000),
+                [NATIVE_TOKEN_ADDRESS]: toWei(100_000),
+                [dai]: toWei(35_000),
+                [link]: toWei(35_000)
+            };
+
             const { timestamp: now } = await ethers.provider.getBlock('latest');
 
             await increaseTime(PROGRAM_START_DELAY + duration.minutes(5));
@@ -62,7 +72,7 @@ describeDeployment(
 
                 expect(program.startTime).to.be.closeTo(now + PROGRAM_START_DELAY, duration.minutes(5));
                 expect(program.endTime).to.equal(program.startTime + PROGRAM_DURATION);
-                expect(program.rewardRate).to.equal(TOTAL_REWARDS.div(program.endTime - program.startTime));
+                expect(program.rewardRate).to.equal(programRewards[pool].div(program.endTime - program.startTime));
             }
         });
     },
