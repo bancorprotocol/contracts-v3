@@ -21,7 +21,6 @@ import LegacyContracts, {
     LiquidityProtection,
     LiquidityProtectionStore,
     Owned,
-    StakingRewards,
     STANDARD_CONVERTER_TYPE,
     STANDARD_POOL_CONVERTER_WEIGHT,
     TokenGovernance,
@@ -658,13 +657,13 @@ import { getNamedAccounts } from 'hardhat';
                         expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
 
                         expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
-                            maxRelativeError: new Decimal('0.0001')
+                            maxRelativeError: new Decimal('0.001')
                         });
 
                         expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
                             prevVaultTokenBalance.add(nativeTokenAmount),
                             {
-                                maxRelativeError: new Decimal('0.0001')
+                                maxRelativeError: new Decimal('0.001')
                             }
                         );
                     });
