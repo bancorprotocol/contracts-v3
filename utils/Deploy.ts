@@ -224,19 +224,20 @@ export const createTenderlyFork = async (options: CreateForkOptions = { projectN
 };
 
 interface DeleteForkOptions extends CreateForkOptions {
-    forkId?: string;
+    targetForkId?: string;
 }
 
-export const deleteTenderlyFork = async (options: DeleteForkOptions = { forkId, projectName: TENDERLY_PROJECT }) => {
-    return axios.delete(
-        `https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${options.projectName}/fork/${options.forkId}`,
+export const deleteTenderlyFork = async (options: DeleteForkOptions = { projectName: TENDERLY_PROJECT }) =>
+    axios.delete(
+        `https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${options.projectName}/fork/${
+            options.targetForkId || forkId
+        }`,
         {
             headers: {
                 'X-Access-Key': TENDERLY_ACCESS_KEY as string
             }
         }
     );
-};
 
 export const getForkId = () => forkId;
 
