@@ -6,8 +6,8 @@ import { ethers } from 'hardhat';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-const PROGRAM_START_DELAY = duration.hours(1);
-const PROGRAM_DURATION = duration.weeks(4);
+const PROGRAM_START_DELAY = duration.minutes(10);
+const PROGRAM_DURATION = duration.days(30);
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
     const { deployer, dai, link } = await getNamedAccounts();

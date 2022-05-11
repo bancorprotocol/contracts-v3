@@ -10,8 +10,8 @@ import { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers, getNamedAccounts } from 'hardhat';
 
-const PROGRAM_START_DELAY = duration.hours(1);
-const PROGRAM_DURATION = duration.weeks(4);
+const PROGRAM_START_DELAY = duration.minutes(10);
+const PROGRAM_DURATION = duration.days(30);
 
 const prevIds: Record<string, BigNumber> = {};
 
@@ -51,7 +51,7 @@ describeDeployment(
 
             const { timestamp: now } = await ethers.provider.getBlock('latest');
 
-            await increaseTime(PROGRAM_START_DELAY + duration.minutes(5));
+            await increaseTime(PROGRAM_START_DELAY + duration.minutes(10));
 
             for (const pool of [bnt.address, NATIVE_TOKEN_ADDRESS, dai, link]) {
                 const prevId = prevIds[pool];
