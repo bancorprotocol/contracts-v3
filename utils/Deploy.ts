@@ -49,6 +49,7 @@ import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import axios from 'axios';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, network, tenderly } from 'hardhat';
@@ -70,13 +71,17 @@ const tenderlyNetwork = tenderly.network();
 
 interface EnvOptions {
     TENDERLY_FORK_ID?: string;
+    TENDERLY_USERNAME: string;
     TENDERLY_PROJECT: string;
+    TENDERLY_ACCESS_KEY: string;
     TEMP_FORK?: boolean;
 }
 
 let {
     TENDERLY_FORK_ID: forkId,
+    TENDERLY_USERNAME,
     TENDERLY_PROJECT,
+    TENDERLY_ACCESS_KEY,
     TEMP_FORK: isTempFork
 }: EnvOptions = process.env as any as EnvOptions;
 
@@ -200,8 +205,12 @@ export const DeployedContracts = {
     ...DeployedNewContracts
 };
 
-export const createTenderlyFork = async (projectName?: string) => {
-    config.tenderly.project = projectName || TENDERLY_PROJECT;
+interface CreateForkOptions {
+    projectName: string;
+}
+
+export const createTenderlyFork = async (options: CreateForkOptions = { projectName: TENDERLY_PROJECT }) => {
+    config.tenderly.project = options.projectName;
 
     await tenderlyNetwork.initializeFork();
     forkId = tenderlyNetwork.getFork()!;
@@ -212,6 +221,21 @@ export const createTenderlyFork = async (projectName?: string) => {
 
     const networkConfig = network.config as HttpNetworkUserConfig;
     networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
+};
+
+interface DeleteForkOptions extends CreateForkOptions {
+    forkId?: string;
+}
+
+export const deleteTenderlyFork = async (options: DeleteForkOptions = { forkId, projectName: TENDERLY_PROJECT }) => {
+    return axios.delete(
+        `https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${options.projectName}/fork/${options.forkId}`,
+        {
+            headers: {
+                'X-Access-Key': TENDERLY_ACCESS_KEY as string
+            }
+        }
+    );
 };
 
 export const getForkId = () => forkId;
@@ -585,6 +609,8 @@ export const verifyTenderlyFork = async (deployment: Deployment) => {
         name: contract || name,
         address: contractAddress
     });
+
+    tenderlyNetwork.setHead('');
 
     for (const contract of contracts) {
         console.log('verifying on tenderly', contract.name, 'at', contract.address);
