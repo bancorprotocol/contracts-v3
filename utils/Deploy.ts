@@ -585,7 +585,7 @@ interface ContractData {
     address: Address;
 }
 
-export const verifyTenderlyFork = async (deployment: Deployment) => {
+const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
     if (!isTenderlyFork() || isTempFork) {
         return;
