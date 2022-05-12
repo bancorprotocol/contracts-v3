@@ -40,5 +40,5 @@ describeDeployment(
             }
         });
     },
-    () => isLive()
+    { skip: isLive }
 );
