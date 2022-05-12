@@ -22,5 +22,5 @@ describeDeployment(
             expect(await poolCollection.owner()).to.equal(daoMultisig);
         });
     },
-    () => isLive()
+    { skip: isLive }
 );

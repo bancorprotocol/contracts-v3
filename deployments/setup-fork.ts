@@ -1,6 +1,13 @@
 import Contracts from '../components/Contracts';
 import { MAX_UINT256 } from '../utils/Constants';
-import { DeployedContracts, getNamedSigners, isTenderlyFork, runPendingDeployments } from '../utils/Deploy';
+import {
+    createTenderlyFork,
+    DeployedContracts,
+    getForkId,
+    getNamedSigners,
+    isTenderlyFork,
+    runPendingDeployments
+} from '../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
 import '@nomiclabs/hardhat-ethers';
@@ -9,9 +16,8 @@ import '@tenderly/hardhat-tenderly';
 import '@typechain/hardhat';
 import AdmZip from 'adm-zip';
 import { BigNumber } from 'ethers';
-import { getNamedAccounts, network, tenderly } from 'hardhat';
+import { getNamedAccounts } from 'hardhat';
 import 'hardhat-deploy';
-import { HttpNetworkUserConfig } from 'hardhat/types';
 import path from 'path';
 
 interface EnvOptions {
@@ -29,31 +35,6 @@ const {
     TENDERLY_PROJECT,
     TENDERLY_USERNAME
 }: EnvOptions = process.env as any as EnvOptions;
-
-const tenderlyNetwork = tenderly.network();
-let forkId: string;
-
-const createTenderlyFork = async () => {
-    console.log('Setting up new fork...');
-
-    await tenderlyNetwork.initializeFork();
-
-    forkId = tenderlyNetwork.getFork()!;
-
-    setForkId(forkId);
-
-    console.log(`Fork ID: ${forkId}`);
-    console.log();
-
-    return forkId;
-};
-
-const setForkId = (forkId: string) => {
-    tenderlyNetwork.setFork(forkId);
-
-    const networkConfig = network.config as HttpNetworkUserConfig;
-    networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
-};
 
 interface FundingRequest {
     token: string;
@@ -159,7 +140,7 @@ const archiveArtifacts = async () => {
     const zip = new AdmZip();
 
     const srcDir = path.resolve(path.join(__dirname, './tenderly'));
-    const dest = path.resolve(path.join(__dirname, `../fork-${forkId}.zip`));
+    const dest = path.resolve(path.join(__dirname, `../fork-${getForkId()}.zip`));
 
     zip.addLocalFolder(srcDir);
     zip.writeZip(dest);
@@ -193,6 +174,7 @@ const main = async () => {
     await archiveArtifacts();
 
     const description = `${FORK_NAME} Fork`;
+    const forkId = getForkId();
 
     console.log('********************************************************************************');
     console.log();
