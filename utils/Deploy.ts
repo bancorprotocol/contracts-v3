@@ -30,6 +30,7 @@ import {
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
     StakingRewards,
+    StakingRewardsStore,
     TokenGovernance,
     TokenHolder,
     VBNT
@@ -48,10 +49,12 @@ import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import axios from 'axios';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
-import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
+import { config, deployments, ethers, getNamedAccounts, network, tenderly } from 'hardhat';
 import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
+import { HttpNetworkUserConfig } from 'hardhat/types';
 import path from 'path';
 
 const {
@@ -64,16 +67,23 @@ const {
     run
 } = deployments;
 
+const tenderlyNetwork = tenderly.network();
+
 interface EnvOptions {
     TENDERLY_FORK_ID?: string;
+    TENDERLY_USERNAME: string;
+    TENDERLY_PROJECT: string;
+    TENDERLY_ACCESS_KEY: string;
     TEMP_FORK?: boolean;
 }
 
-const { TENDERLY_FORK_ID: forkId, TEMP_FORK: isTempFork }: EnvOptions = process.env as any as EnvOptions;
-
-const deployed = <F extends Contract>(name: InstanceName) => ({
-    deployed: async () => ethers.getContract<F>(name)
-});
+let {
+    TENDERLY_FORK_ID: forkId,
+    TENDERLY_USERNAME,
+    TENDERLY_PROJECT,
+    TENDERLY_ACCESS_KEY,
+    TEMP_FORK: isTempFork
+}: EnvOptions = process.env as any as EnvOptions;
 
 enum LegacyInstanceNameV2 {
     BNT = 'BNT',
@@ -83,12 +93,14 @@ enum LegacyInstanceNameV2 {
     ContractRegistry = 'ContractRegistry',
     LiquidityProtection = 'LiquidityProtection',
     LegacyLiquidityProtection = 'LegacyLiquidityProtection',
+    LegacyLiquidityProtection2 = 'LegacyLiquidityProtection2',
     LiquidityProtectionSettings = 'LiquidityProtectionSettings',
     LiquidityProtectionStats = 'LiquidityProtectionStats',
     LiquidityProtectionStore = 'LiquidityProtectionStore',
     LiquidityProtectionSystemStore = 'LiquidityProtectionSystemStore',
     LiquidityProtectionWallet = 'LiquidityProtectionWallet',
     StakingRewards = 'StakingRewards',
+    StakingRewardsStore = 'StakingRewardsStore',
     CheckpointStore = 'CheckpointStore'
 }
 
@@ -130,6 +142,10 @@ export const InstanceName = {
 
 export type InstanceName = NewInstanceName | LegacyInstanceNameV2 | LegacyInstanceNameV3;
 
+const deployed = <F extends Contract>(name: InstanceName) => ({
+    deployed: async () => ethers.getContract<F>(name)
+});
+
 const DeployedLegacyContractsV2 = {
     BNT: deployed<BNT>(InstanceName.BNT),
     BNTGovernance: deployed<TokenGovernance>(InstanceName.BNTGovernance),
@@ -137,6 +153,7 @@ const DeployedLegacyContractsV2 = {
     VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
     ContractRegistry: deployed<ContractRegistry>(InstanceName.ContractRegistry),
     LegacyLiquidityProtection: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection),
+    LegacyLiquidityProtection2: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection2),
     LiquidityProtection: deployed<LiquidityProtection>(InstanceName.LiquidityProtection),
     LiquidityProtectionSettings: deployed<LiquidityProtectionSettings>(InstanceName.LiquidityProtectionSettings),
     LiquidityProtectionStats: deployed<LiquidityProtectionStats>(InstanceName.LiquidityProtectionStats),
@@ -146,6 +163,7 @@ const DeployedLegacyContractsV2 = {
     ),
     LiquidityProtectionWallet: deployed<TokenHolder>(InstanceName.LiquidityProtectionWallet),
     StakingRewards: deployed<StakingRewards>(InstanceName.StakingRewards),
+    StakingRewardsStore: deployed<StakingRewardsStore>(InstanceName.StakingRewardsStore),
     CheckpointStore: deployed<CheckpointStore>(InstanceName.CheckpointStore)
 };
 
@@ -186,6 +204,42 @@ export const DeployedContracts = {
     ...DeployedLegacyContracts,
     ...DeployedNewContracts
 };
+
+interface CreateForkOptions {
+    projectName: string;
+}
+
+export const createTenderlyFork = async (options: CreateForkOptions = { projectName: TENDERLY_PROJECT }) => {
+    config.tenderly.project = options.projectName;
+
+    await tenderlyNetwork.initializeFork();
+    forkId = tenderlyNetwork.getFork()!;
+    tenderlyNetwork.setFork(forkId);
+
+    console.log(`Created temporary fork: ${forkId}`);
+    console.log();
+
+    const networkConfig = network.config as HttpNetworkUserConfig;
+    networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
+};
+
+interface DeleteForkOptions extends CreateForkOptions {
+    targetForkId?: string;
+}
+
+export const deleteTenderlyFork = async (options: DeleteForkOptions = { projectName: TENDERLY_PROJECT }) =>
+    axios.delete(
+        `https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${options.projectName}/fork/${
+            options.targetForkId || forkId
+        }`,
+        {
+            headers: {
+                'X-Access-Key': TENDERLY_ACCESS_KEY as string
+            }
+        }
+    );
+
+export const getForkId = () => forkId;
 
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isTenderlyFork();
@@ -311,6 +365,8 @@ export const deploy = async (options: DeployOptions) => {
 
     let proxyOptions: DeployProxyOptions = {};
 
+    const customAlias = contractName === name ? '' : ` as ${name};`;
+
     if (isProxy) {
         const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
 
@@ -321,9 +377,9 @@ export const deploy = async (options: DeployOptions) => {
             execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
 
-        console.log(`deploying proxy ${contractName} as ${name}`);
+        console.log(`deploying proxy ${contractName}${customAlias}`);
     } else {
-        console.log(`deploying ${contractName} as ${name}`);
+        console.log(`deploying ${contractName}${customAlias}`);
     }
 
     const res = await deployContract(name, {
@@ -536,9 +592,6 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
         return;
     }
 
-    const tenderlyNetwork = tenderly.network();
-    tenderlyNetwork.setFork(forkId);
-
     const { name, contract, address, proxy, implementation } = deployment;
 
     const contracts: ContractData[] = [];
@@ -557,6 +610,8 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
         name: contract || name,
         address: contractAddress
     });
+
+    tenderlyNetwork.setHead('');
 
     for (const contract of contracts) {
         console.log('verifying on tenderly', contract.name, 'at', contract.address);

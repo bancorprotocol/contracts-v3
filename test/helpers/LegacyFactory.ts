@@ -30,7 +30,6 @@ export const createLegacySystem = async (
     await contractRegistry.registerAddress(Registry.BANCOR_NETWORK, legacyNetwork.address);
     await contractRegistry.registerAddress(Registry.NETWORK_SETTINGS, legacyNetworkSettings.address);
 
-    const checkpointStore = await LegacyContracts.TestCheckpointStore.deploy();
     const liquidityProtectionStore = await LegacyContracts.LiquidityProtectionStore.deploy();
     const liquidityProtectionStats = await LegacyContracts.LiquidityProtectionStats.deploy();
     const liquidityProtectionSystemStore = await LegacyContracts.LiquidityProtectionSystemStore.deploy();
@@ -48,11 +47,9 @@ export const createLegacySystem = async (
         liquidityProtectionSystemStore.address,
         liquidityProtectionWallet.address,
         bntGovernance.address,
-        vbntGovernance.address,
-        checkpointStore.address
+        vbntGovernance.address
     );
 
-    await checkpointStore.grantRole(Roles.CheckpointStore.ROLE_OWNER, liquidityProtection.address);
     await liquidityProtectionSettings.grantRole(
         Roles.LiquidityProtectionSettings.ROLE_OWNER,
         liquidityProtection.address
@@ -93,7 +90,6 @@ export const createLegacySystem = async (
         legacyNetwork,
         legacyNetworkSettings,
         standardPoolConverterFactory,
-        checkpointStore,
         liquidityProtectionStore,
         liquidityProtectionStats,
         liquidityProtectionSystemStore,

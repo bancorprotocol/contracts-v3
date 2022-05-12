@@ -1234,7 +1234,7 @@ export interface BancorNetwork extends BaseContract {
     cancelWithdrawal(
       id: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
 
     collectionByPool(pool: string, overrides?: CallOverrides): Promise<string>;
 
@@ -1418,7 +1418,7 @@ export interface BancorNetwork extends BaseContract {
       deadline: BigNumberish,
       beneficiary: string,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
 
     tradeBySourceAmountPermitted(
       sourceToken: string,
@@ -1431,7 +1431,7 @@ export interface BancorNetwork extends BaseContract {
       r: BytesLike,
       s: BytesLike,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
 
     tradeByTargetAmount(
       sourceToken: string,
@@ -1441,7 +1441,7 @@ export interface BancorNetwork extends BaseContract {
       deadline: BigNumberish,
       beneficiary: string,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
 
     tradeByTargetAmountPermitted(
       sourceToken: string,
@@ -1454,7 +1454,7 @@ export interface BancorNetwork extends BaseContract {
       r: BytesLike,
       s: BytesLike,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
 
     version(overrides?: CallOverrides): Promise<number>;
 
@@ -1463,7 +1463,7 @@ export interface BancorNetwork extends BaseContract {
     withdrawNetworkFees(
       recipient: string,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
   };
 
   filters: {
