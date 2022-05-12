@@ -460,7 +460,7 @@ const setupPool = async (
     const factory = isProfiling ? Contracts.TestGovernedToken : LegacyContracts.BNT;
     const bnt = await factory.attach(await networkInfo.bnt());
 
-    if (spec.token?.address === bnt.address ?? spec.tokenData.isBNT()) {
+    if (spec.token?.address === bnt.address || spec.tokenData.isBNT()) {
         const poolToken = await Contracts.PoolToken.attach(await networkInfo.poolToken(bnt.address));
 
         // ensure that there is enough space to deposit BNT
