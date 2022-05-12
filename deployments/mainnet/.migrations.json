@@ -33,5 +33,6 @@
   "000032-upgrade-pending-withdrawals-v2": 1652038898,
   "000033-upgrade-network-v3": 1652039004,
   "000034-upgrade-liquidity-protection": 1652091055,
-  "000035-pause-legacy-programs": 1652091254
+  "000035-pause-legacy-programs": 1652091254,
+  "000036-set-up-beta-rewards-programs": 1652299089
 }
