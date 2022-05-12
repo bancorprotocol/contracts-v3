@@ -21,7 +21,6 @@ import LegacyContracts, {
     LiquidityProtection,
     LiquidityProtectionStore,
     Owned,
-    StakingRewards,
     STANDARD_CONVERTER_TYPE,
     STANDARD_POOL_CONVERTER_WEIGHT,
     TokenGovernance,
@@ -84,7 +83,6 @@ import { getNamedAccounts } from 'hardhat';
         let poolMigrator: PoolMigrator;
         let standardRewards: StandardRewards;
         let bancorPortal: BancorPortal;
-        let legacyStakingRewards: StakingRewards;
         let liquidityProtection: LiquidityProtection;
 
         beforeEach(async () => {
@@ -94,7 +92,6 @@ import { getNamedAccounts } from 'hardhat';
             poolMigrator = await DeployedContracts.PoolMigrator.deployed();
             standardRewards = await DeployedContracts.StandardRewards.deployed();
             bancorPortal = await DeployedContracts.BancorPortal.deployed();
-            legacyStakingRewards = await DeployedContracts.StakingRewards.deployed();
             liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
         });
 
@@ -116,7 +113,7 @@ import { getNamedAccounts } from 'hardhat';
             );
 
             const expectedRoles = isMainnet()
-                ? [standardRewards.address, bntPool.address, liquidityProtection.address, legacyStakingRewards.address]
+                ? [standardRewards.address, bntPool.address, liquidityProtection.address]
                 : [standardRewards.address, bntPool.address];
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
@@ -678,13 +675,13 @@ import { getNamedAccounts } from 'hardhat';
                             expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
 
                             expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
-                                maxRelativeError: new Decimal('0.0001')
+                                maxRelativeError: new Decimal('0.001')
                             });
 
                             expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
                                 prevVaultTokenBalance.add(nativeTokenAmount),
                                 {
-                                    maxRelativeError: new Decimal('0.0001')
+                                    maxRelativeError: new Decimal('0.001')
                                 }
                             );
                         });

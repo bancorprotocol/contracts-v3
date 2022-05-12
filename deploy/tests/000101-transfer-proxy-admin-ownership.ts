@@ -22,5 +22,5 @@ describeDeployment(
             expect(await proxyAdmin.owner()).to.equal(daoMultisig);
         });
     },
-    () => isLive()
+    { skip: isLive }
 );
