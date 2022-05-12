@@ -1,5 +1,6 @@
-import { BancorNetworkInfo, StandardRewards } from '../../components/Contracts';
+import { StandardRewards } from '../../components/Contracts';
 import { BNT } from '../../components/LegacyContracts';
+import { BancorNetworkInfoV1 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts } from '../../utils/Deploy';
 import { duration } from '../../utils/Time';
@@ -13,12 +14,12 @@ const TOTAL_REWARDS = toWei(44_500);
 
 describeDeployment(__filename, () => {
     let bnt: BNT;
-    let networkInfo: BancorNetworkInfo;
+    let networkInfo: BancorNetworkInfoV1;
     let standardRewards: StandardRewards;
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
-        networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
+        networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
         standardRewards = await DeployedContracts.StandardRewards.deployed();
     });
 

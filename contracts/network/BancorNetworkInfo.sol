@@ -162,7 +162,7 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 1;
+        return 2;
     }
 
     /**
@@ -240,6 +240,34 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
      */
     function poolToken(Token pool) external view returns (IPoolToken) {
         return pool.isEqual(_bnt) ? _bntPoolToken : _poolCollection(pool).poolToken(pool);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function tradingFeePPM(Token pool) external view returns (uint32) {
+        return pool.isEqual(_bnt) ? 0 : _poolCollection(pool).tradingFeePPM(pool);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function tradingEnabled(Token pool) external view returns (bool) {
+        return pool.isEqual(_bnt) ? true : _poolCollection(pool).tradingEnabled(pool);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function depositingEnabled(Token pool) external view returns (bool) {
+        return pool.isEqual(_bnt) ? true : _poolCollection(pool).depositingEnabled(pool);
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function isPoolStable(Token pool) external view returns (bool) {
+        return pool.isEqual(_bnt) ? true : _poolCollection(pool).isPoolStable(pool);
     }
 
     /**

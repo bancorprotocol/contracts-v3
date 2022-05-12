@@ -100,6 +100,11 @@ interface IPoolCollection is IVersioned {
     function depositingEnabled(Token pool) external view returns (bool);
 
     /**
+     * @dev returns whether the pool is stable
+     */
+    function isPoolStable(Token pool) external view returns (bool);
+
+    /**
      * @dev converts the specified pool token amount to the underlying base token amount
      */
     function poolTokenToUnderlying(Token pool, uint256 poolTokenAmount) external view returns (uint256);
@@ -118,11 +123,6 @@ interface IPoolCollection is IVersioned {
         uint256 tokenAmountToDistribute,
         uint256 protocolPoolTokenAmount
     ) external view returns (uint256);
-
-    /**
-     * @dev returns whether the pool is stable
-     */
-    function isPoolStable(Token pool) external view returns (bool);
 
     /**
      * @dev creates a new pool

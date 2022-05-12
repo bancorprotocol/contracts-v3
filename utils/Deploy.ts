@@ -36,6 +36,7 @@ import {
     VBNT
 } from '../components/LegacyContracts';
 import {
+    BancorNetworkInfoV1,
     BancorNetworkV1,
     BancorNetworkV2,
     NetworkSettingsV1,
@@ -171,6 +172,7 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
+    BancorNetworkInfoV1: deployed<BancorNetworkInfoV1>(InstanceName.BancorNetworkInfo),
     BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
     BancorNetworkV2: deployed<BancorNetworkV2>(InstanceName.BancorNetwork),
     NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),

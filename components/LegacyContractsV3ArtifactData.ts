@@ -1,4 +1,5 @@
 import {
+    BancorNetworkInfoV1__factory,
     BancorNetworkV1__factory,
     BancorNetworkV2__factory,
     NetworkSettingsV1__factory,
@@ -14,6 +15,11 @@ import { ArtifactData } from './ContractBuilder';
 /* eslint-disable camelcase */
 
 const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
+    BancorNetworkInfoV1: {
+        abi: BancorNetworkInfoV1__factory.abi,
+        bytecode: BancorNetworkInfoV1__factory.bytecode
+    },
+
     BancorNetworkV1: {
         abi: BancorNetworkV1__factory.abi,
         bytecode: BancorNetworkV1__factory.bytecode

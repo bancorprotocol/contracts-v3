@@ -1,5 +1,7 @@
 /* eslint-disable camelcase */
 import {
+    BancorNetworkInfoV1,
+    BancorNetworkInfoV1__factory,
     BancorNetworkV1,
     BancorNetworkV1__factory,
     BancorNetworkV2,
@@ -23,6 +25,7 @@ import { deployOrAttach } from './ContractBuilder';
 import { Signer } from 'ethers';
 
 export {
+    BancorNetworkInfoV1,
     BancorNetworkV1,
     BancorNetworkV2,
     NetworkSettingsV1,
@@ -39,6 +42,7 @@ export {
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
+    BancorNetworkInfoV1: deployOrAttach('BancorNetworkInfo', BancorNetworkInfoV1__factory, signer),
     BancorNetworkV1: deployOrAttach('BancorNetwork', BancorNetworkV1__factory, signer),
     BancorNetworkV2: deployOrAttach('BancorNetwork', BancorNetworkV2__factory, signer),
     NetworkSettingsV1: deployOrAttach('NetworkSettings', NetworkSettingsV1__factory, signer),

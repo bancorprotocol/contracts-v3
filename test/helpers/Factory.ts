@@ -439,7 +439,7 @@ export interface PoolSpec {
     tokenData: TokenData;
     token?: TokenWithAddress;
     balance: BigNumberish;
-    requestedLiquidity: BigNumberish;
+    requestedLiquidity?: BigNumberish;
     bntVirtualBalance: BigNumberish;
     baseTokenVirtualBalance: BigNumberish;
     tradingFeePPM?: number;
@@ -468,7 +468,13 @@ const setupPool = async (
         await createPool(reserveToken, network, networkSettings, poolCollection);
 
         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
-        await poolCollection.requestFundingT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
+        if (spec.requestedLiquidity) {
+            await poolCollection.requestFundingT(
+                formatBytes32String(''),
+                reserveToken.address,
+                spec.requestedLiquidity
+            );
+        }
 
         await depositToPool(provider, bnt, spec.balance, network);
 

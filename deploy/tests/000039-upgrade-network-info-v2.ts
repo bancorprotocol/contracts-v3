@@ -1,19 +1,16 @@
 import {
+    BancorNetwork,
+    BancorNetworkInfo,
     BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
     MasterVault,
+    NetworkSettings,
+    PendingWithdrawals,
     PoolMigrator,
-    PoolToken,
-    ProxyAdmin
+    PoolToken
 } from '../../components/Contracts';
 import { BNT, TokenGovernance, VBNT } from '../../components/LegacyContracts';
-import {
-    BancorNetworkInfoV1,
-    BancorNetworkV1,
-    NetworkSettingsV1,
-    PendingWithdrawalsV1
-} from '../../components/LegacyContractsV3';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -22,49 +19,45 @@ import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
     let deployer: string;
-    let proxyAdmin: ProxyAdmin;
-    let network: BancorNetworkV1;
+    let network: BancorNetwork;
     let bnt: BNT;
     let vbnt: VBNT;
     let bntGovernance: TokenGovernance;
     let vbntGovernance: TokenGovernance;
-    let networkSettings: NetworkSettingsV1;
+    let networkSettings: NetworkSettings;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let externalRewardsVault: ExternalRewardsVault;
     let bntPool: BNTPool;
     let bnBNT: PoolToken;
-    let pendingWithdrawals: PendingWithdrawalsV1;
+    let pendingWithdrawals: PendingWithdrawals;
     let poolMigrator: PoolMigrator;
 
-    let networkInfo: BancorNetworkInfoV1;
+    let networkInfo: BancorNetworkInfo;
 
     before(async () => {
         ({ deployer } = await getNamedAccounts());
     });
 
     beforeEach(async () => {
-        proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
-        network = await DeployedContracts.BancorNetworkV1.deployed();
+        network = await DeployedContracts.BancorNetwork.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
         bntGovernance = await DeployedContracts.BNTGovernance.deployed();
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
-        networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
+        networkSettings = await DeployedContracts.NetworkSettings.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
         externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         bnBNT = await DeployedContracts.bnBNT.deployed();
-        pendingWithdrawals = await DeployedContracts.PendingWithdrawalsV1.deployed();
-        poolMigrator = await DeployedContracts.PoolMigratorV1.deployed();
-        networkInfo = await DeployedContracts.BancorNetworkInfoV1.deployed();
+        pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+        poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+        networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
     });
 
-    it('should deploy and configure the network info contract', async () => {
-        expect(await proxyAdmin.getProxyAdmin(networkInfo.address)).to.equal(proxyAdmin.address);
-
-        expect(await networkInfo.version()).to.equal(1);
+    it('should upgrade and configure the network info contract', async () => {
+        expect(await networkInfo.version()).to.equal(2);
 
         expect(await networkInfo.network()).to.equal(network.address);
         expect(await networkInfo.bnt()).to.equal(bnt.address);

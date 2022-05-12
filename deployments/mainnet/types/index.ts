@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 
+export type { BancorNetworkInfo as BancorNetworkInfoV1 } from './contracts/network/BancorNetworkInfoV1';
 export type { BancorNetwork as BancorNetworkV1 } from './contracts/network/BancorNetworkV1';
 export type { BancorNetwork as BancorNetworkV2 } from './contracts/network/BancorNetworkV2';
 export type { NetworkSettings as NetworkSettingsV1 } from './contracts/network/NetworkSettingsV1';
@@ -10,6 +11,7 @@ export type { PoolCollection as PoolCollectionType1V1 } from './contracts/pools/
 export type { PoolCollection as PoolCollectionType1V2 } from './contracts/pools/PoolCollectionType1V2';
 export type { PoolMigrator as PoolMigratorV1 } from './contracts/pools/PoolMigratorV1';
 
+export { BancorNetworkInfo__factory as BancorNetworkInfoV1__factory } from './factories/contracts/network/BancorNetworkInfoV1__factory';
 export { BancorNetwork__factory as BancorNetworkV1__factory } from './factories/contracts/network/BancorNetworkV1__factory';
 export { BancorNetwork__factory as BancorNetworkV2__factory } from './factories/contracts/network/BancorNetworkV2__factory';
 export { NetworkSettings__factory as NetworkSettingsV1__factory } from './factories/contracts/network/NetworkSettingsV1__factory';
