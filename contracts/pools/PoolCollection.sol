@@ -352,7 +352,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         emit PoolCreated({ poolToken: newPoolToken, token: token });
 
-        emit TradingEnabled({ pool: token, newStatus: false, reason: TRADING_STATUS_UPDATE_DEFAULT });
+        emit TradingEnabled({ pool: token, newStatus: newPool.tradingEnabled, reason: TRADING_STATUS_UPDATE_DEFAULT });
         emit TradingFeePPMUpdated({ pool: token, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: token, newStatus: newPool.depositingEnabled });
     }
