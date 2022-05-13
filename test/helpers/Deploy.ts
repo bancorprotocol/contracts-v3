@@ -9,17 +9,17 @@ interface Options {
     beforeDeployments?: () => Promise<void>;
 }
 
-export const describeDeployment = async (
+export const describeDeployment = (
     filename: string,
     fn: (this: Suite) => void,
     options: Options = {}
-): Promise<Suite | void> => {
+): Suite | void => {
     const { id, tag } = deploymentMetadata(filename);
 
     const { skip = () => false, beforeDeployments = () => Promise.resolve() } = options;
 
     // if we're running against a mainnet fork, ensure to skip tests for already existing deployments
-    if (skip() || (await deploymentTagExists(tag))) {
+    if (skip() || deploymentTagExists(tag)) {
         return describe.skip(id, fn);
     }
 

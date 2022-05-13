@@ -94,7 +94,7 @@ describe('ExternalRewardsVault', () => {
 
                 token = tokenData.isBNT() ? bnt : await createTestToken();
 
-                transfer(deployer, token, externalRewardsVault.address, amount);
+                await transfer(deployer, token, externalRewardsVault.address, amount);
             });
 
             context(`withdrawing ${symbol}`, () => {

@@ -29,10 +29,20 @@
         "no-loop-func": "off",
         "no-unused-expressions": "off",
         "mocha/no-exclusive-tests": "error",
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-non-null-assertion": "off"
     },
+    "overrides": [
+        {
+            "files": ["*.ts", "*.tsx"],
+            "parserOptions": {
+                "project": "./tsconfig.json"
+            }
+        }
+    ],
     "globals": {
         "assert": true,
         "expect": true,

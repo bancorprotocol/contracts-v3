@@ -587,7 +587,7 @@ describe('PoolCollection', () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
 
-        const testActivation = async (tokenData: TokenData) => {
+        const testActivation = (tokenData: TokenData) => {
             const testEnableTrading = async (totalLiquidity: BigNumber) => {
                 expect(await bntPool.currentPoolFunding(token.address)).to.equal(0);
 
@@ -792,7 +792,7 @@ describe('PoolCollection', () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
 
-        const testDisableTrading = async (tokenData: TokenData) => {
+        const testDisableTrading = (tokenData: TokenData) => {
             const testReset = async (expectedStakedBalance: BigNumberish) => {
                 const { tradingEnabled: prevTradingEnabled } = await poolCollection.poolData(token.address);
                 const res = await poolCollection.disableTrading(token.address);

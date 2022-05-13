@@ -590,7 +590,7 @@ describe('BancorNetworkInfo', () => {
     });
 
     describe('pool info', () => {
-        const testPoolInfo = async (tokenData: TokenData) => {
+        const testPoolInfo = (tokenData: TokenData) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
 

@@ -179,7 +179,7 @@ describe('Profile @profile', () => {
                                 }
                             };
 
-                            const testDepositAmount = async (amount: BigNumber) => {
+                            const testDepositAmount = (amount: BigNumber) => {
                                 const COUNT = 3;
 
                                 const testMultipleDeposits = async () => {
@@ -337,7 +337,7 @@ describe('Profile @profile', () => {
                                 }
                             };
 
-                            const testDepositAmount = async (amount: BigNumber) => {
+                            const testDepositAmount = (amount: BigNumber) => {
                                 const test = async () =>
                                     profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
@@ -427,7 +427,7 @@ describe('Profile @profile', () => {
             creationTime: number;
         }
 
-        const testWithdraw = async (tokenData: TokenData) => {
+        const testWithdraw = (tokenData: TokenData) => {
             let provider: SignerWithAddress;
             let poolToken: PoolToken;
             let token: TokenWithAddress;
@@ -1039,7 +1039,7 @@ describe('Profile @profile', () => {
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         });
 
-        const testFlashLoan = async (tokenData: TokenData, flashLoanFeePPM: number) => {
+        const testFlashLoan = (tokenData: TokenData, flashLoanFeePPM: number) => {
             const FEE_AMOUNT = LOAN_AMOUNT.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {

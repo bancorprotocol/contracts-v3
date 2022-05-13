@@ -237,7 +237,7 @@ interface DeleteForkOptions extends CreateForkOptions {
 export const deleteTenderlyFork = async (options: DeleteForkOptions = { projectName: TENDERLY_PROJECT }) =>
     axios.delete(
         `https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${options.projectName}/fork/${
-            options.targetForkId || forkId
+            options.targetForkId ?? forkId
         }`,
         {
             headers: {
@@ -366,7 +366,7 @@ const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
-    const contractName = contract || name;
+    const contractName = contract ?? name;
 
     await fundAccount(from);
 
@@ -390,7 +390,7 @@ export const deploy = async (options: DeployOptions) => {
     }
 
     const res = await deployContract(name, {
-        contract: contractArtifactData || contractName,
+        contract: contractArtifactData ?? contractName,
         from,
         value,
         args,
@@ -401,7 +401,7 @@ export const deploy = async (options: DeployOptions) => {
 
     if (!proxy || !proxy.skipInitialization) {
         const data = { name, contract: contractName };
-        saveTypes(data);
+        await saveTypes(data);
 
         await verifyTenderlyFork({
             address: res.address,
@@ -426,7 +426,7 @@ interface UpgradeProxyOptions extends DeployOptions {
 
 export const upgradeProxy = async (options: UpgradeProxyOptions) => {
     const { name, contract, from, value, args, upgradeArgs, contractArtifactData } = options;
-    const contractName = contract || name;
+    const contractName = contract ?? name;
 
     await fundAccount(from);
 
@@ -442,11 +442,11 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         proxyContract: PROXY_CONTRACT,
         owner: await proxyAdmin.owner(),
         viaAdminContract: InstanceName.ProxyAdmin,
-        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
+        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs ?? [ZERO_BYTES] } }
     };
 
     const res = await deployContract(name, {
-        contract: contractArtifactData || contractName,
+        contract: contractArtifactData ?? contractName,
         from,
         value,
         args,
@@ -460,7 +460,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
     console.log(`upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
     const data = { name, contract: contractName };
-    saveTypes(data);
+    await saveTypes(data);
 
     await verifyTenderlyFork({
         address: res.address,
@@ -489,7 +489,7 @@ export const execute = async (options: ExecuteOptions) => {
         name,
         { from, value, waitConfirmations: WAIT_CONFIRMATIONS, log: true },
         methodName,
-        ...(args || [])
+        ...(args ?? [])
     );
 };
 
@@ -566,12 +566,12 @@ interface Deployment {
 export const save = async (deployment: Deployment) => {
     const { name, contract, address, proxy, skipVerification, skipTypechain } = deployment;
 
-    const contractName = contract || name;
+    const contractName = contract ?? name;
     const { abi } = await getExtendedArtifact(contractName);
 
     // save the typechain for future use
     if (!skipTypechain) {
-        saveTypes({ name, contract: contractName });
+        await saveTypes({ name, contract: contractName });
     }
 
     // save the deployment json data in the deployments folder
@@ -614,7 +614,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
     }
 
     contracts.push({
-        name: contract || name,
+        name: contract ?? name,
         address: contractAddress
     });
 
@@ -627,7 +627,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
     }
 };
 
-export const deploymentTagExists = async (tag: string) => {
+export const deploymentTagExists = (tag: string) => {
     const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
     const migrationsPath = path.resolve(
         __dirname,
