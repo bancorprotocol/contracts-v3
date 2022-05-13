@@ -59,7 +59,7 @@ export const proxyAdmin = async () => {
 
 const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F>, ctorArgs: CtorArgs = []) => {
     // eslint-disable-next-line @typescript-eslint/ban-types
-    return (factory.deploy as Function)(...(ctorArgs || []));
+    return (factory.deploy as Function)(...(ctorArgs ?? []));
 };
 
 const createTransparentProxy = async (
@@ -94,7 +94,7 @@ export const upgradeProxy = async <F extends ContractFactory>(
     await admin.upgradeAndCall(
         proxy.address,
         logicContract.address,
-        logicContract.interface.encodeFunctionData('postUpgrade', [args?.upgradeCallData || []])
+        logicContract.interface.encodeFunctionData('postUpgrade', [args?.upgradeCallData ?? []])
     );
 
     return factory.attach(proxy.address);
@@ -170,7 +170,7 @@ const createGovernedToken = async (
         token = testToken;
     } else {
         const legacyToken = await legacyFactory.deploy(name, symbol, decimals);
-        legacyToken.issue(deployer.address, totalSupply);
+        await legacyToken.issue(deployer.address, totalSupply);
 
         tokenGovernance = await LegacyContracts.TokenGovernance.deploy(legacyToken.address);
         await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer.address);
@@ -475,7 +475,7 @@ const setupPool = async (
         return { poolToken, token: bnt };
     }
 
-    const token = spec.token || (await createToken(spec.tokenData));
+    const token = spec.token ?? (await createToken(spec.tokenData));
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setFundingLimit(token.address, MAX_UINT256);

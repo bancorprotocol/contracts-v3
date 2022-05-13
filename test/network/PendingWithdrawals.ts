@@ -146,7 +146,7 @@ describe('PendingWithdrawals', () => {
 
         const MIN_LIQUIDITY_FOR_TRADING = toWei(100_000);
 
-        const testWithdrawals = async (tokenData: TokenData) => {
+        const testWithdrawals = (tokenData: TokenData) => {
             beforeEach(async () => {
                 ({ network, networkInfo, networkSettings, bntPool, bntPoolToken, pendingWithdrawals, poolCollection } =
                     await createSystem());

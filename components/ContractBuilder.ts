@@ -38,7 +38,7 @@ export const deployOrAttach = <F extends ContractFactory>(
             bytecode: FactoryConstructor.bytecode
         },
         deploy: async (...args: Parameters<F['deploy']>): Promise<Contract<F>> => {
-            const defaultSigner = initialSigner || (await ethers.getSigners())[0];
+            const defaultSigner = initialSigner ?? (await ethers.getSigners())[0];
 
             return new FactoryConstructor(defaultSigner).deploy(...(args || [])) as Promise<Contract<F>>;
         },
@@ -52,8 +52,8 @@ export const attachOnly = <F extends ContractFactory>(
 ) => {
     return {
         attach: async (address: string, signer?: Signer): Promise<Contract<F>> => {
-            const defaultSigner = initialSigner || (await ethers.getSigners())[0];
-            return new FactoryConstructor(signer || defaultSigner).attach(address) as Contract<F>;
+            const defaultSigner = initialSigner ?? (await ethers.getSigners())[0];
+            return new FactoryConstructor(signer ?? defaultSigner).attach(address) as Contract<F>;
         }
     };
 };
