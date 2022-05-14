@@ -51,12 +51,10 @@ import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import axios from 'axios';
 import { BigNumber, Contract } from 'ethers';
 import fs from 'fs';
-import { config, deployments, ethers, getNamedAccounts, network, tenderly } from 'hardhat';
+import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
 import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
-import { HttpNetworkUserConfig } from 'hardhat/types';
 import path from 'path';
 
 const {
@@ -72,20 +70,10 @@ const {
 const tenderlyNetwork = tenderly.network();
 
 interface EnvOptions {
-    TENDERLY_FORK_ID?: string;
-    TENDERLY_USERNAME: string;
-    TENDERLY_PROJECT: string;
-    TENDERLY_ACCESS_KEY: string;
     TEMP_FORK?: boolean;
 }
 
-let {
-    TENDERLY_FORK_ID: forkId,
-    TENDERLY_USERNAME,
-    TENDERLY_PROJECT,
-    TENDERLY_ACCESS_KEY,
-    TEMP_FORK: isTempFork
-}: EnvOptions = process.env as any as EnvOptions;
+const { TEMP_FORK: isTempFork }: EnvOptions = process.env as any as EnvOptions;
 
 enum LegacyInstanceNameV2 {
     BNT = 'BNT',
@@ -208,42 +196,6 @@ export const DeployedContracts = {
     ...DeployedLegacyContracts,
     ...DeployedNewContracts
 };
-
-interface CreateForkOptions {
-    projectName: string;
-}
-
-export const createTenderlyFork = async (options: CreateForkOptions = { projectName: TENDERLY_PROJECT }) => {
-    config.tenderly.project = options.projectName;
-
-    await tenderlyNetwork.initializeFork();
-    forkId = tenderlyNetwork.getFork()!;
-    tenderlyNetwork.setFork(forkId);
-
-    Logger.log(`Created temporary fork: ${forkId}`);
-    Logger.log();
-
-    const networkConfig = network.config as HttpNetworkUserConfig;
-    networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
-};
-
-interface DeleteForkOptions extends CreateForkOptions {
-    targetForkId?: string;
-}
-
-export const deleteTenderlyFork = async (options: DeleteForkOptions = { projectName: TENDERLY_PROJECT }) =>
-    axios.delete(
-        `https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${options.projectName}/fork/${
-            options.targetForkId ?? forkId
-        }`,
-        {
-            headers: {
-                'X-Access-Key': TENDERLY_ACCESS_KEY as string
-            }
-        }
-    );
-
-export const getForkId = () => forkId;
 
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isTenderlyFork();

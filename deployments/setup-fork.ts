@@ -1,13 +1,6 @@
 import Contracts from '../components/Contracts';
 import { MAX_UINT256 } from '../utils/Constants';
-import {
-    createTenderlyFork,
-    DeployedContracts,
-    getForkId,
-    getNamedSigners,
-    isTenderlyFork,
-    runPendingDeployments
-} from '../utils/Deploy';
+import { DeployedContracts, getNamedSigners, isTenderlyFork, runPendingDeployments } from '../utils/Deploy';
 import Logger from '../utils/Logger';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
@@ -27,6 +20,7 @@ interface EnvOptions {
     FORK_RESEARCH: boolean;
     TENDERLY_PROJECT: string;
     TENDERLY_USERNAME: string;
+    TENDERLY_FORK_ID: string;
 }
 
 const {
@@ -34,7 +28,8 @@ const {
     FORK_NAME,
     FORK_RESEARCH: isResearch,
     TENDERLY_PROJECT,
-    TENDERLY_USERNAME
+    TENDERLY_USERNAME,
+    TENDERLY_FORK_ID: forkId
 }: EnvOptions = process.env as any as EnvOptions;
 
 interface FundingRequest {
@@ -141,7 +136,7 @@ const archiveArtifacts = async () => {
     const zip = new AdmZip();
 
     const srcDir = path.resolve(path.join(__dirname, './tenderly'));
-    const dest = path.resolve(path.join(__dirname, `../fork-${getForkId()}.zip`));
+    const dest = path.resolve(path.join(__dirname, `../fork-${forkId}.zip`));
 
     zip.addLocalFolder(srcDir);
     zip.writeZip(dest);
@@ -156,8 +151,6 @@ const main = async () => {
     }
 
     Logger.log();
-
-    await createTenderlyFork();
 
     await runDeployments();
 
@@ -175,7 +168,6 @@ const main = async () => {
     await archiveArtifacts();
 
     const description = `${FORK_NAME} Fork`;
-    const forkId = getForkId();
 
     Logger.log('********************************************************************************');
     Logger.log();
