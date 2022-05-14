@@ -1,12 +1,6 @@
 import Contracts from '../components/Contracts';
-import {
-    createTenderlyFork,
-    DeployedContracts,
-    getForkId,
-    getNamedSigners,
-    isTenderlyFork,
-    runPendingDeployments
-} from '../utils/Deploy';
+import { DeployedContracts, getNamedSigners, isTenderlyFork, runPendingDeployments } from '../utils/Deploy';
+import Logger from '../utils/Logger';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
 import '@nomiclabs/hardhat-ethers';
@@ -25,6 +19,7 @@ interface EnvOptions {
     FORK_RESEARCH: boolean;
     TENDERLY_PROJECT: string;
     TENDERLY_USERNAME: string;
+    TENDERLY_FORK_ID: string;
 }
 
 const {
@@ -32,7 +27,8 @@ const {
     FORK_NAME,
     FORK_RESEARCH: isResearch,
     TENDERLY_PROJECT,
-    TENDERLY_USERNAME
+    TENDERLY_USERNAME,
+    TENDERLY_FORK_ID: forkId
 }: EnvOptions = process.env as any as EnvOptions;
 
 interface FundingRequest {
@@ -42,7 +38,7 @@ interface FundingRequest {
 }
 
 const fundAccount = async (account: string, fundingRequests: FundingRequest[]) => {
-    console.log(`Funding ${account}...`);
+    Logger.log(`Funding ${account}...`);
 
     for (const fundingRequest of fundingRequests) {
         if (fundingRequest.token === NATIVE_TOKEN_ADDRESS) {
@@ -60,8 +56,8 @@ const fundAccount = async (account: string, fundingRequests: FundingRequest[]) =
 };
 
 const fundAccounts = async () => {
-    console.log('Funding test accounts...');
-    console.log();
+    Logger.log('Funding test accounts...');
+    Logger.log();
 
     const { dai, link } = await getNamedAccounts();
     const { ethWhale, bntWhale, daiWhale, linkWhale } = await getNamedSigners();
@@ -101,12 +97,12 @@ const fundAccounts = async () => {
         await fundAccount(account, fundingRequests);
     }
 
-    console.log();
+    Logger.log();
 };
 
 const setLockDuration = async (lockDuration: number) => {
-    console.log(`Setting withdrawal lock duration to ${lockDuration} seconds...`);
-    console.log();
+    Logger.log(`Setting withdrawal lock duration to ${lockDuration} seconds...`);
+    Logger.log();
 
     const { daoMultisig } = await getNamedSigners();
 
@@ -115,25 +111,25 @@ const setLockDuration = async (lockDuration: number) => {
 };
 
 const runDeployments = async () => {
-    console.log('Running pending deployments...');
-    console.log();
+    Logger.log('Running pending deployments...');
+    Logger.log();
 
     await runPendingDeployments();
 
-    console.log();
+    Logger.log();
 };
 
 const archiveArtifacts = async () => {
     const zip = new AdmZip();
 
     const srcDir = path.resolve(path.join(__dirname, './tenderly'));
-    const dest = path.resolve(path.join(__dirname, `../fork-${getForkId()}.zip`));
+    const dest = path.resolve(path.join(__dirname, `../fork-${forkId}.zip`));
 
     zip.addLocalFolder(srcDir);
     zip.writeZip(dest);
 
-    console.log(`Archived ${srcDir} to ${dest}...`);
-    console.log();
+    Logger.log(`Archived ${srcDir} to ${dest}...`);
+    Logger.log();
 };
 
 const main = async () => {
@@ -141,9 +137,7 @@ const main = async () => {
         throw new Error('Invalid network');
     }
 
-    console.log();
-
-    await createTenderlyFork();
+    Logger.log();
 
     await runDeployments();
 
@@ -158,25 +152,24 @@ const main = async () => {
     await archiveArtifacts();
 
     const description = `${FORK_NAME} Fork`;
-    const forkId = getForkId();
 
-    console.log('********************************************************************************');
-    console.log();
-    console.log(description);
-    console.log('‾'.repeat(description.length));
-    console.log(`   RPC: https://rpc.tenderly.co/fork/${forkId}`);
-    console.log(`   Dashboard: https://dashboard.tenderly.co/${TENDERLY_USERNAME}/${TENDERLY_PROJECT}/fork/${forkId}`);
+    Logger.log('********************************************************************************');
+    Logger.log();
+    Logger.log(description);
+    Logger.log('‾'.repeat(description.length));
+    Logger.log(`   RPC: https://rpc.tenderly.co/fork/${forkId}`);
+    Logger.log(`   Dashboard: https://dashboard.tenderly.co/${TENDERLY_USERNAME}/${TENDERLY_PROJECT}/fork/${forkId}`);
     if (isResearch) {
-        console.log();
-        console.log(`   * Withdrawal locking duration was set to ${lockDuration} seconds`);
+        Logger.log();
+        Logger.log(`   * Withdrawal locking duration was set to ${lockDuration} seconds`);
     }
-    console.log();
-    console.log('********************************************************************************');
+    Logger.log();
+    Logger.log('********************************************************************************');
 };
 
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error(error);
+        Logger.error(error);
         process.exit(1);
     });

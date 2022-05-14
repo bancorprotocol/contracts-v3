@@ -560,7 +560,9 @@ describe('PendingWithdrawals', () => {
                         });
 
                         it('should revert when attempting to complete a withdrawal request', async () => {
-                            await expect(testCompleteWithdrawal()).to.be.revertedWith('WithdrawalNotAllowed');
+                            await expect(
+                                network.completeWithdrawalT(CONTEXT_ID, provider.address, id)
+                            ).to.be.revertedWith('WithdrawalNotAllowed');
                         });
                     });
 

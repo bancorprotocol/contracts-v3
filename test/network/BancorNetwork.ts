@@ -30,6 +30,7 @@ import {
 import LegacyContractsV3, { PoolCollectionType1V2 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import Logger from '../../utils/Logger';
 import { permitSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
@@ -4187,7 +4188,7 @@ describe('BancorNetwork Financial Verification', () => {
 
     const execute = async () => {
         for (const [n, { type, userId, amount, mined, expected }] of flow.operations.entries()) {
-            console.log(`${n + 1} out of ${flow.operations.length}: ${type}(${amount})`);
+            Logger.log(`${n + 1} out of ${flow.operations.length}: ${type}(${amount})`);
 
             if (mined) {
                 await poolCollection.setBlockNumber(++blockNumber);

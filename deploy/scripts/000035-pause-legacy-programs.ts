@@ -37,8 +37,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { timestamp: now } = await ethers.provider.getBlock('latest');
 
     for (const poolToken of PROGRAMS_POOL_TOKENS) {
-        console.log(`Updating legacy program for ${poolToken}`);
-
         await execute({
             name: InstanceName.StakingRewardsStore,
             methodName: 'setPoolProgramEndTime',

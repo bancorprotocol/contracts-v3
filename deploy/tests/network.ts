@@ -21,6 +21,7 @@ import LegacyContracts, {
     LiquidityProtection,
     LiquidityProtectionStore,
     Owned,
+    StakingRewardsClaim,
     STANDARD_CONVERTER_TYPE,
     STANDARD_POOL_CONVERTER_WEIGHT,
     TokenGovernance,
@@ -84,6 +85,7 @@ import { getNamedAccounts } from 'hardhat';
         let standardRewards: StandardRewards;
         let bancorPortal: BancorPortal;
         let liquidityProtection: LiquidityProtection;
+        let stakingRewardsClaim: StakingRewardsClaim;
 
         beforeEach(async () => {
             externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
@@ -93,6 +95,7 @@ import { getNamedAccounts } from 'hardhat';
             standardRewards = await DeployedContracts.StandardRewards.deployed();
             bancorPortal = await DeployedContracts.BancorPortal.deployed();
             liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
+            stakingRewardsClaim = await DeployedContracts.StakingRewardsClaim.deployed();
         });
 
         it('should have the correct set of roles', async () => {
@@ -113,7 +116,7 @@ import { getNamedAccounts } from 'hardhat';
             );
 
             const expectedRoles = isMainnet()
-                ? [standardRewards.address, bntPool.address, liquidityProtection.address]
+                ? [standardRewards.address, bntPool.address, liquidityProtection.address, stakingRewardsClaim.address]
                 : [standardRewards.address, bntPool.address];
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
