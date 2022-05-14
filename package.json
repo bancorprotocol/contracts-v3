@@ -110,6 +110,7 @@
     "hardhat-watcher": "^2.3.0",
     "humanize-duration": "^3.27.1",
     "lodash": "^4.17.21",
+    "merkletreejs": "^0.2.31",
     "mocha": "^10.0.0",
     "mocha-silent-reporter": "^1.0.0",
     "module-alias": "^2.2.2",
