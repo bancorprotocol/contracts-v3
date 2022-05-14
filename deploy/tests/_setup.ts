@@ -1,4 +1,5 @@
 import { createTenderlyFork, deleteTenderlyFork, getForkId, isTenderlyFork } from '../../utils/Deploy';
+import Logger from '../../utils/Logger';
 
 interface EnvOptions {
     TENDERLY_TEMP_PROJECT: string;
@@ -17,8 +18,8 @@ before(async () => {
 });
 
 after(async () => {
-    console.log(`Deleting temporary fork: ${getForkId()}`);
-    console.log();
+    Logger.log(`Deleting temporary fork: ${getForkId()}`);
+    Logger.log();
 
     return deleteTenderlyFork({ projectName: TENDERLY_TEMP_PROJECT });
 });

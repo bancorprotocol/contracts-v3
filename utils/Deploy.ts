@@ -45,6 +45,7 @@ import {
     StandardRewardsV2
 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
+import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
@@ -216,8 +217,8 @@ export const createTenderlyFork = async (options: CreateForkOptions = { projectN
     forkId = tenderlyNetwork.getFork()!;
     tenderlyNetwork.setFork(forkId);
 
-    console.log(`Created temporary fork: ${forkId}`);
-    console.log();
+    Logger.log(`Created temporary fork: ${forkId}`);
+    Logger.log();
 
     const networkConfig = network.config as HttpNetworkUserConfig;
     networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
@@ -377,9 +378,9 @@ export const deploy = async (options: DeployOptions) => {
             execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
 
-        console.log(`deploying proxy ${contractName}${customAlias}`);
+        Logger.log(`deploying proxy ${contractName}${customAlias}`);
     } else {
-        console.log(`deploying ${contractName}${customAlias}`);
+        Logger.log(`deploying ${contractName}${customAlias}`);
     }
 
     const res = await deployContract(name, {
@@ -450,7 +451,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
 
     const newVersion = await (deployed as IVersioned).version();
 
-    console.log(`upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
+    Logger.log(`upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
     const data = { name, contract: contractName };
     await saveTypes(data);
@@ -496,7 +497,7 @@ interface InitializeProxyOptions {
 export const initializeProxy = async (options: InitializeProxyOptions) => {
     const { name, proxyName, args, from } = options;
 
-    console.log(`initializing proxy ${name}`);
+    Logger.log(`initializing proxy ${name}`);
 
     await execute({
         name: proxyName,
@@ -614,7 +615,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
     tenderlyNetwork.setHead('');
 
     for (const contract of contracts) {
-        console.log('verifying on tenderly', contract.name, 'at', contract.address);
+        Logger.log('verifying on tenderly', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }
