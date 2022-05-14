@@ -1,4 +1,4 @@
-import { AccessControlEnumerable, PoolToken } from '../../components/Contracts';
+import { AccessControlEnumerable, BancorNetworkInfo, PoolToken } from '../../components/Contracts';
 import { BNT, StakingRewardsClaim } from '../../components/LegacyContracts';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
@@ -14,7 +14,7 @@ const {
 } = ethers;
 
 interface Reward {
-    claimable: BigNumber;
+    claimable: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -23,6 +23,7 @@ const snapshot: Record<string, Reward> = require('@bancor/contracts-solidity/sna
 describeDeployment(__filename, () => {
     let bnt: BNT;
     let bnBNT: PoolToken;
+    let networkInfo: BancorNetworkInfo;
     let stakingRewardsClaim: StakingRewardsClaim;
     let merkleTree: MerkleTree;
 
@@ -37,14 +38,12 @@ describeDeployment(__filename, () => {
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
         bnBNT = await DeployedContracts.bnBNT.deployed();
+        networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
         stakingRewardsClaim = await DeployedContracts.StakingRewardsClaim.deployed();
     });
 
-    const generateLeaf = (address: string, amount: BigNumber) =>
-        Buffer.from(
-            solidityKeccak256(['address', 'uint256'], [getAddress(address), amount.toString()]).slice(2),
-            'hex'
-        );
+    const generateLeaf = (address: string, amount: string) =>
+        Buffer.from(solidityKeccak256(['address', 'uint256'], [getAddress(address), amount]).slice(2), 'hex');
 
     it('should deploy the legacy staking rewards claim contract', async () => {
         expect(await stakingRewardsClaim.merkleRoot()).to.equal(merkleRoot);
@@ -64,44 +63,46 @@ describeDeployment(__filename, () => {
         );
     });
 
-    const testClaim = (stake: boolean) => {
+    const testClaim = (stake: boolean, providerIndices: [number, number]) => {
         it(`should allow ${stake ? 'staking' : 'claiming'} legacy staking rewards`, async () => {
-            const sampleProviders = Object.fromEntries(Object.entries(snapshot).slice(0, 5));
+            const sampleProviders = Object.fromEntries(Object.entries(snapshot).slice(...providerIndices));
 
             for (const [provider, { claimable: amount }] of Object.entries(sampleProviders)) {
+                if (BigNumber.from(amount).isZero()) {
+                    continue;
+                }
+
                 const signer = await ethers.getSigner(provider);
                 const proof = merkleTree.getHexProof(generateLeaf(provider, amount));
 
+                const prevBNTTotalSupply = await bnt.totalSupply();
                 const prevBNTBalance = await bnt.balanceOf(provider);
-                const prevBNBNTTotalSupply = await bnBNT.totalSupply();
                 const prevBNBNTBalance = await bnBNT.balanceOf(provider);
+
+                const poolTokenAmount = await networkInfo.underlyingToPoolToken(bnt.address, amount);
 
                 const method = stake
                     ? stakingRewardsClaim.connect(signer).stakeRewards
                     : stakingRewardsClaim.connect(signer).claimRewards;
                 await method(provider, amount, proof);
 
+                const currBNTTotalSupply = await bnt.totalSupply();
                 const currBNTBalance = await bnt.balanceOf(provider);
-                const currBNBNTTotalSupply = await bnBNT.totalSupply();
                 const currBNBNTBalance = await bnBNT.balanceOf(provider);
 
                 if (stake) {
+                    expect(currBNTTotalSupply).to.equal(prevBNTTotalSupply);
                     expect(currBNTBalance).to.equal(prevBNTBalance);
-                    expect(currBNBNTTotalSupply).to.be.gt(prevBNBNTTotalSupply);
-
-                    expect(currBNBNTBalance).to.equal(
-                        prevBNBNTBalance.add(currBNBNTTotalSupply.sub(prevBNBNTTotalSupply))
-                    );
+                    expect(currBNBNTBalance).to.equal(prevBNBNTBalance.add(poolTokenAmount));
                 } else {
+                    expect(currBNTTotalSupply).to.equal(prevBNTTotalSupply.add(amount));
                     expect(currBNTBalance).to.equal(prevBNTBalance.add(amount));
-                    expect(currBNBNTTotalSupply).to.equal(prevBNBNTTotalSupply);
                     expect(currBNBNTBalance).to.equal(prevBNBNTBalance);
                 }
             }
         });
     };
 
-    for (const stake of [true, false]) {
-        testClaim(stake);
-    }
+    testClaim(false, [0, 30]);
+    testClaim(true, [100, 30]);
 });
