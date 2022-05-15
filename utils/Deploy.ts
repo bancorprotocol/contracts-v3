@@ -319,6 +319,34 @@ const POST_UPGRADE = 'postUpgrade';
 
 const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
 
+interface FunctionParams {
+    name?: string;
+    contractName?: string;
+    methodName?: string;
+    args?: any[];
+}
+
+const logParams = async (params: FunctionParams) => {
+    const { name, contractName, methodName, args = [] } = params;
+
+    if (!name && !contractName) {
+        throw new Error('Either name of contractName must be provided!');
+    }
+
+    const contract = name ? await ethers.getContract(name) : await ethers.getContractFactory(contractName!);
+    const fragment = methodName ? contract.interface.getFunction(methodName) : contract.interface.deploy;
+
+    Logger.log(`${methodName ?? 'constructor'} params: ${args.length === 0 ? '[]' : ''}`);
+    if (args.length === 0) {
+        return;
+    }
+
+    for (const [i, arg] of args.entries()) {
+        const input = fragment.inputs[i];
+        Logger.log(`    ${input.name} (${input.type}): ${arg.toString()}`);
+    }
+};
+
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
@@ -344,6 +372,8 @@ export const deploy = async (options: DeployOptions) => {
     } else {
         Logger.log(`deploying ${contractName}${customAlias}`);
     }
+
+    await logParams({ contractName, args });
 
     const res = await deployContract(name, {
         contract: contractArtifactData ?? contractName,
@@ -401,6 +431,8 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs ?? [ZERO_BYTES] } }
     };
 
+    await logParams({ contractName, args });
+
     const res = await deployContract(name, {
         contract: contractArtifactData ?? contractName,
         from,
@@ -440,6 +472,8 @@ export const execute = async (options: ExecuteOptions) => {
     const { name, methodName, from, value, args } = options;
 
     await fundAccount(from);
+
+    await logParams({ name, args, methodName });
 
     return executeTransaction(
         name,
