@@ -78,9 +78,8 @@ describeDeployment(__filename, () => {
 
                 const poolTokenAmount = await networkInfo.underlyingToPoolToken(bnt.address, amount);
 
-                const method = stake
-                    ? stakingRewardsClaim.connect(signer).stakeRewards
-                    : stakingRewardsClaim.connect(signer).claimRewards;
+                const context = stakingRewardsClaim.connect(signer);
+                const method = stake ? context.stakeRewards : context.claimRewards;
                 await method(provider, amount, proof);
 
                 const currBNTTotalSupply = await bnt.totalSupply();
