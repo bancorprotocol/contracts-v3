@@ -4,7 +4,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe('TransparentUpgradeableProxyImmutable', () => {
+describe.only('TransparentUpgradeableProxyImmutable', () => {
     let admin: SignerWithAddress;
     let nonAdmin: SignerWithAddress;
 
@@ -80,12 +80,15 @@ describe('TransparentUpgradeableProxyImmutable', () => {
         });
 
         describe('callback', () => {
+            const data = 123;
+
             it('should revert when an admin attempt to call into the contract', async () => {
-                await expect(contract.connect(admin).version()).to.be.revertedWith('AccessDenied');
+                await expect(contract.connect(admin).setData(data)).to.be.revertedWith('AccessDenied');
             });
 
             it('should allow a non-admin to call into the contract', async () => {
-                expect(await contract.connect(nonAdmin).version()).to.equal(VERSION);
+                await contract.connect(nonAdmin).setData(data);
+                expect(await contract.connect(nonAdmin).data()).to.equal(data);
             });
         });
 
