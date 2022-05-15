@@ -25,15 +25,15 @@ describeDeployment(__filename, () => {
     let bnBNT: PoolToken;
     let networkInfo: BancorNetworkInfo;
     let stakingRewardsClaim: StakingRewardsClaim;
-    let merkleTree: MerkleTree;
 
-    before(async () => {
-        merkleTree = new MerkleTree(
-            Object.entries(snapshot).map(([provider, { claimable }]) => generateLeaf(provider, claimable)),
-            keccak256,
-            { sortPairs: true }
-        );
-    });
+    const generateLeaf = (address: string, amount: string) =>
+        Buffer.from(solidityKeccak256(['address', 'uint256'], [getAddress(address), amount]).slice(2), 'hex');
+
+    const merkleTree = new MerkleTree(
+        Object.entries(snapshot).map(([provider, { claimable }]) => generateLeaf(provider, claimable)),
+        keccak256,
+        { sortPairs: true }
+    );
 
     beforeEach(async () => {
         bnt = await DeployedContracts.BNT.deployed();
@@ -41,9 +41,6 @@ describeDeployment(__filename, () => {
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
         stakingRewardsClaim = await DeployedContracts.StakingRewardsClaim.deployed();
     });
-
-    const generateLeaf = (address: string, amount: string) =>
-        Buffer.from(solidityKeccak256(['address', 'uint256'], [getAddress(address), amount]).slice(2), 'hex');
 
     it('should deploy the legacy staking rewards claim contract', async () => {
         expect(await stakingRewardsClaim.merkleRoot()).to.equal(merkleRoot);
@@ -81,9 +78,8 @@ describeDeployment(__filename, () => {
 
                 const poolTokenAmount = await networkInfo.underlyingToPoolToken(bnt.address, amount);
 
-                const method = stake
-                    ? stakingRewardsClaim.connect(signer).stakeRewards
-                    : stakingRewardsClaim.connect(signer).claimRewards;
+                const context = stakingRewardsClaim.connect(signer);
+                const method = stake ? context.stakeRewards : context.claimRewards;
                 await method(provider, amount, proof);
 
                 const currBNTTotalSupply = await bnt.totalSupply();
