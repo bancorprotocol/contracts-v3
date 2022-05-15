@@ -4,7 +4,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-describe.only('TransparentUpgradeableProxyImmutable', () => {
+describe('TransparentUpgradeableProxyImmutable', () => {
     let admin: SignerWithAddress;
     let nonAdmin: SignerWithAddress;
 
