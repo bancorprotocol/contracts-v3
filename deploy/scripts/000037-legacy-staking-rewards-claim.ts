@@ -31,7 +31,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         });
     }
 
-    const network = await DeployedContracts.BancorNetworkV2.deployed();
+    const network = await DeployedContracts.BancorNetwork.deployed();
 
     Logger.log(`Legacy staking rewards claim merkle root: ${merkleRoot}`);
 
