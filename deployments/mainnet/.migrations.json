@@ -34,5 +34,6 @@
   "000033-upgrade-network-v3": 1652039004,
   "000034-upgrade-liquidity-protection": 1652091055,
   "000035-pause-legacy-programs": 1652091254,
-  "000036-set-up-beta-rewards-programs": 1652299089
+  "000036-set-up-beta-rewards-programs": 1652299089,
+  "000037-legacy-staking-rewards-claim": 1652702295
 }
