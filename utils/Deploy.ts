@@ -315,7 +315,7 @@ const logParams = async (params: FunctionParams) => {
     const contract = name ? await ethers.getContract(name) : await ethers.getContractFactory(contractName!);
     const fragment = methodName ? contract.interface.getFunction(methodName) : contract.interface.deploy;
 
-    Logger.log(`${methodName ?? 'constructor'} params: ${args.length === 0 ? '[]' : ''}`);
+    Logger.log(`  ${methodName ?? 'constructor'} params: ${args.length === 0 ? '[]' : ''}`);
     if (args.length === 0) {
         return;
     }
@@ -449,6 +449,9 @@ interface ExecuteOptions {
 
 export const execute = async (options: ExecuteOptions) => {
     const { name, methodName, from, value, args } = options;
+    const contract = await ethers.getContract(name);
+
+    Logger.info(`  executing ${name}.${methodName} (${contract.address})`);
 
     await fundAccount(from);
 
