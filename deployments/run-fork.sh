@@ -1,6 +1,9 @@
 #!/bin/bash
 
-source $(dirname $0)/../.env
+dotenv=$(dirname $0)/../.env
+if [ -f "${dotenv}" ]; then
+    source ${dotenv}
+fi
 
 TENDERLY_FORK_API="https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${TENDERLY_PROJECT}/fork"
 
