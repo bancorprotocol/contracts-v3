@@ -481,7 +481,7 @@ describe('PendingWithdrawals', () => {
                             poolToken,
                             withdrawalRequest.poolTokenAmount
                         );
-                        const currentPoolTokenAmount = withdrawalRequest.poolTokenAmount
+                        const effectivePoolTokenAmount = withdrawalRequest.poolTokenAmount
                             .mul(withdrawalRequest.reserveTokenAmount)
                             .div(currentReserveTokenAmount);
 
@@ -491,7 +491,7 @@ describe('PendingWithdrawals', () => {
                             id
                         );
                         expect(completedRequest.poolToken).to.equal(withdrawalRequest.poolToken);
-                        expect(completedRequest.poolTokenAmount).to.equal(currentPoolTokenAmount);
+                        expect(completedRequest.effectivePoolTokenAmount).to.equal(effectivePoolTokenAmount);
                         expect(completedRequest.originalPoolTokenAmount).to.equal(withdrawalRequest.poolTokenAmount);
 
                         const res = await network.completeWithdrawalT(CONTEXT_ID, provider.address, id);
@@ -503,12 +503,12 @@ describe('PendingWithdrawals', () => {
                                 reserveToken.address,
                                 provider.address,
                                 id,
-                                currentPoolTokenAmount,
+                                effectivePoolTokenAmount,
                                 currentReserveTokenAmount,
                                 (await pendingWithdrawals.currentTime()) - withdrawalRequest.createdAt
                             );
 
-                        const extraPoolTokenAmount = withdrawalRequest.poolTokenAmount.sub(currentPoolTokenAmount);
+                        const extraPoolTokenAmount = withdrawalRequest.poolTokenAmount.sub(effectivePoolTokenAmount);
                         if (extraPoolTokenAmount.gt(BigNumber.from(0))) {
                             await expect(res)
                                 .to.emit(poolToken, 'Transfer')
@@ -523,7 +523,7 @@ describe('PendingWithdrawals', () => {
                             pendingWithdrawalsBalance.sub(withdrawalRequest.poolTokenAmount)
                         );
                         expect(await poolToken.balanceOf(network.address)).to.equal(
-                            networkBalance.add(currentPoolTokenAmount)
+                            networkBalance.add(effectivePoolTokenAmount)
                         );
                         expect(await pendingWithdrawals.withdrawalRequestCount(provider.address)).to.equal(
                             withdrawalRequestCount.sub(1)
