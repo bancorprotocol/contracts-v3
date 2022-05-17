@@ -347,9 +347,9 @@ export const deploy = async (options: DeployOptions) => {
             execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
 
-        Logger.log(`deploying proxy ${contractName}${customAlias}`);
+        Logger.log(`  deploying proxy ${contractName}${customAlias}`);
     } else {
-        Logger.log(`deploying ${contractName}${customAlias}`);
+        Logger.log(`  deploying ${contractName}${customAlias}`);
     }
 
     await logParams({ contractName, args });
@@ -410,6 +410,8 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs ?? [ZERO_BYTES] } }
     };
 
+    Logger.log(`  upgrading proxy ${contractName} V${prevVersion}`);
+
     await logParams({ contractName, args });
 
     const res = await deployContract(name, {
@@ -424,7 +426,7 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
 
     const newVersion = await (deployed as IVersioned).version();
 
-    Logger.log(`upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
+    Logger.log(`  upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
     const data = { name, contract: contractName };
     await saveTypes(data);
@@ -475,7 +477,7 @@ interface InitializeProxyOptions {
 export const initializeProxy = async (options: InitializeProxyOptions) => {
     const { name, proxyName, args, from } = options;
 
-    Logger.log(`initializing proxy ${name}`);
+    Logger.log(`  initializing proxy ${name}`);
 
     await execute({
         name: proxyName,
@@ -593,7 +595,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
     tenderlyNetwork.setHead('');
 
     for (const contract of contracts) {
-        Logger.log('verifying on tenderly', contract.name, 'at', contract.address);
+        Logger.log('  verifying on tenderly', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }
