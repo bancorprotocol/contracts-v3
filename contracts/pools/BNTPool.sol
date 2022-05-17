@@ -392,7 +392,7 @@ contract BNTPool is IBNTPool, Vault {
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
 
-        // burn the respective vBNT amount
+        // burn the respective VBNT amount
         _vbntGovernance.burn(originalPoolTokenAmount);
 
         // mint BNT to the provider
