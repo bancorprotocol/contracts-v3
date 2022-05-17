@@ -1069,7 +1069,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.poolTokenAmount);
 
         // transfer VBNT from the caller to the BNT pool
-        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
+        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.originalPoolTokenAmount);
 
         // call withdraw on the BNT pool
         return

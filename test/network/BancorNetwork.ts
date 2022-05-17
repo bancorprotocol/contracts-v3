@@ -1653,11 +1653,9 @@ describe('BancorNetwork', () => {
 
     describe('withdraw', () => {
         let network: TestBancorNetwork;
-        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
-        let bntPool: TestBNTPool;
         let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let pendingWithdrawals: TestPendingWithdrawals;
@@ -1670,18 +1668,8 @@ describe('BancorNetwork', () => {
         });
 
         beforeEach(async () => {
-            ({
-                network,
-                networkInfo,
-                networkSettings,
-                bnt,
-                vbnt,
-                bntPool,
-                masterVault,
-                poolCollection,
-                pendingWithdrawals,
-                bntPoolToken
-            } = await createSystem());
+            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, bntPoolToken } =
+                await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -1712,6 +1700,7 @@ describe('BancorNetwork', () => {
             let provider: SignerWithAddress;
             let poolToken: PoolToken;
             let token: TokenWithAddress;
+            let reserveToken: TokenWithAddress;
             let requests: Request[];
 
             const INITIAL_LIQUIDITY = toWei(222_222_222);
@@ -1726,7 +1715,7 @@ describe('BancorNetwork', () => {
                     token = bnt;
                     poolToken = bntPoolToken;
 
-                    const reserveToken = await createTestToken();
+                    reserveToken = await createTestToken();
                     await createPool(reserveToken, network, networkSettings, poolCollection);
                     await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
 
@@ -1774,80 +1763,30 @@ describe('BancorNetwork', () => {
             context('after the lock duration', () => {
                 const test = async (index: number) => {
                     const request = requests[index];
-                    const prevPoolTokenTotalSupply = await poolToken.totalSupply();
-                    const prevPoolPoolTokenBalance = await poolToken.balanceOf(bntPool.address);
-                    const prevCollectionPoolTokenBalance = await poolToken.balanceOf(poolCollection.address);
-                    const prevProviderPoolTokenBalance = await poolToken.balanceOf(provider.address);
 
                     const prevProviderBNTBalance = await bnt.balanceOf(provider.address);
                     const prevProviderTokenBalance = await getBalance(token, provider.address);
 
-                    const prevVBNTTotalSupply = await vbnt.totalSupply();
-                    const prevPoolVBNTBalance = await vbnt.balanceOf(bntPool.address);
-                    const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
-
-                    let transactionCost = BigNumber.from(0);
+                    const withdrawalAmount = await network.connect(provider).callStatic.withdraw(request.id);
 
                     if (tokenData.isBNT()) {
-                        const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
-                            bnt.address,
-                            request.poolTokenAmount
-                        );
                         await network.connect(provider).withdraw(request.id);
 
-                        const currProviderBNTBalance = await bnt.balanceOf(provider.address);
-                        expect(totalAmount).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
-                        expect(bntAmount).to.equal(currProviderBNTBalance.sub(prevProviderBNTBalance));
-                        expect(baseTokenAmount).to.equal(0);
-
-                        expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                        expect(await poolToken.balanceOf(bntPool.address)).to.equal(
-                            prevPoolPoolTokenBalance.add(request.poolTokenAmount)
-                        );
-
-                        expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.sub(request.poolTokenAmount));
-
-                        expect(await vbnt.balanceOf(provider.address)).to.equal(
-                            prevProviderVBNTBalance.sub(request.poolTokenAmount)
+                        expect(await bnt.balanceOf(provider.address)).to.equal(
+                            prevProviderBNTBalance.add(withdrawalAmount)
                         );
                     } else {
-                        const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
-                            token.address,
-                            request.poolTokenAmount
-                        );
                         const res = await network.connect(provider).withdraw(request.id);
 
+                        let transactionCost = BigNumber.from(0);
                         if (tokenData.isNative()) {
                             transactionCost = await getTransactionCost(res);
                         }
 
-                        const currProviderBNTBalance = await bnt.balanceOf(provider.address);
-                        const currProviderTokenBalance = await getBalance(token, provider.address);
-                        expect(currProviderBNTBalance).to.equal(prevProviderBNTBalance);
-                        expect(totalAmount).to.equal(
-                            currProviderTokenBalance.sub(prevProviderTokenBalance).add(transactionCost.toString())
+                        expect(await getBalance(token, provider.address)).to.equal(
+                            prevProviderTokenBalance.add(withdrawalAmount).sub(transactionCost)
                         );
-                        expect(baseTokenAmount).to.equal(totalAmount);
-                        expect(bntAmount).to.equal(0); // currProviderBNTBalance.sub(prevProviderBNTBalance)
-
-                        expect(await poolToken.totalSupply()).to.equal(
-                            prevPoolTokenTotalSupply.sub(request.poolTokenAmount)
-                        );
-                        expect(await poolToken.balanceOf(bntPool.address)).to.equal(prevPoolPoolTokenBalance);
-
-                        expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply);
-                        expect(await vbnt.balanceOf(provider.address)).to.equal(prevProviderVBNTBalance);
                     }
-
-                    expect(await poolToken.balanceOf(poolCollection.address)).to.equal(prevCollectionPoolTokenBalance);
-                    expect(await poolToken.balanceOf(provider.address)).to.equal(prevProviderPoolTokenBalance);
-
-                    expect(await vbnt.balanceOf(bntPool.address)).to.equal(prevPoolVBNTBalance);
-
-                    // sanity test
-                    expect(await getBalance(token, provider.address)).to.be.gte(
-                        prevProviderTokenBalance.sub(transactionCost)
-                    );
                 };
 
                 const testMultipleWithdrawals = async () => {
@@ -1932,6 +1871,26 @@ describe('BancorNetwork', () => {
                             }
                         );
                     }
+
+                    context('with increased pool token value', () => {
+                        beforeEach(async () => {
+                            const feeAmount = toWei(100_000);
+
+                            if (tokenData.isBNT()) {
+                                await network.onBNTFeesCollectedT(reserveToken.address, feeAmount, true);
+                            } else {
+                                await network.onPoolCollectionFeesCollectedT(
+                                    poolCollection.address,
+                                    token.address,
+                                    feeAmount
+                                );
+                            }
+                        });
+
+                        it('should complete multiple withdrawals', async () => {
+                            await testMultipleWithdrawals();
+                        });
+                    });
                 });
             });
 
@@ -4243,6 +4202,7 @@ describe('BancorNetwork Financial Verification', () => {
 
             it('should complete successfully', async function (this: Context) {
                 this.timeout(0);
+
                 await execute();
             });
         });
