@@ -32,4 +32,4 @@ echo "Running:"
 echo
 echo ${command}
 
-eval ${command}
+exec bash -c "${command}"
