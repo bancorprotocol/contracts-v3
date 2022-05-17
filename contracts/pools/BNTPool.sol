@@ -191,7 +191,7 @@ contract BNTPool is IBNTPool, Vault {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 1;
+        return 2;
     }
 
     /**
@@ -377,15 +377,23 @@ contract BNTPool is IBNTPool, Vault {
     function withdraw(
         bytes32 contextId,
         address provider,
-        uint256 poolTokenAmount
-    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
+        uint256 poolTokenAmount,
+        uint256 originalPoolTokenAmount
+    )
+        external
+        only(address(_network))
+        validAddress(provider)
+        greaterThanZero(poolTokenAmount)
+        greaterThanZero(originalPoolTokenAmount)
+        returns (uint256)
+    {
         InternalWithdrawalAmounts memory amounts = _withdrawalAmounts(poolTokenAmount);
 
         // get the pool tokens from the caller
         _poolToken.transferFrom(msg.sender, address(this), poolTokenAmount);
 
         // burn the respective VBNT amount
-        _vbntGovernance.burn(poolTokenAmount);
+        _vbntGovernance.burn(originalPoolTokenAmount);
 
         // mint BNT to the provider
         _bntGovernance.mint(provider, amounts.bntAmount);
@@ -395,7 +403,7 @@ contract BNTPool is IBNTPool, Vault {
             provider: provider,
             bntAmount: amounts.bntAmount,
             poolTokenAmount: poolTokenAmount,
-            vbntAmount: poolTokenAmount,
+            vbntAmount: originalPoolTokenAmount,
             withdrawalFeeAmount: amounts.withdrawalFeeAmount
         });
 

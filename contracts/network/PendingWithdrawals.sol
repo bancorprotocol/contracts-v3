@@ -137,7 +137,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**
@@ -243,29 +243,34 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         assert(currentReserveTokenAmount >= request.reserveTokenAmount);
 
         // burn the delta between the recorded pool token amount and the amount represented by the reserve token value
-        uint256 currentPoolTokenAmount = request.reserveTokenAmount == currentReserveTokenAmount
+        uint256 effectivePoolTokenAmount = request.reserveTokenAmount == currentReserveTokenAmount
             ? request.poolTokenAmount
             : MathEx.mulDivF(request.poolTokenAmount, request.reserveTokenAmount, currentReserveTokenAmount);
 
         // since pool token value can only go up, there’s usually burning
-        if (request.poolTokenAmount > currentPoolTokenAmount) {
-            request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
+        if (request.poolTokenAmount > effectivePoolTokenAmount) {
+            request.poolToken.burn(request.poolTokenAmount - effectivePoolTokenAmount);
         }
 
         // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, currentPoolTokenAmount);
+        request.poolToken.safeTransfer(msg.sender, effectivePoolTokenAmount);
 
         emit WithdrawalCompleted({
             contextId: contextId,
             pool: request.reserveToken,
             provider: provider,
             requestId: id,
-            poolTokenAmount: currentPoolTokenAmount,
+            poolTokenAmount: effectivePoolTokenAmount,
             reserveTokenAmount: currentReserveTokenAmount,
             timeElapsed: currentTime - request.createdAt
         });
 
-        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: currentPoolTokenAmount });
+        return
+            CompletedWithdrawal({
+                poolToken: request.poolToken,
+                effectivePoolTokenAmount: effectivePoolTokenAmount,
+                originalPoolTokenAmount: request.poolTokenAmount
+            });
     }
 
     /**

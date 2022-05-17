@@ -92,9 +92,10 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function withdrawFromBNTPoolT(
         bytes32 contextId,
         address provider,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 originalPoolTokenAmount
     ) external returns (uint256) {
-        return _bntPool.withdraw(contextId, provider, poolTokenAmount);
+        return _bntPool.withdraw(contextId, provider, poolTokenAmount, originalPoolTokenAmount);
     }
 
     function withdrawFromPoolCollectionT(

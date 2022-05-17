@@ -297,7 +297,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
@@ -1066,13 +1066,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.poolTokenAmount);
+        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.effectivePoolTokenAmount);
 
         // transfer VBNT from the caller to the BNT pool
-        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
+        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.originalPoolTokenAmount);
 
         // call withdraw on the BNT pool
-        return cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
+        return
+            cachedBNTPool.withdraw(
+                contextId,
+                provider,
+                completedRequest.effectivePoolTokenAmount,
+                completedRequest.originalPoolTokenAmount
+            );
     }
 
     /**
@@ -1090,10 +1096,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // approve the pool collection to transfer pool tokens, which we have received from the completion of the
         // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
+        completedRequest.poolToken.approve(address(poolCollection), completedRequest.effectivePoolTokenAmount);
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        return poolCollection.withdraw(contextId, provider, pool, completedRequest.poolTokenAmount);
+        return poolCollection.withdraw(contextId, provider, pool, completedRequest.effectivePoolTokenAmount);
     }
 
     /**

@@ -11,7 +11,7 @@ import Contracts, {
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { min, toPPM, toWei } from '../../utils/Types';
+import { fromPPM, min, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -137,7 +137,8 @@ describe('BNTPool', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await bntPool.version()).to.equal(1);
+            expect(await bntPool.version()).to.equal(2);
+
             expect(await bntPool.isPayable()).to.be.false;
 
             await expectRoles(bntPool, Roles.BNTPool);
@@ -759,33 +760,38 @@ describe('BNTPool', () => {
         it('should revert when attempting to withdraw from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(bntPool.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, 1)).to.be.revertedWith(
+            await expect(bntPool.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWith(
                 'AccessDenied'
             );
         });
 
         it('should revert when attempting to withdraw for an invalid provider', async () => {
-            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, ZERO_ADDRESS, 1)).to.be.revertedWith(
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, ZERO_ADDRESS, 1, 1)).to.be.revertedWith(
                 'InvalidAddress'
             );
         });
 
-        it('should revert when attempting to withdraw a zero amount', async () => {
-            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 0)).to.be.revertedWith('ZeroValue');
+        it('should revert when attempting to withdraw with an invalid amount', async () => {
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 0, 1)).to.be.revertedWith(
+                'ZeroValue'
+            );
+        });
+
+        it('should revert when attempting to withdraw with an invalid original amount', async () => {
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 0)).to.be.revertedWith(
+                'ZeroValue'
+            );
         });
 
         it('should revert when attempting to withdraw before any deposits were made', async () => {
-            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1)).to.be.revertedWith(''); // division by 0
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWith(''); // division by 0
         });
 
         context('with a whitelisted and registered pool', () => {
-            const WITHDRAWAL_FEE = toPPM(5);
-
             beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setFundingLimit(reserveToken.address, FUNDING_LIMIT);
-                await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             });
 
             context('with requested funding', () => {
@@ -815,73 +821,107 @@ describe('BNTPool', () => {
                         );
                     });
 
-                    const testWithdraw = async (provider: SignerWithAddress, poolTokenAmount: BigNumber) => {
-                        await bntPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
-                        await network.approveT(bntPoolToken.address, bntPool.address, poolTokenAmount);
-                        await vbnt.connect(provider).transfer(bntPool.address, poolTokenAmount);
+                    const testWithdraw = (
+                        poolTokenAmount: BigNumber,
+                        originalPoolTokenAmount: BigNumber,
+                        withdrawalFeePPM: number
+                    ) => {
+                        context(
+                            // eslint-disable-next-line max-len
+                            `poolTokenAmount=${poolTokenAmount}, originalPoolTokenAmount=${originalPoolTokenAmount} (withdrawalFee=${fromPPM(
+                                withdrawalFeePPM
+                            )}%)`,
+                            () => {
+                                beforeEach(async () => {
+                                    await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
+                                });
 
-                        const prevStakedBalance = await bntPool.stakedBalance();
+                                it('should allow to withdraw', async () => {
+                                    await bntPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
+                                    await network.approveT(
+                                        bntPoolToken.address,
+                                        bntPool.address,
+                                        originalPoolTokenAmount
+                                    );
+                                    await vbnt.connect(provider).transfer(bntPool.address, originalPoolTokenAmount);
 
-                        const prevPoolTokenTotalSupply = await bntPoolToken.totalSupply();
-                        const prevPoolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
-                        const prevBNTPoolTokenBalance = await bntPoolToken.balanceOf(network.address);
-                        const prevProviderPoolTokenBalance = await bntPoolToken.balanceOf(provider.address);
+                                    const prevStakedBalance = await bntPool.stakedBalance();
 
-                        const prevTokenTotalSupply = await bnt.totalSupply();
-                        const prevPoolTokenBalance = await bnt.balanceOf(bntPool.address);
-                        const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
+                                    const prevPoolTokenTotalSupply = await bntPoolToken.totalSupply();
+                                    const prevPoolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
+                                    const prevBNTPoolTokenBalance = await bntPoolToken.balanceOf(network.address);
+                                    const prevProviderPoolTokenBalance = await bntPoolToken.balanceOf(provider.address);
 
-                        const prevVBNTTotalSupply = await vbnt.totalSupply();
-                        const prevPoolVBNTBalance = await vbnt.balanceOf(bntPool.address);
-                        const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
+                                    const prevTokenTotalSupply = await bnt.totalSupply();
+                                    const prevPoolTokenBalance = await bnt.balanceOf(bntPool.address);
+                                    const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
 
-                        const expectedBNTAmount = poolTokenAmount
-                            .mul(prevStakedBalance.mul(PPM_RESOLUTION - WITHDRAWAL_FEE))
-                            .div(prevPoolTokenTotalSupply.mul(PPM_RESOLUTION));
-                        const expectedWithdrawalFeeAmount = poolTokenAmount
-                            .mul(prevStakedBalance.mul(WITHDRAWAL_FEE))
-                            .div(prevPoolTokenTotalSupply.mul(PPM_RESOLUTION));
+                                    const prevVBNTTotalSupply = await vbnt.totalSupply();
+                                    const prevPoolVBNTBalance = await vbnt.balanceOf(bntPool.address);
+                                    const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
 
-                        const withdrawalAmount = await bntPool.withdrawalAmount(poolTokenAmount);
+                                    const expectedWithdrawalFeeAmount = poolTokenAmount
+                                        .mul(prevStakedBalance.mul(withdrawalFeePPM))
+                                        .div(prevPoolTokenTotalSupply.mul(PPM_RESOLUTION));
 
-                        expect(withdrawalAmount).to.equal(expectedBNTAmount);
+                                    const expectedBNTAmount = poolTokenAmount
+                                        .mul(prevStakedBalance)
+                                        .div(prevPoolTokenTotalSupply)
+                                        .sub(expectedWithdrawalFeeAmount);
 
-                        const res = await network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount);
+                                    const withdrawalAmount = await bntPool.withdrawalAmount(poolTokenAmount);
+                                    expect(withdrawalAmount).to.equal(expectedBNTAmount);
 
-                        await expect(res)
-                            .to.emit(bntPool, 'TokensWithdrawn')
-                            .withArgs(
-                                CONTEXT_ID,
-                                provider.address,
-                                expectedBNTAmount,
-                                poolTokenAmount,
-                                poolTokenAmount,
-                                expectedWithdrawalFeeAmount
-                            );
+                                    const res = await network.withdrawFromBNTPoolT(
+                                        CONTEXT_ID,
+                                        provider.address,
+                                        poolTokenAmount,
+                                        originalPoolTokenAmount
+                                    );
 
-                        expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance);
+                                    await expect(res)
+                                        .to.emit(bntPool, 'TokensWithdrawn')
+                                        .withArgs(
+                                            CONTEXT_ID,
+                                            provider.address,
+                                            expectedBNTAmount,
+                                            poolTokenAmount,
+                                            originalPoolTokenAmount,
+                                            expectedWithdrawalFeeAmount
+                                        );
 
-                        expect(await bntPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                        expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
-                            prevPoolPoolTokenBalance.add(poolTokenAmount)
+                                    expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance);
+
+                                    expect(await bntPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
+                                    expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
+                                        prevPoolPoolTokenBalance.add(poolTokenAmount)
+                                    );
+
+                                    expect(await bntPoolToken.balanceOf(network.address)).to.equal(
+                                        prevBNTPoolTokenBalance.sub(poolTokenAmount)
+                                    );
+                                    expect(await bntPoolToken.balanceOf(provider.address)).to.equal(
+                                        prevProviderPoolTokenBalance
+                                    );
+
+                                    expect(await bnt.totalSupply()).to.equal(
+                                        prevTokenTotalSupply.add(expectedBNTAmount)
+                                    );
+                                    expect(await bnt.balanceOf(bntPool.address)).to.equal(prevPoolTokenBalance);
+                                    expect(await bnt.balanceOf(provider.address)).to.equal(
+                                        prevProviderTokenBalance.add(expectedBNTAmount)
+                                    );
+
+                                    expect(await vbnt.totalSupply()).to.equal(
+                                        prevVBNTTotalSupply.sub(originalPoolTokenAmount)
+                                    );
+                                    expect(await vbnt.balanceOf(bntPool.address)).to.equal(
+                                        prevPoolVBNTBalance.sub(originalPoolTokenAmount)
+                                    );
+                                    expect(await vbnt.balanceOf(provider.address)).to.equal(prevProviderVBNTBalance);
+                                });
+                            }
                         );
-
-                        expect(await bntPoolToken.balanceOf(network.address)).to.equal(
-                            prevBNTPoolTokenBalance.sub(poolTokenAmount)
-                        );
-                        expect(await bntPoolToken.balanceOf(provider.address)).to.equal(prevProviderPoolTokenBalance);
-
-                        expect(await bnt.totalSupply()).to.equal(prevTokenTotalSupply.add(expectedBNTAmount));
-                        expect(await bnt.balanceOf(bntPool.address)).to.equal(prevPoolTokenBalance);
-                        expect(await bnt.balanceOf(provider.address)).to.equal(
-                            prevProviderTokenBalance.add(expectedBNTAmount)
-                        );
-
-                        expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.sub(poolTokenAmount));
-                        expect(await vbnt.balanceOf(bntPool.address)).to.equal(
-                            prevPoolVBNTBalance.sub(poolTokenAmount)
-                        );
-                        expect(await vbnt.balanceOf(provider.address)).to.equal(prevProviderVBNTBalance);
                     };
 
                     it('should revert when attempting to withdraw more than the deposited amount', async () => {
@@ -893,18 +933,18 @@ describe('BNTPool', () => {
                         await vbnt.connect(provider).transfer(bntPool.address, poolTokenAmount);
 
                         await expect(
-                            network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
+                            network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount, poolTokenAmount)
                         ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsBalance);
                     });
 
-                    it('should revert when attempting to deposit without sending VBNT', async () => {
+                    it('should revert when attempting to deposit without sending vBNT', async () => {
                         const poolTokenAmount = 1000;
 
                         await bntPoolToken.connect(provider).transfer(network.address, poolTokenAmount);
                         await network.approveT(bntPoolToken.address, bntPool.address, poolTokenAmount);
 
                         await expect(
-                            network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
+                            network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount, poolTokenAmount)
                         ).to.be.revertedWith(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
                     });
 
@@ -913,15 +953,20 @@ describe('BNTPool', () => {
                         await vbnt.connect(provider).transfer(bntPool.address, poolTokenAmount);
 
                         await expect(
-                            network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount)
+                            network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount, poolTokenAmount)
                         ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsAllowance);
                     });
 
-                    it('should allow withdrawing liquidity', async () => {
-                        for (const poolTokenAmount of [100, 10_000, toWei(20_000), toWei(30_000)]) {
-                            await testWithdraw(provider, BigNumber.from(poolTokenAmount));
+                    for (const poolTokenAmount of [100, 10_000, toWei(20_000), toWei(30_000)]) {
+                        for (const withheldPoolTokenAmount of [0, 50]) {
+                            for (const withdrawalFeePPM of [toPPM(0), toPPM(0.25), toPPM(20)])
+                                testWithdraw(
+                                    BigNumber.from(poolTokenAmount).sub(withheldPoolTokenAmount),
+                                    BigNumber.from(poolTokenAmount),
+                                    withdrawalFeePPM
+                                );
                         }
-                    });
+                    }
                 });
             });
         });
