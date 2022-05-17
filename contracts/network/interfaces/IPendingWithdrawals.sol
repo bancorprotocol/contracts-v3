@@ -25,6 +25,7 @@ struct WithdrawalRequest {
 struct CompletedWithdrawal {
     IPoolToken poolToken; // the transferred pool token
     uint256 poolTokenAmount; // the transferred pool token amount
+    uint256 originalPoolTokenAmount; // the original pool token amount at the time of the withdrawal init request
 }
 
 /**

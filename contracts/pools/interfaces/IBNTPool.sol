@@ -104,7 +104,8 @@ interface IBNTPool is IVault {
     function withdraw(
         bytes32 contextId,
         address provider,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 originalPoolTokenAmount
     ) external returns (uint256);
 
     /**

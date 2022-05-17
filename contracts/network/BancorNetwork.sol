@@ -297,7 +297,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
@@ -1072,7 +1072,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the BNT pool
-        return cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
+
+        return
+            cachedBNTPool.withdraw(
+                contextId,
+                provider,
+                completedRequest.poolTokenAmount,
+                completedRequest.originalPoolTokenAmount
+            );
     }
 
     /**

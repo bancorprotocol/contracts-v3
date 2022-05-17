@@ -281,7 +281,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(3);
+            expect(await network.version()).to.equal(4);
 
             await expectRoles(network, Roles.BancorNetwork);
 

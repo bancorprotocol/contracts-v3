@@ -137,7 +137,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**
@@ -265,7 +265,12 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
             timeElapsed: currentTime - request.createdAt
         });
 
-        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: currentPoolTokenAmount });
+        return
+            CompletedWithdrawal({
+                poolToken: request.poolToken,
+                poolTokenAmount: currentPoolTokenAmount,
+                originalPoolTokenAmount: request.poolTokenAmount
+            });
     }
 
     /**

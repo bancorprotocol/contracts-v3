@@ -36,6 +36,13 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
+    // renounce the ROLE_EMERGENCY_STOPPER role from the deployer
+    await renounceRole({
+        name: InstanceName.BancorNetwork,
+        id: Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER,
+        from: deployer
+    });
+
     for (const name of [
         InstanceName.BancorNetworkInfo,
         InstanceName.BancorNetwork,
