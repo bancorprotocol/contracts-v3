@@ -760,7 +760,7 @@ describe('BNTPool', () => {
         it('should revert when attempting to withdraw from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(bntPool.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, 1, 0)).to.be.revertedWith(
+            await expect(bntPool.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWith(
                 'AccessDenied'
             );
         });
