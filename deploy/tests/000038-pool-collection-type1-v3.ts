@@ -74,6 +74,8 @@ describeDeployment(
             externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
             externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
             poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+            prevPoolCollection = await DeployedContracts.PoolCollectionType1V2.deployed();
+            newPoolCollection = await DeployedContracts.PoolCollectionType1V3.deployed();
             networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
         });
 
