@@ -19,6 +19,7 @@ import LegacyContracts, {
     BNT,
     Registry as LegacyRegistry,
     LiquidityProtection,
+    LiquidityProtectionSettings,
     LiquidityProtectionStore,
     Owned,
     StakingRewardsClaim,
@@ -52,11 +53,12 @@ import { getNamedAccounts } from 'hardhat';
     let poolCollection: PoolCollection;
     let pendingWithdrawals: PendingWithdrawals;
 
+    let deployer: SignerWithAddress;
     let daoMultisig: SignerWithAddress;
     let bntWhale: SignerWithAddress;
 
     before(async () => {
-        ({ daoMultisig, bntWhale } = await getNamedSigners());
+        ({ deployer, daoMultisig, bntWhale } = await getNamedSigners());
 
         await fundAccount(bntWhale);
     });
@@ -576,12 +578,15 @@ import { getNamedAccounts } from 'hardhat';
                     context('from v2', () => {
                         let liquidityProtection: LiquidityProtection;
                         let liquidityProtectionStore: LiquidityProtectionStore;
+                        let liquidityProtectionSettings: LiquidityProtectionSettings;
                         let anchor: Owned;
                         let bnTKN: PoolToken;
 
                         beforeEach(async () => {
                             liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
                             liquidityProtectionStore = await DeployedContracts.LiquidityProtectionStore.deployed();
+                            liquidityProtectionSettings =
+                                await DeployedContracts.LiquidityProtectionSettings.deployed();
 
                             bnTKN = await Contracts.PoolToken.attach(
                                 await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS)
@@ -605,10 +610,20 @@ import { getNamedAccounts } from 'hardhat';
                         });
 
                         it('should migrate positions from V2', async () => {
-                            const initialTotalSupply = await bnt.totalSupply();
-
                             // add some BNT to the V2 ETH-BNT pool
                             const bntAmount = toWei(100);
+
+                            // increase the funding limit of the V2 ETH-BNT pool
+                            const currentMintLimit = await liquidityProtectionSettings.networkTokenMintingLimits(
+                                anchor.address
+                            );
+
+                            await liquidityProtectionSettings
+                                .connect(deployer)
+                                .setNetworkTokenMintingLimit(anchor.address, currentMintLimit.add(bntAmount));
+
+                            const initialTotalSupply = await bnt.totalSupply();
+
                             await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
                             const id1 = await liquidityProtection
                                 .connect(bntWhale)
