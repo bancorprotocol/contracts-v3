@@ -15,15 +15,13 @@ import Contracts, {
     TestPoolMigrator
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
+import { PPM_RESOLUTION, RATE_MAX_DEVIATION_PPM, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { toWei } from '../../utils/Types';
+import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, Roles } from '../helpers/AccessControl';
 import {
-    createPool,
     createSystem,
     createTestToken,
-    createToken,
     depositToPool,
     initWithdraw,
     PoolSpec,
@@ -263,7 +261,7 @@ describe('BancorNetworkInfo', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await networkInfo.version()).to.equal(1);
+            expect(await networkInfo.version()).to.equal(2);
 
             await expectRole(networkInfo, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [
                 deployer.address
@@ -496,14 +494,14 @@ describe('BancorNetworkInfo', () => {
                 {
                     tokenData: new TokenData(sourceSymbol),
                     balance: toWei(1_000_000),
-                    requestedLiquidity: toWei(1_000_000).mul(1000),
+                    requestedFunding: toWei(1_000_000).mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 {
                     tokenData: new TokenData(targetSymbol),
                     balance: toWei(5_000_000),
-                    requestedLiquidity: toWei(5_000_000).mul(1000),
+                    requestedFunding: toWei(5_000_000).mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 }
@@ -540,7 +538,7 @@ describe('BancorNetworkInfo', () => {
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
-                    requestedLiquidity: BALANCE.mul(1000),
+                    requestedFunding: BALANCE.mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
@@ -591,85 +589,137 @@ describe('BancorNetworkInfo', () => {
         });
     });
 
-    describe('pool token calculations', () => {
-        const testPoolTokenCalculations = (tokenData: TokenData) => {
+    describe('pool info', () => {
+        const testPoolInfo = (tokenData: TokenData) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
+
             let bnt: IERC20;
             let networkInfo: BancorNetworkInfo;
             let poolCollection: TestPoolCollection;
             let bntPool: BNTPool;
-            let pool: TokenWithAddress;
+            let pool: string;
             let reserveToken: TokenWithAddress;
-            let fundingManager: SignerWithAddress;
 
-            const CONTEXT_ID = formatBytes32String('CTX');
+            const TRADING_FEE_PPM = toPPM(2);
             const BASE_TOKEN_LIQUIDITY = toWei(1_000_000_000);
-            const BNT_LIQUIDITY = toWei(1_000_000_000);
-
-            before(async () => {
-                [, fundingManager] = await ethers.getSigners();
-            });
 
             beforeEach(async () => {
                 ({ networkSettings, network, bnt, networkInfo, bntPool, poolCollection } = await createSystem());
 
-                if (tokenData.isBNT()) {
-                    pool = bnt;
-                    reserveToken = await createTestToken();
-
-                    await createPool(reserveToken, network, networkSettings, poolCollection);
-
-                    await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
-
-                    await bntPool.grantRole(Roles.BNTPool.ROLE_FUNDING_MANAGER, fundingManager.address);
-                    await bntPool
-                        .connect(fundingManager)
-                        .requestFunding(CONTEXT_ID, reserveToken.address, BNT_LIQUIDITY);
-                } else {
-                    reserveToken = await createToken(tokenData);
-                    pool = reserveToken;
-
-                    await createPool(reserveToken, network, networkSettings, poolCollection);
-
-                    await poolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
-
-                    await network.depositToPoolCollectionForT(
-                        poolCollection.address,
-                        CONTEXT_ID,
-                        deployer.address,
-                        reserveToken.address,
-                        BASE_TOKEN_LIQUIDITY
-                    );
-                }
-
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+                // create a funded and enabled TKN pool
+                ({ token: reserveToken } = await setupFundedPool(
+                    {
+                        tokenData: tokenData.isBNT() ? new TokenData(TokenSymbol.TKN) : tokenData,
+                        balance: BASE_TOKEN_LIQUIDITY,
+                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE,
+                        tradingFeePPM: TRADING_FEE_PPM
+                    },
+                    deployer,
+                    network,
+                    networkInfo,
+                    networkSettings,
+                    poolCollection
+                ));
+
+                pool = tokenData.isBNT() ? bnt.address : reserveToken.address;
             });
 
-            it('should return the pool token correctly', async () => {
-                expect(await networkInfo.poolToken(bnt.address)).to.equal(await bntPool.poolToken());
-                expect(await networkInfo.poolToken(reserveToken.address)).to.equal(
-                    await poolCollection.poolToken(reserveToken.address)
-                );
+            it('should return the pool token', async () => {
+                if (tokenData.isBNT()) {
+                    expect(await networkInfo.poolToken(pool)).to.equal(await bntPool.poolToken());
+                } else {
+                    expect(await networkInfo.poolToken(pool)).to.equal(await poolCollection.poolToken(pool));
+                }
+            });
+
+            it('should return the trading fee', async () => {
+                if (tokenData.isBNT()) {
+                    expect(await networkInfo.tradingFeePPM(pool)).to.equal(0);
+                } else {
+                    expect(await networkInfo.tradingFeePPM(pool)).to.equal(TRADING_FEE_PPM);
+
+                    const newTradingFee = toPPM(50);
+                    await poolCollection.setTradingFeePPM(pool, newTradingFee);
+
+                    expect(await networkInfo.tradingFeePPM(pool)).to.equal(newTradingFee);
+                }
+            });
+
+            it('should return whether trading is enabled', async () => {
+                if (tokenData.isBNT()) {
+                    expect(await networkInfo.tradingEnabled(pool)).to.be.true;
+                } else {
+                    expect(await networkInfo.tradingEnabled(pool)).to.be.true;
+
+                    await poolCollection.disableTrading(pool);
+
+                    expect(await networkInfo.tradingEnabled(pool)).to.be.false;
+                }
+            });
+
+            it('should return whether depositing is enabled', async () => {
+                if (tokenData.isBNT()) {
+                    expect(await networkInfo.depositingEnabled(pool)).to.be.true;
+                } else {
+                    expect(await networkInfo.depositingEnabled(pool)).to.be.true;
+
+                    await poolCollection.enableDepositing(pool, false);
+
+                    expect(await networkInfo.depositingEnabled(pool)).to.be.false;
+                }
+            });
+
+            it('should return whether the pool is stable', async () => {
+                if (tokenData.isBNT()) {
+                    expect(await networkInfo.isPoolStable(pool)).to.be.true;
+                } else {
+                    expect(await networkInfo.isPoolStable(pool)).to.be.true;
+
+                    const liquidity = await poolCollection.poolLiquidity(pool);
+
+                    await poolCollection.setAverageRateT(pool, {
+                        blockNumber: await poolCollection.currentBlockNumber(),
+                        rate: {
+                            n: liquidity.bntTradingLiquidity.mul(PPM_RESOLUTION),
+                            d: liquidity.baseTokenTradingLiquidity.mul(
+                                PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5)
+                            )
+                        }
+                    });
+
+                    expect(await networkInfo.isPoolStable(pool)).to.be.false;
+                }
             });
 
             for (const tokenAmount of [0, 1000, toWei(10_000), toWei(1_000_000)]) {
                 context(`underlying amount of ${tokenAmount.toString()}`, () => {
+                    beforeEach(async () => {
+                        await poolCollection.requestFundingT(
+                            formatBytes32String(''),
+                            reserveToken.address,
+                            BASE_TOKEN_LIQUIDITY.mul(1000)
+                        );
+                    });
+
                     it('should properly convert between underlying amount and pool token amount', async () => {
-                        const poolTokenAmount = await networkInfo.underlyingToPoolToken(pool.address, tokenAmount);
+                        const poolTokenAmount = await networkInfo.underlyingToPoolToken(pool, tokenAmount);
 
                         expect(poolTokenAmount).to.equal(
                             tokenData.isBNT()
                                 ? await bntPool.underlyingToPoolToken(tokenAmount)
-                                : await poolCollection.underlyingToPoolToken(pool.address, tokenAmount)
+                                : await poolCollection.underlyingToPoolToken(pool, tokenAmount)
                         );
 
-                        const underlyingAmount = await networkInfo.poolTokenToUnderlying(pool.address, poolTokenAmount);
+                        const underlyingAmount = await networkInfo.poolTokenToUnderlying(pool, poolTokenAmount);
 
                         expect(underlyingAmount).to.be.equal(
                             tokenData.isBNT()
                                 ? await bntPool.poolTokenToUnderlying(poolTokenAmount)
-                                : await poolCollection.poolTokenToUnderlying(pool.address, poolTokenAmount)
+                                : await poolCollection.poolTokenToUnderlying(pool, poolTokenAmount)
                         );
                     });
                 });
@@ -678,7 +728,7 @@ describe('BancorNetworkInfo', () => {
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                testPoolTokenCalculations(new TokenData(symbol));
+                testPoolInfo(new TokenData(symbol));
             });
         }
     });

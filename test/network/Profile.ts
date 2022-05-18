@@ -17,7 +17,7 @@ import Contracts, {
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
-import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
     EXP2_INPUT_TOO_HIGH,
     MAX_UINT256,
@@ -105,7 +105,6 @@ describe('Profile @profile', () => {
                     await createPool(token, network, networkSettings, poolCollection);
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
                     // ensure that the trading is enabled with sufficient funding
                     if (tokenData.isNative()) {
@@ -456,7 +455,6 @@ describe('Profile @profile', () => {
                     poolToken = await createPool(token, network, networkSettings, poolCollection);
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
                 }
 
                 await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
@@ -943,14 +941,14 @@ describe('Profile @profile', () => {
                 {
                     tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
-                    requestedLiquidity: toWei(1_000_000).mul(1000),
+                    requestedFunding: toWei(1_000_000).mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 {
                     tokenData: targetTokenData,
                     balance: toWei(5_000_000),
-                    requestedLiquidity: toWei(5_000_000).mul(1000),
+                    requestedFunding: toWei(5_000_000).mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
@@ -970,7 +968,7 @@ describe('Profile @profile', () => {
                                         {
                                             tokenData: new TokenData(sourceSymbol),
                                             balance: sourceBalance,
-                                            requestedLiquidity: sourceBalance.mul(1000),
+                                            requestedFunding: sourceBalance.mul(1000),
                                             tradingFeePPM: sourceTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
@@ -980,7 +978,7 @@ describe('Profile @profile', () => {
                                         {
                                             tokenData: new TokenData(targetSymbol),
                                             balance: targetBalance,
-                                            requestedLiquidity: targetBalance.mul(1000),
+                                            requestedFunding: targetBalance.mul(1000),
                                             tradingFeePPM: targetTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
@@ -996,7 +994,7 @@ describe('Profile @profile', () => {
                                             {
                                                 tokenData: new TokenData(sourceSymbol),
                                                 balance: sourceBalance,
-                                                requestedLiquidity: sourceBalance.mul(1000),
+                                                requestedFunding: sourceBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent),
                                                 bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                                                 baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
@@ -1004,7 +1002,7 @@ describe('Profile @profile', () => {
                                             {
                                                 tokenData: new TokenData(targetSymbol),
                                                 balance: targetBalance,
-                                                requestedLiquidity: targetBalance.mul(1000),
+                                                requestedFunding: targetBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent2),
                                                 bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                                                 baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
@@ -1049,7 +1047,7 @@ describe('Profile @profile', () => {
                     {
                         tokenData,
                         balance: BALANCE,
-                        requestedLiquidity: BALANCE.mul(1000),
+                        requestedFunding: BALANCE.mul(1000),
                         bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                         baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                     },
@@ -1121,7 +1119,7 @@ describe('Profile @profile', () => {
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
-                    requestedLiquidity: BALANCE.mul(1000),
+                    requestedFunding: BALANCE.mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
@@ -1206,7 +1204,7 @@ describe('Profile @profile', () => {
                 {
                     tokenData,
                     balance: providerStake,
-                    requestedLiquidity: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
+                    requestedFunding: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
@@ -1431,7 +1429,7 @@ describe('Profile @profile', () => {
                 {
                     tokenData: poolData,
                     balance: initialBalance,
-                    requestedLiquidity: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
+                    requestedFunding: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
                     bntVirtualBalance: 1,
                     baseTokenVirtualBalance: 2
                 },

@@ -83,6 +83,26 @@ interface IBancorNetworkInfo is IUpgradeable {
     function poolToken(Token pool) external view returns (IPoolToken);
 
     /**
+     * @dev returns the trading fee (in units of PPM)
+     */
+    function tradingFeePPM(Token pool) external view returns (uint32);
+
+    /**
+     * @dev returns whether trading is enabled
+     */
+    function tradingEnabled(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns whether depositing is enabled
+     */
+    function depositingEnabled(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns whether the pool is stable
+     */
+    function isPoolStable(Token pool) external view returns (bool);
+
+    /**
      * @dev returns the pending withdrawals contract
      */
     function pendingWithdrawals() external view returns (IPendingWithdrawals);

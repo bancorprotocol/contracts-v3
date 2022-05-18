@@ -93,7 +93,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     error AlreadyEnabled();
-    error DepositLimitExceeded();
     error DepositingDisabled();
     error InsufficientLiquidity();
     error InsufficientSourceAmount();
@@ -193,11 +192,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     event DepositingEnabled(Token indexed pool, bool indexed newStatus);
 
     /**
-     * @dev triggered when a pool's deposit limit is updated
-     */
-    event DepositLimitUpdated(Token indexed pool, uint256 prevDepositLimit, uint256 newDepositLimit);
-
-    /**
      * @dev triggered when new liquidity is deposited into a pool
      */
     event TokensDeposited(
@@ -282,7 +276,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**
@@ -351,7 +345,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             tradingEnabled: false,
             depositingEnabled: true,
             averageRate: AverageRate({ blockNumber: 0, rate: zeroFraction112() }),
-            depositLimit: 0,
             liquidity: PoolLiquidity({ bntTradingLiquidity: 0, baseTokenTradingLiquidity: 0, stakedBalance: 0 })
         });
 
@@ -359,10 +352,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         emit PoolCreated({ poolToken: newPoolToken, token: token });
 
-        emit TradingEnabled({ pool: token, newStatus: false, reason: TRADING_STATUS_UPDATE_DEFAULT });
+        emit TradingEnabled({ pool: token, newStatus: newPool.tradingEnabled, reason: TRADING_STATUS_UPDATE_DEFAULT });
         emit TradingFeePPMUpdated({ pool: token, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });
         emit DepositingEnabled({ pool: token, newStatus: newPool.depositingEnabled });
-        emit DepositLimitUpdated({ pool: token, prevDepositLimit: 0, newDepositLimit: newPool.depositLimit });
     }
 
     /**
@@ -373,7 +365,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @inheritdoc IPoolCollection
+     * @dev returns specific pool's data
+     *
+     * notes:
+     *
+     * - there is no guarantee that this function will remains forward compatible, so please avoid relying on it and
+     *   rely on specific getters from the IPoolCollection interface instead
      */
     function poolData(Token pool) external view returns (Pool memory) {
         return _poolData[pool];
@@ -391,6 +388,27 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function poolToken(Token pool) external view returns (IPoolToken) {
         return _poolData[pool].poolToken;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function tradingFeePPM(Token pool) external view returns (uint32) {
+        return _poolData[pool].tradingFeePPM;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function tradingEnabled(Token pool) external view returns (bool) {
+        return _poolData[pool].tradingEnabled;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function depositingEnabled(Token pool) external view returns (bool) {
+        return _poolData[pool].depositingEnabled;
     }
 
     /**
@@ -434,6 +452,15 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 poolTokenSupply,
                 val + data.liquidity.stakedBalance * (poolTokenSupply - protocolPoolTokenAmount)
             );
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function isPoolStable(Token pool) external view returns (bool) {
+        Pool storage data = _poolData[pool];
+
+        return _poolRateState(data.liquidity, data.averageRate) == PoolRateState.Stable;
     }
 
     /**
@@ -535,26 +562,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @dev sets the deposit limit of a given pool
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function setDepositLimit(Token pool, uint256 newDepositLimit) external onlyOwner {
-        Pool storage data = _poolStorage(pool);
-
-        uint256 prevDepositLimit = data.depositLimit;
-        if (prevDepositLimit == newDepositLimit) {
-            return;
-        }
-
-        data.depositLimit = newDepositLimit;
-
-        emit DepositLimitUpdated({ pool: pool, prevDepositLimit: prevDepositLimit, newDepositLimit: newDepositLimit });
-    }
-
-    /**
      * @inheritdoc IPoolCollection
      */
     function depositFor(
@@ -574,16 +581,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
         uint256 poolTokenAmount = _underlyingToPoolToken(tokenAmount, prevPoolTokenTotalSupply, currentStakedBalance);
 
-        // verify that the staked balance and the newly deposited amount isn't higher than the deposit limit
-        uint256 newStakedBalance = currentStakedBalance + tokenAmount;
-        if (newStakedBalance > data.depositLimit) {
-            revert DepositLimitExceeded();
-        }
-
         PoolLiquidity memory prevLiquidity = data.liquidity;
 
         // update the staked balance with the full base token amount
-        data.liquidity.stakedBalance = newStakedBalance;
+        data.liquidity.stakedBalance = currentStakedBalance + tokenAmount;
 
         // mint pool tokens to the provider
         data.poolToken.mint(provider, poolTokenAmount);
@@ -1334,7 +1335,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function _tradeAmountAndFeeBySourceAmount(
         uint256 sourceBalance,
         uint256 targetBalance,
-        uint32 tradingFeePPM,
+        uint32 feePPM,
         uint256 sourceAmount
     ) private pure returns (TradeAmountAndTradingFee memory) {
         if (sourceBalance == 0 || targetBalance == 0) {
@@ -1342,7 +1343,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         }
 
         uint256 targetAmount = MathEx.mulDivF(targetBalance, sourceAmount, sourceBalance + sourceAmount);
-        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION);
+        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, feePPM, PPM_RESOLUTION);
 
         return
             TradeAmountAndTradingFee({ amount: targetAmount - tradingFeeAmount, tradingFeeAmount: tradingFeeAmount });
@@ -1354,14 +1355,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function _tradeAmountAndFeeByTargetAmount(
         uint256 sourceBalance,
         uint256 targetBalance,
-        uint32 tradingFeePPM,
+        uint32 feePPM,
         uint256 targetAmount
     ) private pure returns (TradeAmountAndTradingFee memory) {
         if (sourceBalance == 0) {
             revert InsufficientLiquidity();
         }
 
-        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, tradingFeePPM, PPM_RESOLUTION - tradingFeePPM);
+        uint256 tradingFeeAmount = MathEx.mulDivF(targetAmount, feePPM, PPM_RESOLUTION - feePPM);
         uint256 fullTargetAmount = targetAmount + tradingFeeAmount;
         uint256 sourceAmount = MathEx.mulDivF(sourceBalance, fullTargetAmount, targetBalance - fullTargetAmount);
 

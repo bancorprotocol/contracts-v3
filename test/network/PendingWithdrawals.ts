@@ -243,7 +243,7 @@ describe('PendingWithdrawals', () => {
                             {
                                 tokenData: new TokenData(TokenSymbol.TKN),
                                 balance: toWei(1_000_000),
-                                requestedLiquidity: toWei(1_000_000).mul(1000),
+                                requestedFunding: toWei(1_000_000).mul(1000),
                                 bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                                 baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                             },
@@ -314,7 +314,7 @@ describe('PendingWithdrawals', () => {
                         {
                             tokenData: new TokenData(TokenSymbol.TKN),
                             balance: toWei(1_000_000),
-                            requestedLiquidity: toWei(1_000_000).mul(1000),
+                            requestedFunding: toWei(1_000_000).mul(1000),
                             bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                             baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                         },
@@ -443,7 +443,7 @@ describe('PendingWithdrawals', () => {
                         {
                             tokenData: new TokenData(TokenSymbol.TKN),
                             balance: toWei(1_000_000),
-                            requestedLiquidity: toWei(1_000_000).mul(1000),
+                            requestedFunding: toWei(1_000_000).mul(1000),
                             bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                             baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                         },

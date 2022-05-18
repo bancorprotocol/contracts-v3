@@ -719,7 +719,7 @@ describe('BancorPortal', () => {
             {
                 tokenData: new TokenData(symbol),
                 balance,
-                requestedLiquidity: balance.mul(1000),
+                requestedFunding: balance.mul(1000),
                 bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                 baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
             },
