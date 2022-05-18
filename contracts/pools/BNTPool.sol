@@ -348,14 +348,14 @@ contract BNTPool is IBNTPool, Vault {
 
         uint256 vbntAmount = poolTokenAmount;
 
-        // the provider should receive pool tokens and VBNT in equal amounts. since the provider might already have
-        // some VBNT during migration, the contract only mints the delta between the full amount and the amount the
+        // the provider should receive pool tokens and vBNT in equal amounts. since the provider might already have
+        // some vBNT during migration, the contract only mints the delta between the full amount and the amount the
         // provider already has
         if (isMigrating) {
             vbntAmount = MathEx.subMax0(vbntAmount, originalVBNTAmount);
         }
 
-        // mint VBNT to the provider
+        // mint vBNT to the provider
         if (vbntAmount > 0) {
             _vbntGovernance.mint(provider, vbntAmount);
         }

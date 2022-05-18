@@ -28,7 +28,7 @@ describe('ExternalRewardsVault', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid VBNT governance contract', async () => {
+        it('should revert when attempting to create with an invalid vBNT governance contract', async () => {
             await expect(Contracts.ExternalRewardsVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );

@@ -43,12 +43,12 @@ interface IBancorNetworkInfo is IUpgradeable {
     function bntGovernance() external view returns (ITokenGovernance);
 
     /**
-     * @dev returns the VBNT contract
+     * @dev returns the vBNT contract
      */
     function vbnt() external view returns (IERC20);
 
     /**
-     * @dev returns the VBNT governance contract
+     * @dev returns the vBNT governance contract
      */
     function vbntGovernance() external view returns (ITokenGovernance);
 

@@ -102,10 +102,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the address of the BNT token governance
     ITokenGovernance private immutable _bntGovernance;
 
-    // the address of the VBNT token
+    // the address of the vBNT token
     IERC20 private immutable _vbnt;
 
-    // the address of the VBNT token governance
+    // the address of the vBNT token governance
     ITokenGovernance private immutable _vbntGovernance;
 
     // the network settings contract

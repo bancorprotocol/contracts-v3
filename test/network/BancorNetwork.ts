@@ -162,7 +162,7 @@ describe('BancorNetwork', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid VBNT governance contract', async () => {
+        it('should revert when attempting to create with an invalid vBNT governance contract', async () => {
             await expect(
                 Contracts.BancorNetwork.deploy(
                     bntGovernance.address,
@@ -1816,8 +1816,8 @@ describe('BancorNetwork', () => {
                     });
 
                     if (tokenData.isBNT()) {
-                        it('should revert when attempting to withdraw with an insufficient VBNT amount', async () => {
-                            // ensure that there isn't enough VBNT left to process a single withdrawal
+                        it('should revert when attempting to withdraw with an insufficient vBNT amount', async () => {
+                            // ensure that there isn't enough vBNT left to process a single withdrawal
                             await vbnt
                                 .connect(provider)
                                 .transfer(deployer.address, (await vbnt.balanceOf(provider.address)).sub(1));

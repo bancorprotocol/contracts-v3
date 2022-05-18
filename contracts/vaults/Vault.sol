@@ -28,10 +28,10 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     // the address of the BNT token governance
     ITokenGovernance internal immutable _bntGovernance;
 
-    // the address of the VBNT token
+    // the address of the vBNT token
     IERC20 internal immutable _vbnt;
 
-    // the address of the VBNT token governance
+    // the address of the vBNT token governance
     ITokenGovernance internal immutable _vbntGovernance;
 
     // solhint-disable func-name-mixedcase
@@ -164,7 +164,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
             revert InvalidToken();
         }
 
-        // allow vaults to burn BNT and VBNT via their respective token governance modules
+        // allow vaults to burn BNT and vBNT via their respective token governance modules
         if (token.isEqual(_bnt)) {
             _bntGovernance.burn(amount);
         } else if (token.isEqual(_vbnt)) {

@@ -182,7 +182,7 @@ describe('StandardRewards', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid VBNT contract', async () => {
+        it('should revert when attempting to create with an invalid vBNT contract', async () => {
             await expect(
                 Contracts.StandardRewards.deploy(
                     network.address,
