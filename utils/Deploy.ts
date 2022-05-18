@@ -62,10 +62,10 @@ const {
 const tenderlyNetwork = tenderly.network();
 
 interface EnvOptions {
-    TEMP_FORK?: boolean;
+    TEST_FORK?: boolean;
 }
 
-const { TEMP_FORK: isTempFork }: EnvOptions = process.env as any as EnvOptions;
+const { TEST_FORK: isTestFork }: EnvOptions = process.env as any as EnvOptions;
 
 enum LegacyInstanceNameV2 {
     BNT = 'BNT',
@@ -569,7 +569,7 @@ interface ContractData {
 
 const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isTenderlyFork() || isTempFork) {
+    if (!isTenderlyFork() || isTestFork) {
         return;
     }
 

@@ -24,6 +24,7 @@ interface EnvOptions {
     PROFILE?: boolean;
     TENDERLY_FORK_ID?: string;
     TENDERLY_PROJECT?: string;
+    TENDERLY_TEST_PROJECT?: string;
     TENDERLY_USERNAME?: string;
 }
 
@@ -36,6 +37,7 @@ const {
     PROFILE: isProfiling,
     TENDERLY_FORK_ID = '',
     TENDERLY_PROJECT = '',
+    TENDERLY_TEST_PROJECT = '',
     TENDERLY_USERNAME = ''
 }: EnvOptions = process.env as any as EnvOptions;
 
@@ -109,7 +111,7 @@ const config: HardhatUserConfig = {
 
     tenderly: {
         forkNetwork: '1',
-        project: TENDERLY_PROJECT,
+        project: TENDERLY_PROJECT || TENDERLY_TEST_PROJECT,
         username: TENDERLY_USERNAME
     },
 
