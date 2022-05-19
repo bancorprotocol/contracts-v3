@@ -65,14 +65,14 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
     function poolWithdrawalAmountsT(
         Token pool,
         uint256 poolTokenAmount,
-        uint256 reserveTokenAmount
+        uint256 baseTokensWithdrawalAmount
     ) external view returns (InternalWithdrawalAmounts memory) {
         return
             _poolWithdrawalAmounts(
                 pool,
                 _poolData[pool],
                 poolTokenAmount,
-                reserveTokenAmount,
+                baseTokensWithdrawalAmount,
                 _poolData[pool].poolToken.totalSupply()
             );
     }

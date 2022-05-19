@@ -892,7 +892,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         Token pool,
         Pool memory data,
         uint256 poolTokenAmount,
-        uint256 reserveTokenAmount,
+        uint256 baseTokensWithdrawalAmount,
         uint256 poolTokenTotalSupply
     ) internal view returns (InternalWithdrawalAmounts memory) {
         // the base token trading liquidity of a given pool can never be higher than the base token balance of the vault
@@ -908,7 +908,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             pool.balanceOf(address(_externalProtectionVault)),
             data.tradingFeePPM,
             _networkSettings.withdrawalFeePPM(),
-            reserveTokenAmount
+            baseTokensWithdrawalAmount
         );
 
         return
@@ -920,7 +920,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 bntTradingLiquidityDelta: output.p,
                 bntProtocolHoldingsDelta: output.q,
                 baseTokensWithdrawalFee: output.v,
-                baseTokensWithdrawalAmount: reserveTokenAmount,
+                baseTokensWithdrawalAmount: baseTokensWithdrawalAmount,
                 poolTokenAmount: poolTokenAmount,
                 poolTokenTotalSupply: poolTokenTotalSupply,
                 newBaseTokenTradingLiquidity: output.r.isNeg
