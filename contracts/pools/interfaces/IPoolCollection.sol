@@ -162,7 +162,8 @@ interface IPoolCollection is IVersioned {
         bytes32 contextId,
         address provider,
         Token pool,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 reserveTokenAmount
     ) external returns (uint256);
 
     /**

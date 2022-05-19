@@ -1440,8 +1440,7 @@ describe('PoolCollection', () => {
                 token.address
             );
 
-            await poolToken.connect(provider).transfer(network.address, poolTokenAmount);
-            await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
+            await poolToken.connect(provider).transfer(poolCollection.address, poolTokenAmount);
 
             const prevPoolTokenTotalSupply = await poolToken.totalSupply();
             const prevNetworkPoolTokenBalance = await poolToken.balanceOf(network.address);
@@ -1455,7 +1454,11 @@ describe('PoolCollection', () => {
             const underlyingAmount = await poolCollection.poolTokenToUnderlying(token.address, poolTokenAmount);
             const expectedWithdrawalFee = underlyingAmount.mul(withdrawalFeePPM).div(PPM_RESOLUTION);
 
-            const poolWithdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(token.address, poolTokenAmount);
+            const poolWithdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(
+                token.address,
+                poolTokenAmount,
+                underlyingAmount
+            );
 
             const bntAmountRenouncedOnResetLiquidity = poolWithdrawalAmounts.newBNTTradingLiquidity.lt(
                 await networkSettings.minLiquidityForTrading()
@@ -1487,7 +1490,8 @@ describe('PoolCollection', () => {
                 CONTEXT_ID,
                 provider.address,
                 token.address,
-                poolTokenAmount
+                poolTokenAmount,
+                underlyingAmount
             );
 
             await expect(res)
@@ -1543,9 +1547,7 @@ describe('PoolCollection', () => {
             );
 
             expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmount));
-            expect(await poolToken.balanceOf(network.address)).to.equal(
-                prevNetworkPoolTokenBalance.sub(poolTokenAmount)
-            );
+            expect(await poolToken.balanceOf(network.address)).to.equal(prevNetworkPoolTokenBalance);
             expect(await getBalance(token, provider)).to.equal(prevProviderBalance.add(baseTokenAmount));
 
             expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
@@ -1597,7 +1599,7 @@ describe('PoolCollection', () => {
                 const nonNetwork = deployer;
 
                 await expect(
-                    poolCollection.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, token.address, 1)
+                    poolCollection.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, token.address, 1, 1)
                 ).to.be.revertedWith('AccessDenied');
             });
 
@@ -1608,6 +1610,7 @@ describe('PoolCollection', () => {
                         CONTEXT_ID,
                         provider.address,
                         ZERO_ADDRESS,
+                        1,
                         1
                     )
                 ).to.be.revertedWith('DoesNotExist');
@@ -1621,21 +1624,49 @@ describe('PoolCollection', () => {
                         CONTEXT_ID,
                         provider.address,
                         newReserveToken.address,
+                        1,
                         1
                     )
                 ).to.be.revertedWith('DoesNotExist');
             });
 
-            it('should revert when attempting to withdraw an invalid amount', async () => {
+            it('should revert when attempting to withdraw an invalid pool token amount', async () => {
                 await expect(
                     network.withdrawFromPoolCollectionT(
                         poolCollection.address,
                         CONTEXT_ID,
                         provider.address,
                         token.address,
+                        0,
+                        1
+                    )
+                ).to.be.revertedWith('ZeroValue');
+            });
+
+            it('should revert when attempting to withdraw an invalid reserve token amount', async () => {
+                await expect(
+                    network.withdrawFromPoolCollectionT(
+                        poolCollection.address,
+                        CONTEXT_ID,
+                        provider.address,
+                        token.address,
+                        1,
                         0
                     )
                 ).to.be.revertedWith('ZeroValue');
+            });
+
+            it('should revert when attempting to withdraw inconsistent amounts', async () => {
+                await expect(
+                    network.withdrawFromPoolCollectionT(
+                        poolCollection.address,
+                        CONTEXT_ID,
+                        provider.address,
+                        token.address,
+                        1,
+                        100_000
+                    )
+                ).to.be.revertedWith('InvalidParam');
             });
 
             context('with deposited funds', () => {
@@ -2547,16 +2578,20 @@ describe('PoolCollection', () => {
                             const poolTokenTotalSupply = await poolToken.totalSupply();
 
                             const poolTokenAmount = toWei(10);
+                            const reserveTokenAmount = await poolCollection.underlyingToPoolToken(
+                                reserveToken.address,
+                                poolTokenAmount
+                            );
                             const newStakedBalance = prevLiquidity.stakedBalance
                                 .mul(poolTokenTotalSupply.sub(poolTokenAmount))
                                 .div(poolTokenTotalSupply);
 
-                            await poolToken.connect(deployer).transfer(network.address, poolTokenAmount);
-                            await network.approveT(poolToken.address, poolCollection.address, poolTokenAmount);
+                            await poolToken.connect(deployer).transfer(poolCollection.address, poolTokenAmount);
 
                             const withdrawalAmounts = await poolCollection.poolWithdrawalAmountsT(
                                 reserveToken.address,
-                                poolTokenAmount
+                                poolTokenAmount,
+                                reserveTokenAmount
                             );
 
                             const res = await network.withdrawFromPoolCollectionT(
@@ -2564,7 +2599,8 @@ describe('PoolCollection', () => {
                                 CONTEXT_ID,
                                 deployer.address,
                                 reserveToken.address,
-                                poolTokenAmount
+                                poolTokenAmount._hex,
+                                reserveTokenAmount
                             );
 
                             await testLiquidityReset(

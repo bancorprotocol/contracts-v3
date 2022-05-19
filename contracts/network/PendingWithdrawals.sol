@@ -235,41 +235,24 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(provider, id);
 
-        // get the pool token value in reserve/pool tokens
-        uint256 currentReserveTokenAmount = _poolTokenToUnderlying(request.reserveToken, request.poolTokenAmount);
-
-        // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
-        // of the request
-        assert(currentReserveTokenAmount >= request.reserveTokenAmount);
-
-        // burn the delta between the recorded pool token amount and the amount represented by the reserve token value
-        uint256 effectivePoolTokenAmount = request.reserveTokenAmount == currentReserveTokenAmount
-            ? request.poolTokenAmount
-            : MathEx.mulDivF(request.poolTokenAmount, request.reserveTokenAmount, currentReserveTokenAmount);
-
-        // since pool token value can only go up, there’s usually burning
-        if (request.poolTokenAmount > effectivePoolTokenAmount) {
-            request.poolToken.burn(request.poolTokenAmount - effectivePoolTokenAmount);
-        }
-
-        // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, effectivePoolTokenAmount);
+        // approve the caller to transfer the locked pool tokens
+        request.poolToken.approve(msg.sender, request.poolTokenAmount);
 
         emit WithdrawalCompleted({
             contextId: contextId,
             pool: request.reserveToken,
             provider: provider,
             requestId: id,
-            poolTokenAmount: effectivePoolTokenAmount,
-            reserveTokenAmount: currentReserveTokenAmount,
+            poolTokenAmount: request.poolTokenAmount,
+            reserveTokenAmount: request.reserveTokenAmount,
             timeElapsed: currentTime - request.createdAt
         });
 
         return
             CompletedWithdrawal({
                 poolToken: request.poolToken,
-                effectivePoolTokenAmount: effectivePoolTokenAmount,
-                originalPoolTokenAmount: request.poolTokenAmount
+                poolTokenAmount: request.poolTokenAmount,
+                reserveTokenAmount: request.reserveTokenAmount
             });
     }
 

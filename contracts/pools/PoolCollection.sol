@@ -25,6 +25,7 @@ import {
     Utils,
     AlreadyExists,
     DoesNotExist,
+    InvalidParam,
     InvalidPoolCollection,
     InvalidStakedBalance
 } from "../utility/Utils.sol";
@@ -63,6 +64,7 @@ struct InternalWithdrawalAmounts {
     Sint256 bntProtocolHoldingsDelta; // BNT amount add to the protocol equity
     uint256 baseTokensWithdrawalFee; // base token amount to keep in the pool as a withdrawal fee
     uint256 baseTokensWithdrawalAmount; // base token amount equivalent to the base pool token's withdrawal amount
+    uint256 poolTokenAmount; // base pool token
     uint256 poolTokenTotalSupply; // base pool token's total supply
     uint256 newBaseTokenTradingLiquidity; // new base token trading liquidity
     uint256 newBNTTradingLiquidity; // new BNT trading liquidity
@@ -625,15 +627,40 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         bytes32 contextId,
         address provider,
         Token pool,
-        uint256 poolTokenAmount
-    ) external only(address(_network)) validAddress(provider) greaterThanZero(poolTokenAmount) returns (uint256) {
+        uint256 poolTokenAmount,
+        uint256 reserveTokenAmount
+    )
+        external
+        only(address(_network))
+        validAddress(provider)
+        greaterThanZero(poolTokenAmount)
+        greaterThanZero(reserveTokenAmount)
+        returns (uint256)
+    {
         Pool storage data = _poolStorage(pool);
 
+        uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
+        uint256 underlyingAmount = _poolTokenToUnderlying(
+            poolTokenAmount,
+            poolTokenTotalSupply,
+            data.liquidity.stakedBalance
+        );
+
+        if (reserveTokenAmount > underlyingAmount) {
+            revert InvalidParam();
+        }
+
         // obtain the withdrawal amounts
-        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, data, poolTokenAmount);
+        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(
+            pool,
+            data,
+            poolTokenAmount,
+            reserveTokenAmount,
+            poolTokenTotalSupply
+        );
 
         // execute the actual withdrawal
-        _executeWithdrawal(contextId, provider, pool, data, poolTokenAmount, amounts);
+        _executeWithdrawal(contextId, provider, pool, data, amounts);
 
         return amounts.baseTokensToTransferFromMasterVault;
     }
@@ -648,7 +675,22 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         greaterThanZero(poolTokenAmount)
         returns (WithdrawalAmounts memory)
     {
-        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(pool, _poolStorage(pool), poolTokenAmount);
+        Pool storage data = _poolData[pool];
+
+        uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
+        uint256 underlyingAmount = _poolTokenToUnderlying(
+            poolTokenAmount,
+            poolTokenTotalSupply,
+            data.liquidity.stakedBalance
+        );
+
+        InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(
+            pool,
+            data,
+            poolTokenAmount,
+            underlyingAmount,
+            poolTokenTotalSupply
+        );
 
         return
             WithdrawalAmounts({
@@ -849,20 +891,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function _poolWithdrawalAmounts(
         Token pool,
         Pool memory data,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 reserveTokenAmount,
+        uint256 poolTokenTotalSupply
     ) internal view returns (InternalWithdrawalAmounts memory) {
         // the base token trading liquidity of a given pool can never be higher than the base token balance of the vault
         // whenever the base token trading liquidity is updated, it is set to at most the base token balance of the vault
         uint256 baseTokenExcessAmount = pool.balanceOf(address(_masterVault)) -
             data.liquidity.baseTokenTradingLiquidity;
-
-        uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
-
-        uint256 baseTokensWithdrawalAmount = _poolTokenToUnderlying(
-            poolTokenAmount,
-            poolTokenTotalSupply,
-            data.liquidity.stakedBalance
-        );
 
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
             data.liquidity.bntTradingLiquidity,
@@ -872,7 +908,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             pool.balanceOf(address(_externalProtectionVault)),
             data.tradingFeePPM,
             _networkSettings.withdrawalFeePPM(),
-            baseTokensWithdrawalAmount
+            reserveTokenAmount
         );
 
         return
@@ -884,7 +920,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 bntTradingLiquidityDelta: output.p,
                 bntProtocolHoldingsDelta: output.q,
                 baseTokensWithdrawalFee: output.v,
-                baseTokensWithdrawalAmount: baseTokensWithdrawalAmount,
+                baseTokensWithdrawalAmount: reserveTokenAmount,
+                poolTokenAmount: poolTokenAmount,
                 poolTokenTotalSupply: poolTokenTotalSupply,
                 newBaseTokenTradingLiquidity: output.r.isNeg
                     ? data.liquidity.baseTokenTradingLiquidity - output.r.value
@@ -911,7 +948,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         address provider,
         Token pool,
         Pool storage data,
-        uint256 poolTokenAmount,
         InternalWithdrawalAmounts memory amounts
     ) private {
         PoolLiquidity storage liquidity = data.liquidity;
@@ -922,8 +958,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             revert RateUnstable();
         }
 
-        data.poolToken.burnFrom(address(_network), poolTokenAmount);
-        uint256 newPoolTokenTotalSupply = amounts.poolTokenTotalSupply - poolTokenAmount;
+        data.poolToken.burn(amounts.poolTokenAmount);
+
+        uint256 newPoolTokenTotalSupply = amounts.poolTokenTotalSupply - amounts.poolTokenAmount;
 
         liquidity.stakedBalance = MathEx.mulDivF(
             liquidity.stakedBalance,
@@ -990,7 +1027,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             provider: provider,
             token: pool,
             tokenAmount: amounts.baseTokensToTransferFromMasterVault,
-            poolTokenAmount: poolTokenAmount,
+            poolTokenAmount: amounts.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
             bntAmount: amounts.bntToMintForProvider,
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee

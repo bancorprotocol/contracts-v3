@@ -62,12 +62,19 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         _poolData[pool].averageRate = newAverageRate;
     }
 
-    function poolWithdrawalAmountsT(Token pool, uint256 poolTokenAmount)
-        external
-        view
-        returns (InternalWithdrawalAmounts memory)
-    {
-        return _poolWithdrawalAmounts(pool, _poolData[pool], poolTokenAmount);
+    function poolWithdrawalAmountsT(
+        Token pool,
+        uint256 poolTokenAmount,
+        uint256 reserveTokenAmount
+    ) external view returns (InternalWithdrawalAmounts memory) {
+        return
+            _poolWithdrawalAmounts(
+                pool,
+                _poolData[pool],
+                poolTokenAmount,
+                reserveTokenAmount,
+                _poolData[pool].poolToken.totalSupply()
+            );
     }
 
     function mintPoolTokenT(

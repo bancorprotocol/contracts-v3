@@ -1652,6 +1652,7 @@ describe('BancorNetwork', () => {
 
     describe('withdraw', () => {
         let network: TestBancorNetwork;
+        let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
         let vbnt: IERC20;
@@ -1667,8 +1668,17 @@ describe('BancorNetwork', () => {
         });
 
         beforeEach(async () => {
-            ({ network, networkSettings, bnt, vbnt, masterVault, poolCollection, pendingWithdrawals, bntPoolToken } =
-                await createSystem());
+            ({
+                network,
+                networkInfo,
+                networkSettings,
+                bnt,
+                vbnt,
+                masterVault,
+                poolCollection,
+                pendingWithdrawals,
+                bntPoolToken
+            } = await createSystem());
 
             await networkSettings.setWithdrawalFeePPM(WITHDRAWAL_FEE);
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -1691,6 +1701,7 @@ describe('BancorNetwork', () => {
 
         interface Request {
             id: BigNumber;
+            tokenAmount: BigNumber;
             poolTokenAmount: BigNumber;
             creationTime: number;
         }
@@ -1734,6 +1745,8 @@ describe('BancorNetwork', () => {
                 requests = [];
 
                 for (let i = 0; i < COUNT; i++) {
+                    const tokenAmount = await networkInfo.poolTokenToUnderlying(token.address, poolTokenAmount);
+
                     const { id, creationTime } = await initWithdraw(
                         provider,
                         network,
@@ -1744,6 +1757,7 @@ describe('BancorNetwork', () => {
 
                     requests.push({
                         id,
+                        tokenAmount,
                         poolTokenAmount,
                         creationTime
                     });
@@ -1766,6 +1780,11 @@ describe('BancorNetwork', () => {
                     const prevProviderTokenBalance = await getBalance(token, provider.address);
 
                     const withdrawalAmount = await network.connect(provider).callStatic.withdraw(request.id);
+                    const expectedWithdrawalAmount = request.tokenAmount
+                        .mul(PPM_RESOLUTION - WITHDRAWAL_FEE)
+                        .div(PPM_RESOLUTION);
+
+                    expect(withdrawalAmount).to.equal(expectedWithdrawalAmount);
 
                     if (tokenData.isBNT()) {
                         await network.connect(provider).withdraw(request.id);

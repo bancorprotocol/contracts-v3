@@ -665,10 +665,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
         if (completedRequest.poolToken == _bntPoolToken) {
-            return _withdrawBNT(contextId, provider, completedRequest);
+            return _withdrawBNT(contextId, provider, _pendingWithdrawals, completedRequest);
         }
 
-        return _withdrawBaseToken(contextId, provider, completedRequest);
+        return _withdrawBaseToken(contextId, provider, _pendingWithdrawals, completedRequest);
     }
 
     /**
@@ -1060,24 +1060,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _withdrawBNT(
         bytes32 contextId,
         address provider,
+        IPendingWithdrawals pendingWithdrawals,
         CompletedWithdrawal memory completedRequest
     ) private returns (uint256) {
         IBNTPool cachedBNTPool = _bntPool;
 
-        // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.effectivePoolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the BNT pool
+        completedRequest.poolToken.transferFrom(
+            address(pendingWithdrawals),
+            address(cachedBNTPool),
+            completedRequest.poolTokenAmount
+        );
 
-        // transfer VBNT from the caller to the BNT pool
-        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.originalPoolTokenAmount);
+        // transfer vBNT from the caller to the BNT pool
+        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the BNT pool
         return
             cachedBNTPool.withdraw(
                 contextId,
                 provider,
-                completedRequest.effectivePoolTokenAmount,
-                completedRequest.originalPoolTokenAmount
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
             );
     }
 
@@ -1087,6 +1091,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _withdrawBaseToken(
         bytes32 contextId,
         address provider,
+        IPendingWithdrawals pendingWithdrawals,
         CompletedWithdrawal memory completedRequest
     ) private returns (uint256) {
         Token pool = completedRequest.poolToken.reserveToken();
@@ -1094,12 +1099,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // approve the pool collection to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(poolCollection), completedRequest.effectivePoolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the pool collection
+        completedRequest.poolToken.transferFrom(
+            address(pendingWithdrawals),
+            address(poolCollection),
+            completedRequest.poolTokenAmount
+        );
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        return poolCollection.withdraw(contextId, provider, pool, completedRequest.effectivePoolTokenAmount);
+        return
+            poolCollection.withdraw(
+                contextId,
+                provider,
+                pool,
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
+            );
     }
 
     /**
