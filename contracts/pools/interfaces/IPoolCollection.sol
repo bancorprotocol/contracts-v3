@@ -14,9 +14,10 @@ struct PoolLiquidity {
     uint256 stakedBalance; // the staked balance
 }
 
-struct AverageRate {
+struct AverageRates {
     uint32 blockNumber;
     Fraction112 rate;
+    Fraction112 invRate;
 }
 
 struct Pool {
@@ -24,7 +25,7 @@ struct Pool {
     uint32 tradingFeePPM; // the trading fee (in units of PPM)
     bool tradingEnabled; // whether trading is enabled
     bool depositingEnabled; // whether depositing is enabled
-    AverageRate averageRate; // the recent average rate
+    AverageRates averageRates; // the recent average rates
     PoolLiquidity liquidity; // the overall liquidity in the pool
 }
 

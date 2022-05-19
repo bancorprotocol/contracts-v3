@@ -32,7 +32,7 @@ import {
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { max, min, toPPM, toWei } from '../../utils/Types';
+import { Fraction, max, min, toPPM, toWei } from '../../utils/Types';
 import { latestBlockNumber } from '..//helpers/BlockNumber';
 import { getBalance, transfer } from '..//helpers/Utils';
 import {
@@ -83,8 +83,9 @@ describe('PoolCollection', () => {
         expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
 
         const data = await poolCollection.poolData(token.address);
-        expect(data.averageRate.blockNumber).to.equal(0);
-        expect(data.averageRate.rate).to.equal(ZERO_FRACTION);
+        expect(data.averageRates.blockNumber).to.equal(0);
+        expect(data.averageRates.rate).to.equal(ZERO_FRACTION);
+        expect(data.averageRates.invRate).to.equal(ZERO_FRACTION);
 
         const liquidity = await poolCollection.poolLiquidity(token.address);
         expect(liquidity.bntTradingLiquidity).to.equal(0);
@@ -436,8 +437,9 @@ describe('PoolCollection', () => {
                     expect(await poolCollection.tradingEnabled(reserveToken.address)).to.be.false;
                     expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
 
-                    expect(pool.averageRate.blockNumber).to.equal(0);
-                    expect(pool.averageRate.rate).to.equal(ZERO_FRACTION);
+                    expect(pool.averageRates.blockNumber).to.equal(0);
+                    expect(pool.averageRates.rate).to.equal(ZERO_FRACTION);
+                    expect(pool.averageRates.invRate).to.equal(ZERO_FRACTION);
 
                     const { liquidity } = pool;
                     expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
@@ -602,8 +604,9 @@ describe('PoolCollection', () => {
                 const data = await poolCollection.poolData(token.address);
                 const { liquidity } = data;
 
-                expect(data.averageRate.blockNumber).to.equal(await poolCollection.currentBlockNumber());
-                expect(data.averageRate.rate).to.equal({ n: BNT_VIRTUAL_BALANCE, d: BASE_TOKEN_VIRTUAL_BALANCE });
+                expect(data.averageRates.blockNumber).to.equal(await poolCollection.currentBlockNumber());
+                expect(data.averageRates.rate).to.equal({ n: BNT_VIRTUAL_BALANCE, d: BASE_TOKEN_VIRTUAL_BALANCE });
+                expect(data.averageRates.invRate).to.equal({ n: BASE_TOKEN_VIRTUAL_BALANCE, d: BNT_VIRTUAL_BALANCE });
 
                 expect(await poolCollection.tradingEnabled(token.address)).to.be.true;
 
@@ -702,16 +705,20 @@ describe('PoolCollection', () => {
                     await poolCollection.enableTrading(token.address, bntVirtualBalance, baseTokenVirtualBalance);
 
                     const {
-                        averageRate: { rate }
+                        averageRates: { rate, invRate }
                     } = await poolCollection.poolData(token.address);
 
-                    expect(rate).not.to.equal({ n: bntVirtualBalance, d: baseTokenVirtualBalance });
-                    expect(rate).to.almostEqual(
-                        { n: bntVirtualBalance, d: baseTokenVirtualBalance },
-                        {
-                            maxRelativeError: new Decimal('0.000000000000000000000001')
-                        }
-                    );
+                    const spotRate = { n: bntVirtualBalance, d: baseTokenVirtualBalance };
+                    expect(rate).not.to.equal(spotRate);
+                    expect(rate).to.almostEqual(spotRate, {
+                        maxRelativeError: new Decimal('0.000000000000000000000001')
+                    });
+
+                    const invSpotRate = { n: baseTokenVirtualBalance, d: bntVirtualBalance };
+                    expect(invRate).not.to.equal(invSpotRate);
+                    expect(invRate).to.almostEqual(invSpotRate, {
+                        maxRelativeError: new Decimal('0.000000000000000000000001')
+                    });
                 });
 
                 it('should revert when attempting to enable trading twice', async () => {
@@ -871,20 +878,25 @@ describe('PoolCollection', () => {
 
                 context('with an initialized average rate', () => {
                     beforeEach(async () => {
-                        await poolCollection.setAverageRateT(token.address, {
+                        await poolCollection.setAverageRatesT(token.address, {
                             blockNumber: 1000,
                             rate: {
                                 n: 1234,
                                 d: 100
+                            },
+                            invRate: {
+                                n: 100,
+                                d: 1234
                             }
                         });
 
-                        const data = await poolCollection.poolData(token.address);
-                        const { averageRate } = data;
+                        const { averageRates } = await poolCollection.poolData(token.address);
 
-                        expect(averageRate.blockNumber).to.be.gte(0);
-                        expect(averageRate.rate.n).to.be.gte(0);
-                        expect(averageRate.rate.d).to.be.gte(0);
+                        expect(averageRates.blockNumber).to.be.gte(0);
+                        expect(averageRates.rate.n).to.be.gte(0);
+                        expect(averageRates.rate.d).to.be.gte(0);
+                        expect(averageRates.invRate.n).to.be.gte(0);
+                        expect(averageRates.invRate.d).to.be.gte(0);
                     });
 
                     it('should reset the trading liquidity', async () => {
@@ -1009,7 +1021,7 @@ describe('PoolCollection', () => {
                 ) => {
                     const {
                         tradingEnabled: prevTradingEnabled,
-                        averageRate: prevAverageRate,
+                        averageRates: prevAverageRates,
                         liquidity: prevLiquidity
                     } = await poolCollection.poolData(token.address);
 
@@ -1102,8 +1114,8 @@ describe('PoolCollection', () => {
 
                                 let targetBNTTradingLiquidity = min(
                                     prevLiquidity.baseTokenTradingLiquidity
-                                        .mul(prevAverageRate.rate.n)
-                                        .div(prevAverageRate.rate.d),
+                                        .mul(prevAverageRates.rate.n)
+                                        .div(prevAverageRates.rate.d),
                                     prevLiquidity.bntTradingLiquidity.add(await bntPool.availableFunding(token.address))
                                 );
 
@@ -1195,9 +1207,13 @@ describe('PoolCollection', () => {
                                 stakedBalance: 1
                             });
 
-                            await poolCollection.setAverageRateT(token.address, {
+                            await poolCollection.setAverageRatesT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
                                 rate: {
+                                    n: 1,
+                                    d: 1
+                                },
+                                invRate: {
                                     n: 1,
                                     d: 1
                                 }
@@ -1223,7 +1239,7 @@ describe('PoolCollection', () => {
                                 tokenAmount
                             );
 
-                            const { liquidity, averageRate } = await poolCollection.poolData(token.address);
+                            const { liquidity, averageRates } = await poolCollection.poolData(token.address);
 
                             await expect(res).to.not.emit(poolCollection, 'TradingLiquidityUpdated');
 
@@ -1248,17 +1264,20 @@ describe('PoolCollection', () => {
                                 res
                             );
 
-                            expect(averageRate.rate.n).to.equal(1);
-                            expect(averageRate.rate.d).to.equal(1);
+                            expect(averageRates.rate.n).to.equal(1);
+                            expect(averageRates.rate.d).to.equal(1);
+                            expect(averageRates.invRate.n).to.equal(1);
+                            expect(averageRates.invRate.d).to.equal(1);
                         });
                     });
 
                     context('when the new BNT liquidity for trading is below the minimum liquidity for trading', () => {
-                        context('pool is uninitialized', () => {
+                        context('when pool rates are uninitialized', () => {
                             beforeEach(async () => {
-                                await poolCollection.setAverageRateT(token.address, {
+                                await poolCollection.setAverageRatesT(token.address, {
                                     blockNumber: await poolCollection.currentBlockNumber(),
-                                    rate: { n: 0, d: 1 }
+                                    rate: { n: 0, d: 1 },
+                                    invRate: { n: 0, d: 1 }
                                 });
                             });
 
@@ -1267,19 +1286,47 @@ describe('PoolCollection', () => {
                             });
                         });
 
-                        context('pool is unstable', () => {
+                        context('when pool rates are stable', () => {
                             beforeEach(async () => {
                                 const liquidity = await poolCollection.poolLiquidity(token.address);
 
-                                await poolCollection.setAverageRateT(token.address, {
+                                await poolCollection.setAverageRatesT(token.address, {
                                     blockNumber: await poolCollection.currentBlockNumber(),
                                     rate: {
+                                        n: liquidity.bntTradingLiquidity,
+                                        d: liquidity.baseTokenTradingLiquidity
+                                    },
+                                    invRate: {
                                         n: liquidity.baseTokenTradingLiquidity,
                                         d: liquidity.bntTradingLiquidity
                                     }
                                 });
 
-                                expect(await poolCollection.isPoolRateStable(token.address)).to.be.false;
+                                expect(await poolCollection.isPoolStable(token.address)).to.be.true;
+                            });
+
+                            it('should deposit and update the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            });
+                        });
+
+                        context('when pool rate is unstable', () => {
+                            beforeEach(async () => {
+                                const liquidity = await poolCollection.poolLiquidity(token.address);
+
+                                await poolCollection.setAverageRatesT(token.address, {
+                                    blockNumber: await poolCollection.currentBlockNumber(),
+                                    rate: {
+                                        n: liquidity.bntTradingLiquidity.mul(1_000_000),
+                                        d: liquidity.baseTokenTradingLiquidity
+                                    },
+                                    invRate: {
+                                        n: liquidity.baseTokenTradingLiquidity,
+                                        d: liquidity.bntTradingLiquidity
+                                    }
+                                });
+
+                                expect(await poolCollection.isPoolStable(token.address)).to.be.false;
                             });
 
                             it('should deposit without resetting the trading liquidity', async () => {
@@ -1287,51 +1334,59 @@ describe('PoolCollection', () => {
                             });
                         });
 
-                        context('pool is stable', () => {
+                        context('when pool inverse rate is unstable', () => {
                             beforeEach(async () => {
                                 const liquidity = await poolCollection.poolLiquidity(token.address);
 
-                                await poolCollection.setAverageRateT(token.address, {
+                                await poolCollection.setAverageRatesT(token.address, {
                                     blockNumber: await poolCollection.currentBlockNumber(),
                                     rate: {
                                         n: liquidity.bntTradingLiquidity,
                                         d: liquidity.baseTokenTradingLiquidity
+                                    },
+                                    invRate: {
+                                        n: liquidity.baseTokenTradingLiquidity.mul(1_000_000),
+                                        d: liquidity.bntTradingLiquidity
                                     }
                                 });
 
-                                expect(await poolCollection.isPoolRateStable(token.address)).to.be.true;
+                                expect(await poolCollection.isPoolStable(token.address)).to.be.false;
                             });
 
-                            it('should deposit and update the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            it('should deposit without resetting the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Ignore);
                             });
                         });
                     });
 
-                    context('when the pool is unstable', () => {
-                        const SPOT_RATE = {
-                            n: toWei(1_000_000),
-                            d: toWei(10_000_000)
-                        };
-
+                    context('when pool rate is unstable', () => {
                         beforeEach(async () => {
                             const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
 
+                            const spotRate = {
+                                n: toWei(1_000_000),
+                                d: toWei(10_000_000)
+                            };
+
                             await poolCollection.setTradingLiquidityT(token.address, {
-                                bntTradingLiquidity: SPOT_RATE.n,
-                                baseTokenTradingLiquidity: SPOT_RATE.d,
+                                bntTradingLiquidity: spotRate.n,
+                                baseTokenTradingLiquidity: spotRate.d,
                                 stakedBalance
                             });
 
-                            await poolCollection.setAverageRateT(token.address, {
+                            await poolCollection.setAverageRatesT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
                                 rate: {
-                                    n: SPOT_RATE.n.mul(PPM_RESOLUTION),
-                                    d: SPOT_RATE.d.mul(PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5))
+                                    n: spotRate.n.mul(PPM_RESOLUTION),
+                                    d: spotRate.d.mul(PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5))
+                                },
+                                invRate: {
+                                    n: spotRate.d,
+                                    d: spotRate.n
                                 }
                             });
 
-                            expect(await poolCollection.isPoolRateStable(token.address)).to.be.false;
+                            expect(await poolCollection.isPoolStable(token.address)).to.be.false;
                         });
 
                         it('should deposit liquidity and preserve the trading liquidity', async () => {
@@ -1339,19 +1394,58 @@ describe('PoolCollection', () => {
                         });
                     });
 
-                    context('when the pool is stable', () => {
+                    context('when pool inverse rate is unstable', () => {
+                        beforeEach(async () => {
+                            const { stakedBalance } = await poolCollection.poolLiquidity(token.address);
+
+                            const spotRate = {
+                                n: toWei(1_000_000),
+                                d: toWei(10_000_000)
+                            };
+
+                            await poolCollection.setTradingLiquidityT(token.address, {
+                                bntTradingLiquidity: spotRate.n,
+                                baseTokenTradingLiquidity: spotRate.d,
+                                stakedBalance
+                            });
+
+                            await poolCollection.setAverageRatesT(token.address, {
+                                blockNumber: await poolCollection.currentBlockNumber(),
+                                rate: {
+                                    n: spotRate.n,
+                                    d: spotRate.d
+                                },
+                                invRate: {
+                                    n: spotRate.d.mul(PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5)),
+                                    d: spotRate.n.mul(PPM_RESOLUTION)
+                                }
+                            });
+
+                            expect(await poolCollection.isPoolStable(token.address)).to.be.false;
+                        });
+
+                        it('should deposit liquidity and preserve the trading liquidity', async () => {
+                            await testMultipleDepositsFor(TradingLiquidityState.Ignore);
+                        });
+                    });
+
+                    context('when pool rates are stable', () => {
                         beforeEach(async () => {
                             const liquidity = await poolCollection.poolLiquidity(token.address);
 
-                            await poolCollection.setAverageRateT(token.address, {
+                            await poolCollection.setAverageRatesT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
                                 rate: {
                                     n: liquidity.bntTradingLiquidity,
                                     d: liquidity.baseTokenTradingLiquidity
+                                },
+                                invRate: {
+                                    n: liquidity.baseTokenTradingLiquidity,
+                                    d: liquidity.bntTradingLiquidity
                                 }
                             });
 
-                            expect(await poolCollection.isPoolRateStable(token.address)).to.be.true;
+                            expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                         });
 
                         it('should deposit and update the trading liquidity', async () => {
@@ -1751,7 +1845,7 @@ describe('PoolCollection', () => {
                                 );
                             });
 
-                            // set each one of the average rate components as follows:
+                            // set each one of the average rates components as follows:
                             // 1. slightly below the minimum permitted deviation of the spot rate from the average rate
                             // 2. precisely at the minimum permitted deviation of the spot rate from the average rate
                             // 3. slightly above the minimum permitted deviation of the spot rate from the average rate
@@ -1761,47 +1855,82 @@ describe('PoolCollection', () => {
                             // since the average rate has 2 components, this method simulates 36 different scenarios:
                             // - in some of them, the spot rate is within the permitted deviation from the average rate
                             // - in some of them, the spot rate is outside the permitted deviation from the average rate
-                            for (const ns of [-1, +1]) {
-                                for (const nx of [-1, 0, +1]) {
-                                    for (const ds of [-1, +1]) {
-                                        for (const dx of [-1, 0, +1]) {
-                                            const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
-                                            const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
-                                            const ok = Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
+                            for (const inverseRate of [false, true]) {
+                                context(inverseRate ? 'inverse rate' : 'rate', () => {
+                                    for (const ns of [-1, +1]) {
+                                        for (const nx of [-1, 0, +1]) {
+                                            for (const ds of [-1, +1]) {
+                                                for (const dx of [-1, 0, +1]) {
+                                                    const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
+                                                    const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
+                                                    const ok =
+                                                        Math.abs(nf / df - 1) <=
+                                                        RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
 
-                                            context(`ns=${ns}, nx=${nx}, dx=${dx}`, () => {
-                                                beforeEach(async () => {
-                                                    const liquidity = await poolCollection.poolLiquidity(token.address);
+                                                    context(`ns=${ns}, nx=${nx}, dx=${dx}`, () => {
+                                                        beforeEach(async () => {
+                                                            const liquidity = await poolCollection.poolLiquidity(
+                                                                token.address
+                                                            );
 
-                                                    await poolCollection.setAverageRateT(token.address, {
-                                                        blockNumber: 1,
-                                                        rate: {
-                                                            n: liquidity.bntTradingLiquidity.mul(nf),
-                                                            d: liquidity.baseTokenTradingLiquidity.mul(df)
-                                                        }
+                                                            let rate: Fraction<BigNumber>;
+                                                            let invRate: Fraction<BigNumber>;
+
+                                                            if (inverseRate) {
+                                                                rate = {
+                                                                    n: liquidity.bntTradingLiquidity,
+                                                                    d: liquidity.baseTokenTradingLiquidity
+                                                                };
+
+                                                                invRate = {
+                                                                    n: liquidity.baseTokenTradingLiquidity.mul(nf),
+                                                                    d: liquidity.bntTradingLiquidity.mul(df)
+                                                                };
+                                                            } else {
+                                                                rate = {
+                                                                    n: liquidity.bntTradingLiquidity.mul(nf),
+                                                                    d: liquidity.baseTokenTradingLiquidity.mul(df)
+                                                                };
+
+                                                                invRate = {
+                                                                    n: liquidity.baseTokenTradingLiquidity,
+                                                                    d: liquidity.bntTradingLiquidity
+                                                                };
+                                                            }
+
+                                                            await poolCollection.setAverageRatesT(token.address, {
+                                                                blockNumber: 1,
+                                                                rate,
+                                                                invRate
+                                                            });
+                                                        });
+
+                                                        it(`withdrawal should ${
+                                                            ok ? 'complete' : 'revert'
+                                                        }`, async () => {
+                                                            if (ok) {
+                                                                await testMultipleWithdrawals(
+                                                                    TradingLiquidityState.Update
+                                                                );
+                                                            } else {
+                                                                expect(await poolCollection.isPoolStable(token.address))
+                                                                    .to.be.false;
+
+                                                                await expect(
+                                                                    withdrawAndVerifyState(
+                                                                        totalBasePoolTokenAmount,
+                                                                        withdrawalFeePPM,
+                                                                        TradingLiquidityState.Update
+                                                                    )
+                                                                ).to.be.revertedWith('RateUnstable');
+                                                            }
+                                                        });
                                                     });
-                                                });
-
-                                                it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
-                                                    if (ok) {
-                                                        await testMultipleWithdrawals(TradingLiquidityState.Update);
-                                                    } else {
-                                                        expect(await poolCollection.isPoolRateStable(token.address)).to
-                                                            .be.false;
-
-                                                        await expect(
-                                                            withdrawAndVerifyState(
-                                                                totalBasePoolTokenAmount,
-                                                                withdrawalFeePPM,
-                                                                TradingLiquidityState.Update
-                                                            )
-                                                        ).to.be.revertedWith('RateUnstable');
-                                                    }
-                                                });
-                                            });
+                                                }
+                                            }
                                         }
                                     }
-                                }
+                                });
                             }
                         }
                     );
@@ -1888,9 +2017,10 @@ describe('PoolCollection', () => {
             await poolCollection.requestFundingT(CONTEXT_ID, token.address, bntTradingLiquidity);
             await poolCollection.mintPoolTokenT(token.address, provider.address, poolTokenTotalSupply);
             await poolCollection.setBlockNumber(blockNumber);
-            await poolCollection.setAverageRateT(token.address, {
+            await poolCollection.setAverageRatesT(token.address, {
                 blockNumber,
-                rate: { n: bntTradingLiquidity, d: baseTokenTradingLiquidity }
+                rate: { n: bntTradingLiquidity, d: baseTokenTradingLiquidity },
+                invRate: { n: baseTokenTradingLiquidity, d: bntTradingLiquidity }
             });
 
             await transfer(deployer, token, masterVault, balanceOfMasterVault);
@@ -2532,11 +2662,15 @@ describe('PoolCollection', () => {
 
                             const liquidity = await poolCollection.poolLiquidity(reserveToken.address);
 
-                            await poolCollection.setAverageRateT(reserveToken.address, {
+                            await poolCollection.setAverageRatesT(reserveToken.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
                                 rate: {
                                     n: liquidity.bntTradingLiquidity,
                                     d: liquidity.baseTokenTradingLiquidity
+                                },
+                                invRate: {
+                                    n: liquidity.baseTokenTradingLiquidity,
+                                    d: liquidity.bntTradingLiquidity
                                 }
                             });
 
@@ -2852,9 +2986,9 @@ describe('PoolCollection', () => {
                             ]}) [${blockNumbers}]`,
                             () => {
                                 type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
-                                const expectedAverageRate = (poolData: PoolData, blockNumber: number) => {
-                                    if (blockNumber !== poolData.averageRate.blockNumber) {
-                                        const averageRate = poolData.averageRate.rate;
+                                const expectedAverageRates = (poolData: PoolData, blockNumber: number) => {
+                                    if (blockNumber !== poolData.averageRates.blockNumber) {
+                                        const averageRate = poolData.averageRates.rate;
                                         const spotRate = {
                                             n: poolData.liquidity.bntTradingLiquidity,
                                             d: poolData.liquidity.baseTokenTradingLiquidity
@@ -2868,16 +3002,45 @@ describe('PoolCollection', () => {
                                                 .mul(spotRate.d)
                                                 .mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
                                         };
+
                                         const scale = max(newAverageRate.n, newAverageRate.d)
                                             .sub(1)
                                             .div(BigNumber.from(2).pow(112).sub(1))
                                             .add(1);
+
+                                        const invAverageRate = poolData.averageRates.invRate;
+                                        const invSpotRate = {
+                                            n: poolData.liquidity.baseTokenTradingLiquidity,
+                                            d: poolData.liquidity.bntTradingLiquidity
+                                        };
+                                        const newInvAverageRate = {
+                                            n: invAverageRate.n
+                                                .mul(invSpotRate.d)
+                                                .mul(EMA_AVERAGE_RATE_WEIGHT)
+                                                .add(invAverageRate.d.mul(invSpotRate.n).mul(EMA_SPOT_RATE_WEIGHT)),
+                                            d: invAverageRate.d
+                                                .mul(invSpotRate.d)
+                                                .mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
+                                        };
+                                        const invScale = max(newInvAverageRate.n, newInvAverageRate.d)
+                                            .sub(1)
+                                            .div(BigNumber.from(2).pow(112).sub(1))
+                                            .add(1);
+
                                         return {
                                             blockNumber,
-                                            rate: { n: newAverageRate.n.div(scale), d: newAverageRate.d.div(scale) }
+                                            rate: {
+                                                n: newAverageRate.n.div(scale),
+                                                d: newAverageRate.d.div(scale)
+                                            },
+                                            invRate: {
+                                                n: newInvAverageRate.n.div(invScale),
+                                                d: newInvAverageRate.d.div(invScale)
+                                            }
                                         };
                                     }
-                                    return poolData.averageRate;
+
+                                    return poolData.averageRates;
                                 };
 
                                 const expectedNetworkFeeAmount = (
@@ -2938,9 +3101,10 @@ describe('PoolCollection', () => {
                                     const baseTokenTradingLiquidity = isSourceBNT ? targetBalance : sourceBalance;
                                     await setTradingLiquidity(bntTradingLiquidity, baseTokenTradingLiquidity);
 
-                                    await poolCollection.setAverageRateT(reserveToken.address, {
+                                    await poolCollection.setAverageRatesT(reserveToken.address, {
                                         blockNumber: 0,
-                                        rate: { n: bntTradingLiquidity, d: baseTokenTradingLiquidity }
+                                        rate: { n: bntTradingLiquidity, d: baseTokenTradingLiquidity },
+                                        invRate: { n: baseTokenTradingLiquidity, d: bntTradingLiquidity }
                                     });
 
                                     await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
@@ -3101,15 +3265,16 @@ describe('PoolCollection', () => {
                                             expect(liquidity.bntTradingLiquidity).to.equal(newBNTTradingLiquidity);
                                         }
 
-                                        // verify that the average rate has been updated
-                                        const expectedNewAverageRate = await expectedAverageRate(
+                                        // verify that the average rates have been updated
+                                        const expectedNewAverageRates = await expectedAverageRates(
                                             prevPoolData,
                                             blockNumber
                                         );
-                                        expect(poolData.averageRate.blockNumber).to.equal(
-                                            expectedNewAverageRate.blockNumber
+                                        expect(poolData.averageRates.blockNumber).to.equal(
+                                            expectedNewAverageRates.blockNumber
                                         );
-                                        expect(poolData.averageRate.rate).to.equal(expectedNewAverageRate.rate);
+                                        expect(poolData.averageRates.rate).to.equal(expectedNewAverageRates.rate);
+                                        expect(poolData.averageRates.invRate).to.equal(expectedNewAverageRates.invRate);
                                     }
                                 });
 
@@ -3269,15 +3434,16 @@ describe('PoolCollection', () => {
                                             expect(liquidity.bntTradingLiquidity).to.equal(newBNTTradingLiquidity);
                                         }
 
-                                        // verify that the average rate has been updated
-                                        const expectedNewAverageRate = await expectedAverageRate(
+                                        // verify that the average rates have been updated
+                                        const expectedNewAverageRates = await expectedAverageRates(
                                             prevPoolData,
                                             blockNumber
                                         );
-                                        expect(poolData.averageRate.blockNumber).to.equal(
-                                            expectedNewAverageRate.blockNumber
+                                        expect(poolData.averageRates.blockNumber).to.equal(
+                                            expectedNewAverageRates.blockNumber
                                         );
-                                        expect(poolData.averageRate.rate).to.equal(expectedNewAverageRate.rate);
+                                        expect(poolData.averageRates.rate).to.equal(expectedNewAverageRates.rate);
+                                        expect(poolData.averageRates.invRate).to.equal(expectedNewAverageRates.invRate);
                                     }
                                 });
                             }

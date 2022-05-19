@@ -681,13 +681,33 @@ describe('BancorNetworkInfo', () => {
 
                     const liquidity = await poolCollection.poolLiquidity(pool);
 
-                    await poolCollection.setAverageRateT(pool, {
+                    await poolCollection.setAverageRatesT(pool, {
                         blockNumber: await poolCollection.currentBlockNumber(),
                         rate: {
                             n: liquidity.bntTradingLiquidity.mul(PPM_RESOLUTION),
                             d: liquidity.baseTokenTradingLiquidity.mul(
                                 PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5)
                             )
+                        },
+                        invRate: {
+                            n: liquidity.baseTokenTradingLiquidity,
+                            d: liquidity.bntTradingLiquidity
+                        }
+                    });
+
+                    expect(await networkInfo.isPoolStable(pool)).to.be.false;
+
+                    await poolCollection.setAverageRatesT(pool, {
+                        blockNumber: await poolCollection.currentBlockNumber(),
+                        rate: {
+                            n: liquidity.bntTradingLiquidity,
+                            d: liquidity.baseTokenTradingLiquidity
+                        },
+                        invRate: {
+                            n: liquidity.baseTokenTradingLiquidity.mul(
+                                PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM + toPPM(0.5)
+                            ),
+                            d: liquidity.bntTradingLiquidity.mul(PPM_RESOLUTION)
                         }
                     });
 

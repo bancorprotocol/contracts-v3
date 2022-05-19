@@ -18,10 +18,19 @@ function zeroFraction112() pure returns (Fraction112 memory) {
  * @dev this library provides a set of fraction operations
  */
 library FractionLibrary {
+    error InvalidFraction();
+
     /**
      * @dev returns whether a standard fraction is valid
      */
     function isValid(Fraction memory fraction) internal pure returns (bool) {
+        return fraction.d != 0;
+    }
+
+    /**
+     * @dev returns whether a 112-bit fraction is valid
+     */
+    function isValid(Fraction112 memory fraction) internal pure returns (bool) {
         return fraction.d != 0;
     }
 
@@ -33,17 +42,36 @@ library FractionLibrary {
     }
 
     /**
-     * @dev returns whether a 112-bit fraction is valid
-     */
-    function isValid(Fraction112 memory fraction) internal pure returns (bool) {
-        return fraction.d != 0;
-    }
-
-    /**
      * @dev returns whether a 112-bit fraction is positive
      */
     function isPositive(Fraction112 memory fraction) internal pure returns (bool) {
         return isValid(fraction) && fraction.n != 0;
+    }
+
+    /**
+     * @dev returns the inverse of a given fraction
+     */
+    function inverse(Fraction memory fraction) internal pure returns (Fraction memory) {
+        Fraction memory invFraction = Fraction({ n: fraction.d, d: fraction.n });
+
+        if (!isValid(invFraction)) {
+            revert InvalidFraction();
+        }
+
+        return invFraction;
+    }
+
+    /**
+     * @dev returns the inverse of a given fraction
+     */
+    function inverse(Fraction112 memory fraction) internal pure returns (Fraction112 memory) {
+        Fraction112 memory invFraction = Fraction112({ n: fraction.d, d: fraction.n });
+
+        if (!isValid(invFraction)) {
+            revert InvalidFraction();
+        }
+
+        return invFraction;
     }
 
     /**

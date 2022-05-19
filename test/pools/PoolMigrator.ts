@@ -210,7 +210,14 @@ describe('PoolMigrator', () => {
                 expect(newPoolData.tradingFeePPM).to.equal(poolData.tradingFeePPM);
                 expect(newPoolData.tradingEnabled).to.equal(poolData.tradingEnabled);
                 expect(newPoolData.depositingEnabled).to.equal(poolData.depositingEnabled);
-                expect(newPoolData.averageRate).to.deep.equal(poolData.averageRate);
+                expect(newPoolData.averageRates).to.deep.equal({
+                    blockNumber: poolData.averageRate.blockNumber,
+                    rate: poolData.averageRate.rate,
+                    invRate: {
+                        n: poolData.liquidity.baseTokenTradingLiquidity,
+                        d: poolData.liquidity.bntTradingLiquidity
+                    }
+                });
                 expect(newPoolData.liquidity).to.deep.equal(poolData.liquidity);
 
                 poolData = await prevPoolCollection.poolData(reserveToken.address);

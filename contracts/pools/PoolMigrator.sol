@@ -3,12 +3,12 @@ pragma solidity 0.8.13;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { Pool, PoolLiquidity, IPoolCollection, AverageRate } from "./interfaces/IPoolCollection.sol";
+import { Pool, PoolLiquidity, IPoolCollection, AverageRates } from "./interfaces/IPoolCollection.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction } from "../utility/FractionLibrary.sol";
+import { FractionLibrary, Fraction, Fraction112 } from "../utility/FractionLibrary.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
 import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
@@ -18,12 +18,17 @@ interface IPoolCollectionBase {
 }
 
 interface IPoolCollectionV2 is IPoolCollectionBase {
+    struct AverageRateV2 {
+        uint32 blockNumber;
+        Fraction112 rate;
+    }
+
     struct PoolV2 {
         IPoolToken poolToken; // the pool token of a given pool
         uint32 tradingFeePPM; // the trading fee (in units of PPM)
         bool tradingEnabled; // whether trading is enabled
         bool depositingEnabled; // whether depositing is enabled
-        AverageRate averageRate; // the recent average rate
+        AverageRateV2 averageRate; // the recent average rate
         uint256 depositLimit; // the deposit limit
         PoolLiquidity liquidity; // the overall liquidity in the pool
     }
@@ -35,6 +40,9 @@ interface IPoolCollectionV2 is IPoolCollectionBase {
  * @dev Pool Migrator contract
  */
 contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
+    using FractionLibrary for Fraction;
+    using FractionLibrary for Fraction112;
+
     error UnsupportedVersion();
 
     IPoolCollection private constant INVALID_POOL_COLLECTION = IPoolCollection(address(0));
@@ -136,6 +144,8 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
         IPoolCollection targetPoolCollection
     ) private {
         IPoolCollectionV2.PoolV2 memory data = sourcePoolCollection.poolData(pool);
+        IPoolCollectionV2.AverageRateV2 memory averageRate = data.averageRate;
+        PoolLiquidity memory liquidity = data.liquidity;
 
         // since the latest pool collection is also v2, currently not additional pre- or post-processing is needed
         Pool memory newData = Pool({
@@ -143,11 +153,16 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
             tradingFeePPM: data.tradingFeePPM,
             tradingEnabled: data.tradingEnabled,
             depositingEnabled: data.depositingEnabled,
-            averageRate: data.averageRate,
+            averageRates: AverageRates({
+                blockNumber: averageRate.blockNumber,
+                rate: averageRate.rate,
+                invRate: Fraction({ n: liquidity.baseTokenTradingLiquidity, d: liquidity.bntTradingLiquidity })
+                    .toFraction112()
+            }),
             liquidity: PoolLiquidity({
-                bntTradingLiquidity: data.liquidity.bntTradingLiquidity,
-                baseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity,
-                stakedBalance: data.liquidity.stakedBalance
+                bntTradingLiquidity: liquidity.bntTradingLiquidity,
+                baseTokenTradingLiquidity: liquidity.baseTokenTradingLiquidity,
+                stakedBalance: liquidity.stakedBalance
             })
         });
 
