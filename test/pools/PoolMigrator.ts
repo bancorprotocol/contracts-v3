@@ -14,8 +14,9 @@ import Contracts, {
 } from '../../components/Contracts';
 import LegacyContractsV3, { PoolCollectionType1V2 } from '../../components/LegacyContractsV3';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
+import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createPool, createPoolCollection, createSystem, createTestToken } from '../helpers/Factory';
+import { createPool, createPoolCollection, createSystem, createTestToken, depositToPool } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -71,6 +72,13 @@ describe('PoolMigrator', () => {
         let poolToken: PoolToken;
         let reserveToken: TestERC20Token;
 
+        const BNT_VIRTUAL_BALANCE = 1;
+        const BASE_TOKEN_VIRTUAL_BALANCE = 2;
+        const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
+        const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
+            .div(BNT_VIRTUAL_BALANCE)
+            .mul(1000);
+
         beforeEach(async () => {
             ({
                 network,
@@ -84,6 +92,8 @@ describe('PoolMigrator', () => {
             } = await createSystem());
 
             reserveToken = await createTestToken();
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
             prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V2.deploy(
                 network.address,
@@ -105,7 +115,16 @@ describe('PoolMigrator', () => {
                 prevPoolCollection as any as IPoolCollection
             );
 
+            await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
             await prevPoolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
+
+            await depositToPool(deployer, reserveToken, INITIAL_LIQUIDITY, network);
+
+            await prevPoolCollection.enableTrading(
+                reserveToken.address,
+                BNT_VIRTUAL_BALANCE,
+                BASE_TOKEN_VIRTUAL_BALANCE
+            );
         });
 
         it('should revert when attempting to migrate from a non-network', async () => {
@@ -210,14 +229,14 @@ describe('PoolMigrator', () => {
                 expect(newPoolData.tradingFeePPM).to.equal(poolData.tradingFeePPM);
                 expect(newPoolData.tradingEnabled).to.equal(poolData.tradingEnabled);
                 expect(newPoolData.depositingEnabled).to.equal(poolData.depositingEnabled);
-                expect(newPoolData.averageRates).to.deep.equal({
-                    blockNumber: poolData.averageRate.blockNumber,
-                    rate: poolData.averageRate.rate,
-                    invRate: {
-                        n: poolData.liquidity.baseTokenTradingLiquidity,
-                        d: poolData.liquidity.bntTradingLiquidity
-                    }
+
+                expect(newPoolData.averageRates.blockNumber).to.equal(poolData.averageRate.blockNumber);
+                expect(newPoolData.averageRates.rate).to.deep.equal(poolData.averageRate.rate);
+                expect(newPoolData.averageRates.invRate).to.deep.equal({
+                    n: poolData.liquidity.baseTokenTradingLiquidity,
+                    d: poolData.liquidity.bntTradingLiquidity
                 });
+
                 expect(newPoolData.liquidity).to.deep.equal(poolData.liquidity);
 
                 poolData = await prevPoolCollection.poolData(reserveToken.address);
