@@ -638,12 +638,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         returns (uint256)
     {
         Pool storage data = _poolStorage(pool);
+        PoolLiquidity memory liquidity = data.liquidity;
 
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
         uint256 underlyingAmount = _poolTokenToUnderlying(
             poolTokenAmount,
             poolTokenTotalSupply,
-            data.liquidity.stakedBalance
+            liquidity.stakedBalance
         );
 
         if (reserveTokenAmount > underlyingAmount) {
@@ -653,9 +654,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // obtain the withdrawal amounts
         InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(
             pool,
-            data,
             poolTokenAmount,
             reserveTokenAmount,
+            liquidity,
+            data.tradingFeePPM,
             poolTokenTotalSupply
         );
 
@@ -676,19 +678,21 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         returns (WithdrawalAmounts memory)
     {
         Pool storage data = _poolData[pool];
+        PoolLiquidity memory liquidity = data.liquidity;
 
         uint256 poolTokenTotalSupply = data.poolToken.totalSupply();
         uint256 underlyingAmount = _poolTokenToUnderlying(
             poolTokenAmount,
             poolTokenTotalSupply,
-            data.liquidity.stakedBalance
+            liquidity.stakedBalance
         );
 
         InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(
             pool,
-            data,
             poolTokenAmount,
             underlyingAmount,
+            liquidity,
+            data.tradingFeePPM,
             poolTokenTotalSupply
         );
 
@@ -890,23 +894,23 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function _poolWithdrawalAmounts(
         Token pool,
-        Pool memory data,
         uint256 poolTokenAmount,
         uint256 baseTokensWithdrawalAmount,
+        PoolLiquidity memory liquidity,
+        uint32 poolTradingFeePPM,
         uint256 poolTokenTotalSupply
     ) internal view returns (InternalWithdrawalAmounts memory) {
         // the base token trading liquidity of a given pool can never be higher than the base token balance of the vault
         // whenever the base token trading liquidity is updated, it is set to at most the base token balance of the vault
-        uint256 baseTokenExcessAmount = pool.balanceOf(address(_masterVault)) -
-            data.liquidity.baseTokenTradingLiquidity;
+        uint256 baseTokenExcessAmount = pool.balanceOf(address(_masterVault)) - liquidity.baseTokenTradingLiquidity;
 
         PoolCollectionWithdrawal.Output memory output = PoolCollectionWithdrawal.calculateWithdrawalAmounts(
-            data.liquidity.bntTradingLiquidity,
-            data.liquidity.baseTokenTradingLiquidity,
+            liquidity.bntTradingLiquidity,
+            liquidity.baseTokenTradingLiquidity,
             baseTokenExcessAmount,
-            data.liquidity.stakedBalance,
+            liquidity.stakedBalance,
             pool.balanceOf(address(_externalProtectionVault)),
-            data.tradingFeePPM,
+            poolTradingFeePPM,
             _networkSettings.withdrawalFeePPM(),
             baseTokensWithdrawalAmount
         );
@@ -924,11 +928,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 poolTokenAmount: poolTokenAmount,
                 poolTokenTotalSupply: poolTokenTotalSupply,
                 newBaseTokenTradingLiquidity: output.r.isNeg
-                    ? data.liquidity.baseTokenTradingLiquidity - output.r.value
-                    : data.liquidity.baseTokenTradingLiquidity + output.r.value,
+                    ? liquidity.baseTokenTradingLiquidity - output.r.value
+                    : liquidity.baseTokenTradingLiquidity + output.r.value,
                 newBNTTradingLiquidity: output.p.isNeg
-                    ? data.liquidity.bntTradingLiquidity - output.p.value
-                    : data.liquidity.bntTradingLiquidity + output.p.value
+                    ? liquidity.bntTradingLiquidity - output.p.value
+                    : liquidity.bntTradingLiquidity + output.p.value
             });
     }
 

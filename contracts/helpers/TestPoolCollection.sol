@@ -67,13 +67,17 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         uint256 poolTokenAmount,
         uint256 baseTokensWithdrawalAmount
     ) external view returns (InternalWithdrawalAmounts memory) {
+        Pool storage data = _poolData[pool];
+        PoolLiquidity memory liquidity = data.liquidity;
+
         return
             _poolWithdrawalAmounts(
                 pool,
-                _poolData[pool],
                 poolTokenAmount,
                 baseTokensWithdrawalAmount,
-                _poolData[pool].poolToken.totalSupply()
+                liquidity,
+                data.tradingFeePPM,
+                data.poolToken.totalSupply()
             );
     }
 
