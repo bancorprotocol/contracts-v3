@@ -593,21 +593,18 @@ import { getNamedAccounts } from 'hardhat';
                     });
 
                     it('should migrate positions from V2', async () => {
-                        // add some BNT to the V2 ETH-BNT pool
-                        const bntAmount = toWei(100);
-
-                        // increase the funding limit of the V2 ETH-BNT pool
-                        const currentMintLimit = await liquidityProtectionSettings.networkTokenMintingLimits(
-                            anchor.address
-                        );
-
+                        // ensure that there is enough space to perform the test
                         await liquidityProtectionSettings
                             .connect(deployer)
-                            .setNetworkTokenMintingLimit(anchor.address, currentMintLimit.add(bntAmount));
+                            .setNetworkTokenMintingLimit(anchor.address, MAX_UINT256.div(2));
 
                         const initialTotalSupply = await bnt.totalSupply();
 
+                        // add some BNT to the V2 ETH-BNT pool
+                        const bntAmount = toWei(100);
+
                         await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
+
                         const id1 = await liquidityProtection
                             .connect(bntWhale)
                             .callStatic.addLiquidity(anchor.address, bnt.address, bntAmount);
