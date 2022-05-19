@@ -665,10 +665,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         CompletedWithdrawal memory completedRequest = _pendingWithdrawals.completeWithdrawal(contextId, provider, id);
 
         if (completedRequest.poolToken == _bntPoolToken) {
-            return _withdrawBNT(contextId, provider, _pendingWithdrawals, completedRequest);
+            return _withdrawBNT(contextId, provider, completedRequest);
         }
 
-        return _withdrawBaseToken(contextId, provider, _pendingWithdrawals, completedRequest);
+        return _withdrawBaseToken(contextId, provider, completedRequest);
     }
 
     /**
@@ -1060,14 +1060,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _withdrawBNT(
         bytes32 contextId,
         address provider,
-        IPendingWithdrawals pendingWithdrawals,
         CompletedWithdrawal memory completedRequest
     ) private returns (uint256) {
         IBNTPool cachedBNTPool = _bntPool;
 
         // transfer the pool tokens to from the pending withdrawals contract to the BNT pool
         completedRequest.poolToken.transferFrom(
-            address(pendingWithdrawals),
+            address(_pendingWithdrawals),
             address(cachedBNTPool),
             completedRequest.poolTokenAmount
         );
@@ -1091,7 +1090,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function _withdrawBaseToken(
         bytes32 contextId,
         address provider,
-        IPendingWithdrawals pendingWithdrawals,
         CompletedWithdrawal memory completedRequest
     ) private returns (uint256) {
         Token pool = completedRequest.poolToken.reserveToken();
@@ -1101,7 +1099,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // transfer the pool tokens to from the pending withdrawals contract to the pool collection
         completedRequest.poolToken.transferFrom(
-            address(pendingWithdrawals),
+            address(_pendingWithdrawals),
             address(poolCollection),
             completedRequest.poolTokenAmount
         );
