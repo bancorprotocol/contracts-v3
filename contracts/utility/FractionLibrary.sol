@@ -79,6 +79,7 @@ library FractionLibrary {
      */
     function toFraction112(Fraction memory fraction) internal pure returns (Fraction112 memory) {
         Fraction memory reducedFraction = MathEx.reducedFraction(fraction, type(uint112).max);
+
         return Fraction112({ n: uint112(reducedFraction.n), d: uint112(reducedFraction.d) });
     }
 
