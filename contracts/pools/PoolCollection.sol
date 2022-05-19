@@ -628,13 +628,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         address provider,
         Token pool,
         uint256 poolTokenAmount,
-        uint256 reserveTokenAmount
+        uint256 baseTokenAmount
     )
         external
         only(address(_network))
         validAddress(provider)
         greaterThanZero(poolTokenAmount)
-        greaterThanZero(reserveTokenAmount)
+        greaterThanZero(baseTokenAmount)
         returns (uint256)
     {
         Pool storage data = _poolStorage(pool);
@@ -647,7 +647,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             liquidity.stakedBalance
         );
 
-        if (reserveTokenAmount > underlyingAmount) {
+        if (baseTokenAmount > underlyingAmount) {
             revert InvalidParam();
         }
 
@@ -655,7 +655,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(
             pool,
             poolTokenAmount,
-            reserveTokenAmount,
+            baseTokenAmount,
             liquidity,
             data.tradingFeePPM,
             poolTokenTotalSupply

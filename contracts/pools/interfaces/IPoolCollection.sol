@@ -163,7 +163,7 @@ interface IPoolCollection is IVersioned {
         address provider,
         Token pool,
         uint256 poolTokenAmount,
-        uint256 reserveTokenAmount
+        uint256 baseTokenAmount
     ) external returns (uint256);
 
     /**
