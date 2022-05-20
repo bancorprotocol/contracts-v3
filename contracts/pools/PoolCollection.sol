@@ -606,9 +606,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             _networkSettings.minLiquidityForTrading()
         );
 
-        // if trading is enabled, then update the recent average rate
+        // if trading is enabled, then update the recent average rates
         if (data.tradingEnabled) {
-            _updateAverageRate(
+            _updateAverageRates(
                 data,
                 Fraction({ n: data.liquidity.bntTradingLiquidity, d: data.liquidity.baseTokenTradingLiquidity })
             );
@@ -677,9 +677,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // execute the actual withdrawal
         _executeWithdrawal(contextId, provider, pool, data, amounts);
 
-        // if trading is enabled, then update the recent average rate
+        // if trading is enabled, then update the recent average rates
         if (data.tradingEnabled) {
-            _updateAverageRate(
+            _updateAverageRates(
                 data,
                 Fraction({ n: data.liquidity.bntTradingLiquidity, d: data.liquidity.baseTokenTradingLiquidity })
             );
@@ -1612,7 +1612,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         pure
         returns (Fraction112 memory)
     {
-        if (spotRate.n * averageRate.d == spotRate.d * averageRate.n) {
+        if (poolRate.n * averageRate.d == poolRate.d * averageRate.n) {
             return averageRate;
         }
 
