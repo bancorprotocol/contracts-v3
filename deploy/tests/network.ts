@@ -219,8 +219,8 @@ import { getNamedAccounts } from 'hardhat';
         const stabilizePool = async (pool: string, tokenWhale: SignerWithAddress) => {
             while (true) {
                 const poolData = await poolCollection.poolData(pool);
-                const { averageRate, liquidity } = poolData;
-                const { rate: emaRate } = averageRate;
+                const { averageRates, liquidity } = poolData;
+                const { rate: emaRate } = averageRates;
                 const spotRate = { n: liquidity.bntTradingLiquidity, d: liquidity.baseTokenTradingLiquidity };
 
                 if (isInRange(emaRate, spotRate, RATE_MAX_DEVIATION_PPM)) {

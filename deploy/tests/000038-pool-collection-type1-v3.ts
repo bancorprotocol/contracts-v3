@@ -107,7 +107,14 @@ describeDeployment(
                 expect(newPoolData.tradingFeePPM).to.equal(prevPoolData.tradingFeePPM);
                 expect(newPoolData.tradingEnabled).to.equal(prevPoolData.tradingEnabled);
                 expect(newPoolData.depositingEnabled).to.equal(prevPoolData.depositingEnabled);
-                expect(newPoolData.averageRate).to.deep.equal(prevPoolData.averageRate);
+
+                expect(newPoolData.averageRates.blockNumber).to.equal(prevPoolData.averageRate.blockNumber);
+                expect(newPoolData.averageRates.rate).to.deep.equal(prevPoolData.averageRate.rate);
+                expect(newPoolData.averageRates.invRate).to.deep.equal({
+                    n: prevPoolData.liquidity.baseTokenTradingLiquidity,
+                    d: prevPoolData.liquidity.bntTradingLiquidity
+                });
+
                 expect(newPoolData.liquidity).to.deep.equal(prevPoolData.liquidity);
             }
 
