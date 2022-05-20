@@ -4101,8 +4101,8 @@ describe('BancorNetwork Financial Verification', () => {
         actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.bntTradingLiquidity, bntDecimals);
         actual.averageRateN = integerToDecimal(poolData.averageRates.rate.n, 0);
         actual.averageRateD = integerToDecimal(poolData.averageRates.rate.d, 0);
-        actual.averageInvRateN = integerToDecimal(poolData.averageRates.rate.n, 0);
-        actual.averageInvRateD = integerToDecimal(poolData.averageRates.rate.d, 0);
+        actual.averageInvRateN = integerToDecimal(poolData.averageRates.invRate.n, 0);
+        actual.averageInvRateD = integerToDecimal(poolData.averageRates.invRate.d, 0);
 
         expect(actual).to.deep.equal(expected);
     };
