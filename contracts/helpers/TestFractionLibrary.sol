@@ -42,7 +42,7 @@ contract TestFractionLibrary {
         return fraction.inverse();
     }
 
-    function inverse112(Fraction memory fraction) external pure returns (Fraction memory) {
+    function inverse112(Fraction112 memory fraction) external pure returns (Fraction112 memory) {
         return fraction.inverse();
     }
 
