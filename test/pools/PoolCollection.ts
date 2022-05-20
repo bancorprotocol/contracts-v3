@@ -151,6 +151,56 @@ describe('PoolCollection', () => {
         }
     };
 
+    const updatedAverageRates = (poolData: AsyncReturnType<TestPoolCollection['poolData']>, blockNumber: number) => {
+        if (blockNumber === poolData.averageRates.blockNumber) {
+            return poolData.averageRates;
+        }
+
+        const averageRate = poolData.averageRates.rate;
+        const spotRate = {
+            n: poolData.liquidity.bntTradingLiquidity,
+            d: poolData.liquidity.baseTokenTradingLiquidity
+        };
+        const newAverageRate = {
+            n: averageRate.n
+                .mul(spotRate.d)
+                .mul(EMA_AVERAGE_RATE_WEIGHT)
+                .add(averageRate.d.mul(spotRate.n).mul(EMA_SPOT_RATE_WEIGHT)),
+            d: averageRate.d.mul(spotRate.d).mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
+        };
+
+        const scale = max(newAverageRate.n, newAverageRate.d).sub(1).div(BigNumber.from(2).pow(112).sub(1)).add(1);
+
+        const invAverageRate = poolData.averageRates.invRate;
+        const invSpotRate = {
+            n: poolData.liquidity.baseTokenTradingLiquidity,
+            d: poolData.liquidity.bntTradingLiquidity
+        };
+        const newInvAverageRate = {
+            n: invAverageRate.n
+                .mul(invSpotRate.d)
+                .mul(EMA_AVERAGE_RATE_WEIGHT)
+                .add(invAverageRate.d.mul(invSpotRate.n).mul(EMA_SPOT_RATE_WEIGHT)),
+            d: invAverageRate.d.mul(invSpotRate.d).mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
+        };
+        const invScale = max(newInvAverageRate.n, newInvAverageRate.d)
+            .sub(1)
+            .div(BigNumber.from(2).pow(112).sub(1))
+            .add(1);
+
+        return {
+            blockNumber,
+            rate: {
+                n: newAverageRate.n.div(scale),
+                d: newAverageRate.d.div(scale)
+            },
+            invRate: {
+                n: newInvAverageRate.n.div(invScale),
+                d: newInvAverageRate.d.div(invScale)
+            }
+        };
+    };
+
     describe('construction', () => {
         let network: TestBancorNetwork;
         let bnt: IERC20;
@@ -1452,6 +1502,47 @@ describe('PoolCollection', () => {
                             await testMultipleDepositsFor(TradingLiquidityState.Update);
                         });
 
+                        it('should update the rates of the pool', async () => {
+                            const currentBlockNumber = await poolCollection.currentBlockNumber();
+
+                            await poolCollection.setAverageRatesT(token.address, {
+                                blockNumber: currentBlockNumber,
+                                rate: {
+                                    n: 1,
+                                    d: 1
+                                },
+                                invRate: {
+                                    n: 1,
+                                    d: 1
+                                }
+                            });
+
+                            const currPoolData = await poolCollection.poolData(token.address);
+                            const { averageRates: currAverageRates } = currPoolData;
+                            const newBlockNumber = currentBlockNumber + 1;
+                            await poolCollection.setBlockNumber(newBlockNumber);
+
+                            await network.depositToPoolCollectionForT(
+                                poolCollection.address,
+                                CONTEXT_ID,
+                                provider.address,
+                                token.address,
+                                toWei(1_000_000)
+                            );
+
+                            const expectedAverageRates = updatedAverageRates(currPoolData, newBlockNumber);
+
+                            const { averageRates: newAverageRates } = await poolCollection.poolData(token.address);
+
+                            expect(newAverageRates.blockNumber).not.to.equal(currAverageRates.blockNumber);
+                            expect(newAverageRates.rate).not.to.equal(currAverageRates.rate);
+                            expect(newAverageRates.invRate).not.to.equal(currAverageRates.invRate);
+
+                            expect(newAverageRates.blockNumber).to.equal(expectedAverageRates.blockNumber);
+                            expect(newAverageRates.rate).to.equal(expectedAverageRates.rate);
+                            expect(newAverageRates.invRate).to.equal(expectedAverageRates.invRate);
+                        });
+
                         context('when the pool funding limit is below the minimum liquidity for trading', () => {
                             beforeEach(async () => {
                                 await networkSettings.setFundingLimit(token.address, MIN_LIQUIDITY_FOR_TRADING.sub(1));
@@ -1825,6 +1916,61 @@ describe('PoolCollection', () => {
                             BNT_VIRTUAL_BALANCE,
                             BASE_TOKEN_VIRTUAL_BALANCE
                         );
+                    });
+
+                    it('should update the rates of the pool', async () => {
+                        expect(await poolCollection.isPoolStable(token.address)).to.be.true;
+
+                        const currentBlockNumber = await poolCollection.currentBlockNumber();
+                        const { averageRates: prevAverageRates } = await poolCollection.poolData(token.address);
+
+                        await poolCollection.setAverageRatesT(token.address, {
+                            blockNumber: await poolCollection.currentBlockNumber(),
+                            rate: {
+                                n: prevAverageRates.rate.n.mul(1000),
+                                d: prevAverageRates.rate.d.mul(1001)
+                            },
+                            invRate: {
+                                n: prevAverageRates.invRate.n.mul(1001),
+                                d: prevAverageRates.invRate.d.mul(1000)
+                            }
+                        });
+
+                        const currPoolData = await poolCollection.poolData(token.address);
+
+                        expect(await poolCollection.isPoolStable(token.address)).to.be.true;
+
+                        const newBlockNumber = currentBlockNumber + 1;
+                        await poolCollection.setBlockNumber(newBlockNumber);
+
+                        const poolTokenAmount = toWei(10);
+                        const reserveTokenAmount = await poolCollection.underlyingToPoolToken(
+                            token.address,
+                            poolTokenAmount
+                        );
+
+                        await poolToken.connect(provider).transfer(poolCollection.address, poolTokenAmount);
+
+                        await network.withdrawFromPoolCollectionT(
+                            poolCollection.address,
+                            CONTEXT_ID,
+                            provider.address,
+                            token.address,
+                            poolTokenAmount,
+                            reserveTokenAmount
+                        );
+
+                        const expectedAverageRates = updatedAverageRates(currPoolData, newBlockNumber);
+
+                        const { averageRates: newAverageRates } = await poolCollection.poolData(token.address);
+
+                        expect(newAverageRates.blockNumber).not.to.equal(prevAverageRates.blockNumber);
+                        expect(newAverageRates.rate).not.to.equal(prevAverageRates.rate);
+                        expect(newAverageRates.invRate).not.to.equal(prevAverageRates.invRate);
+
+                        expect(newAverageRates.blockNumber).to.equal(expectedAverageRates.blockNumber);
+                        expect(newAverageRates.rate).to.equal(expectedAverageRates.rate);
+                        expect(newAverageRates.invRate).to.equal(expectedAverageRates.invRate);
                     });
 
                     context(
@@ -2733,7 +2879,7 @@ describe('PoolCollection', () => {
                                 CONTEXT_ID,
                                 deployer.address,
                                 reserveToken.address,
-                                poolTokenAmount._hex,
+                                poolTokenAmount,
                                 reserveTokenAmount
                             );
 
@@ -2985,64 +3131,6 @@ describe('PoolCollection', () => {
                                 amount
                             ]}) [${blockNumbers}]`,
                             () => {
-                                type PoolData = AsyncReturnType<TestPoolCollection['poolData']>;
-                                const expectedAverageRates = (poolData: PoolData, blockNumber: number) => {
-                                    if (blockNumber !== poolData.averageRates.blockNumber) {
-                                        const averageRate = poolData.averageRates.rate;
-                                        const spotRate = {
-                                            n: poolData.liquidity.bntTradingLiquidity,
-                                            d: poolData.liquidity.baseTokenTradingLiquidity
-                                        };
-                                        const newAverageRate = {
-                                            n: averageRate.n
-                                                .mul(spotRate.d)
-                                                .mul(EMA_AVERAGE_RATE_WEIGHT)
-                                                .add(averageRate.d.mul(spotRate.n).mul(EMA_SPOT_RATE_WEIGHT)),
-                                            d: averageRate.d
-                                                .mul(spotRate.d)
-                                                .mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
-                                        };
-
-                                        const scale = max(newAverageRate.n, newAverageRate.d)
-                                            .sub(1)
-                                            .div(BigNumber.from(2).pow(112).sub(1))
-                                            .add(1);
-
-                                        const invAverageRate = poolData.averageRates.invRate;
-                                        const invSpotRate = {
-                                            n: poolData.liquidity.baseTokenTradingLiquidity,
-                                            d: poolData.liquidity.bntTradingLiquidity
-                                        };
-                                        const newInvAverageRate = {
-                                            n: invAverageRate.n
-                                                .mul(invSpotRate.d)
-                                                .mul(EMA_AVERAGE_RATE_WEIGHT)
-                                                .add(invAverageRate.d.mul(invSpotRate.n).mul(EMA_SPOT_RATE_WEIGHT)),
-                                            d: invAverageRate.d
-                                                .mul(invSpotRate.d)
-                                                .mul(EMA_AVERAGE_RATE_WEIGHT + EMA_SPOT_RATE_WEIGHT)
-                                        };
-                                        const invScale = max(newInvAverageRate.n, newInvAverageRate.d)
-                                            .sub(1)
-                                            .div(BigNumber.from(2).pow(112).sub(1))
-                                            .add(1);
-
-                                        return {
-                                            blockNumber,
-                                            rate: {
-                                                n: newAverageRate.n.div(scale),
-                                                d: newAverageRate.d.div(scale)
-                                            },
-                                            invRate: {
-                                                n: newInvAverageRate.n.div(invScale),
-                                                d: newInvAverageRate.d.div(invScale)
-                                            }
-                                        };
-                                    }
-
-                                    return poolData.averageRates;
-                                };
-
                                 const expectedNetworkFeeAmount = (
                                     targetNetworkFeeAmount: BigNumber,
                                     bntTradingLiquidity: BigNumber,
@@ -3266,10 +3354,7 @@ describe('PoolCollection', () => {
                                         }
 
                                         // verify that the average rates have been updated
-                                        const expectedNewAverageRates = await expectedAverageRates(
-                                            prevPoolData,
-                                            blockNumber
-                                        );
+                                        const expectedNewAverageRates = updatedAverageRates(prevPoolData, blockNumber);
                                         expect(poolData.averageRates.blockNumber).to.equal(
                                             expectedNewAverageRates.blockNumber
                                         );
@@ -3435,10 +3520,7 @@ describe('PoolCollection', () => {
                                         }
 
                                         // verify that the average rates have been updated
-                                        const expectedNewAverageRates = await expectedAverageRates(
-                                            prevPoolData,
-                                            blockNumber
-                                        );
+                                        const expectedNewAverageRates = updatedAverageRates(prevPoolData, blockNumber);
                                         expect(poolData.averageRates.blockNumber).to.equal(
                                             expectedNewAverageRates.blockNumber
                                         );
