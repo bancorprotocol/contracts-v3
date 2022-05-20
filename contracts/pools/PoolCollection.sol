@@ -102,6 +102,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     error InvalidRate();
     error RateUnstable();
     error TradingDisabled();
+    error FundingLimitTooHigh();
 
     uint16 private constant POOL_TYPE = 1;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
@@ -886,6 +887,56 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _removePool(pool);
 
         cachedPoolToken.transferOwnership(address(targetPoolCollection));
+    }
+
+    /**
+     * @dev reduces the trading liquidity of a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function reduceTradingLiquidity(Token pool, uint256 newTradingLiquidity) external onlyOwner {
+        Pool storage data = _poolStorage(pool);
+        PoolLiquidity memory prevLiquidity = data.liquidity;
+        uint256 bntTradingLiquidity = prevLiquidity.bntTradingLiquidity;
+
+        // if the requested trading liquidity is equal to or larger than the current trading liquidity - return
+        if (newTradingLiquidity >= bntTradingLiquidity) {
+            return;
+        }
+
+        bytes32 contextId = keccak256(abi.encodePacked(msg.sender, pool, newTradingLiquidity));
+
+        // if the requested trading liquidity is zero - reset the current trading liquidity and return
+        if (newTradingLiquidity == 0) {
+            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_ADMIN);
+
+            return;
+        }
+
+        // if the requested trading liquidity is smaller than the funding limit - revert (the funding limit should be
+        // decreased below the new value first)
+        if (newTradingLiquidity < _networkSettings.poolFundingLimit(pool)) {
+            revert FundingLimitTooHigh();
+        }
+
+        // deplete the extra amount of funding currently available
+        uint256 renouncedAmount = bntTradingLiquidity - newTradingLiquidity;
+        _bntPool.renounceFunding(contextId, pool, renouncedAmount);
+
+        Fraction memory averageRate = data.averageRates.rate.fromFraction112();
+        uint256 baseTokenTradingLiquidity = prevLiquidity.baseTokenTradingLiquidity;
+
+        // this is safe because we reduce baseTokenTradingLiquidity to baseTokenTradingLiquidity - renouncedAmount / averageRate
+        data.liquidity.baseTokenTradingLiquidity = uint128(
+            (baseTokenTradingLiquidity * averageRate.n - renouncedAmount * averageRate.d) / averageRate.n
+        );
+
+        // this is safe because we reduce bntTradingLiquidity to newTradingLiquidity
+        data.liquidity.bntTradingLiquidity = uint128(newTradingLiquidity);
+
+        _dispatchTradingLiquidityEvents(contextId, pool, prevLiquidity, data.liquidity);
     }
 
     /**

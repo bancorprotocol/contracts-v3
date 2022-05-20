@@ -4028,6 +4028,14 @@ describe('BancorNetwork Financial Verification', () => {
             .tradeBySourceAmount(bnt.address, baseToken.address, wei, 1, MAX_UINT256, users[userId].address);
     };
 
+    const setFundingLimit = async (amount: string) => {
+        await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(amount, bntDecimals));
+    };
+
+    const reduceTradingLiquidity = async (amount: string) => {
+        await poolCollection.reduceTradingLiquidity(baseToken.address, decimalToInteger(amount, bntDecimals));
+    };
+
     const enableTrading = async (bntVirtualBalance: number, baseTokenVirtualBalance: number) => {
         await poolCollection.enableTrading(baseToken.address, bntVirtualBalance, baseTokenVirtualBalance);
     };
@@ -4203,10 +4211,17 @@ describe('BancorNetwork Financial Verification', () => {
                     await tradeBNT(userId, amount);
                     break;
 
+                case 'setFundingLimit':
+                    await setFundingLimit(amount);
+                    break;
+
+                case 'reduceTradingLiquidity':
+                    await reduceTradingLiquidity(amount);
+                    break;
+
                 case 'enableTrading': {
                     const { bntVirtualBalance, baseTokenVirtualBalance } = amount as any;
                     await enableTrading(bntVirtualBalance, baseTokenVirtualBalance);
-
                     break;
                 }
             }
@@ -4235,6 +4250,7 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario3');
         test('BancorNetworkSimpleFinancialScenario4');
         test('BancorNetworkSimpleFinancialScenario5');
+        test('BancorNetworkReduceTradingLiquidity');
     });
 
     describe('@stress test', () => {
