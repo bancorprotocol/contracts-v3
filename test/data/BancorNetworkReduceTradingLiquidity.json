@@ -42,7 +42,9 @@
         "tknTradingLiquidity": "0",
         "bntTradingLiquidity": "0",
         "averageRateN": "0",
-        "averageRateD": "1"
+        "averageRateD": "1",
+        "averageInvRateN": "0",
+        "averageInvRateD": "1"
       }
     },
     {
@@ -76,7 +78,9 @@
         "tknTradingLiquidity": "1000",
         "bntTradingLiquidity": "1000",
         "averageRateN": "1",
-        "averageRateD": "1"
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1"
       }
     },
     {
@@ -107,7 +111,9 @@
         "tknTradingLiquidity": "1000",
         "bntTradingLiquidity": "1000",
         "averageRateN": "1",
-        "averageRateD": "1"
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1"
       }
     },
     {
@@ -138,7 +144,9 @@
         "tknTradingLiquidity": "900",
         "bntTradingLiquidity": "900",
         "averageRateN": "1",
-        "averageRateD": "1"
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1"
       }
     },
     {
@@ -168,8 +176,10 @@
         "bntStakedBalance": "900",
         "tknTradingLiquidity": "1000800",
         "bntTradingLiquidity": "0.809352517985611511",
-        "averageRateN": "4500000000000000000000",
-        "averageRateD": "4500000000000000000000"
+        "averageRateN": "1",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1"
       }
     },
     {
@@ -199,8 +209,10 @@
         "bntStakedBalance": "900",
         "tknTradingLiquidity": "8927.743086529884034486",
         "bntTradingLiquidity": "90.728417266187050359",
-        "averageRateN": "4153838326634935517937894986644093",
-        "averageRateD": "5192296858533843112663574464352049"
+        "averageRateN": "4003200809352517985611511",
+        "averageRateD": "5004000000000000000000000",
+        "averageInvRateN": "1000803237410071942446044",
+        "averageInvRateD": "4046762589928057555"
       }
     },
     {
@@ -230,8 +242,10 @@
         "bntStakedBalance": "900",
         "tknTradingLiquidity": "8927.743086529884034486",
         "bntTradingLiquidity": "90.728417266187050359",
-        "averageRateN": "4153838326634935517937894986644093",
-        "averageRateD": "5192296858533843112663574464352049"
+        "averageRateN": "3333624031211429384779068835798189",
+        "averageRateD": "5192296858534750427642817645417571",
+        "averageInvRateN": "5192296858488006011422252257415496",
+        "averageInvRateD": "26241300508695886131030780990"
       }
     },
     {
@@ -261,8 +275,10 @@
         "bntStakedBalance": "900",
         "tknTradingLiquidity": "8927.743086529884034486",
         "bntTradingLiquidity": "90.728417266187050359",
-        "averageRateN": "4153838326634935517937894986644093",
-        "averageRateD": "5192296858533843112663574464352049"
+        "averageRateN": "3333624031211429384779068835798189",
+        "averageRateD": "5192296858534750427642817645417571",
+        "averageInvRateN": "5192296858488006011422252257415496",
+        "averageInvRateD": "26241300508695886131030780990"
       }
     },
     {
@@ -292,8 +308,10 @@
         "bntStakedBalance": "900",
         "tknTradingLiquidity": "988.923034357368010453",
         "bntTradingLiquidity": "819.072841726618705036",
-        "averageRateN": "3333624031211478950268325306868395",
-        "averageRateD": "5192296858534827628530424814854972"
+        "averageRateN": "2677452594872083605850504852373304",
+        "averageRateD": "5192296858534827628530442007429238",
+        "averageInvRateN": "5192296858534827628527653667403968",
+        "averageInvRateD": "32797548027204449131263349905"
       }
     },
     {
@@ -321,10 +339,12 @@
         "bntCurrentPoolFunding": "880.927158273381294964",
         "tknStakedBalance": "1000097.225691347011596551",
         "bntStakedBalance": "880.927158273381294964",
-        "tknTradingLiquidity": "959.21606822883763875",
+        "tknTradingLiquidity": "951.935691847505359713",
         "bntTradingLiquidity": "800",
-        "averageRateN": "3333624031211478950268325306868395",
-        "averageRateD": "5192296858534827628530424814854972"
+        "averageRateN": "2677452594872083605850504852373304",
+        "averageRateD": "5192296858534827628530442007429238",
+        "averageInvRateN": "5192296858534827628527653667403968",
+        "averageInvRateD": "32797548027204449131263349905"
       }
     }
   ]
