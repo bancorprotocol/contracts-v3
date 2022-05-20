@@ -606,6 +606,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             _networkSettings.minLiquidityForTrading()
         );
 
+        // if trading is enabled, then update the recent average rate
+        if (data.tradingEnabled) {
+            _updateAverageRate(
+                data,
+                Fraction({ n: data.liquidity.bntTradingLiquidity, d: data.liquidity.baseTokenTradingLiquidity })
+            );
+        }
+
         emit TokensDeposited({
             contextId: contextId,
             provider: provider,
@@ -668,6 +676,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // execute the actual withdrawal
         _executeWithdrawal(contextId, provider, pool, data, amounts);
+
+        // if trading is enabled, then update the recent average rate
+        if (data.tradingEnabled) {
+            _updateAverageRate(
+                data,
+                Fraction({ n: data.liquidity.bntTradingLiquidity, d: data.liquidity.baseTokenTradingLiquidity })
+            );
+        }
 
         return amounts.baseTokensToTransferFromMasterVault;
     }
@@ -1118,7 +1134,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function _calcTargetBNTTradingLiquidity(
         uint256 tokenReserveAmount,
         uint256 availableFunding,
-        PoolLiquidity memory liquidity,
+        uint256 bntTradingLiquidity,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
     ) private pure returns (TradingLiquidityAction memory) {
@@ -1127,7 +1143,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // - maximum available BNT trading liquidity (current amount + available funding)
         uint256 targetBNTTradingLiquidity = Math.min(
             MathEx.mulDivF(tokenReserveAmount, fundingRate.n, fundingRate.d),
-            liquidity.bntTradingLiquidity + availableFunding
+            bntTradingLiquidity + availableFunding
         );
 
         // ensure that the target is above the minimum liquidity for trading
@@ -1136,7 +1152,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         }
 
         // calculate the new BNT trading liquidity and cap it by the growth factor
-        if (liquidity.bntTradingLiquidity == 0) {
+        if (bntTradingLiquidity == 0) {
             // if the current BNT trading liquidity is 0, set it to the minimum liquidity for trading (with an
             // additional buffer so that initial trades will be less likely to trigger disabling of trading)
             uint256 newTargetBNTTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
@@ -1147,12 +1163,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             }
 
             targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
-        } else if (targetBNTTradingLiquidity >= liquidity.bntTradingLiquidity) {
+        } else if (targetBNTTradingLiquidity >= bntTradingLiquidity) {
             // if the target is above the current trading liquidity, limit it by factoring the current value up. Please
             // note that if the target is below the current trading liquidity - it will be reduced to it immediately
             targetBNTTradingLiquidity = Math.min(
                 targetBNTTradingLiquidity,
-                liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
+                bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
             );
         }
 
@@ -1191,7 +1207,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         TradingLiquidityAction memory action = _calcTargetBNTTradingLiquidity(
             tokenReserveAmount,
             _bntPool.availableFunding(pool),
-            liquidity,
+            liquidity.bntTradingLiquidity,
             fundingRate,
             minLiquidityForTrading
         );
@@ -1596,6 +1612,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         pure
         returns (Fraction112 memory)
     {
+        if (spotRate.n * averageRate.d == spotRate.d * averageRate.n) {
+            return averageRate;
+        }
+
         return
             MathEx
                 .weightedAverage(averageRate.fromFraction112(), poolRate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
