@@ -3926,8 +3926,8 @@ describe('BancorNetwork Financial Verification', () => {
         bntTradingLiquidity: Decimal;
         averageRateN: Decimal;
         averageRateD: Decimal;
-        invAverageRateN: Decimal;
-        invAverageRateD: Decimal;
+        averageInvRateN: Decimal;
+        averageInvRateD: Decimal;
     }
 
     interface Operation {
@@ -4062,8 +4062,8 @@ describe('BancorNetwork Financial Verification', () => {
             bntTradingLiquidity: new Decimal(0),
             averageRateN: new Decimal(0),
             averageRateD: new Decimal(0),
-            invAverageRateN: new Decimal(0),
-            invAverageRateD: new Decimal(0)
+            averageInvRateN: new Decimal(0),
+            averageInvRateD: new Decimal(0)
         };
 
         for (const userId in users) {
@@ -4101,8 +4101,8 @@ describe('BancorNetwork Financial Verification', () => {
         actual.bntTradingLiquidity = integerToDecimal(poolData.liquidity.bntTradingLiquidity, bntDecimals);
         actual.averageRateN = integerToDecimal(poolData.averageRates.rate.n, 0);
         actual.averageRateD = integerToDecimal(poolData.averageRates.rate.d, 0);
-        actual.invAverageRateN = integerToDecimal(poolData.averageRates.rate.n, 0);
-        actual.invAverageRateD = integerToDecimal(poolData.averageRates.rate.d, 0);
+        actual.averageInvRateN = integerToDecimal(poolData.averageRates.invRate.n, 0);
+        actual.averageInvRateD = integerToDecimal(poolData.averageRates.invRate.d, 0);
 
         expect(actual).to.deep.equal(expected);
     };
