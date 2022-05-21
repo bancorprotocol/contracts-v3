@@ -1658,18 +1658,18 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev calculates the average rate
      */
-    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory poolRate)
+    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory rate)
         private
         pure
         returns (Fraction112 memory)
     {
-        if (poolRate.n * averageRate.d == poolRate.d * averageRate.n) {
+        if (rate.n * averageRate.d == rate.d * averageRate.n) {
             return averageRate;
         }
 
         return
             MathEx
-                .weightedAverage(averageRate.fromFraction112(), poolRate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
+                .weightedAverage(averageRate.fromFraction112(), rate, EMA_AVERAGE_RATE_WEIGHT, EMA_SPOT_RATE_WEIGHT)
                 .toFraction112();
     }
 
