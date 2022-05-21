@@ -167,9 +167,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     );
 
     /**
-     * @dev triggered when a new pool is added
+     * @dev triggered when a pool is created
+     */
+    event PoolCreated(Token indexed pool, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when a new pool is added to a pool collection
      */
     event PoolAdded(Token indexed pool, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when a new pool is removed to a pool collection
+     */
+    event PoolRemoved(Token indexed pool, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when funds are migrated
@@ -510,7 +520,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // add the pool collection to the reverse pool collection lookup
         _collectionByPool[token] = poolCollection;
 
-        emit PoolAdded({ pool: token, poolCollection: poolCollection });
+        emit PoolCreated({ pool: token, poolCollection: poolCollection });
     }
 
     /**
@@ -523,12 +533,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // request the pool migrator to migrate the pool and get the new pool collection it exists in
             IPoolCollection newPoolCollection = _poolMigrator.migratePool(pool);
-            if (newPoolCollection == IPoolCollection(address(0))) {
-                continue;
-            }
+            IPoolCollection prevPoolCollection = _collectionByPool[pool];
 
             // update the mapping between pools and their respective pool collections
             _collectionByPool[pool] = newPoolCollection;
+
+            emit PoolAdded(pool, newPoolCollection);
+            emit PoolRemoved(pool, prevPoolCollection);
         }
     }
 

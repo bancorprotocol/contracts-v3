@@ -218,10 +218,7 @@ describe('PoolMigrator', () => {
 
                 expect(await poolToken.owner()).to.equal(prevPoolCollection.address);
 
-                const res = await network.migratePoolT(poolMigrator.address, reserveToken.address);
-                await expect(res)
-                    .to.emit(poolMigrator, 'PoolMigrated')
-                    .withArgs(reserveToken.address, prevPoolCollection.address, newPoolCollection.address);
+                await network.migratePoolT(poolMigrator.address, reserveToken.address);
 
                 newPoolData = await newPoolCollection.poolData(reserveToken.address);
 

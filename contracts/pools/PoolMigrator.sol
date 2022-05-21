@@ -54,11 +54,6 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     uint256[MAX_GAP - 0] private __gap;
 
     /**
-     * @dev triggered when an existing pool is migrated between pool collections
-     */
-    event PoolMigrated(Token indexed pool, IPoolCollection prevPoolCollection, IPoolCollection newPoolCollection);
-
-    /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(IBancorNetwork initNetwork) validAddress(address(initNetwork)) {
@@ -122,12 +117,6 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
         // migrate all relevant values based on a historical collection version into the new pool collection
         if (prevPoolCollection.version() == 2) {
             _migrateFromV2(pool, IPoolCollectionV2(address(prevPoolCollection)), newPoolCollection);
-
-            emit PoolMigrated({
-                pool: pool,
-                prevPoolCollection: prevPoolCollection,
-                newPoolCollection: newPoolCollection
-            });
 
             return newPoolCollection;
         }

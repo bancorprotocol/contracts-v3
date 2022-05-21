@@ -170,11 +170,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     uint32 private _defaultTradingFeePPM;
 
     /**
-     * @dev triggered when a pool is created
-     */
-    event PoolCreated(IPoolToken indexed poolToken, Token indexed token);
-
-    /**
      * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
@@ -352,8 +347,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         });
 
         _addPool(token, newPool);
-
-        emit PoolCreated({ poolToken: newPoolToken, token: token });
 
         emit TradingEnabled({ pool: token, newStatus: newPool.tradingEnabled, reason: TRADING_STATUS_UPDATE_DEFAULT });
         emit TradingFeePPMUpdated({ pool: token, prevFeePPM: 0, newFeePPM: newPool.tradingFeePPM });

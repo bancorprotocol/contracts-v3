@@ -809,7 +809,7 @@ describe('BancorNetwork', () => {
 
                     const res = await network.createPool(poolType, reserveToken.address);
                     await expect(res)
-                        .to.emit(network, 'PoolAdded')
+                        .to.emit(network, 'PoolCreated')
                         .withArgs(reserveToken.address, poolCollection.address);
 
                     expect(await network.isPoolValid(reserveToken.address)).to.be.true;
@@ -835,7 +835,7 @@ describe('BancorNetwork', () => {
                     const res = await network.createPools(poolType, tokens);
 
                     for (const token of tokens) {
-                        await expect(res).to.emit(network, 'PoolAdded').withArgs(token, poolCollection.address);
+                        await expect(res).to.emit(network, 'PoolCreated').withArgs(token, poolCollection.address);
                         expect(await network.isPoolValid(token)).to.be.true;
                         expect(await network.collectionByPool(token)).to.equal(poolCollection.address);
                         expect(await poolCollection.isPoolValid(token)).to.be.true;
@@ -993,13 +993,20 @@ describe('BancorNetwork', () => {
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(prevPoolCollection.address);
             }
 
-            await network.migratePools(reserveTokenAddresses);
+            const res = await network.migratePools(reserveTokenAddresses);
 
             expect(await prevPoolCollection.poolCount()).to.equal(0);
             expect(await newPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);
 
             for (const reserveTokenAddress of reserveTokenAddresses) {
                 const isNativeToken = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
+
+                await expect(res)
+                    .to.emit(network, 'PoolAdded')
+                    .withArgs(reserveTokenAddress, newPoolCollection.address);
+                await expect(res)
+                    .to.emit(network, 'PoolRemoved')
+                    .withArgs(reserveTokenAddress, prevPoolCollection.address);
 
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(newPoolCollection.address);
 
@@ -1037,7 +1044,7 @@ describe('BancorNetwork', () => {
                 prevTokenBalance = await getBalance(token, deployer);
 
                 let transactionCost = BigNumber.from(0);
-                const res = await tradeBySourceAmount(
+                const res2 = await tradeBySourceAmount(
                     deployer,
                     token,
                     bnt,
@@ -1049,7 +1056,7 @@ describe('BancorNetwork', () => {
                 );
 
                 if (isNativeToken) {
-                    transactionCost = await getTransactionCost(res);
+                    transactionCost = await getTransactionCost(res2);
                 }
 
                 expect(await bnt.balanceOf(deployer.address)).to.be.gte(prevBNTBalance);
@@ -1061,7 +1068,7 @@ describe('BancorNetwork', () => {
                 prevTokenBalance = await getBalance(token, deployer);
 
                 transactionCost = BigNumber.from(0);
-                const res2 = await tradeBySourceAmount(
+                const res3 = await tradeBySourceAmount(
                     deployer,
                     bnt,
                     token,
@@ -1073,7 +1080,7 @@ describe('BancorNetwork', () => {
                 );
 
                 if (isNativeToken) {
-                    transactionCost = await getTransactionCost(res2);
+                    transactionCost = await getTransactionCost(res3);
                 }
 
                 expect(await getBalance(token, deployer)).to.be.gte(prevTokenBalance.sub(transactionCost));

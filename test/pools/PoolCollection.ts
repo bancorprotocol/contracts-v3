@@ -464,9 +464,6 @@ describe('PoolCollection', () => {
                     const pool = await poolCollection.poolData(reserveToken.address);
 
                     await expect(res)
-                        .to.emit(poolCollection, 'PoolCreated')
-                        .withArgs(pool.poolToken, reserveToken.address);
-                    await expect(res)
                         .to.emit(poolCollection, 'TradingFeePPMUpdated')
                         .withArgs(reserveToken.address, 0, pool.tradingFeePPM);
                     await expect(res)
