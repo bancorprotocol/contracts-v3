@@ -177,7 +177,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     event PoolAdded(Token indexed pool, IPoolCollection indexed poolCollection);
 
     /**
-     * @dev triggered when a new pool is removed to a pool collection
+     * @dev triggered when a new pool is removed from a pool collection
      */
     event PoolRemoved(Token indexed pool, IPoolCollection indexed poolCollection);
 
