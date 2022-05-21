@@ -11,17 +11,17 @@ import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVaul
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
-import { IPoolCollection, WithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, PoolLiquidity, WithdrawalAmounts } from "../pools/interfaces/IPoolCollection.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, InvalidToken } from "../utility/Utils.sol";
+import { Utils, InvalidToken, InvalidParam } from "../utility/Utils.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IBancorNetworkInfo } from "./interfaces/IBancorNetworkInfo.sol";
+import { IBancorNetworkInfo, TradingLiquidity } from "./interfaces/IBancorNetworkInfo.sol";
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals } from "./interfaces/IPendingWithdrawals.sol";
@@ -245,8 +245,36 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
+    function stakedBalance(Token pool) external view returns (uint256) {
+        return pool.isEqual(_bnt) ? _bntPool.stakedBalance() : _poolCollection(pool).poolLiquidity(pool).stakedBalance;
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
+    function tradingLiquidity(Token pool) external view returns (TradingLiquidity memory) {
+        if (pool.isEqual(_bnt)) {
+            revert InvalidParam();
+        }
+
+        PoolLiquidity memory liquidity = _poolCollection(pool).poolLiquidity(pool);
+
+        return
+            TradingLiquidity({
+                bntTradingLiquidity: liquidity.bntTradingLiquidity,
+                baseTokenTradingLiquidity: liquidity.baseTokenTradingLiquidity
+            });
+    }
+
+    /**
+     * @inheritdoc IBancorNetworkInfo
+     */
     function tradingFeePPM(Token pool) external view returns (uint32) {
-        return pool.isEqual(_bnt) ? 0 : _poolCollection(pool).tradingFeePPM(pool);
+        if (pool.isEqual(_bnt)) {
+            revert InvalidParam();
+        }
+
+        return _poolCollection(pool).tradingFeePPM(pool);
     }
 
     /**

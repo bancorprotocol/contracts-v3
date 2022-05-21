@@ -636,9 +636,29 @@ describe('BancorNetworkInfo', () => {
                 }
             });
 
+            it('should return the staked balance', async () => {
+                if (tokenData.isBNT()) {
+                    expect(await networkInfo.stakedBalance(pool)).to.equal(await bntPool.stakedBalance());
+                } else {
+                    const { stakedBalance } = await poolCollection.poolLiquidity(pool);
+                    expect(await networkInfo.stakedBalance(pool)).to.equal(stakedBalance);
+                }
+            });
+
+            it('should return the trading liquidities', async () => {
+                if (tokenData.isBNT()) {
+                    await expect(networkInfo.tradingLiquidity(pool)).to.be.revertedWith('InvalidParam');
+                } else {
+                    const liquidity = await poolCollection.poolLiquidity(pool);
+                    const tradingLiquidity = await networkInfo.tradingLiquidity(pool);
+                    expect(tradingLiquidity.bntTradingLiquidity).to.equal(liquidity.bntTradingLiquidity);
+                    expect(tradingLiquidity.baseTokenTradingLiquidity).to.equal(liquidity.baseTokenTradingLiquidity);
+                }
+            });
+
             it('should return the trading fee', async () => {
                 if (tokenData.isBNT()) {
-                    expect(await networkInfo.tradingFeePPM(pool)).to.equal(0);
+                    await expect(networkInfo.tradingFeePPM(pool)).to.be.revertedWith('InvalidParam');
                 } else {
                     expect(await networkInfo.tradingFeePPM(pool)).to.equal(TRADING_FEE_PPM);
 
