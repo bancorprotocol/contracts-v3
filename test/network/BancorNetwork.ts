@@ -4249,7 +4249,6 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario3');
         test('BancorNetworkSimpleFinancialScenario4');
         test('BancorNetworkSimpleFinancialScenario5');
-        test('BancorNetworkReduceTradingLiquidity');
     });
 
     describe('@stress test', () => {
