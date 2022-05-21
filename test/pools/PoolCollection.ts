@@ -51,7 +51,7 @@ import Decimal from 'decimal.js';
 import { BigNumber, BigNumberish, ContractTransaction, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
-const { formatBytes32String, solidityKeccak256 } = utils;
+const { formatBytes32String } = utils;
 
 describe('PoolCollection', () => {
     const BNT_VIRTUAL_BALANCE = 1;
@@ -514,15 +514,12 @@ describe('PoolCollection', () => {
     describe('settings', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let bnt: IERC20;
-        let bntPool: TestBNTPool;
-        let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let newReserveToken: TestERC20Token;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ network, networkSettings, bnt, bntPool, masterVault, poolCollection } = await createSystem());
+            ({ network, networkSettings, poolCollection } = await createSystem());
 
             reserveToken = await createTestToken();
 

@@ -4032,10 +4032,6 @@ describe('BancorNetwork Financial Verification', () => {
         await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(amount, bntDecimals));
     };
 
-    const reduceTradingLiquidity = async (amount: string) => {
-        await poolCollection.reduceTradingLiquidity(baseToken.address, decimalToInteger(amount, bntDecimals));
-    };
-
     const enableTrading = async (bntVirtualBalance: number, baseTokenVirtualBalance: number) => {
         await poolCollection.enableTrading(baseToken.address, bntVirtualBalance, baseTokenVirtualBalance);
     };
@@ -4213,10 +4209,6 @@ describe('BancorNetwork Financial Verification', () => {
 
                 case 'setFundingLimit':
                     await setFundingLimit(amount);
-                    break;
-
-                case 'reduceTradingLiquidity':
-                    await reduceTradingLiquidity(amount);
                     break;
 
                 case 'enableTrading': {
