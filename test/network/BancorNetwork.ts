@@ -811,6 +811,9 @@ describe('BancorNetwork', () => {
                     await expect(res)
                         .to.emit(network, 'PoolCreated')
                         .withArgs(reserveToken.address, poolCollection.address);
+                    await expect(res)
+                        .to.emit(network, 'PoolAdded')
+                        .withArgs(reserveToken.address, poolCollection.address);
 
                     expect(await network.isPoolValid(reserveToken.address)).to.be.true;
                     expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
