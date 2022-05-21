@@ -521,6 +521,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _collectionByPool[token] = poolCollection;
 
         emit PoolCreated({ pool: token, poolCollection: poolCollection });
+        emit PoolAdded({ pool: token, poolCollection: poolCollection });
     }
 
     /**
