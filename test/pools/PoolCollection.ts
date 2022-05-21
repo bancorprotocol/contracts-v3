@@ -515,13 +515,14 @@ describe('PoolCollection', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
         let bnt: IERC20;
+        let bntPool: TestBNTPool;
         let masterVault: MasterVault;
         let poolCollection: TestPoolCollection;
         let newReserveToken: TestERC20Token;
         let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ network, networkSettings, bnt, masterVault, poolCollection } = await createSystem());
+            ({ network, networkSettings, bnt, bntPool, masterVault, poolCollection } = await createSystem());
 
             reserveToken = await createTestToken();
 
@@ -616,183 +617,6 @@ describe('PoolCollection', () => {
                 await expect(res2).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, true);
 
                 expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
-            });
-        });
-
-        describe('reducing the trading liquidity', () => {
-            const bntTradingLiquidity = toWei(1000);
-            const baseTokenTradingLiquidity = toWei(2000);
-            const stakedBalance = toWei(3000);
-            const bntFundingLimit = bntTradingLiquidity.div(2);
-            const newTradingLiquidity = bntTradingLiquidity.add(bntFundingLimit).div(2);
-            const averageRate = { n: 1234, d: 5678 };
-
-            beforeEach(async () => {
-                await transfer(deployer, bnt, masterVault, bntTradingLiquidity);
-
-                await poolCollection.setTradingLiquidityT(reserveToken.address, {
-                    bntTradingLiquidity,
-                    baseTokenTradingLiquidity,
-                    stakedBalance
-                });
-
-                await poolCollection.setAverageRatesT(reserveToken.address, {
-                    blockNumber: 1000,
-                    rate: averageRate,
-                    invRate: { n: averageRate.d, d: averageRate.n }
-                });
-            });
-
-            it('should revert when a non-owner attempts to reduce the trading liquidity', async () => {
-                await expect(
-                    poolCollection.connect(nonOwner).reduceTradingLiquidity(reserveToken.address, newTradingLiquidity)
-                ).to.be.revertedWith('AccessDenied');
-            });
-
-            it('should revert when reducing the trading liquidity for a non-existing pool', async () => {
-                await expect(
-                    poolCollection.reduceTradingLiquidity(newReserveToken.address, newTradingLiquidity)
-                ).to.be.revertedWith('DoesNotExist');
-            });
-
-            it('should revert when the new amount is smaller than the funding limit', async () => {
-                await networkSettings.setFundingLimit(reserveToken.address, bntFundingLimit);
-
-                await expect(
-                    poolCollection.reduceTradingLiquidity(reserveToken.address, bntFundingLimit.sub(1))
-                ).to.be.revertedWith('FundingLimitTooHigh');
-            });
-
-            it('should not reduce the trading liquidity when the new amount is greater or equal to the current trading liquidity', async () => {
-                for (const delta of [0, 1]) {
-                    const prevLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
-
-                    await poolCollection.reduceTradingLiquidity(reserveToken.address, bntTradingLiquidity.add(delta));
-
-                    const liquidity = await poolCollection.poolLiquidity(reserveToken.address);
-                    expect(liquidity.baseTokenTradingLiquidity).to.equal(prevLiquidity.baseTokenTradingLiquidity);
-                    expect(liquidity.bntTradingLiquidity).to.equal(prevLiquidity.bntTradingLiquidity);
-                }
-            });
-
-            describe('reset trading liquidity', () => {
-                const expectReset = async () => {
-                    const prevLiquidity = await poolCollection.poolLiquidity(reserveToken.address);
-                    expect(prevLiquidity.baseTokenTradingLiquidity).to.be.gt(0);
-                    expect(prevLiquidity.bntTradingLiquidity).to.be.gt(0);
-
-                    await poolCollection.reduceTradingLiquidity(reserveToken.address, 0);
-
-                    const liquidity = await poolCollection.poolLiquidity(reserveToken.address);
-                    expect(liquidity.baseTokenTradingLiquidity).to.equal(0);
-                    expect(liquidity.bntTradingLiquidity).to.equal(0);
-                };
-
-                context('when the current funding is smaller than the trading liquidity', () => {
-                    beforeEach(async () => {
-                        await networkSettings.setFundingLimit(reserveToken.address, bntTradingLiquidity.mul(2));
-                        await poolCollection.requestFundingT(
-                            CONTEXT_ID,
-                            reserveToken.address,
-                            bntTradingLiquidity.sub(1)
-                        );
-                    });
-
-                    it('should reset the trading liquidity ', async () => {
-                        await expectReset();
-                    });
-                });
-
-                context('when the current funding is equal to the trading liquidity', () => {
-                    beforeEach(async () => {
-                        await networkSettings.setFundingLimit(reserveToken.address, bntTradingLiquidity.mul(2));
-                        await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, bntTradingLiquidity);
-                    });
-
-                    it('should reset the trading liquidity ', async () => {
-                        await expectReset();
-                    });
-                });
-
-                context('when the current funding is larger than the trading liquidity', () => {
-                    beforeEach(async () => {
-                        await networkSettings.setFundingLimit(reserveToken.address, bntTradingLiquidity.mul(2));
-                        await poolCollection.requestFundingT(
-                            CONTEXT_ID,
-                            reserveToken.address,
-                            bntTradingLiquidity.add(1)
-                        );
-                    });
-
-                    it('should reset the trading liquidity ', async () => {
-                        await expectReset();
-                    });
-                });
-            });
-
-            describe('reduce trading liquidity', () => {
-                const prevLiquidity = {
-                    bntTradingLiquidity,
-                    baseTokenTradingLiquidity,
-                    stakedBalance
-                };
-
-                const expectedLiquidity = {
-                    bntTradingLiquidity: newTradingLiquidity,
-                    baseTokenTradingLiquidity: baseTokenTradingLiquidity
-                        .mul(averageRate.n)
-                        .sub(bntTradingLiquidity.sub(newTradingLiquidity).mul(averageRate.d))
-                        .div(averageRate.n),
-                    stakedBalance
-                };
-
-                beforeEach(async () => {
-                    await networkSettings.setFundingLimit(reserveToken.address, bntFundingLimit);
-                });
-
-                const expectReduce = async () => {
-                    const contextId = solidityKeccak256(
-                        ['address', 'address', 'uint256'],
-                        [deployer.address, reserveToken.address, newTradingLiquidity]
-                    );
-
-                    const res = await poolCollection.reduceTradingLiquidity(reserveToken.address, newTradingLiquidity);
-
-                    await testTradingLiquidityEvents(
-                        reserveToken,
-                        poolCollection,
-                        masterVault,
-                        bnt,
-                        prevLiquidity as PoolLiquidityStructOutput,
-                        expectedLiquidity as PoolLiquidityStructOutput,
-                        contextId,
-                        res
-                    );
-                };
-
-                context('with the funding at the funding limit', () => {
-                    beforeEach(async () => {
-                        await poolCollection.requestFundingT(CONTEXT_ID, reserveToken.address, bntFundingLimit);
-                    });
-
-                    it('should reduce the trading liquidity', async () => {
-                        await expectReduce();
-                    });
-                });
-
-                context('with the funding below the funding limit', () => {
-                    beforeEach(async () => {
-                        await poolCollection.requestFundingT(
-                            CONTEXT_ID,
-                            reserveToken.address,
-                            bntFundingLimit.sub(1000)
-                        );
-                    });
-
-                    it('should reduce the trading liquidity', async () => {
-                        await expectReduce();
-                    });
-                });
             });
         });
     });
