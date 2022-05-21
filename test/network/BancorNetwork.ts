@@ -1005,11 +1005,11 @@ describe('BancorNetwork', () => {
                 const isNativeToken = reserveTokenAddress === NATIVE_TOKEN_ADDRESS;
 
                 await expect(res)
-                    .to.emit(network, 'PoolAdded')
-                    .withArgs(reserveTokenAddress, newPoolCollection.address);
-                await expect(res)
                     .to.emit(network, 'PoolRemoved')
                     .withArgs(reserveTokenAddress, prevPoolCollection.address);
+                await expect(res)
+                    .to.emit(network, 'PoolAdded')
+                    .withArgs(reserveTokenAddress, newPoolCollection.address);
 
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(newPoolCollection.address);
 

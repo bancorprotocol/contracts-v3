@@ -539,8 +539,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             // update the mapping between pools and their respective pool collections
             _collectionByPool[pool] = newPoolCollection;
 
-            emit PoolAdded(pool, newPoolCollection);
             emit PoolRemoved(pool, prevPoolCollection);
+            emit PoolAdded(pool, newPoolCollection);
         }
     }
 
