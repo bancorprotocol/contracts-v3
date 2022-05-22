@@ -14,7 +14,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IPoolTokenFactory } from "../pools/interfaces/IPoolTokenFactory.sol";
 import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
 import { PoolCollection, Pool, PoolLiquidity, InternalWithdrawalAmounts, PoolRateState } from "../pools/PoolCollection.sol";
-import { AverageRate } from "../pools/interfaces/IPoolCollection.sol";
+import { AverageRates } from "../pools/interfaces/IPoolCollection.sol";
 
 import { BlockNumber } from "../utility/BlockNumber.sol";
 
@@ -58,16 +58,26 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         _poolData[pool].liquidity = liquidity;
     }
 
-    function setAverageRateT(Token pool, AverageRate calldata newAverageRate) external {
-        _poolData[pool].averageRate = newAverageRate;
+    function setAverageRatesT(Token pool, AverageRates calldata newAverageRates) external {
+        _poolData[pool].averageRates = newAverageRates;
     }
 
-    function poolWithdrawalAmountsT(Token pool, uint256 poolTokenAmount)
-        external
-        view
-        returns (InternalWithdrawalAmounts memory)
-    {
-        return _poolWithdrawalAmounts(pool, _poolData[pool], poolTokenAmount);
+    function poolWithdrawalAmountsT(
+        Token pool,
+        uint256 poolTokenAmount,
+        uint256 baseTokensWithdrawalAmount
+    ) external view returns (InternalWithdrawalAmounts memory) {
+        Pool storage data = _poolData[pool];
+
+        return
+            _poolWithdrawalAmounts(
+                pool,
+                poolTokenAmount,
+                baseTokensWithdrawalAmount,
+                data.liquidity,
+                data.tradingFeePPM,
+                data.poolToken.totalSupply()
+            );
     }
 
     function mintPoolTokenT(
@@ -84,11 +94,6 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         uint256 bntAmount
     ) external {
         _bntPool.requestFunding(contextId, pool, bntAmount);
-    }
-
-    function isPoolRateStable(Token pool) external view returns (bool) {
-        Pool memory data = _poolData[pool];
-        return _poolRateState(data.liquidity, data.averageRate) == PoolRateState.Stable;
     }
 
     function _blockNumber() internal view virtual override(BlockNumber, TestBlockNumber) returns (uint32) {

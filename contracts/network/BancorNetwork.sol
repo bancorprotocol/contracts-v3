@@ -102,10 +102,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the address of the BNT token governance
     ITokenGovernance private immutable _bntGovernance;
 
-    // the address of the VBNT token
+    // the address of the vBNT token
     IERC20 private immutable _vbnt;
 
-    // the address of the VBNT token governance
+    // the address of the vBNT token governance
     ITokenGovernance private immutable _vbntGovernance;
 
     // the network settings contract
@@ -167,9 +167,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     );
 
     /**
-     * @dev triggered when a new pool is added
+     * @dev triggered when a pool is created
+     */
+    event PoolCreated(Token indexed pool, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when a new pool is added to a pool collection
      */
     event PoolAdded(Token indexed pool, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when a new pool is removed from a pool collection
+     */
+    event PoolRemoved(Token indexed pool, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when funds are migrated
@@ -510,6 +520,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // add the pool collection to the reverse pool collection lookup
         _collectionByPool[token] = poolCollection;
 
+        emit PoolCreated({ pool: token, poolCollection: poolCollection });
         emit PoolAdded({ pool: token, poolCollection: poolCollection });
     }
 
@@ -523,12 +534,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // request the pool migrator to migrate the pool and get the new pool collection it exists in
             IPoolCollection newPoolCollection = _poolMigrator.migratePool(pool);
-            if (newPoolCollection == IPoolCollection(address(0))) {
-                continue;
-            }
+            IPoolCollection prevPoolCollection = _collectionByPool[pool];
 
             // update the mapping between pools and their respective pool collections
             _collectionByPool[pool] = newPoolCollection;
+
+            emit PoolRemoved(pool, prevPoolCollection);
+            emit PoolAdded(pool, newPoolCollection);
         }
     }
 
@@ -1064,20 +1076,23 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         IBNTPool cachedBNTPool = _bntPool;
 
-        // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.effectivePoolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the BNT pool
+        completedRequest.poolToken.transferFrom(
+            address(_pendingWithdrawals),
+            address(cachedBNTPool),
+            completedRequest.poolTokenAmount
+        );
 
-        // transfer VBNT from the caller to the BNT pool
-        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.originalPoolTokenAmount);
+        // transfer vBNT from the caller to the BNT pool
+        _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the BNT pool
         return
             cachedBNTPool.withdraw(
                 contextId,
                 provider,
-                completedRequest.effectivePoolTokenAmount,
-                completedRequest.originalPoolTokenAmount
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
             );
     }
 
@@ -1094,12 +1109,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // approve the pool collection to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(poolCollection), completedRequest.effectivePoolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the pool collection
+        completedRequest.poolToken.transferFrom(
+            address(_pendingWithdrawals),
+            address(poolCollection),
+            completedRequest.poolTokenAmount
+        );
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        return poolCollection.withdraw(contextId, provider, pool, completedRequest.effectivePoolTokenAmount);
+        return
+            poolCollection.withdraw(
+                contextId,
+                provider,
+                pool,
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
+            );
     }
 
     /**

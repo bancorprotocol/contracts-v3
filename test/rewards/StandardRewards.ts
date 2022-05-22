@@ -78,7 +78,7 @@ describe('StandardRewards', () => {
                 // if the pool is the same as the rewards token - don't create a new token for the pool
                 token: poolData.symbol() === rewardsData.symbol() ? rewardsToken : undefined,
                 balance: initialBalance,
-                requestedLiquidity: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
+                requestedFunding: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
                 bntVirtualBalance: 1,
                 baseTokenVirtualBalance: 2
             },
@@ -182,7 +182,7 @@ describe('StandardRewards', () => {
             ).to.be.revertedWith('InvalidAddress');
         });
 
-        it('should revert when attempting to create with an invalid VBNT contract', async () => {
+        it('should revert when attempting to create with an invalid vBNT contract', async () => {
             await expect(
                 Contracts.StandardRewards.deploy(
                     network.address,
@@ -1929,7 +1929,7 @@ describe('StandardRewards', () => {
                     tokenData: rewardsData.rewardsTokenData,
                     token: rewardsData.rewardsToken,
                     balance: INITIAL_BALANCE,
-                    requestedLiquidity: BigNumber.from(INITIAL_BALANCE).mul(1000),
+                    requestedFunding: BigNumber.from(INITIAL_BALANCE).mul(1000),
                     bntVirtualBalance: 1,
                     baseTokenVirtualBalance: 2
                 },

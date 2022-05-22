@@ -49,7 +49,7 @@ describe('Vault', () => {
             );
         });
 
-        it('should revert when attempting to create with an invalid VBNT governance contract', async () => {
+        it('should revert when attempting to create with an invalid vBNT governance contract', async () => {
             await expect(Contracts.TestVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
                 'InvalidAddress'
             );

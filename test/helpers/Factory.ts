@@ -34,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const V1 = 1;
+const V3 = 3;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -215,7 +215,7 @@ export const createPoolCollection = async (
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
-    version: number = V1
+    version: number = V3
 ) =>
     Contracts.TestPoolCollection.deploy(
         version,
@@ -288,8 +288,8 @@ export const createPool = async (
     }
     await network.createPool(await poolCollection.poolType(), reserveToken.address);
 
-    const pool = await poolCollection.poolData(reserveToken.address);
-    return Contracts.PoolToken.attach(pool.poolToken);
+    const poolToken = await poolCollection.poolToken(reserveToken.address);
+    return Contracts.PoolToken.attach(poolToken);
 };
 
 const createNetwork = async (
@@ -439,7 +439,7 @@ export interface PoolSpec {
     tokenData: TokenData;
     token?: TokenWithAddress;
     balance: BigNumberish;
-    requestedLiquidity: BigNumberish;
+    requestedFunding?: BigNumberish;
     bntVirtualBalance: BigNumberish;
     baseTokenVirtualBalance: BigNumberish;
     tradingFeePPM?: number;
@@ -468,7 +468,9 @@ const setupPool = async (
         await createPool(reserveToken, network, networkSettings, poolCollection);
 
         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
-        await poolCollection.requestFundingT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
+        if (spec.requestedFunding) {
+            await poolCollection.requestFundingT(formatBytes32String(''), reserveToken.address, spec.requestedFunding);
+        }
 
         await depositToPool(provider, bnt, spec.balance, network);
 
@@ -479,7 +481,6 @@ const setupPool = async (
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
     await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);
 
     await depositToPool(provider, token, spec.balance, network);
