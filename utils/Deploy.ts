@@ -367,8 +367,9 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    if (!proxy || !proxy.skipInitialization) {
+    if (!proxy) {
         const data = { name, contract: contractName };
+
         await saveTypes(data);
 
         await verifyTenderlyFork({
@@ -431,14 +432,12 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
 
     Logger.log(`  upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
-    const data = { name, contract: contractName };
-    await saveTypes(data);
-
     await verifyTenderlyFork({
+        name,
+        contract: contractName,
         address: res.address,
         proxy: true,
-        implementation: res.implementation,
-        ...data
+        implementation: res.implementation
     });
 
     return res.address;
@@ -536,20 +535,14 @@ interface Deployment {
     address: Address;
     proxy?: boolean;
     implementation?: Address;
-    skipTypechain?: boolean;
     skipVerification?: boolean;
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address, proxy, skipVerification, skipTypechain } = deployment;
+    const { name, contract, address, proxy, skipVerification } = deployment;
 
     const contractName = contract ?? name;
     const { abi } = await getExtendedArtifact(contractName);
-
-    // save the typechain for future use
-    if (!skipTypechain) {
-        await saveTypes({ name, contract: contractName });
-    }
 
     // save the deployment json data in the deployments folder
     await saveContract(name, { abi, address });
