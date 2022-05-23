@@ -87,6 +87,20 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         ]
     });
 
+    // upgrade the BancorNetwork contract
+    await upgradeProxy({
+        name: InstanceName.BancorNetwork,
+        args: [
+            bntGovernance.address,
+            vbntGovernance.address,
+            networkSettings.address,
+            masterVault.address,
+            externalProtectionVault.address,
+            bnBNT.address
+        ],
+        from: deployer
+    });
+
     await execute({
         name: InstanceName.BancorNetwork,
         methodName: 'addPoolCollection',
@@ -109,20 +123,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: InstanceName.BancorNetwork,
         methodName: 'removePoolCollection',
         args: [prevPoolCollection.address, newPoolCollectionAddress],
-        from: deployer
-    });
-
-    // upgrade the BancorNetwork contract
-    await upgradeProxy({
-        name: InstanceName.BancorNetwork,
-        args: [
-            bntGovernance.address,
-            vbntGovernance.address,
-            networkSettings.address,
-            masterVault.address,
-            externalProtectionVault.address,
-            bnBNT.address
-        ],
         from: deployer
     });
 
