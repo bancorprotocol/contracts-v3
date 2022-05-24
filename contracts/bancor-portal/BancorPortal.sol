@@ -84,7 +84,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev triggered after a successful SushiSwap V1 migration
      */
-    event SushiSwapV2PositionMigrated(
+    event SushiSwapV1PositionMigrated(
         address indexed provider,
         IUniswapV2Pair poolToken,
         Token indexed tokenA,
@@ -225,7 +225,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             msg.sender
         );
 
-        emit SushiSwapV2PositionMigrated({
+        emit SushiSwapV1PositionMigrated({
             provider: msg.sender,
             poolToken: res.pair,
             tokenA: res.tokenA,

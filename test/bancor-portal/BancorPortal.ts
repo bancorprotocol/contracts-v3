@@ -584,7 +584,7 @@ describe('BancorPortal', () => {
                 true
             );
             await expect(res)
-                .to.emit(bancorPortal, 'SushiSwapV2PositionMigrated')
+                .to.emit(bancorPortal, 'SushiSwapV1PositionMigrated')
                 .withArgs(
                     user.address,
                     uniswapV2Pair.address,
