@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { Fraction } from "./Fraction.sol";
+import { Fraction, InvalidFraction } from "./Fraction.sol";
 
 import { PPM_RESOLUTION } from "./Constants.sol";
 
@@ -109,7 +109,12 @@ library MathEx {
      */
     function reducedFraction(Fraction memory fraction, uint256 max) internal pure returns (Fraction memory) {
         uint256 scale = Math.ceilDiv(Math.max(fraction.n, fraction.d), max);
-        return Fraction({ n: fraction.n / scale, d: fraction.d / scale });
+        Fraction memory reduced = Fraction({ n: fraction.n / scale, d: fraction.d / scale });
+        if (reduced.d == 0) {
+            revert InvalidFraction();
+        }
+
+        return reduced;
     }
 
     /**

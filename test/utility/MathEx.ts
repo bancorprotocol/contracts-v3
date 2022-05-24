@@ -73,6 +73,12 @@ describe('MathEx', () => {
         });
     };
 
+    const testReducedFractionRevert = (fraction: Fraction<BigNumber>, max: BigNumber) => {
+        it(`reducedFraction(${toString(fraction)}), ${max}) should revert`, async () => {
+            await expect(mathContract.reducedFraction(fraction, max)).to.be.revertedWith('InvalidFraction');
+        });
+    };
+
     const testWeightedAverage = (
         fraction1: Fraction<BigNumber>,
         fraction2: Fraction<BigNumber>,
@@ -219,6 +225,14 @@ describe('MathEx', () => {
                         max,
                         new Decimal('0.000000000000000000000000000000000000003')
                     );
+                }
+            }
+        }
+
+        for (const n of [100, 200]) {
+            for (const d of [2, 3]) {
+                for (const max of [3, 5]) {
+                    testReducedFractionRevert({ n: BigNumber.from(n), d: BigNumber.from(d) }, BigNumber.from(max));
                 }
             }
         }
