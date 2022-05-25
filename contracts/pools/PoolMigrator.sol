@@ -107,7 +107,7 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
         }
 
         // get the latest pool collection corresponding to its type and ensure that a migration is necessary
-        // note that it's currently not possible to add two pool collections with the same version or type
+        // note that it's currently not possible to add two pool collections with the same version and type
         uint16 poolType = prevPoolCollection.poolType();
         IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
         if (address(newPoolCollection) == address(prevPoolCollection)) {
@@ -136,7 +136,6 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
         IPoolCollectionV2.AverageRateV2 memory averageRate = data.averageRate;
         PoolLiquidity memory liquidity = data.liquidity;
 
-        // since the latest pool collection is also v2, currently not additional pre- or post-processing is needed
         Pool memory newData = Pool({
             poolToken: data.poolToken,
             tradingFeePPM: data.tradingFeePPM,

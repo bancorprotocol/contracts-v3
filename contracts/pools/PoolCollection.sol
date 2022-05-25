@@ -107,8 +107,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     uint16 private constant POOL_TYPE = 1;
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
-    uint32 private constant DEFAULT_TRADING_FEE_PPM = 2000; // 0.2%
-    uint32 private constant RATE_MAX_DEVIATION_PPM = 10000; // %1
+    uint32 private constant DEFAULT_TRADING_FEE_PPM = 2_000; // 0.2%
+    uint32 private constant RATE_MAX_DEVIATION_PPM = 10_000; // %1
 
     // the average rate is recalculated based on the ratio between the weights of the rates the smaller the weights are,
     // the larger the supported range of each one of the rates is

@@ -24,7 +24,7 @@ abstract contract Owned is IOwned {
      * @dev initializes the contract
      */
     constructor() {
-        _transferOwnership(msg.sender);
+        _setOwnership(msg.sender);
     }
 
     // solhint-enable func-name-mixedcase
@@ -69,7 +69,7 @@ abstract contract Owned is IOwned {
             revert AccessDenied();
         }
 
-        _transferOwnership(_newOwner);
+        _setOwnership(_newOwner);
     }
 
     /**
@@ -82,7 +82,7 @@ abstract contract Owned is IOwned {
     /**
      * @dev sets the new owner internally
      */
-    function _transferOwnership(address ownerCandidate) private {
+    function _setOwnership(address ownerCandidate) private {
         address prevOwner = _owner;
 
         _owner = ownerCandidate;

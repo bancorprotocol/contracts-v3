@@ -14,7 +14,7 @@ struct WithdrawalRequest {
     address provider; // the liquidity provider
     IPoolToken poolToken; // the locked pool token
     Token reserveToken; // the reserve token to withdraw
-    uint32 createdAt; // the time when the request was created (Unix timestamp))
+    uint32 createdAt; // the time when the request was created (Unix timestamp)
     uint256 poolTokenAmount; // the locked pool token amount
     uint256 reserveTokenAmount; // the expected reserve token amount to withdraw
 }

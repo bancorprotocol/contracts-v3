@@ -124,14 +124,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
         Token token,
         address payable target,
         uint256 amount
-    )
-        external
-        override
-        validAddress(target)
-        nonReentrant
-        whenNotPaused
-        whenAuthorized(msg.sender, token, target, amount)
-    {
+    ) external validAddress(target) nonReentrant whenNotPaused whenAuthorized(msg.sender, token, target, amount) {
         if (amount == 0) {
             return;
         }

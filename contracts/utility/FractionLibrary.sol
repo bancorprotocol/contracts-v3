@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
 
-import { Fraction, Fraction112 } from "./Fraction.sol";
+import { Fraction, Fraction112, InvalidFraction } from "./Fraction.sol";
 import { MathEx } from "./MathEx.sol";
 
 // solhint-disable-next-line func-visibility
@@ -18,8 +18,6 @@ function zeroFraction112() pure returns (Fraction112 memory) {
  * @dev this library provides a set of fraction operations
  */
 library FractionLibrary {
-    error InvalidFraction();
-
     /**
      * @dev returns whether a standard fraction is valid
      */
