@@ -3005,8 +3005,6 @@ describe('PoolCollection', () => {
                                         )
                                     ).to.be.revertedWith('InsufficientLiquidity');
 
-                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         network.tradeByTargetPoolCollectionT(
                                             poolCollection.address,
@@ -3016,7 +3014,7 @@ describe('PoolCollection', () => {
                                             amount,
                                             MAX_SOURCE_AMOUNT
                                         )
-                                    ).to.be.reverted;
+                                    ).to.be.revertedWithError('panic code 0x11');
 
                                     await expect(
                                         poolCollection.tradeOutputAndFeeBySourceAmount(
@@ -3026,15 +3024,13 @@ describe('PoolCollection', () => {
                                         )
                                     ).to.be.revertedWith('InsufficientLiquidity');
 
-                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
                                         )
-                                    ).to.be.reverted;
+                                    ).to.be.revertedWithError('panic code 0x11');
                                 });
                             });
 
@@ -3053,15 +3049,13 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should revert when attempting to query the source amount', async () => {
-                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             targetAmount
                                         )
-                                    ).to.be.reverted;
+                                    ).to.be.revertedWithError('panic code 0x11');
                                 });
 
                                 context('with a trading fee', () => {
@@ -3091,15 +3085,13 @@ describe('PoolCollection', () => {
                                     });
 
                                     it('should revert when attempting to query the source amount', async () => {
-                                        // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                        // error: either division by zero or subtraction underflow
                                         await expect(
                                             poolCollection.tradeInputAndFeeByTargetAmount(
                                                 sourceToken.address,
                                                 targetToken.address,
                                                 targetAmount.add(1)
                                             )
-                                        ).to.be.reverted;
+                                        ).to.be.revertedWithError(isSourceBNT ? 'panic code 0x11' : 'panic code 0x12');
                                     });
                                 });
                             });

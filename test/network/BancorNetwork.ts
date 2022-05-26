@@ -3675,7 +3675,7 @@ describe('BancorNetwork', () => {
             it('should revert when attempting to initiate a withdrawal request with an invalid pool token', async () => {
                 await expect(
                     network.connect(provider).initWithdrawal(ZERO_ADDRESS, poolTokenAmount)
-                ).to.be.revertedWithCustomError('InvalidAddress');
+                ).to.be.revertedWithError('InvalidAddress');
 
                 const reserveToken = await createTestToken();
                 const poolToken2 = await Contracts.PoolToken.deploy(
@@ -3687,7 +3687,7 @@ describe('BancorNetwork', () => {
 
                 await expect(
                     network.connect(provider).initWithdrawal(poolToken2.address, poolTokenAmount)
-                ).to.be.revertedWithCustomError('InvalidToken');
+                ).to.be.revertedWithError('InvalidToken');
 
                 const contract = await Contracts.TestERC20Token.attach(token.address);
                 const poolToken3 = await Contracts.PoolToken.deploy(
@@ -3698,7 +3698,7 @@ describe('BancorNetwork', () => {
                 );
                 await expect(
                     network.connect(provider).initWithdrawal(poolToken3.address, poolTokenAmount)
-                ).to.be.revertedWithCustomError('InvalidPool');
+                ).to.be.revertedWithError('InvalidPool');
             });
 
             it('should initiate a withdrawal request', async () => {
@@ -3745,7 +3745,7 @@ describe('BancorNetwork', () => {
                             signature.r,
                             signature.s
                         )
-                ).to.be.revertedWith('InvalidAddress');
+                ).to.be.revertedWithError('InvalidAddress');
 
                 const reserveToken = await createTestToken();
                 const poolToken2 = await Contracts.PoolToken.deploy(
@@ -3775,7 +3775,7 @@ describe('BancorNetwork', () => {
                             signature2.r,
                             signature2.s
                         )
-                ).to.be.revertedWith('InvalidToken');
+                ).to.be.revertedWithError('InvalidToken');
 
                 const contract = await Contracts.TestERC20Token.attach(token.address);
                 const poolToken3 = await Contracts.PoolToken.deploy(
@@ -3805,7 +3805,7 @@ describe('BancorNetwork', () => {
                             signature3.r,
                             signature3.s
                         )
-                ).to.be.revertedWith('InvalidPool');
+                ).to.be.revertedWithError('InvalidPool');
             });
 
             it('should initiate a withdrawal request', async () => {

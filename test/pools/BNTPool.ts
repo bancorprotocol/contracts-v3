@@ -704,7 +704,7 @@ describe('BNTPool', () => {
 
                     await expect(
                         network.depositToBNTPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
-                    ).to.be.revertedWith('');
+                    ).to.be.revertedWithError('Transaction reverted without a reason string');
                 });
 
                 it('should revert when attempting to deposit too much liquidity', async () => {
