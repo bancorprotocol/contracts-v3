@@ -389,7 +389,9 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
-            await expect(poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
+            await expect(poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError(
+                'InvalidFee'
+            );
         });
 
         it('should ignore updating to the same default trading fee', async () => {
@@ -430,9 +432,9 @@ describe('PoolCollection', () => {
             it('should revert when attempting to create a pool from a non-network', async () => {
                 const nonNetwork = deployer;
 
-                await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWithError(
-                    'AccessDenied'
-                );
+                await expect(
+                    poolCollection.connect(nonNetwork).createPool(reserveToken.address)
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
@@ -449,9 +451,9 @@ describe('PoolCollection', () => {
                 it('should not allow to create the same pool twice', async () => {
                     await network.createPoolT(poolCollection.address, reserveToken.address);
 
-                    await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWithError(
-                        'AlreadyExists'
-                    );
+                    await expect(
+                        network.createPoolT(poolCollection.address, reserveToken.address)
+                    ).to.be.revertedWithError('AlreadyExists');
                 });
 
                 it('should create a pool', async () => {
@@ -887,7 +889,9 @@ describe('PoolCollection', () => {
 
             it('should revert when disabling trading of a non-existing pool', async () => {
                 const newReserveToken = await createTestToken();
-                await expect(poolCollection.disableTrading(newReserveToken.address)).to.be.revertedWithError('DoesNotExist');
+                await expect(poolCollection.disableTrading(newReserveToken.address)).to.be.revertedWithError(
+                    'DoesNotExist'
+                );
             });
 
             context('when trading is disabled', () => {

@@ -238,7 +238,7 @@ describe('BNTPool', () => {
 
         it('should revert when attempting to burn more than the balance of the master vault', async () => {
             await expect(bntPool.connect(vaultManager).burnFromVault(amount.add(1))).to.be.revertedWithError(
-                new TokenData(TokenSymbol.BNT).errors().burnExceedsBalance
+                'Transaction reverted without a reason string'
             );
         });
 
@@ -469,7 +469,7 @@ describe('BNTPool', () => {
         it('should revert when attempting to renounce funding when no funding was ever requested', async () => {
             await expect(
                 bntPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 1)
-            ).to.be.revertedWithError('reverted with panic code 0x12 (Division or modulo division by zero)');
+            ).to.be.revertedWithError('panic code 0x12');
         });
 
         context('with requested funding', () => {
@@ -608,7 +608,7 @@ describe('BNTPool', () => {
 
             await expect(
                 network.depositToBNTPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
-            ).to.be.revertedWithError('reverted with panic code 0x12 (Division or modulo division by zero)');
+            ).to.be.revertedWithError('panic code 0x12');
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -790,7 +790,7 @@ describe('BNTPool', () => {
 
         it('should revert when attempting to withdraw before any deposits were made', async () => {
             await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWithError(
-                'reverted with panic code 0x12 (Division or modulo division by zero)'
+                'panic code 0x12'
             );
         });
 

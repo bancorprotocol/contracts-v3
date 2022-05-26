@@ -31,7 +31,7 @@ import LegacyContractsV3, { PoolCollectionType1V2 } from '../../components/Legac
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
-import { ECDSASignature, permitSignature } from '../../utils/Permit';
+import { permitSignature, Signature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -1368,7 +1368,9 @@ describe('BancorNetwork', () => {
 
                                         it('should revert when attempting to deposit without approving the network', async () => {
                                             await expect(deposit(amount)).to.be.revertedWithError(
-                                                tokenData.errors().exceedsAllowance
+                                                tokenData.isBNT()
+                                                    ? 'Transaction reverted without a reason string'
+                                                    : tokenData.errors().exceedsAllowance
                                             );
                                         });
                                     }
@@ -1620,7 +1622,9 @@ describe('BancorNetwork', () => {
                                     if (tokenData.isBNT() || tokenData.isNative()) {
                                         it('should revert when attempting to deposit', async () => {
                                             await expect(deposit(amount)).to.be.revertedWithError(
-                                                tokenData.isNative() ? 'PermitUnsupported' : ''
+                                                tokenData.isNative()
+                                                    ? 'PermitUnsupported'
+                                                    : 'Transaction reverted without a reason string'
                                             );
                                         });
 
@@ -2718,7 +2722,9 @@ describe('BancorNetwork', () => {
                             if (isSourceNativeToken || isSourceBNT) {
                                 it('should revert when attempting a permitted trade', async () => {
                                     await expect(tradeFunc(amount)).to.be.revertedWithError(
-                                        isSourceNativeToken ? 'PermitUnsupported' : ''
+                                        isSourceNativeToken
+                                            ? 'PermitUnsupported'
+                                            : 'Transaction reverted without a reason string'
                                     );
                                 });
                             } else {
@@ -3728,7 +3734,7 @@ describe('BancorNetwork', () => {
         });
 
         describe('permitted', () => {
-            let signature: ECDSASignature;
+            let signature: Signature;
 
             beforeEach(async () => {
                 signature = await permitSignature(

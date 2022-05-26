@@ -26,7 +26,7 @@ describe('RewardsMath', () => {
                 } else {
                     await expect(
                         rewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration)
-                    ).to.be.revertedWithError('panic code 1');
+                    ).to.be.revertedWithError('panic code 0x1');
                 }
             });
 

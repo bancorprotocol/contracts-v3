@@ -35,6 +35,7 @@ const TOKEN_DATA = {
         name: 'Bancor Network Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
+            exceedsAllowance: 'SafeERC20: low-level call failed',
             exceedsBalance: 'SafeERC20: low-level call failed'
         }
     },
