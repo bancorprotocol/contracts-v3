@@ -3,10 +3,10 @@ import { MAX_UINT256, ZERO_ADDRESS } from './Constants';
 import { NATIVE_TOKEN_ADDRESS } from './TokenData';
 import { Addressable } from './Types';
 import { signTypedData, SignTypedDataVersion, TypedDataUtils } from '@metamask/eth-sig-util';
-import { fromRpcSig } from 'ethereumjs-util';
-import { BigNumber, BigNumberish, utils, Wallet } from 'ethers';
+import { ECDSASignature, fromRpcSig } from 'ethereumjs-util';
+import { BigNumber, BigNumberish, Wallet } from 'ethers';
 
-const { formatBytes32String, hexlify } = utils;
+export { ECDSASignature };
 
 const VERSION = '1';
 const HARDHAT_CHAIN_ID = 31337;
@@ -54,12 +54,6 @@ export const permitData = (
     message: { owner, spender, value: amount.toString(), nonce: nonce.toString(), deadline: deadline.toString() }
 });
 
-export interface Signature {
-    v: number;
-    r: string;
-    s: string;
-}
-
 export const permitCustomSignature = async (
     wallet: Wallet,
     name: string,
@@ -68,7 +62,7 @@ export const permitCustomSignature = async (
     amount: BigNumber,
     nonce: number,
     deadline: BigNumberish
-): Promise<Signature> => {
+): Promise<ECDSASignature> => {
     const data = permitData(name, verifyingContract, await wallet.getAddress(), spender, amount, nonce, deadline);
     const signedData = signTypedData({
         privateKey: Buffer.from(wallet.privateKey.slice(2), 'hex'),
@@ -76,13 +70,7 @@ export const permitCustomSignature = async (
         version: SignTypedDataVersion.V4
     });
 
-    const signature = fromRpcSig(signedData);
-
-    return {
-        v: signature.v,
-        r: hexlify(signature.r),
-        s: hexlify(signature.s)
-    };
+    return fromRpcSig(signedData);
 };
 
 export const permitSignature = async (
@@ -92,7 +80,7 @@ export const permitSignature = async (
     bnt: undefined | IERC20,
     amount: BigNumberish,
     deadline: BigNumberish
-): Promise<Signature> => {
+): Promise<ECDSASignature> => {
     if (
         tokenAddress === NATIVE_TOKEN_ADDRESS ||
         tokenAddress === ZERO_ADDRESS ||
@@ -100,8 +88,8 @@ export const permitSignature = async (
     ) {
         return {
             v: 0,
-            r: formatBytes32String(''),
-            s: formatBytes32String('')
+            r: Buffer.alloc(0),
+            s: Buffer.alloc(0)
         };
     }
 

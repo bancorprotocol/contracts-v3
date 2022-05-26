@@ -31,7 +31,7 @@ import LegacyContractsV3, { PoolCollectionType1V2 } from '../../components/Legac
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
-import { permitSignature, Signature } from '../../utils/Permit';
+import { ECDSASignature, permitSignature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -3675,7 +3675,7 @@ describe('BancorNetwork', () => {
             it('should revert when attempting to initiate a withdrawal request with an invalid pool token', async () => {
                 await expect(
                     network.connect(provider).initWithdrawal(ZERO_ADDRESS, poolTokenAmount)
-                ).to.be.revertedWith('InvalidAddress');
+                ).to.be.revertedWithCustomError('InvalidAddress');
 
                 const reserveToken = await createTestToken();
                 const poolToken2 = await Contracts.PoolToken.deploy(
@@ -3687,7 +3687,7 @@ describe('BancorNetwork', () => {
 
                 await expect(
                     network.connect(provider).initWithdrawal(poolToken2.address, poolTokenAmount)
-                ).to.be.revertedWith('InvalidToken');
+                ).to.be.revertedWithCustomError('InvalidToken');
 
                 const contract = await Contracts.TestERC20Token.attach(token.address);
                 const poolToken3 = await Contracts.PoolToken.deploy(
@@ -3698,7 +3698,7 @@ describe('BancorNetwork', () => {
                 );
                 await expect(
                     network.connect(provider).initWithdrawal(poolToken3.address, poolTokenAmount)
-                ).to.be.revertedWith('InvalidPool');
+                ).to.be.revertedWithCustomError('InvalidPool');
             });
 
             it('should initiate a withdrawal request', async () => {
@@ -3720,7 +3720,7 @@ describe('BancorNetwork', () => {
         });
 
         describe('permitted', () => {
-            let signature: Signature;
+            let signature: ECDSASignature;
 
             beforeEach(async () => {
                 signature = await permitSignature(
