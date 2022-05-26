@@ -23,6 +23,7 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidType,
+    InvalidPool,
     InvalidPoolCollection,
     NotEmpty
 } from "../utility/Utils.sol";
@@ -307,7 +308,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 4;
+        return 5;
     }
 
     /**
@@ -468,13 +469,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function collectionByPool(Token pool) external view returns (IPoolCollection) {
         return _collectionByPool[pool];
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function isPoolValid(Token pool) external view returns (bool) {
-        return address(pool) == address(_bnt) || _liquidityPools.contains(address(pool));
     }
 
     /**
@@ -1428,6 +1422,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolToken poolToken,
         uint256 poolTokenAmount
     ) private returns (uint256) {
+        if (poolToken != _bntPoolToken) {
+            Token reserveToken = poolToken.reserveToken();
+            if (_poolCollection(reserveToken).poolToken(reserveToken) != poolToken) {
+                revert InvalidPool();
+            }
+        }
+
         // transfer the pool tokens from the provider. Note, that the provider should have either previously approved
         // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);

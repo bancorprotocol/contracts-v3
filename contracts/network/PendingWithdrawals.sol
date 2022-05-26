@@ -10,7 +10,7 @@ import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
+import { Utils, AccessDenied, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -137,7 +137,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
@@ -292,16 +292,11 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         IPoolToken poolToken,
         uint256 poolTokenAmount
     ) private returns (uint256) {
-        // make sure that the pool is valid
-        Token pool = poolToken.reserveToken();
-        if (!_network.isPoolValid(pool)) {
-            revert InvalidPool();
-        }
-
         // record the current withdrawal request alongside previous pending withdrawal requests
         uint256 id = _nextWithdrawalRequestId++;
 
         // get the pool token value in reserve/pool tokens
+        Token pool = poolToken.reserveToken();
         uint256 reserveTokenAmount = _poolTokenToUnderlying(pool, poolTokenAmount);
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,
