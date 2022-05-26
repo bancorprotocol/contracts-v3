@@ -65,9 +65,9 @@ describe('RewardsMath', () => {
                         relation: Relation.LesserOrEqual
                     });
                 } else {
-                    await expect(rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife)).to.revertedWith(
-                        'Overflow'
-                    );
+                    await expect(
+                        rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife)
+                    ).to.revertedWithError('Overflow');
                 }
             });
 

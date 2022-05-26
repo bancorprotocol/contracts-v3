@@ -52,7 +52,7 @@ describe('ERC20Burnable', () => {
         it('should revert when the given amount is greater than the balance of the sender', async () => {
             const initialBalance = await burnable.balanceOf(owner.address);
 
-            await expect(burnable.connect(owner).burn(initialBalance.add(1))).to.be.revertedWith(
+            await expect(burnable.connect(owner).burn(initialBalance.add(1))).to.be.revertedWithError(
                 new TokenData(TokenSymbol.TKN).errors().burnExceedsBalance
             );
         });
@@ -102,7 +102,7 @@ describe('ERC20Burnable', () => {
             const amount = initialBalance.add(1);
 
             await burnable.connect(owner).approve(burner.address, amount);
-            await expect(burnable.connect(owner).burnFrom(owner.address, amount)).to.be.revertedWith(
+            await expect(burnable.connect(owner).burnFrom(owner.address, amount)).to.be.revertedWithError(
                 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
             );
         });
@@ -111,7 +111,7 @@ describe('ERC20Burnable', () => {
             const allowance = 100;
 
             await burnable.connect(owner).approve(burner.address, allowance);
-            await expect(burnable.connect(owner).burnFrom(owner.address, allowance + 1)).to.be.revertedWith(
+            await expect(burnable.connect(owner).burnFrom(owner.address, allowance + 1)).to.be.revertedWithError(
                 'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
             );
         });

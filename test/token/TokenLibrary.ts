@@ -124,7 +124,7 @@ describe('TokenLibrary', () => {
                             MAX_UINT256,
                             signature
                         )
-                    ).to.be.revertedWith('PermitUnsupported');
+                    ).to.be.revertedWithError('PermitUnsupported');
                 });
             } else {
                 for (const amount of [0, 10_000]) {

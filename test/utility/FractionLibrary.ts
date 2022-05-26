@@ -66,7 +66,7 @@ describe('FractionLibrary', () => {
     const inverse256 = (fraction: Fraction<BigNumber>) => {
         it(`inverse256(${toString(fraction)})`, async () => {
             if (fraction.n.isZero()) {
-                await expect(fractionLibrary.inverse256(fraction)).to.be.revertedWith('InvalidFraction');
+                await expect(fractionLibrary.inverse256(fraction)).to.be.revertedWithError('InvalidFraction');
             } else {
                 expect(await fractionLibrary.inverse256(fraction)).to.equal({ n: fraction.d, d: fraction.n });
             }
@@ -76,7 +76,7 @@ describe('FractionLibrary', () => {
     const inverse112 = (fraction: Fraction<BigNumber>) => {
         it(`inverse112(${toString(fraction)})`, async () => {
             if (fraction.n.isZero()) {
-                await expect(fractionLibrary.inverse112(fraction)).to.be.revertedWith('InvalidFraction');
+                await expect(fractionLibrary.inverse112(fraction)).to.be.revertedWithError('InvalidFraction');
             } else {
                 expect(await fractionLibrary.inverse112(fraction)).to.equal({ n: fraction.d, d: fraction.n });
             }

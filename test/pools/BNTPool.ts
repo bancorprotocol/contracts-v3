@@ -64,7 +64,7 @@ describe('BNTPool', () => {
                     masterVault.address,
                     bntPoolToken.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT governance contract', async () => {
@@ -77,7 +77,7 @@ describe('BNTPool', () => {
                     masterVault.address,
                     bntPoolToken.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid vBNT governance contract', async () => {
@@ -90,7 +90,7 @@ describe('BNTPool', () => {
                     masterVault.address,
                     bntPoolToken.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network settings contract', async () => {
@@ -103,7 +103,7 @@ describe('BNTPool', () => {
                     masterVault.address,
                     bntPoolToken.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid master vault contract', async () => {
@@ -116,7 +116,7 @@ describe('BNTPool', () => {
                     ZERO_ADDRESS,
                     bntPoolToken.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT pool token contract', async () => {
@@ -129,11 +129,13 @@ describe('BNTPool', () => {
                     masterVault.address,
                     ZERO_ADDRESS
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(bntPool.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(bntPool.initialize()).to.be.revertedWithError(
+                'Initializable: contract is already initialized'
+            );
         });
 
         it('should be properly initialized', async () => {
@@ -178,15 +180,17 @@ describe('BNTPool', () => {
         it('should revert when attempting to mint from a non-BNT manager', async () => {
             const nonBNTManager = deployer;
 
-            await expect(bntPool.connect(nonBNTManager).mint(provider.address, 1)).to.be.revertedWith('AccessDenied');
+            await expect(bntPool.connect(nonBNTManager).mint(provider.address, 1)).to.be.revertedWithError(
+                'AccessDenied'
+            );
         });
 
         it('should revert when attempting to mint to an invalid address', async () => {
-            await expect(bntPool.connect(bntManager).mint(ZERO_ADDRESS, 1)).to.be.revertedWith('InvalidAddress');
+            await expect(bntPool.connect(bntManager).mint(ZERO_ADDRESS, 1)).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to mint an invalid amount', async () => {
-            await expect(bntPool.connect(bntManager).mint(provider.address, 0)).to.be.revertedWith('ZeroValue');
+            await expect(bntPool.connect(bntManager).mint(provider.address, 0)).to.be.revertedWithError('ZeroValue');
         });
 
         it('should mint to the recipient', async () => {
@@ -225,15 +229,15 @@ describe('BNTPool', () => {
         it('should revert when attempting to burn from a non-vault manager', async () => {
             const nonVaultManager = deployer;
 
-            await expect(bntPool.connect(nonVaultManager).burnFromVault(1)).to.be.revertedWith('AccessDenied');
+            await expect(bntPool.connect(nonVaultManager).burnFromVault(1)).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when attempting to burn an invalid amount', async () => {
-            await expect(bntPool.connect(vaultManager).burnFromVault(0)).to.be.revertedWith('ZeroValue');
+            await expect(bntPool.connect(vaultManager).burnFromVault(0)).to.be.revertedWithError('ZeroValue');
         });
 
         it('should revert when attempting to burn more than the balance of the master vault', async () => {
-            await expect(bntPool.connect(vaultManager).burnFromVault(amount.add(1))).to.be.revertedWith(
+            await expect(bntPool.connect(vaultManager).burnFromVault(amount.add(1))).to.be.revertedWithError(
                 new TokenData(TokenSymbol.BNT).errors().burnExceedsBalance
             );
         });
@@ -333,24 +337,24 @@ describe('BNTPool', () => {
 
             await expect(
                 bntPool.connect(nonFundingManager).requestFunding(CONTEXT_ID, reserveToken.address, 1)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when attempting to request funding for a non-whitelisted pool', async () => {
             await expect(
                 bntPool.connect(fundingManager).requestFunding(CONTEXT_ID, ZERO_ADDRESS, 1)
-            ).to.be.revertedWith('NotWhitelisted');
+            ).to.be.revertedWithError('NotWhitelisted');
 
             const reserveToken2 = await createTestToken();
             await expect(
                 bntPool.connect(fundingManager).requestFunding(CONTEXT_ID, reserveToken2.address, 1)
-            ).to.be.revertedWith('NotWhitelisted');
+            ).to.be.revertedWithError('NotWhitelisted');
         });
 
         it('should revert when attempting to request a zero funding amount', async () => {
             await expect(
                 bntPool.connect(fundingManager).requestFunding(CONTEXT_ID, reserveToken.address, 0)
-            ).to.be.revertedWith('ZeroValue');
+            ).to.be.revertedWithError('ZeroValue');
         });
 
         it('should allow requesting funding', async () => {
@@ -378,7 +382,7 @@ describe('BNTPool', () => {
                 for (const amount of [remaining.add(1), remaining.add(toWei(2_000_000)), toWei(2_000_000)]) {
                     await expect(
                         bntPool.connect(fundingManager).requestFunding(CONTEXT_ID, reserveToken.address, amount)
-                    ).to.be.revertedWith('FundingLimitExceeded');
+                    ).to.be.revertedWithError('FundingLimitExceeded');
                 }
             });
 
@@ -393,7 +397,7 @@ describe('BNTPool', () => {
                     for (const amount of [10, 100_000, toWei(2_000_000), toWei(1_500_000)]) {
                         await expect(
                             bntPool.connect(fundingManager).requestFunding(CONTEXT_ID, reserveToken.address, amount)
-                        ).to.be.revertedWith('FundingLimitExceeded');
+                        ).to.be.revertedWithError('FundingLimitExceeded');
                     }
                 });
             });
@@ -408,7 +412,7 @@ describe('BNTPool', () => {
                 for (const amount of [10, 100_000, toWei(2_000_000), toWei(1_500_000)]) {
                     await expect(
                         bntPool.connect(fundingManager).requestFunding(CONTEXT_ID, reserveToken.address, amount)
-                    ).to.be.revertedWith('FundingLimitExceeded');
+                    ).to.be.revertedWithError('FundingLimitExceeded');
                 }
             });
         });
@@ -442,30 +446,30 @@ describe('BNTPool', () => {
 
             await expect(
                 bntPool.connect(nonFundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 1)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when attempting to renounce funding for a non-whitelisted pool', async () => {
             await expect(
                 bntPool.connect(fundingManager).renounceFunding(CONTEXT_ID, ZERO_ADDRESS, 1)
-            ).to.be.revertedWith('NotWhitelisted');
+            ).to.be.revertedWithError('NotWhitelisted');
 
             const reserveToken2 = await createTestToken();
             await expect(
                 bntPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken2.address, 1)
-            ).to.be.revertedWith('NotWhitelisted');
+            ).to.be.revertedWithError('NotWhitelisted');
         });
 
         it('should revert when attempting to renounce a zero funding amount', async () => {
             await expect(
                 bntPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 0)
-            ).to.be.revertedWith('ZeroValue');
+            ).to.be.revertedWithError('ZeroValue');
         });
 
         it('should revert when attempting to renounce funding when no funding was ever requested', async () => {
             await expect(
                 bntPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 1)
-            ).to.be.revertedWith('reverted with panic code 0x12 (Division or modulo division by zero)');
+            ).to.be.revertedWithError('reverted with panic code 0x12 (Division or modulo division by zero)');
         });
 
         context('with requested funding', () => {
@@ -580,7 +584,7 @@ describe('BNTPool', () => {
 
             await expect(
                 bntPool.connect(nonNetwork).depositFor(CONTEXT_ID, provider.address, amount, false, 0)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when attempting to deposit a zero amount', async () => {
@@ -588,15 +592,15 @@ describe('BNTPool', () => {
 
             await expect(
                 network.depositToBNTPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
-            ).to.be.revertedWith('ZeroValue');
+            ).to.be.revertedWithError('ZeroValue');
         });
 
         it('should revert when attempting to deposit for an invalid provider', async () => {
             const amount = 1;
 
-            await expect(network.depositToBNTPoolForT(CONTEXT_ID, ZERO_ADDRESS, amount, false, 0)).to.be.revertedWith(
-                'InvalidAddress'
-            );
+            await expect(
+                network.depositToBNTPoolForT(CONTEXT_ID, ZERO_ADDRESS, amount, false, 0)
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to deposit when no funding was requested', async () => {
@@ -604,7 +608,7 @@ describe('BNTPool', () => {
 
             await expect(
                 network.depositToBNTPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
-            ).to.be.revertedWith('reverted with panic code 0x12 (Division or modulo division by zero)');
+            ).to.be.revertedWithError('reverted with panic code 0x12 (Division or modulo division by zero)');
         });
 
         context('with a whitelisted and registered pool', () => {
@@ -714,7 +718,7 @@ describe('BNTPool', () => {
 
                     await expect(
                         network.depositToBNTPoolForT(CONTEXT_ID, provider.address, maxAmount.add(1), false, 0)
-                    ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsBalance);
+                    ).to.be.revertedWithError(new TokenData(TokenSymbol.TKN).errors().exceedsBalance);
                 });
 
                 it('should allow depositing liquidity', async () => {
@@ -761,31 +765,31 @@ describe('BNTPool', () => {
         it('should revert when attempting to withdraw from a non-network', async () => {
             const nonNetwork = deployer;
 
-            await expect(bntPool.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWith(
-                'AccessDenied'
-            );
+            await expect(
+                bntPool.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, 1, 1)
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when attempting to withdraw for an invalid provider', async () => {
-            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, ZERO_ADDRESS, 1, 1)).to.be.revertedWith(
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, ZERO_ADDRESS, 1, 1)).to.be.revertedWithError(
                 'InvalidAddress'
             );
         });
 
         it('should revert when attempting to withdraw with an invalid pool token amount', async () => {
-            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 0, 1)).to.be.revertedWith(
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 0, 1)).to.be.revertedWithError(
                 'ZeroValue'
             );
         });
 
         it('should revert when attempting to withdraw with an invalid bnt amount', async () => {
-            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 0)).to.be.revertedWith(
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 0)).to.be.revertedWithError(
                 'ZeroValue'
             );
         });
 
         it('should revert when attempting to withdraw before any deposits were made', async () => {
-            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWith(
+            await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWithError(
                 'reverted with panic code 0x12 (Division or modulo division by zero)'
             );
         });
@@ -916,7 +920,7 @@ describe('BNTPool', () => {
 
                         await expect(
                             network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount, poolTokenAmount)
-                        ).to.be.revertedWith(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
+                        ).to.be.revertedWithError(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
                     });
 
                     it('should revert when attempting to withdraw more than the deposited pool token amount', async () => {
@@ -925,7 +929,7 @@ describe('BNTPool', () => {
 
                         await expect(
                             network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, poolTokenAmount, depositAmount)
-                        ).to.be.revertedWith(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
+                        ).to.be.revertedWithError(new TokenData(TokenSymbol.vBNT).errors().exceedsBalance);
                     });
 
                     it('should revert when attempting to withdraw inconsistent amounts', async () => {
@@ -939,7 +943,7 @@ describe('BNTPool', () => {
                                 poolTokenAmount,
                                 poolTokenAmount * 10_000
                             )
-                        ).to.be.revertedWith('InvalidParam');
+                        ).to.be.revertedWithError('InvalidParam');
                     });
 
                     for (const poolTokenAmount of [100, 10_000, toWei(20_000), toWei(30_000)]) {
@@ -974,11 +978,11 @@ describe('BNTPool', () => {
 
                     await expect(
                         bntPool.connect(nonNetwork).onFeesCollected(reserveToken.address, 1, tradeFee)
-                    ).to.be.revertedWith('AccessDenied');
+                    ).to.be.revertedWithError('AccessDenied');
                 });
 
                 it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
-                    await expect(network.onBNTFeesCollectedT(ZERO_ADDRESS, 1, tradeFee)).to.be.revertedWith(
+                    await expect(network.onBNTFeesCollectedT(ZERO_ADDRESS, 1, tradeFee)).to.be.revertedWithError(
                         'InvalidAddress'
                     );
                 });
@@ -1029,7 +1033,7 @@ describe('BNTPool', () => {
             it('should revert', async () => {
                 await expect(
                     bntPool.connect(provider).withdrawFunds(token.address, provider.address, amount)
-                ).to.revertedWith('AccessDenied');
+                ).to.revertedWithError('AccessDenied');
             });
         };
 
