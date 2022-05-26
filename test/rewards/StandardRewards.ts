@@ -976,7 +976,7 @@ describe('StandardRewards', () => {
                 };
 
                 for (const permitted of [false, true]) {
-                    context(permitted ? 'permitted' : 'regular', () => {
+                    describe(permitted ? 'permitted' : 'regular', () => {
                         testBasicTests(permitted);
                     });
                 }
@@ -1540,7 +1540,7 @@ describe('StandardRewards', () => {
                 };
 
                 for (const permitted of [false, true]) {
-                    context(permitted ? 'permitted' : 'regular', () => {
+                    describe(permitted ? 'permitted' : 'regular', () => {
                         testBasicTests(permitted);
                     });
                 }
