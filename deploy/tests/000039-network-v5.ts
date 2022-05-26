@@ -11,6 +11,6 @@ describeDeployment(__filename, () => {
     });
 
     it('should deploy and migrate the new pool collection contract and related contracts', async () => {
-        expect(await network.version()).to.equal(4);
+        expect(await network.version()).to.equal(5);
     });
 });
