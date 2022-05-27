@@ -29,14 +29,17 @@ const TOKEN_DATA = {
     [TokenSymbol.ETH]: {
         name: 'Ethereum',
         decimals: DEFAULT_DECIMALS,
-        errors: {}
+        errors: {
+            exceedsBalance: 'Address: insufficient balance'
+        }
     },
     [TokenSymbol.BNT]: {
         name: 'Bancor Network Token',
         decimals: DEFAULT_DECIMALS,
         errors: {
             exceedsAllowance: 'SafeERC20: low-level call failed',
-            exceedsBalance: 'SafeERC20: low-level call failed'
+            exceedsBalance: 'SafeERC20: low-level call failed',
+            burnExceedsBalance: 'Transaction reverted without a reason string'
         }
     },
     [TokenSymbol.vBNT]: {

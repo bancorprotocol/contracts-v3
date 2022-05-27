@@ -103,7 +103,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, amount);
             await expect(burnable.connect(owner).burnFrom(owner.address, amount)).to.be.revertedWithError(
-                'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
+                'panic code 0x11'
             );
         });
 
@@ -112,7 +112,7 @@ describe('ERC20Burnable', () => {
 
             await burnable.connect(owner).approve(burner.address, allowance);
             await expect(burnable.connect(owner).burnFrom(owner.address, allowance + 1)).to.be.revertedWithError(
-                'reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)'
+                'panic code 0x11'
             );
         });
     });
