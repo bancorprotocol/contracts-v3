@@ -588,8 +588,6 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
         address: contractAddress
     });
 
-    tenderlyNetwork.setHead('');
-
     for (const contract of contracts) {
         Logger.log('  verifying on tenderly', contract.name, 'at', contract.address);
 
