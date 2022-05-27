@@ -11,7 +11,7 @@ describeDeployment(__filename, () => {
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
     });
 
-    it('should deploy and migrate the new pool collection contract and related contracts', async () => {
+    it('should deploy and verify the pending withdrawals contract', async () => {
         expect(await pendingWithdrawals.version()).to.equal(4);
         expect(await pendingWithdrawals.lockDuration()).to.equal(DEFAULT_LOCK_DURATION);
     });

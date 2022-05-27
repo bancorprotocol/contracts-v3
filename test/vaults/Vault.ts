@@ -291,7 +291,7 @@ describe('Vault', () => {
                 });
 
                 it('should allow to withdraw', async () => {
-                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).to.not.reverted;
+                    await expect(testVault.withdrawFunds(token.address, target.address, amount)).not.to.be.reverted;
                 });
             });
 

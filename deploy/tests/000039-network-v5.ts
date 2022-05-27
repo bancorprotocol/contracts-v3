@@ -10,7 +10,7 @@ describeDeployment(__filename, () => {
         network = await DeployedContracts.BancorNetwork.deployed();
     });
 
-    it('should deploy and migrate the new pool collection contract and related contracts', async () => {
+    it('should deploy and verify the network contract', async () => {
         expect(await network.version()).to.equal(5);
     });
 });
