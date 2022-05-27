@@ -31,7 +31,7 @@ import LegacyContractsV3, { PoolCollectionType1V2 } from '../../components/Legac
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
-import { permitSignature } from '../../utils/Permit';
+import { permitSignature, Signature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { fromPPM, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -123,7 +123,6 @@ describe('BancorNetwork', () => {
     describe('construction', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
-        let bnt: IERC20;
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
         let bntPool: TestBNTPool;
@@ -137,7 +136,6 @@ describe('BancorNetwork', () => {
             ({
                 network,
                 networkSettings,
-                bnt,
                 bntGovernance,
                 vbntGovernance,
                 bntPool,
@@ -281,7 +279,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(4);
+            expect(await network.version()).to.equal(5);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -293,7 +291,6 @@ describe('BancorNetwork', () => {
             expect(await network.isPaused()).to.be.false;
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
-            expect(await network.isPoolValid(bnt.address)).to.be.true;
         });
     });
 
@@ -801,7 +798,6 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should create a pool', async () => {
-                    expect(await network.isPoolValid(reserveToken.address)).to.be.false;
                     expect(await network.collectionByPool(reserveToken.address)).to.equal(ZERO_ADDRESS);
                     expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.false;
 
@@ -815,7 +811,6 @@ describe('BancorNetwork', () => {
                         .to.emit(network, 'PoolAdded')
                         .withArgs(reserveToken.address, poolCollection.address);
 
-                    expect(await network.isPoolValid(reserveToken.address)).to.be.true;
                     expect(await network.collectionByPool(reserveToken.address)).to.equal(poolCollection.address);
                     expect(await poolCollection.isPoolValid(reserveToken.address)).to.be.true;
 
@@ -828,7 +823,6 @@ describe('BancorNetwork', () => {
                     const tokens = [reserveToken.address, reserveToken2.address];
 
                     for (const token of tokens) {
-                        expect(await network.isPoolValid(token)).to.be.false;
                         expect(await network.collectionByPool(token)).to.equal(ZERO_ADDRESS);
                         expect(await poolCollection.isPoolValid(token)).to.be.false;
                     }
@@ -839,7 +833,6 @@ describe('BancorNetwork', () => {
 
                     for (const token of tokens) {
                         await expect(res).to.emit(network, 'PoolCreated').withArgs(token, poolCollection.address);
-                        expect(await network.isPoolValid(token)).to.be.true;
                         expect(await network.collectionByPool(token)).to.equal(poolCollection.address);
                         expect(await poolCollection.isPoolValid(token)).to.be.true;
                     }
@@ -3629,6 +3622,7 @@ describe('BancorNetwork', () => {
         let bnt: IERC20;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
+        let token: TokenWithAddress;
 
         let provider: Wallet;
         let poolTokenAmount: BigNumber;
@@ -3653,7 +3647,7 @@ describe('BancorNetwork', () => {
 
             await pendingWithdrawals.setTime(await latest());
 
-            ({ poolToken } = await setupFundedPool(
+            ({ poolToken, token } = await setupFundedPool(
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
@@ -3671,59 +3665,179 @@ describe('BancorNetwork', () => {
             poolTokenAmount = await poolToken.balanceOf(provider.address);
         });
 
-        it('should initiate a withdrawal request', async () => {
-            await poolToken.connect(provider).approve(network.address, poolTokenAmount);
+        describe('regular', () => {
+            it('should revert when attempting to initiate a withdrawal request with an invalid amount', async () => {
+                await expect(network.connect(provider).initWithdrawal(poolToken.address, 0)).to.be.revertedWith(
+                    'ZeroValue'
+                );
+            });
 
-            const retId = await network.connect(provider).callStatic.initWithdrawal(poolToken.address, poolTokenAmount);
-            await network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
+            it('should revert when attempting to initiate a withdrawal request with an invalid pool token', async () => {
+                await expect(
+                    network.connect(provider).initWithdrawal(ZERO_ADDRESS, poolTokenAmount)
+                ).to.be.revertedWith('InvalidAddress');
 
-            const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-            const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
-            expect(id).to.equal(retId);
+                const reserveToken = await createTestToken();
+                const poolToken2 = await Contracts.PoolToken.deploy(
+                    await reserveToken.name(),
+                    await reserveToken.symbol(),
+                    DEFAULT_DECIMALS,
+                    reserveToken.address
+                );
 
-            const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-            expect(withdrawalRequest.provider).to.equal(provider.address);
-            expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+                await expect(
+                    network.connect(provider).initWithdrawal(poolToken2.address, poolTokenAmount)
+                ).to.be.revertedWith('InvalidToken');
+
+                const contract = await Contracts.TestERC20Token.attach(token.address);
+                const poolToken3 = await Contracts.PoolToken.deploy(
+                    await contract.name(),
+                    await contract.symbol(),
+                    DEFAULT_DECIMALS,
+                    contract.address
+                );
+                await expect(
+                    network.connect(provider).initWithdrawal(poolToken3.address, poolTokenAmount)
+                ).to.be.revertedWith('InvalidPool');
+            });
+
+            it('should initiate a withdrawal request', async () => {
+                await poolToken.connect(provider).approve(network.address, poolTokenAmount);
+
+                const retId = await network
+                    .connect(provider)
+                    .callStatic.initWithdrawal(poolToken.address, poolTokenAmount);
+                await network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount);
+
+                const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+                expect(id).to.equal(retId);
+
+                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                expect(withdrawalRequest.provider).to.equal(provider.address);
+                expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+            });
         });
 
-        it('should initiate a permitted withdrawal request', async () => {
-            const signature = await permitSignature(
-                provider as Wallet,
-                poolToken.address,
-                network,
-                bnt,
-                poolTokenAmount,
-                MAX_UINT256
-            );
+        describe('permitted', () => {
+            let signature: Signature;
 
-            const retId = await network
-                .connect(provider)
-                .callStatic.initWithdrawalPermitted(
+            beforeEach(async () => {
+                signature = await permitSignature(
+                    provider as Wallet,
                     poolToken.address,
+                    network,
+                    bnt,
                     poolTokenAmount,
-                    MAX_UINT256,
-                    signature.v,
-                    signature.r,
-                    signature.s
+                    MAX_UINT256
                 );
-            await network
-                .connect(provider)
-                .initWithdrawalPermitted(
-                    poolToken.address,
-                    poolTokenAmount,
-                    MAX_UINT256,
-                    signature.v,
-                    signature.r,
-                    signature.s
+            });
+
+            it('should revert when attempting to initiate a withdrawal request with an invalid pool token', async () => {
+                await expect(
+                    network
+                        .connect(provider)
+                        .initWithdrawalPermitted(
+                            ZERO_ADDRESS,
+                            poolTokenAmount,
+                            MAX_UINT256,
+                            signature.v,
+                            signature.r,
+                            signature.s
+                        )
+                ).to.be.revertedWith('InvalidAddress');
+
+                const reserveToken = await createTestToken();
+                const poolToken2 = await Contracts.PoolToken.deploy(
+                    await reserveToken.name(),
+                    await reserveToken.symbol(),
+                    DEFAULT_DECIMALS,
+                    reserveToken.address
                 );
 
-            const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-            const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
-            expect(id).to.equal(retId);
+                const signature2 = await permitSignature(
+                    provider as Wallet,
+                    poolToken2.address,
+                    network,
+                    bnt,
+                    poolTokenAmount,
+                    MAX_UINT256
+                );
 
-            const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-            expect(withdrawalRequest.provider).to.equal(provider.address);
-            expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+                await expect(
+                    network
+                        .connect(provider)
+                        .initWithdrawalPermitted(
+                            poolToken2.address,
+                            poolTokenAmount,
+                            MAX_UINT256,
+                            signature2.v,
+                            signature2.r,
+                            signature2.s
+                        )
+                ).to.be.revertedWith('InvalidToken');
+
+                const contract = await Contracts.TestERC20Token.attach(token.address);
+                const poolToken3 = await Contracts.PoolToken.deploy(
+                    await contract.name(),
+                    await contract.symbol(),
+                    DEFAULT_DECIMALS,
+                    contract.address
+                );
+
+                const signature3 = await permitSignature(
+                    provider as Wallet,
+                    poolToken3.address,
+                    network,
+                    bnt,
+                    poolTokenAmount,
+                    MAX_UINT256
+                );
+
+                await expect(
+                    network
+                        .connect(provider)
+                        .initWithdrawalPermitted(
+                            poolToken3.address,
+                            poolTokenAmount,
+                            MAX_UINT256,
+                            signature3.v,
+                            signature3.r,
+                            signature3.s
+                        )
+                ).to.be.revertedWith('InvalidPool');
+            });
+
+            it('should initiate a withdrawal request', async () => {
+                const retId = await network
+                    .connect(provider)
+                    .callStatic.initWithdrawalPermitted(
+                        poolToken.address,
+                        poolTokenAmount,
+                        MAX_UINT256,
+                        signature.v,
+                        signature.r,
+                        signature.s
+                    );
+                await network
+                    .connect(provider)
+                    .initWithdrawalPermitted(
+                        poolToken.address,
+                        poolTokenAmount,
+                        MAX_UINT256,
+                        signature.v,
+                        signature.r,
+                        signature.s
+                    );
+
+                const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
+                const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
+                expect(id).to.equal(retId);
+
+                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
+                expect(withdrawalRequest.provider).to.equal(provider.address);
+                expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
+            });
         });
 
         context('when paused', () => {

@@ -6,7 +6,7 @@ import { signTypedData, SignTypedDataVersion, TypedDataUtils } from '@metamask/e
 import { fromRpcSig } from 'ethereumjs-util';
 import { BigNumber, BigNumberish, utils, Wallet } from 'ethers';
 
-const { formatBytes32String } = utils;
+const { formatBytes32String, hexlify } = utils;
 
 const VERSION = '1';
 const HARDHAT_CHAIN_ID = 31337;
@@ -54,6 +54,12 @@ export const permitData = (
     message: { owner, spender, value: amount.toString(), nonce: nonce.toString(), deadline: deadline.toString() }
 });
 
+export interface Signature {
+    v: number;
+    r: string;
+    s: string;
+}
+
 export const permitCustomSignature = async (
     wallet: Wallet,
     name: string,
@@ -62,14 +68,21 @@ export const permitCustomSignature = async (
     amount: BigNumber,
     nonce: number,
     deadline: BigNumberish
-) => {
+): Promise<Signature> => {
     const data = permitData(name, verifyingContract, await wallet.getAddress(), spender, amount, nonce, deadline);
-    const signature = signTypedData({
+    const signedData = signTypedData({
         privateKey: Buffer.from(wallet.privateKey.slice(2), 'hex'),
         data,
         version: SignTypedDataVersion.V4
     });
-    return fromRpcSig(signature);
+
+    const signature = fromRpcSig(signedData);
+
+    return {
+        v: signature.v,
+        r: hexlify(signature.r),
+        s: hexlify(signature.s)
+    };
 };
 
 export const permitSignature = async (
@@ -79,7 +92,7 @@ export const permitSignature = async (
     bnt: undefined | IERC20,
     amount: BigNumberish,
     deadline: BigNumberish
-) => {
+): Promise<Signature> => {
     if (
         tokenAddress === NATIVE_TOKEN_ADDRESS ||
         tokenAddress === ZERO_ADDRESS ||
@@ -92,15 +105,13 @@ export const permitSignature = async (
         };
     }
 
-    const reserveToken = await Contracts.TestERC20Token.attach(tokenAddress);
-    const ownerAddress = await owner.getAddress();
-
-    const nonce = await reserveToken.nonces(ownerAddress);
+    const token = await Contracts.TestERC20Token.attach(tokenAddress);
+    const nonce = await token.nonces(owner.address);
 
     return permitCustomSignature(
         owner,
-        await reserveToken.name(),
-        reserveToken.address,
+        await token.name(),
+        tokenAddress,
         spender.address,
         BigNumber.from(amount),
         nonce.toNumber(),

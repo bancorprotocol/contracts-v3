@@ -9,10 +9,10 @@ import Contracts, {
     TestPoolCollection
 } from '../../components/Contracts';
 import { DEFAULT_LOCK_DURATION, ZERO_ADDRESS } from '../../utils/Constants';
-import { DEFAULT_DECIMALS, TokenData, TokenSymbol } from '../../utils/TokenData';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import { createSystem, createTestToken, depositToPool, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
+import { createSystem, depositToPool, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
 import { createWallet } from '../helpers/Utils';
@@ -71,7 +71,7 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await pendingWithdrawals.version()).to.equal(3);
+            expect(await pendingWithdrawals.version()).to.equal(4);
 
             await expectRoles(pendingWithdrawals, Roles.Upgradeable);
 
@@ -211,29 +211,6 @@ describe('PendingWithdrawals', () => {
                     expect(withdrawalRequest.reserveTokenAmount).to.equal(reserveTokenAmount);
                     expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
                 };
-
-                it('should revert when attempting to withdraw from an invalid pool', async () => {
-                    const amount = 1;
-
-                    await expect(network.connect(provider).initWithdrawal(ZERO_ADDRESS, amount)).to.be.revertedWith(
-                        'InvalidAddress'
-                    );
-
-                    const reserveToken = await createTestToken();
-                    const poolToken = await Contracts.PoolToken.deploy(
-                        'POOL',
-                        'POOL',
-                        DEFAULT_DECIMALS,
-                        reserveToken.address
-                    );
-
-                    await poolToken.mint(provider.address, amount);
-                    await poolToken.connect(provider).approve(network.address, amount);
-
-                    await expect(
-                        network.connect(provider).initWithdrawal(poolToken.address, amount)
-                    ).to.be.revertedWith('InvalidPool');
-                });
 
                 context('with provided liquidity', () => {
                     let poolTokenAmount: BigNumber;

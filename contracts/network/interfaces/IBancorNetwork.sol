@@ -51,11 +51,6 @@ interface IBancorNetwork is IUpgradeable {
     function collectionByPool(Token pool) external view returns (IPoolCollection);
 
     /**
-     * @dev returns whether the pool is valid
-     */
-    function isPoolValid(Token pool) external view returns (bool);
-
-    /**
      * @dev creates a new pool
      *
      * requirements:
