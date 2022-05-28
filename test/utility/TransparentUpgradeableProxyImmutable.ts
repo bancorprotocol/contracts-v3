@@ -25,17 +25,17 @@ describe('TransparentUpgradeableProxyImmutable', () => {
         it('should revert when attempting to create with an invalid logic contract', async () => {
             await expect(
                 Contracts.TransparentUpgradeableProxyImmutable.deploy(ZERO_ADDRESS, admin.address, [])
-            ).to.be.revertedWith('ERC1967: new implementation is not a contract');
+            ).to.be.revertedWithError('ERC1967: new implementation is not a contract');
 
             await expect(
                 Contracts.TransparentUpgradeableProxyImmutable.deploy(admin.address, admin.address, [])
-            ).to.be.revertedWith('ERC1967: new implementation is not a contract');
+            ).to.be.revertedWithError('ERC1967: new implementation is not a contract');
         });
 
         it('should revert when attempting to create with an invalid admin', async () => {
             await expect(
                 Contracts.TransparentUpgradeableProxyImmutable.deploy(logic.address, ZERO_ADDRESS, [])
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -83,7 +83,7 @@ describe('TransparentUpgradeableProxyImmutable', () => {
             const data = 123;
 
             it('should revert when an admin attempt to call into the contract', async () => {
-                await expect(contract.connect(admin).setData(data)).to.be.revertedWith('AccessDenied');
+                await expect(contract.connect(admin).setData(data)).to.be.revertedWithError('AccessDenied');
             });
 
             it('should allow a non-admin to call into the contract', async () => {
@@ -100,26 +100,26 @@ describe('TransparentUpgradeableProxyImmutable', () => {
             });
 
             it('should revert when a non-admin attempts to upgrade the proxy', async () => {
-                await expect(proxy.connect(nonAdmin).upgradeTo(newLogic.address)).to.be.revertedWith(
+                await expect(proxy.connect(nonAdmin).upgradeTo(newLogic.address)).to.be.revertedWithError(
                     "function selector was not recognized and there's no fallback function"
                 );
-                await expect(proxy.connect(nonAdmin).upgradeToAndCall(newLogic.address, [])).to.be.revertedWith(
+                await expect(proxy.connect(nonAdmin).upgradeToAndCall(newLogic.address, [])).to.be.revertedWithError(
                     "function selector was not recognized and there's no fallback function"
                 );
             });
 
             it('should revert when attempting to upgrade to an invalid logic contract', async () => {
-                await expect(proxy.connect(admin).upgradeTo(ZERO_ADDRESS)).to.be.revertedWith(
+                await expect(proxy.connect(admin).upgradeTo(ZERO_ADDRESS)).to.be.revertedWithError(
                     'ERC1967: new implementation is not a contract'
                 );
-                await expect(proxy.connect(admin).upgradeTo(admin.address)).to.be.revertedWith(
+                await expect(proxy.connect(admin).upgradeTo(admin.address)).to.be.revertedWithError(
                     'ERC1967: new implementation is not a contract'
                 );
 
-                await expect(proxy.connect(admin).upgradeToAndCall(ZERO_ADDRESS, [])).to.be.revertedWith(
+                await expect(proxy.connect(admin).upgradeToAndCall(ZERO_ADDRESS, [])).to.be.revertedWithError(
                     'ERC1967: new implementation is not a contract'
                 );
-                await expect(proxy.connect(admin).upgradeToAndCall(admin.address, [])).to.be.revertedWith(
+                await expect(proxy.connect(admin).upgradeToAndCall(admin.address, [])).to.be.revertedWithError(
                     'ERC1967: new implementation is not a contract'
                 );
             });

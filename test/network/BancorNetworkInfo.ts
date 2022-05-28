@@ -100,7 +100,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT governance contract', async () => {
@@ -117,7 +117,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid vBNT governance contract', async () => {
@@ -134,7 +134,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network settings contract', async () => {
@@ -151,7 +151,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid master vault contract', async () => {
@@ -168,7 +168,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid external protection vault contract', async () => {
@@ -185,7 +185,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid external rewards vault contract', async () => {
@@ -202,7 +202,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT pool contract', async () => {
@@ -219,7 +219,7 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid pending withdrawals contract', async () => {
@@ -236,7 +236,7 @@ describe('BancorNetworkInfo', () => {
                     ZERO_ADDRESS,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid pool migrator contract', async () => {
@@ -253,11 +253,13 @@ describe('BancorNetworkInfo', () => {
                     pendingWithdrawals.address,
                     ZERO_ADDRESS
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(networkInfo.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(networkInfo.initialize()).to.be.revertedWithError(
+                'Initializable: contract is already initialized'
+            );
         });
 
         it('should be properly initialized', async () => {
@@ -366,26 +368,26 @@ describe('BancorNetworkInfo', () => {
                 it('should revert when attempting to query using an invalid source token', async () => {
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
-                    ).to.be.revertedWith('InvalidAddress');
+                    ).to.be.revertedWithError('InvalidAddress');
                     await expect(
                         tradeInputByTargetAmount(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
-                    ).to.be.revertedWith('InvalidAddress');
+                    ).to.be.revertedWithError('InvalidAddress');
                 });
 
                 it('should revert when attempting to query using an invalid target token', async () => {
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
-                    ).to.be.revertedWith('InvalidAddress');
+                    ).to.be.revertedWithError('InvalidAddress');
                     await expect(
                         tradeInputByTargetAmount(testAmount, { targetTokenAddress: ZERO_ADDRESS })
-                    ).to.be.revertedWith('InvalidAddress');
+                    ).to.be.revertedWithError('InvalidAddress');
                 });
 
                 it('should revert when attempting to  query using an invalid amount', async () => {
                     const amount = 0;
 
-                    await expect(tradeOutputBySourceAmount(amount)).to.be.revertedWith('ZeroValue');
-                    await expect(tradeInputByTargetAmount(amount)).to.be.revertedWith('ZeroValue');
+                    await expect(tradeOutputBySourceAmount(amount)).to.be.revertedWithError('ZeroValue');
+                    await expect(tradeInputByTargetAmount(amount)).to.be.revertedWithError('ZeroValue');
                 });
 
                 it('should revert when attempting to query using unsupported tokens', async () => {
@@ -397,27 +399,27 @@ describe('BancorNetworkInfo', () => {
                     // unknown source token
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
-                    ).to.be.revertedWith('InvalidToken');
+                    ).to.be.revertedWithError('InvalidToken');
                     await expect(
                         tradeInputByTargetAmount(testAmount, { sourceTokenAddress: reserveToken2.address })
-                    ).to.be.revertedWith('InvalidToken');
+                    ).to.be.revertedWithError('InvalidToken');
 
                     // unknown target token
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { targetTokenAddress: reserveToken2.address })
-                    ).to.be.revertedWith('InvalidToken');
+                    ).to.be.revertedWithError('InvalidToken');
                     await expect(
                         tradeInputByTargetAmount(testAmount, { targetTokenAddress: reserveToken2.address })
-                    ).to.be.revertedWith('InvalidToken');
+                    ).to.be.revertedWithError('InvalidToken');
                 });
 
                 it('should revert when attempting to query using same source and target tokens', async () => {
                     await expect(
                         tradeOutputBySourceAmount(testAmount, { targetTokenAddress: sourceToken.address })
-                    ).to.be.revertedWith('InvalidToken');
+                    ).to.be.revertedWithError('InvalidToken');
                     await expect(
                         tradeInputByTargetAmount(testAmount, { targetTokenAddress: sourceToken.address })
-                    ).to.be.revertedWith('InvalidToken');
+                    ).to.be.revertedWithError('InvalidToken');
                 });
 
                 it('should return correct amounts', async () => {
@@ -569,13 +571,13 @@ describe('BancorNetworkInfo', () => {
         });
 
         it('should not return withdrawal amounts when the pool token is invalid', async () => {
-            await expect(networkInfo.withdrawalAmounts(ZERO_ADDRESS, poolTokenAmount)).to.be.revertedWith(
+            await expect(networkInfo.withdrawalAmounts(ZERO_ADDRESS, poolTokenAmount)).to.be.revertedWithError(
                 'InvalidAddress'
             );
         });
 
         it('should not return withdrawal amounts when the pool token amount is zero', async () => {
-            await expect(networkInfo.withdrawalAmounts(token.address, 0)).to.be.revertedWith('ZeroValue');
+            await expect(networkInfo.withdrawalAmounts(token.address, 0)).to.be.revertedWithError('ZeroValue');
         });
 
         it('should return withdrawal amounts', async () => {
@@ -647,7 +649,7 @@ describe('BancorNetworkInfo', () => {
 
             it('should return the trading liquidities', async () => {
                 if (tokenData.isBNT()) {
-                    await expect(networkInfo.tradingLiquidity(pool)).to.be.revertedWith('InvalidParam');
+                    await expect(networkInfo.tradingLiquidity(pool)).to.be.revertedWithError('InvalidParam');
                 } else {
                     const liquidity = await poolCollection.poolLiquidity(pool);
                     const tradingLiquidity = await networkInfo.tradingLiquidity(pool);
@@ -658,7 +660,7 @@ describe('BancorNetworkInfo', () => {
 
             it('should return the trading fee', async () => {
                 if (tokenData.isBNT()) {
-                    await expect(networkInfo.tradingFeePPM(pool)).to.be.revertedWith('InvalidParam');
+                    await expect(networkInfo.tradingFeePPM(pool)).to.be.revertedWithError('InvalidParam');
                 } else {
                     expect(await networkInfo.tradingFeePPM(pool)).to.equal(TRADING_FEE_PPM);
 

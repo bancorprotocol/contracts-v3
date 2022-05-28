@@ -76,19 +76,19 @@ describe('BancorV1Migration', () => {
         it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
                 Contracts.BancorV1Migration.deploy(ZERO_ADDRESS, networkSettings.address, bnt.address)
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network settings contract', async () => {
             await expect(
                 Contracts.BancorV1Migration.deploy(network.address, ZERO_ADDRESS, bnt.address)
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT contract', async () => {
             await expect(
                 Contracts.BancorV1Migration.deploy(network.address, networkSettings.address, ZERO_ADDRESS)
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {

@@ -58,7 +58,7 @@ describe('MathEx', () => {
                     }
                 );
             } else {
-                await expect(mathContract.exp2(f)).to.revertedWith('Overflow');
+                await expect(mathContract.exp2(f)).to.revertedWithError('Overflow');
             }
         });
     };
@@ -75,7 +75,7 @@ describe('MathEx', () => {
 
     const testReducedFractionRevert = (fraction: Fraction<BigNumber>, max: BigNumber) => {
         it(`reducedFraction(${toString(fraction)}), ${max}) should revert`, async () => {
-            await expect(mathContract.reducedFraction(fraction, max)).to.be.revertedWith('InvalidFraction');
+            await expect(mathContract.reducedFraction(fraction, max)).to.be.revertedWithError('InvalidFraction');
         });
     };
 
@@ -125,7 +125,7 @@ describe('MathEx', () => {
                     const actual = await actualFunc(x, y, z);
                     expect(actual).to.equal(expected);
                 } else {
-                    await expect(actualFunc(x, y, z)).to.be.revertedWith('Overflow');
+                    await expect(actualFunc(x, y, z)).to.be.revertedWithError('Overflow');
                 }
             });
         }

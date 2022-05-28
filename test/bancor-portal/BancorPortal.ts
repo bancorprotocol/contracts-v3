@@ -104,7 +104,7 @@ describe('BancorPortal', () => {
 
             await expect(
                 bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
-            ).to.be.revertedWith('UnsupportedTokens');
+            ).to.be.revertedWithError('UnsupportedTokens');
         });
 
         it('reverts if the migration is not approved', async () => {
@@ -113,7 +113,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(token1.address, token2.address);
             await expect(
                 bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
-            ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsAllowance);
+            ).to.be.revertedWithError(new TokenData(TokenSymbol.TKN).errors().exceedsAllowance);
         });
 
         it('reverts if the input amount is 0', async () => {
@@ -122,7 +122,7 @@ describe('BancorPortal', () => {
             await uniswapV2Factory.setTokens(token1.address, token2.address);
             await expect(
                 bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 0)
-            ).to.be.revertedWith('ZeroValue()');
+            ).to.be.revertedWithError('ZeroValue');
         });
 
         it('reverts if there is no Uniswap pair for specified tokens', async () => {
@@ -132,7 +132,7 @@ describe('BancorPortal', () => {
             await uniswapV2Pair.setTokens(token1.address, token2.address);
             await expect(
                 bancorPortal.connect(user).migrateUniswapV2Position(token1.address, token2.address, 10)
-            ).to.be.revertedWith('NoPairForTokens()');
+            ).to.be.revertedWithError('NoPairForTokens');
         });
 
         it('returns the correct values', async () => {
@@ -172,7 +172,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('reverts when initializing with an invalid networkSettings contract', async () => {
@@ -186,7 +186,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('reverts when initializing with an invalid bnt contract', async () => {
@@ -200,7 +200,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('reverts when initializing with an invalid uniswapV2Router contract', async () => {
@@ -214,7 +214,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('reverts when initializing with an invalid sushiSwapV2Router contract', async () => {
@@ -228,7 +228,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     uniswapV2Factory.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('reverts when initializing with an invalid sushiSwapV2Factory contract', async () => {
@@ -242,7 +242,7 @@ describe('BancorPortal', () => {
                     ZERO_ADDRESS,
                     uniswapV2Factory.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('reverts when initializing with an invalid network contract', async () => {
@@ -256,7 +256,7 @@ describe('BancorPortal', () => {
                     uniswapV2Router02.address,
                     ZERO_ADDRESS
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should be initialized', async () => {

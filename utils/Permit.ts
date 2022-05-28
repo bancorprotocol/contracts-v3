@@ -1,12 +1,10 @@
 import Contracts, { IERC20 } from '../components/Contracts';
-import { MAX_UINT256, ZERO_ADDRESS } from './Constants';
+import { MAX_UINT256, ZERO_ADDRESS, ZERO_BYTES32 } from './Constants';
 import { NATIVE_TOKEN_ADDRESS } from './TokenData';
 import { Addressable } from './Types';
 import { signTypedData, SignTypedDataVersion, TypedDataUtils } from '@metamask/eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
-import { BigNumber, BigNumberish, utils, Wallet } from 'ethers';
-
-const { formatBytes32String, hexlify } = utils;
+import { BigNumber, BigNumberish, Wallet } from 'ethers';
 
 const VERSION = '1';
 const HARDHAT_CHAIN_ID = 31337;
@@ -56,8 +54,8 @@ export const permitData = (
 
 export interface Signature {
     v: number;
-    r: string;
-    s: string;
+    r: Buffer | string;
+    s: Buffer | string;
 }
 
 export const permitCustomSignature = async (
@@ -76,13 +74,7 @@ export const permitCustomSignature = async (
         version: SignTypedDataVersion.V4
     });
 
-    const signature = fromRpcSig(signedData);
-
-    return {
-        v: signature.v,
-        r: hexlify(signature.r),
-        s: hexlify(signature.s)
-    };
+    return fromRpcSig(signedData);
 };
 
 export const permitSignature = async (
@@ -100,8 +92,8 @@ export const permitSignature = async (
     ) {
         return {
             v: 0,
-            r: formatBytes32String(''),
-            s: formatBytes32String('')
+            r: ZERO_BYTES32,
+            s: ZERO_BYTES32
         };
     }
 
