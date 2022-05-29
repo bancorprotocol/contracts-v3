@@ -44,7 +44,7 @@ import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, Contract } from 'ethers';
+import { BigNumber, Contract, utils } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
 import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
@@ -59,6 +59,8 @@ const {
     getArtifact,
     run
 } = deployments;
+
+const { AbiCoder } = utils;
 
 const tenderlyNetwork = tenderly.network();
 
@@ -329,6 +331,23 @@ const logParams = async (params: FunctionParams) => {
     }
 };
 
+interface TypedParam {
+    name: string;
+    type: string;
+    value: any;
+}
+
+const logTypedParams = async (methodName: string, params: TypedParam[] = []) => {
+    Logger.log(`  ${methodName} params: ${params.length === 0 ? '[]' : ''}`);
+    if (params.length === 0) {
+        return;
+    }
+
+    for (const { name, type, value } of params) {
+        Logger.log(`    ${name} (${type}): ${value.toString()}`);
+    }
+};
+
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
@@ -389,12 +408,28 @@ export const deployProxy = async (options: DeployOptions, proxy: ProxyOptions = 
         proxy
     });
 
+// an array of typed parameters which will be encoded and passed to the postUpgrade callback
+//
+// for example:
+//
+// postUpgradeArgs: [
+//    {
+//        name: 'x',
+//        type: 'uint256',
+//        value: 12
+//    },
+//    {
+//        name: 'y',
+//        type: 'string',
+//        value: 'Hello World!'
+//    }
+// ]
 interface UpgradeProxyOptions extends DeployOptions {
-    upgradeArgs?: string;
+    postUpgradeArgs?: TypedParam[];
 }
 
 export const upgradeProxy = async (options: UpgradeProxyOptions) => {
-    const { name, contract, from, value, args, upgradeArgs, contractArtifactData } = options;
+    const { name, contract, from, value, args, postUpgradeArgs, contractArtifactData } = options;
     const contractName = contract ?? name;
 
     await fundAccount(from);
@@ -404,18 +439,30 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         throw new Error(`Proxy ${name} can't be found!`);
     }
 
+    const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
     const prevVersion = await (deployed as IVersioned).version();
 
-    const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
+    let upgradeCallData;
+    if (postUpgradeArgs && postUpgradeArgs.length) {
+        const types = postUpgradeArgs.map(({ type }) => type);
+        const values = postUpgradeArgs.map(({ value }) => value);
+        const abiCoder = new AbiCoder();
+
+        upgradeCallData = [abiCoder.encode(types, values)];
+    } else {
+        upgradeCallData = [ZERO_BYTES];
+    }
+
     const proxyOptions = {
         proxyContract: PROXY_CONTRACT,
         owner: await proxyAdmin.owner(),
         viaAdminContract: InstanceName.ProxyAdmin,
-        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs ?? [ZERO_BYTES] } }
+        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeCallData } }
     };
 
     Logger.log(`  upgrading proxy ${contractName} V${prevVersion}`);
 
+    await logTypedParams(POST_UPGRADE, postUpgradeArgs);
     await logParams({ contractName, args });
 
     const res = await deployContract(name, {
