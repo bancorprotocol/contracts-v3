@@ -236,7 +236,7 @@ describe('PoolCollection', () => {
                     poolTokenFactory.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT contract', async () => {
@@ -251,7 +251,7 @@ describe('PoolCollection', () => {
                     poolTokenFactory.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network settings contract', async () => {
@@ -266,7 +266,7 @@ describe('PoolCollection', () => {
                     poolTokenFactory.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid master vault contract', async () => {
@@ -281,7 +281,7 @@ describe('PoolCollection', () => {
                     poolTokenFactory.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT pool contract', async () => {
@@ -296,7 +296,7 @@ describe('PoolCollection', () => {
                     poolTokenFactory.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid external protection vault contract', async () => {
@@ -311,7 +311,7 @@ describe('PoolCollection', () => {
                     poolTokenFactory.address,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid pool token factory contract', async () => {
@@ -326,7 +326,7 @@ describe('PoolCollection', () => {
                     ZERO_ADDRESS,
                     poolMigrator.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid pool migrator contract', async () => {
@@ -341,7 +341,7 @@ describe('PoolCollection', () => {
                     poolTokenFactory.address,
                     ZERO_ADDRESS
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -385,11 +385,13 @@ describe('PoolCollection', () => {
         it('should revert when a non-owner attempts to set the default trading fee', async () => {
             await expect(
                 poolCollection.connect(nonOwner).setDefaultTradingFeePPM(newDefaultTradingFee)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when setting the default trading fee to an invalid value', async () => {
-            await expect(poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
+            await expect(poolCollection.setDefaultTradingFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError(
+                'InvalidFee'
+            );
         });
 
         it('should ignore updating to the same default trading fee', async () => {
@@ -430,13 +432,13 @@ describe('PoolCollection', () => {
             it('should revert when attempting to create a pool from a non-network', async () => {
                 const nonNetwork = deployer;
 
-                await expect(poolCollection.connect(nonNetwork).createPool(reserveToken.address)).to.be.revertedWith(
-                    'AccessDenied'
-                );
+                await expect(
+                    poolCollection.connect(nonNetwork).createPool(reserveToken.address)
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to create a pool for a non-whitelisted token', async () => {
-                await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
+                await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWithError(
                     'NotWhitelisted'
                 );
             });
@@ -449,9 +451,9 @@ describe('PoolCollection', () => {
                 it('should not allow to create the same pool twice', async () => {
                     await network.createPoolT(poolCollection.address, reserveToken.address);
 
-                    await expect(network.createPoolT(poolCollection.address, reserveToken.address)).to.be.revertedWith(
-                        'AlreadyExists'
-                    );
+                    await expect(
+                        network.createPoolT(poolCollection.address, reserveToken.address)
+                    ).to.be.revertedWithError('AlreadyExists');
                 });
 
                 it('should create a pool', async () => {
@@ -531,19 +533,19 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to set the trading fee', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).setTradingFeePPM(reserveToken.address, newTradingFee)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when setting an invalid trading fee', async () => {
                 await expect(
                     poolCollection.setTradingFeePPM(reserveToken.address, PPM_RESOLUTION + 1)
-                ).to.be.revertedWith('InvalidFee');
+                ).to.be.revertedWithError('InvalidFee');
             });
 
             it('should revert when setting the trading fee of a non-existing pool', async () => {
                 await expect(
                     poolCollection.setTradingFeePPM(newReserveToken.address, newTradingFee)
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should ignore updating to the same trading fee', async () => {
@@ -583,11 +585,11 @@ describe('PoolCollection', () => {
             it('should revert when a non-owner attempts to enable depositing', async () => {
                 await expect(
                     poolCollection.connect(nonOwner).enableDepositing(reserveToken.address, true)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when enabling depositing for a non-existing pool', async () => {
-                await expect(poolCollection.enableDepositing(newReserveToken.address, true)).to.be.revertedWith(
+                await expect(poolCollection.enableDepositing(newReserveToken.address, true)).to.be.revertedWithError(
                     'DoesNotExist'
                 );
             });
@@ -701,13 +703,13 @@ describe('PoolCollection', () => {
                     poolCollection
                         .connect(nonOwner)
                         .enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when enabling trading an invalid pool', async () => {
                 await expect(
                     poolCollection.enableTrading(ZERO_ADDRESS, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when enabling trading a non-existing pool', async () => {
@@ -718,18 +720,18 @@ describe('PoolCollection', () => {
                         BNT_VIRTUAL_BALANCE,
                         BASE_TOKEN_VIRTUAL_BALANCE
                     )
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when enabling trading with an invalid funding rate', async () => {
-                await expect(poolCollection.enableTrading(token.address, 0, 1)).to.be.revertedWith('InvalidRate');
+                await expect(poolCollection.enableTrading(token.address, 0, 1)).to.be.revertedWithError('InvalidRate');
             });
 
             context('when no base token liquidity was deposited', () => {
                 it('should revert', async () => {
                     await expect(
                         poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
-                    ).to.be.revertedWith('InsufficientLiquidity');
+                    ).to.be.revertedWithError('InsufficientLiquidity');
                 });
             });
 
@@ -772,7 +774,7 @@ describe('PoolCollection', () => {
                     await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                     await expect(
                         poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
-                    ).to.be.revertedWith('AlreadyEnabled');
+                    ).to.be.revertedWithError('AlreadyEnabled');
                 });
 
                 context('when the pool funding limit is below the minimum liquidity for trading', () => {
@@ -783,7 +785,7 @@ describe('PoolCollection', () => {
                     it('should revert', async () => {
                         await expect(
                             poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE)
-                        ).to.be.revertedWith('InsufficientLiquidity');
+                        ).to.be.revertedWithError('InsufficientLiquidity');
                     });
                 });
 
@@ -796,7 +798,7 @@ describe('PoolCollection', () => {
                                 MIN_LIQUIDITY_FOR_TRADING.sub(1),
                                 INITIAL_LIQUIDITY
                             )
-                        ).to.be.revertedWith('InsufficientLiquidity');
+                        ).to.be.revertedWithError('InsufficientLiquidity');
                     });
                 });
             });
@@ -876,18 +878,20 @@ describe('PoolCollection', () => {
             });
 
             it('should revert when a non-owner attempts to disable trading', async () => {
-                await expect(poolCollection.connect(nonOwner).disableTrading(token.address)).to.be.revertedWith(
+                await expect(poolCollection.connect(nonOwner).disableTrading(token.address)).to.be.revertedWithError(
                     'AccessDenied'
                 );
             });
 
             it('should revert when disabling trading of an invalid pool', async () => {
-                await expect(poolCollection.disableTrading(ZERO_ADDRESS)).to.be.revertedWith('DoesNotExist');
+                await expect(poolCollection.disableTrading(ZERO_ADDRESS)).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when disabling trading of a non-existing pool', async () => {
                 const newReserveToken = await createTestToken();
-                await expect(poolCollection.disableTrading(newReserveToken.address)).to.be.revertedWith('DoesNotExist');
+                await expect(poolCollection.disableTrading(newReserveToken.address)).to.be.revertedWithError(
+                    'DoesNotExist'
+                );
             });
 
             context('when trading is disabled', () => {
@@ -989,7 +993,7 @@ describe('PoolCollection', () => {
 
                 await expect(
                     poolCollection.connect(nonNetwork).depositFor(CONTEXT_ID, provider.address, token.address, 1)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to deposit for an invalid provider', async () => {
@@ -1001,7 +1005,7 @@ describe('PoolCollection', () => {
                         token.address,
                         1
                     )
-                ).to.be.revertedWith('InvalidAddress');
+                ).to.be.revertedWithError('InvalidAddress');
             });
 
             it('should revert when attempting to deposit for an invalid pool', async () => {
@@ -1013,7 +1017,7 @@ describe('PoolCollection', () => {
                         ZERO_ADDRESS,
                         1
                     )
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when attempting to deposit into a non-existing pool', async () => {
@@ -1025,7 +1029,7 @@ describe('PoolCollection', () => {
                         token.address,
                         1
                     )
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when attempting to deposit an invalid amount', async () => {
@@ -1037,7 +1041,7 @@ describe('PoolCollection', () => {
                         token.address,
                         0
                     )
-                ).to.be.revertedWith('ZeroValue');
+                ).to.be.revertedWithError('ZeroValue');
             });
 
             context('with a registered pool', () => {
@@ -1213,7 +1217,7 @@ describe('PoolCollection', () => {
                                 token.address,
                                 1
                             )
-                        ).to.be.revertedWith('DepositingDisabled');
+                        ).to.be.revertedWithError('DepositingDisabled');
                     });
                 });
 
@@ -1782,7 +1786,7 @@ describe('PoolCollection', () => {
 
                 await expect(
                     poolCollection.connect(nonNetwork).withdraw(CONTEXT_ID, provider.address, token.address, 1, 1)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to withdraw from an invalid pool', async () => {
@@ -1795,7 +1799,7 @@ describe('PoolCollection', () => {
                         1,
                         1
                     )
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when attempting to withdraw from a non-existing pool', async () => {
@@ -1809,7 +1813,7 @@ describe('PoolCollection', () => {
                         1,
                         1
                     )
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when attempting to withdraw an invalid pool token amount', async () => {
@@ -1822,7 +1826,7 @@ describe('PoolCollection', () => {
                         0,
                         1
                     )
-                ).to.be.revertedWith('ZeroValue');
+                ).to.be.revertedWithError('ZeroValue');
             });
 
             it('should revert when attempting to withdraw an invalid reserve token amount', async () => {
@@ -1835,7 +1839,7 @@ describe('PoolCollection', () => {
                         1,
                         0
                     )
-                ).to.be.revertedWith('ZeroValue');
+                ).to.be.revertedWithError('ZeroValue');
             });
 
             it('should revert when attempting to withdraw inconsistent amounts', async () => {
@@ -1848,7 +1852,7 @@ describe('PoolCollection', () => {
                         1,
                         100_000
                     )
-                ).to.be.revertedWith('InvalidParam');
+                ).to.be.revertedWithError('InvalidParam');
             });
 
             context('with deposited funds', () => {
@@ -2065,7 +2069,7 @@ describe('PoolCollection', () => {
                                                                         withdrawalFeePPM,
                                                                         TradingLiquidityState.Update
                                                                     )
-                                                                ).to.be.revertedWith('RateUnstable');
+                                                                ).to.be.revertedWithError('RateUnstable');
                                                             }
                                                         });
                                                     });
@@ -2397,7 +2401,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('TradingDisabled');
+                        ).to.be.revertedWithError('TradingDisabled');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2408,15 +2412,15 @@ describe('PoolCollection', () => {
                                 1,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('TradingDisabled');
+                        ).to.be.revertedWithError('TradingDisabled');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken.address, targetToken.address, 1)
-                        ).to.be.revertedWith('TradingDisabled');
+                        ).to.be.revertedWithError('TradingDisabled');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(sourceToken.address, targetToken.address, 1)
-                        ).to.be.revertedWith('TradingDisabled');
+                        ).to.be.revertedWithError('TradingDisabled');
                     });
                 });
 
@@ -2448,7 +2452,7 @@ describe('PoolCollection', () => {
                                     1,
                                     MIN_RETURN_AMOUNT
                                 )
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWithError('AccessDenied');
 
                         await expect(
                             poolCollection
@@ -2460,7 +2464,7 @@ describe('PoolCollection', () => {
                                     1,
                                     MAX_SOURCE_AMOUNT
                                 )
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWithError('AccessDenied');
                     });
 
                     it('should revert when attempting to trade or query using an invalid source token', async () => {
@@ -2473,7 +2477,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2484,15 +2488,15 @@ describe('PoolCollection', () => {
                                 1,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(ZERO_ADDRESS, targetToken.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(ZERO_ADDRESS, targetToken.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to trade or query using an invalid target token', async () => {
@@ -2505,7 +2509,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2516,15 +2520,15 @@ describe('PoolCollection', () => {
                                 1,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken.address, ZERO_ADDRESS, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(sourceToken.address, ZERO_ADDRESS, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to trade or query using a non-existing source token', async () => {
@@ -2539,7 +2543,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2550,15 +2554,15 @@ describe('PoolCollection', () => {
                                 1,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(reserveToken2.address, bnt.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(reserveToken2.address, bnt.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to trade or query using a non-existing target token', async () => {
@@ -2573,7 +2577,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2584,15 +2588,15 @@ describe('PoolCollection', () => {
                                 1,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(bnt.address, reserveToken2.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(bnt.address, reserveToken2.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to trade or query without using BNT as one of the tokens', async () => {
@@ -2607,7 +2611,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2618,7 +2622,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(
@@ -2626,7 +2630,7 @@ describe('PoolCollection', () => {
                                 reserveToken2.address,
                                 1
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(
@@ -2634,7 +2638,7 @@ describe('PoolCollection', () => {
                                 reserveToken2.address,
                                 1
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to trade or query using BNT as both of the pools', async () => {
@@ -2647,7 +2651,7 @@ describe('PoolCollection', () => {
                                 1,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2658,15 +2662,15 @@ describe('PoolCollection', () => {
                                 1,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(bnt.address, bnt.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(bnt.address, bnt.address, 1)
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to trade or query with an invalid amount', async () => {
@@ -2679,7 +2683,7 @@ describe('PoolCollection', () => {
                                 0,
                                 MIN_RETURN_AMOUNT
                             )
-                        ).to.be.revertedWith('ZeroValue');
+                        ).to.be.revertedWithError('ZeroValue');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2690,15 +2694,15 @@ describe('PoolCollection', () => {
                                 0,
                                 MAX_SOURCE_AMOUNT
                             )
-                        ).to.be.revertedWith('ZeroValue');
+                        ).to.be.revertedWithError('ZeroValue');
 
                         await expect(
                             poolCollection.tradeOutputAndFeeBySourceAmount(sourceToken.address, targetToken.address, 0)
-                        ).to.be.revertedWith('ZeroValue');
+                        ).to.be.revertedWithError('ZeroValue');
 
                         await expect(
                             poolCollection.tradeInputAndFeeByTargetAmount(sourceToken.address, targetToken.address, 0)
-                        ).to.be.revertedWith('ZeroValue');
+                        ).to.be.revertedWithError('ZeroValue');
                     });
 
                     it('should revert when attempting to trade with an invalid minimum/maximum return/source amount', async () => {
@@ -2711,7 +2715,7 @@ describe('PoolCollection', () => {
                                 1,
                                 0
                             )
-                        ).to.be.revertedWith('ZeroValue');
+                        ).to.be.revertedWithError('ZeroValue');
 
                         await expect(
                             network.tradeByTargetPoolCollectionT(
@@ -2722,7 +2726,7 @@ describe('PoolCollection', () => {
                                 1,
                                 0
                             )
-                        ).to.be.revertedWith('ZeroValue');
+                        ).to.be.revertedWithError('ZeroValue');
                     });
 
                     context('with sufficient BNT liquidity', () => {
@@ -2753,7 +2757,7 @@ describe('PoolCollection', () => {
                                         1,
                                         MAX_UINT256
                                     )
-                                ).to.be.revertedWith('InsufficientTargetAmount');
+                                ).to.be.revertedWithError('InsufficientTargetAmount');
                             });
 
                             it('should revert when a trade by providing the target amount requires more tokens than provided', async () => {
@@ -2766,7 +2770,7 @@ describe('PoolCollection', () => {
                                         toWei(100_000),
                                         1
                                     )
-                                ).to.be.revertedWith('InsufficientSourceAmount');
+                                ).to.be.revertedWithError('InsufficientSourceAmount');
                             });
                         });
                     });
@@ -2948,7 +2952,7 @@ describe('PoolCollection', () => {
                                             amount,
                                             MIN_RETURN_AMOUNT
                                         )
-                                    ).to.be.revertedWith('InsufficientLiquidity');
+                                    ).to.be.revertedWithError('InsufficientLiquidity');
 
                                     await expect(
                                         network.tradeByTargetPoolCollectionT(
@@ -2959,7 +2963,7 @@ describe('PoolCollection', () => {
                                             amount,
                                             MAX_SOURCE_AMOUNT
                                         )
-                                    ).to.be.revertedWith('InsufficientLiquidity');
+                                    ).to.be.revertedWithError('InsufficientLiquidity');
 
                                     await expect(
                                         poolCollection.tradeOutputAndFeeBySourceAmount(
@@ -2967,7 +2971,7 @@ describe('PoolCollection', () => {
                                             targetToken.address,
                                             amount
                                         )
-                                    ).to.be.revertedWith('InsufficientLiquidity');
+                                    ).to.be.revertedWithError('InsufficientLiquidity');
 
                                     await expect(
                                         poolCollection.tradeInputAndFeeByTargetAmount(
@@ -2975,7 +2979,7 @@ describe('PoolCollection', () => {
                                             targetToken.address,
                                             amount
                                         )
-                                    ).to.be.revertedWith('InsufficientLiquidity');
+                                    ).to.be.revertedWithError('InsufficientLiquidity');
                                 });
                             });
                         });
@@ -3003,10 +3007,8 @@ describe('PoolCollection', () => {
                                             amount,
                                             MIN_RETURN_AMOUNT
                                         )
-                                    ).to.be.revertedWith('InsufficientLiquidity');
+                                    ).to.be.revertedWithError('InsufficientLiquidity');
 
-                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         network.tradeByTargetPoolCollectionT(
                                             poolCollection.address,
@@ -3016,7 +3018,7 @@ describe('PoolCollection', () => {
                                             amount,
                                             MAX_SOURCE_AMOUNT
                                         )
-                                    ).to.be.reverted;
+                                    ).to.be.revertedWithError('panic code 0x11');
 
                                     await expect(
                                         poolCollection.tradeOutputAndFeeBySourceAmount(
@@ -3024,17 +3026,15 @@ describe('PoolCollection', () => {
                                             targetToken.address,
                                             amount
                                         )
-                                    ).to.be.revertedWith('InsufficientLiquidity');
+                                    ).to.be.revertedWithError('InsufficientLiquidity');
 
-                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             amount
                                         )
-                                    ).to.be.reverted;
+                                    ).to.be.revertedWithError('panic code 0x11');
                                 });
                             });
 
@@ -3053,15 +3053,13 @@ describe('PoolCollection', () => {
                                 });
 
                                 it('should revert when attempting to query the source amount', async () => {
-                                    // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                    // error: revertedWith('reverted with panic code 0x11')
                                     await expect(
                                         poolCollection.tradeInputAndFeeByTargetAmount(
                                             sourceToken.address,
                                             targetToken.address,
                                             targetAmount
                                         )
-                                    ).to.be.reverted;
+                                    ).to.be.revertedWithError('panic code 0x11');
                                 });
 
                                 context('with a trading fee', () => {
@@ -3091,15 +3089,13 @@ describe('PoolCollection', () => {
                                     });
 
                                     it('should revert when attempting to query the source amount', async () => {
-                                        // TODO: test for the exact revert reason once the issue with ethers is fixed
-                                        // error: either division by zero or subtraction underflow
                                         await expect(
                                             poolCollection.tradeInputAndFeeByTargetAmount(
                                                 sourceToken.address,
                                                 targetToken.address,
                                                 targetAmount.add(1)
                                             )
-                                        ).to.be.reverted;
+                                        ).to.be.revertedWithError(isSourceBNT ? 'panic code 0x11' : 'panic code 0x12');
                                     });
                                 });
                             });
@@ -3598,13 +3594,13 @@ describe('PoolCollection', () => {
 
             await expect(
                 poolCollection.connect(nonNetwork).onFeesCollected(reserveToken.address, 1)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when attempting to notify about collected fee from an invalid pool', async () => {
             await expect(
                 network.onPoolCollectionFeesCollectedT(poolCollection.address, ZERO_ADDRESS, 1)
-            ).to.be.revertedWith('DoesNotExist');
+            ).to.be.revertedWithError('DoesNotExist');
         });
 
         it('should revert when attempting to notify about collected fee from a non-existing pool', async () => {
@@ -3612,7 +3608,7 @@ describe('PoolCollection', () => {
 
             await expect(
                 network.onPoolCollectionFeesCollectedT(poolCollection.address, reserveToken2.address, 1)
-            ).to.be.revertedWith('DoesNotExist');
+            ).to.be.revertedWithError('DoesNotExist');
         });
 
         for (const feeAmount of [0, 12_345]) {
@@ -3788,21 +3784,21 @@ describe('PoolCollection', () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
                     targetPoolCollection.connect(nonMigrator).migratePoolIn(reserveToken.address, poolData)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to migrate an invalid pool into a pool collection', async () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
                     poolMigrator.migratePoolInT(targetPoolCollection.address, ZERO_ADDRESS, poolData)
-                ).to.be.revertedWith('InvalidAddress');
+                ).to.be.revertedWithError('InvalidAddress');
             });
 
             it('should revert when attempting to migrate an already existing pool into a pool collection', async () => {
                 const poolData = await poolCollection.poolData(reserveToken.address);
                 await expect(
                     poolMigrator.migratePoolInT(poolCollection.address, reserveToken.address, poolData)
-                ).to.be.revertedWith('AlreadyExists');
+                ).to.be.revertedWithError('AlreadyExists');
             });
 
             it('should revert when attempting to migrate a pool that was not migrated out', async () => {
@@ -3810,7 +3806,7 @@ describe('PoolCollection', () => {
 
                 await expect(
                     poolMigrator.migratePoolInT(targetPoolCollection.address, reserveToken.address, poolData)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should allow to migrate a pool into a pool collection', async () => {
@@ -3844,19 +3840,19 @@ describe('PoolCollection', () => {
                     poolCollection
                         .connect(nonMigrator)
                         .migratePoolOut(reserveToken.address, targetPoolCollection.address)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to migrate an invalid pool out of a pool collection', async () => {
                 await expect(
                     poolMigrator.migratePoolOutT(poolCollection.address, ZERO_ADDRESS, targetPoolCollection.address)
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should revert when attempting to migrate a pool out of a pool collection to an invalid pool collection', async () => {
                 await expect(
                     poolMigrator.migratePoolOutT(poolCollection.address, reserveToken.address, ZERO_ADDRESS)
-                ).to.be.revertedWith('InvalidAddress');
+                ).to.be.revertedWithError('InvalidAddress');
 
                 const newPoolCollection = await createPoolCollection(
                     network,
@@ -3874,7 +3870,7 @@ describe('PoolCollection', () => {
                         reserveToken.address,
                         newPoolCollection.address
                     )
-                ).to.be.revertedWith('InvalidPoolCollection');
+                ).to.be.revertedWithError('InvalidPoolCollection');
             });
 
             it('should revert when attempting to migrate a non-existing pool out of a pool collection', async () => {
@@ -3885,7 +3881,7 @@ describe('PoolCollection', () => {
                         reserveToken2.address,
                         targetPoolCollection.address
                     )
-                ).to.be.revertedWith('DoesNotExist');
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             it('should allow to migrate a pool out of a pool collection', async () => {

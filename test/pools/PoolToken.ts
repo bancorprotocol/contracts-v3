@@ -42,7 +42,7 @@ describe('PoolToken', () => {
         });
 
         it('should revert when initialized with an invalid base reserve token', async () => {
-            await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, ZERO_ADDRESS)).to.be.revertedWith(
+            await expect(Contracts.PoolToken.deploy(NAME, SYMBOL, DECIMALS, ZERO_ADDRESS)).to.be.revertedWithError(
                 'InvalidAddress'
             );
         });
@@ -54,15 +54,15 @@ describe('PoolToken', () => {
         });
 
         it('should revert when the owner attempts to issue tokens to an invalid address', async () => {
-            await expect(poolToken.mint(ZERO_ADDRESS, 1)).to.be.revertedWith('InvalidExternalAddress');
+            await expect(poolToken.mint(ZERO_ADDRESS, 1)).to.be.revertedWithError('InvalidExternalAddress');
         });
 
         it('should revert when the owner attempts to issue tokens to the token address', async () => {
-            await expect(poolToken.mint(poolToken.address, 1)).to.be.revertedWith('InvalidExternalAddress');
+            await expect(poolToken.mint(poolToken.address, 1)).to.be.revertedWithError('InvalidExternalAddress');
         });
 
         it('should revert when a non owner attempts to issue tokens', async () => {
-            await expect(poolToken.connect(nonOwner).mint(owner.address, 1)).to.be.revertedWith('AccessDenied');
+            await expect(poolToken.connect(nonOwner).mint(owner.address, 1)).to.be.revertedWithError('AccessDenied');
         });
     });
 
@@ -114,9 +114,9 @@ describe('PoolToken', () => {
 
             await poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s);
 
-            await expect(poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s)).to.be.revertedWith(
-                'ERC20Permit: invalid signature'
-            );
+            await expect(
+                poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s)
+            ).to.be.revertedWithError('ERC20Permit: invalid signature');
         });
 
         it('should reject an invalid signature', async () => {
@@ -132,9 +132,9 @@ describe('PoolToken', () => {
                 MAX_UINT256
             );
 
-            await expect(poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s)).to.be.revertedWith(
-                'ERC20Permit: invalid signature'
-            );
+            await expect(
+                poolToken.permit(sender, spender.address, amount, MAX_UINT256, v, r, s)
+            ).to.be.revertedWithError('ERC20Permit: invalid signature');
         });
 
         it('should reject an expired permit', async () => {
@@ -150,7 +150,7 @@ describe('PoolToken', () => {
                 deadline
             );
 
-            await expect(poolToken.permit(sender, spender.address, amount, deadline, v, r, s)).to.be.revertedWith(
+            await expect(poolToken.permit(sender, spender.address, amount, deadline, v, r, s)).to.be.revertedWithError(
                 'ERC20Permit: expired deadline'
             );
         });

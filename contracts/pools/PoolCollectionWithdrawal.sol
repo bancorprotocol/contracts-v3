@@ -89,8 +89,6 @@ library PoolCollectionWithdrawal {
         uint256 n, // <= M == 1000000
         uint256 x /// <= e <= 2**128-1
     ) internal pure returns (Output memory output) {
-        // given the restrictions above, everything below can be declared `unchecked`
-
         if (
             a > type(uint128).max ||
             b > type(uint128).max ||
@@ -141,7 +139,6 @@ library PoolCollectionWithdrawal {
         uint256 e, // <= 2**128-1
         uint256 x /// <= e <= 2**128-1
     ) private pure returns (bool) {
-        // given the restrictions above, everything below can be declared `unchecked`
         return b * x < c * (e - x);
     }
 
@@ -157,7 +154,6 @@ library PoolCollectionWithdrawal {
         uint256 n, // <= M == 1000000
         uint256 x /// <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) {
-        // given the restrictions above, everything below can be declared `unchecked`
         Uint512 memory lhs = MathEx.mul512(b * e, f * m + e * n);
         Uint512 memory rhs = MathEx.mul512(f * x, g * (M - m));
         return MathEx.gt512(lhs, rhs);
@@ -174,7 +170,6 @@ library PoolCollectionWithdrawal {
         uint256 n, // <= M == 1000000
         uint256 x /// <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) {
-        // given the restrictions above, everything below can be declared `unchecked`
         Uint512 memory lhs = MathEx.mul512(b * e, (f * m + e * n) * M);
         Uint512 memory rhs = MathEx.mul512(f * x, (f * M + e * n) * (M - m));
         return MathEx.gt512(lhs, rhs); // `x < e*c/(b+c)` --> `f*x < e*c*(b+c-e)/(b+c) <= e*c <= 2**256-1`
@@ -196,7 +191,6 @@ library PoolCollectionWithdrawal {
         uint256 x, // <= e <= 2**128-1
         uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) {
-        // given the restrictions above, everything below can be declared `unchecked`
         uint256 i = f * (M - m);
         uint256 j = mulSubMulDivF(b, e * M, x, i, 1);
         output.p = MathEx.mulDivF(a * x, i, j).toPos256();
@@ -221,7 +215,6 @@ library PoolCollectionWithdrawal {
         uint256 x, // <= e <= 2**128-1
         uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) {
-        // given the restrictions above, everything below can be declared `unchecked`
         uint256 i = f * M + e * n;
         uint256 j = mulAddMulDivF(b, e * (M - m), x, i * (M - m), M);
         output.p = MathEx.mulDivF(a * x, i, j).toNeg256();
@@ -243,7 +236,6 @@ library PoolCollectionWithdrawal {
         uint256 e, // <= 2**128-1
         uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) {
-        // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y * b, c * (e - y));
         output.p = MathEx.mulDivF(a, z, b * e).toNeg256();
         output.q = output.p;
@@ -264,7 +256,6 @@ library PoolCollectionWithdrawal {
         uint256 c, // <= 2**128-1
         uint256 y /// == x*(1-n) <= x <= e <= 2**128-1
     ) private pure returns (Output memory output) {
-        // given the restrictions above, everything below can be declared `unchecked`
         uint256 z = MathEx.subMax0(y, c);
         output.p = MathEx.mulDivF(a, z, b).toNeg256();
         output.q = output.p;
@@ -294,7 +285,6 @@ library PoolCollectionWithdrawal {
         uint256 y, // == x*(1-n) <= x <= e <= 2**128-1
         uint256 w /// <= 2**128-1
     ) private pure returns (uint256 t, uint256 u) {
-        // given the restrictions above, everything below can be declared `unchecked`
         uint256 yg = y * g;
         uint256 we = w * e;
         if (yg > we) {

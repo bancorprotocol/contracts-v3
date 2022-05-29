@@ -153,7 +153,7 @@ describe('StandardRewards', () => {
                     bntPool.address,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network settings contract', async () => {
@@ -166,7 +166,7 @@ describe('StandardRewards', () => {
                     bntPool.address,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT governance contract', async () => {
@@ -179,7 +179,7 @@ describe('StandardRewards', () => {
                     bntPool.address,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid vBNT contract', async () => {
@@ -192,7 +192,7 @@ describe('StandardRewards', () => {
                     bntPool.address,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT pool contract', async () => {
@@ -205,7 +205,7 @@ describe('StandardRewards', () => {
                     ZERO_ADDRESS,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid external rewards vault contract', async () => {
@@ -218,7 +218,7 @@ describe('StandardRewards', () => {
                     bntPool.address,
                     ZERO_ADDRESS
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -231,7 +231,7 @@ describe('StandardRewards', () => {
                 externalRewardsVault
             );
 
-            await expect(standardRewards.initialize()).to.be.revertedWith(
+            await expect(standardRewards.initialize()).to.be.revertedWithError(
                 'Initializable: contract is already initialized'
             );
         });
@@ -315,7 +315,7 @@ describe('StandardRewards', () => {
                         standardRewards
                             .connect(nonAdmin)
                             .createProgram(pool.address, bnt.address, TOTAL_REWARDS, now, now + duration.days(1))
-                    ).to.be.revertedWith('AccessDenied');
+                    ).to.be.revertedWithError('AccessDenied');
                 });
 
                 it('should revert when attempting to create a program with for an invalid pool', async () => {
@@ -327,7 +327,7 @@ describe('StandardRewards', () => {
                             now,
                             now + duration.days(1)
                         )
-                    ).to.be.revertedWith('InvalidAddress');
+                    ).to.be.revertedWithError('InvalidAddress');
 
                     const token2 = await createTestToken();
 
@@ -339,7 +339,7 @@ describe('StandardRewards', () => {
                             now,
                             now + duration.days(1)
                         )
-                    ).to.be.revertedWith('NotWhitelisted');
+                    ).to.be.revertedWithError('NotWhitelisted');
                 });
 
                 it('should revert when attempting to create a program with an invalid reward token', async () => {
@@ -351,13 +351,13 @@ describe('StandardRewards', () => {
                             now,
                             now + duration.days(1)
                         )
-                    ).to.be.revertedWith('InvalidAddress');
+                    ).to.be.revertedWithError('InvalidAddress');
                 });
 
                 it('should revert when attempting to create a program with an invalid total rewards amount', async () => {
                     await expect(
                         standardRewards.createProgram(pool.address, bnt.address, 0, now, now + duration.days(1))
-                    ).to.be.revertedWith('ZeroValue');
+                    ).to.be.revertedWithError('ZeroValue');
                 });
 
                 it('should revert when attempting to create a program with an invalid start/end time', async () => {
@@ -369,7 +369,7 @@ describe('StandardRewards', () => {
                             now - 1,
                             now + duration.days(1)
                         )
-                    ).to.be.revertedWith('InvalidParam');
+                    ).to.be.revertedWithError('InvalidParam');
 
                     await expect(
                         standardRewards.createProgram(
@@ -379,7 +379,7 @@ describe('StandardRewards', () => {
                             now + duration.days(1),
                             now
                         )
-                    ).to.be.revertedWith('InvalidParam');
+                    ).to.be.revertedWithError('InvalidParam');
                 });
             });
 
@@ -470,7 +470,7 @@ describe('StandardRewards', () => {
                                 startTime,
                                 endTime
                             )
-                        ).to.be.revertedWith('InsufficientFunds');
+                        ).to.be.revertedWithError('InsufficientFunds');
                     });
                 }
 
@@ -503,7 +503,7 @@ describe('StandardRewards', () => {
                                 startTime,
                                 endTime
                             )
-                        ).to.be.revertedWith('AlreadyExists');
+                        ).to.be.revertedWithError('AlreadyExists');
                     });
 
                     context('when the active program was disabled', () => {
@@ -520,7 +520,7 @@ describe('StandardRewards', () => {
                                     startTime,
                                     endTime
                                 )
-                            ).to.be.revertedWith('AlreadyExists');
+                            ).to.be.revertedWithError('AlreadyExists');
                         });
                     });
 
@@ -540,7 +540,7 @@ describe('StandardRewards', () => {
                                             now,
                                             now + duration.days(1)
                                         )
-                                    ).to.be.revertedWith('InsufficientFunds');
+                                    ).to.be.revertedWithError('InsufficientFunds');
                                 });
                             });
                         }
@@ -574,7 +574,7 @@ describe('StandardRewards', () => {
                                             startTime,
                                             endTime
                                         )
-                                    ).to.be.revertedWith('InsufficientFunds');
+                                    ).to.be.revertedWithError('InsufficientFunds');
                                 });
                             });
                         }
@@ -635,11 +635,13 @@ describe('StandardRewards', () => {
             });
 
             it('should revert when a non-admin is attempting to terminate a program', async () => {
-                await expect(standardRewards.connect(nonAdmin).terminateProgram(1)).to.be.revertedWith('AccessDenied');
+                await expect(standardRewards.connect(nonAdmin).terminateProgram(1)).to.be.revertedWithError(
+                    'AccessDenied'
+                );
             });
 
             it('should revert when attempting to terminate a non-existing program', async () => {
-                await expect(standardRewards.terminateProgram(1)).to.be.revertedWith('DoesNotExist');
+                await expect(standardRewards.terminateProgram(1)).to.be.revertedWithError('DoesNotExist');
             });
 
             context('with an active program', () => {
@@ -724,7 +726,7 @@ describe('StandardRewards', () => {
                     });
 
                     it('should revert', async () => {
-                        await expect(standardRewards.terminateProgram(id)).to.be.revertedWith('ProgramInactive');
+                        await expect(standardRewards.terminateProgram(id)).to.be.revertedWithError('ProgramInactive');
                     });
                 });
 
@@ -734,7 +736,7 @@ describe('StandardRewards', () => {
                     });
 
                     it('should revert', async () => {
-                        await expect(standardRewards.terminateProgram(id)).to.be.revertedWith('ProgramInactive');
+                        await expect(standardRewards.terminateProgram(id)).to.be.revertedWithError('ProgramInactive');
                     });
                 });
             });
@@ -764,7 +766,7 @@ describe('StandardRewards', () => {
 
             it('should revert when a non-admin is attempting to enable/disable a program', async () => {
                 for (const status of [true, false]) {
-                    await expect(standardRewards.connect(nonAdmin).enableProgram(1, status)).to.be.revertedWith(
+                    await expect(standardRewards.connect(nonAdmin).enableProgram(1, status)).to.be.revertedWithError(
                         'AccessDenied'
                     );
                 }
@@ -772,7 +774,7 @@ describe('StandardRewards', () => {
 
             it('should revert when attempting to enable/disable a non-existing program', async () => {
                 for (const status of [true, false]) {
-                    await expect(standardRewards.enableProgram(1, status)).to.be.revertedWith('DoesNotExist');
+                    await expect(standardRewards.enableProgram(1, status)).to.be.revertedWithError('DoesNotExist');
                 }
             });
 
@@ -943,11 +945,11 @@ describe('StandardRewards', () => {
                     };
 
                     it('should revert when attempting to join a non-existing program', async () => {
-                        await expect(join(0, 1)).to.be.revertedWith('DoesNotExist');
+                        await expect(join(0, 1)).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to join with an invalid amount', async () => {
-                        await expect(join(1, 0)).to.be.revertedWith('ZeroValue');
+                        await expect(join(1, 0)).to.be.revertedWithError('ZeroValue');
                     });
 
                     it('should join an existing program', async () => {
@@ -969,14 +971,14 @@ describe('StandardRewards', () => {
                             it('should revert', async () => {
                                 await expect(
                                     standardRewards.connect(provider).join(id, poolTokenAmount)
-                                ).to.be.revertedWith(new TokenData(TokenSymbol.bnBNT).errors().exceedsAllowance);
+                                ).to.be.revertedWithError(new TokenData(TokenSymbol.bnBNT).errors().exceedsAllowance);
                             });
                         });
                     }
                 };
 
                 for (const permitted of [false, true]) {
-                    context(permitted ? 'permitted' : 'regular', () => {
+                    describe(permitted ? 'permitted' : 'regular', () => {
                         testBasicTests(permitted);
                     });
                 }
@@ -1122,7 +1124,7 @@ describe('StandardRewards', () => {
                             it('should revert', async () => {
                                 await expect(
                                     standardRewards.connect(provider).join(id, poolTokenAmount)
-                                ).to.be.revertedWith('ProgramDisabled');
+                                ).to.be.revertedWithError('ProgramDisabled');
                             });
                         });
 
@@ -1134,7 +1136,7 @@ describe('StandardRewards', () => {
                             it('should revert', async () => {
                                 await expect(
                                     standardRewards.connect(provider).join(id, poolTokenAmount)
-                                ).to.be.revertedWith('ProgramInactive');
+                                ).to.be.revertedWithError('ProgramInactive');
                             });
                         });
 
@@ -1146,7 +1148,7 @@ describe('StandardRewards', () => {
                             it('should revert', async () => {
                                 await expect(
                                     standardRewards.connect(provider).join(id, poolTokenAmount)
-                                ).to.be.revertedWith('ProgramInactive');
+                                ).to.be.revertedWithError('ProgramInactive');
                             });
                         });
                     });
@@ -1179,11 +1181,11 @@ describe('StandardRewards', () => {
                 });
 
                 it('should revert when attempting to leave a non-existing program', async () => {
-                    await expect(standardRewards.connect(provider).leave(0, 1)).to.be.revertedWith('DoesNotExist');
+                    await expect(standardRewards.connect(provider).leave(0, 1)).to.be.revertedWithError('DoesNotExist');
                 });
 
                 it('should revert when attempting to leave with an invalid amount', async () => {
-                    await expect(standardRewards.connect(provider).leave(1, 0)).to.be.revertedWith('ZeroValue');
+                    await expect(standardRewards.connect(provider).leave(1, 0)).to.be.revertedWithError('ZeroValue');
                 });
             });
 
@@ -1463,11 +1465,11 @@ describe('StandardRewards', () => {
                     };
 
                     it('should revert when attempting to deposit and join a non-existing program', async () => {
-                        await expect(depositAndJoin(0, 1)).to.be.revertedWith('DoesNotExist');
+                        await expect(depositAndJoin(0, 1)).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to deposit and join with an invalid amount', async () => {
-                        await expect(depositAndJoin(1, 0)).to.be.revertedWith('ZeroValue');
+                        await expect(depositAndJoin(1, 0)).to.be.revertedWithError('ZeroValue');
                     });
 
                     it('should deposit and join an existing program', async () => {
@@ -1494,11 +1496,11 @@ describe('StandardRewards', () => {
                                     depositAndJoin(nativeId, amount, {
                                         value: amount.sub(missingAmount)
                                     })
-                                ).to.be.revertedWith('NativeTokenAmountMismatch');
+                                ).to.be.revertedWithError('NativeTokenAmountMismatch');
 
                                 await expect(
                                     depositAndJoin(nativeId, amount, { value: BigNumber.from(0) })
-                                ).to.be.revertedWith('NativeTokenAmountMismatch');
+                                ).to.be.revertedWithError('NativeTokenAmountMismatch');
                             });
 
                             it('should refund when attempting to deposit and join with less than what was actually sent', async () => {
@@ -1524,7 +1526,7 @@ describe('StandardRewards', () => {
                                 it('should revert', async () => {
                                     await expect(
                                         standardRewards.connect(provider).depositAndJoin(id, tokenAmount)
-                                    ).to.be.revertedWith(new TokenData(TokenSymbol.TKN).errors().exceedsAllowance);
+                                    ).to.be.revertedWithError(new TokenData(TokenSymbol.TKN).errors().exceedsAllowance);
                                 });
                             });
 
@@ -1533,14 +1535,14 @@ describe('StandardRewards', () => {
 
                                 await expect(
                                     depositAndJoin(id, amount, { value: BigNumber.from(1) })
-                                ).to.be.revertedWith('NativeTokenAmountMismatch');
+                                ).to.be.revertedWithError('NativeTokenAmountMismatch');
                             });
                         });
                     }
                 };
 
                 for (const permitted of [false, true]) {
-                    context(permitted ? 'permitted' : 'regular', () => {
+                    describe(permitted ? 'permitted' : 'regular', () => {
                         testBasicTests(permitted);
                     });
                 }
@@ -1726,7 +1728,7 @@ describe('StandardRewards', () => {
                             it('should revert', async () => {
                                 await expect(
                                     standardRewards.connect(provider).depositAndJoin(id, tokenAmount)
-                                ).to.be.revertedWith('ProgramDisabled');
+                                ).to.be.revertedWithError('ProgramDisabled');
                             });
                         });
 
@@ -1738,7 +1740,7 @@ describe('StandardRewards', () => {
                             it('should revert', async () => {
                                 await expect(
                                     standardRewards.connect(provider).depositAndJoin(id, tokenAmount)
-                                ).to.be.revertedWith('ProgramInactive');
+                                ).to.be.revertedWithError('ProgramInactive');
                             });
                         });
 
@@ -1750,7 +1752,7 @@ describe('StandardRewards', () => {
                             it('should revert', async () => {
                                 await expect(
                                     standardRewards.connect(provider).depositAndJoin(id, tokenAmount)
-                                ).to.be.revertedWith('ProgramInactive');
+                                ).to.be.revertedWithError('ProgramInactive');
                             });
                         });
                     });
@@ -1965,43 +1967,43 @@ describe('StandardRewards', () => {
                     });
 
                     it('should revert when attempting to claim rewards for non-existing programs', async () => {
-                        await expect(standardRewards.connect(provider).claimRewards([10_000])).to.be.revertedWith(
+                        await expect(standardRewards.connect(provider).claimRewards([10_000])).to.be.revertedWithError(
                             'DoesNotExist'
                         );
 
                         await expect(
                             standardRewards.connect(provider).claimRewards([programData.id, 10_000])
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to stake rewards for non-existing programs', async () => {
-                        await expect(standardRewards.connect(provider).stakeRewards([10_000])).to.be.revertedWith(
+                        await expect(standardRewards.connect(provider).stakeRewards([10_000])).to.be.revertedWithError(
                             'DoesNotExist'
                         );
 
                         await expect(
                             standardRewards.connect(provider).stakeRewards([programData.id, 10_000])
-                        ).to.be.revertedWith('DoesNotExist');
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should revert when attempting to claim rewards with duplicate ids', async () => {
                         await expect(
                             standardRewards.connect(provider).claimRewards([10_000, 10_000])
-                        ).to.be.revertedWith('ArrayNotUnique');
+                        ).to.be.revertedWithError('ArrayNotUnique');
 
                         await expect(
                             standardRewards.connect(provider).claimRewards([programData.id, programData.id])
-                        ).to.be.revertedWith('ArrayNotUnique');
+                        ).to.be.revertedWithError('ArrayNotUnique');
                     });
 
                     it('should revert when attempting to stake rewards with duplicate ids', async () => {
                         await expect(
                             standardRewards.connect(provider).stakeRewards([10_000, 10_000])
-                        ).to.be.revertedWith('ArrayNotUnique');
+                        ).to.be.revertedWithError('ArrayNotUnique');
 
                         await expect(
                             standardRewards.connect(provider).stakeRewards([programData.id, programData.id])
-                        ).to.be.revertedWith('ArrayNotUnique');
+                        ).to.be.revertedWithError('ArrayNotUnique');
                     });
 
                     context('when the active program was disabled', () => {
@@ -2012,13 +2014,13 @@ describe('StandardRewards', () => {
                         it('should revert', async () => {
                             await expect(
                                 standardRewards.connect(provider).claimRewards([programData.id])
-                            ).to.be.revertedWith('ProgramDisabled');
+                            ).to.be.revertedWithError('ProgramDisabled');
                         });
 
                         it('should revert', async () => {
                             await expect(
                                 standardRewards.connect(provider).stakeRewards([programData.id])
-                            ).to.be.revertedWith('ProgramDisabled');
+                            ).to.be.revertedWithError('ProgramDisabled');
                         });
                     });
 
@@ -2040,7 +2042,7 @@ describe('StandardRewards', () => {
 
                             await expect(
                                 standardRewards.connect(provider).claimRewards([programData.id])
-                            ).to.be.revertedWith('RewardsTooHigh');
+                            ).to.be.revertedWithError('RewardsTooHigh');
                         });
 
                         context('with staked tokens in different rewards program', () => {
@@ -2071,19 +2073,19 @@ describe('StandardRewards', () => {
                             it('should revert if attempting to get pending rewards for programs with different reward tokens', async () => {
                                 await expect(
                                     standardRewards.pendingRewards(provider.address, [programData.id, programData2.id])
-                                ).to.be.revertedWith('RewardsTokenMismatch');
+                                ).to.be.revertedWithError('RewardsTokenMismatch');
                             });
 
                             it('should revert if attempting to claim rewards for programs with different reward tokens', async () => {
                                 await expect(
                                     standardRewards.connect(provider).claimRewards([programData.id, programData2.id])
-                                ).to.be.revertedWith('RewardsTokenMismatch');
+                                ).to.be.revertedWithError('RewardsTokenMismatch');
                             });
 
                             it('should revert if attempting to stake rewards for programs with different reward tokens', async () => {
                                 await expect(
                                     standardRewards.connect(provider).stakeRewards([programData.id, programData2.id])
-                                ).to.be.revertedWith('RewardsTokenMismatch');
+                                ).to.be.revertedWithError('RewardsTokenMismatch');
                             });
                         });
                     });
