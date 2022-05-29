@@ -29,6 +29,13 @@ See the details [here](./docs/bug-bounty.md).
 
 The security policy is available [here](./SECURITY.md).
 
+### Security Audits
+
+- [PeckShield](docs/audits/PeckShield-Audit-Report-BancorV3-v1.0.pdf)
+- OpenZeppelin (coming soon...)
+- Certora (coming soon...)
+- ChainSecurity (coming soon...)
+
 ## Setup
 
 As a first step of contributing to the repo, you should install all the required dependencies via:
@@ -61,16 +68,10 @@ This suite is called “nightly” since it’s scheduled to run every day at mi
 
 ### Deployment Tests
 
-You can run deployment unit-tests (which are also part of the full test suite) via:
+You can test new deployments (and the health of the network) against a mainnet fork via:
 
 ```sh
 yarn test:deploy
-```
-
-You can also run a specialized set of deployment tests against a mainnet fork via:
-
-```sh
-yarn test:deploy:fork
 ```
 
 This will automatically be skipped on an already deployed and configured deployment scripts and will only test the additional changeset resulting by running any new/pending deployment scripts and perform an e2e test against the up to date state. This is especially useful to verify that any future deployments and upgrades, suggested by the DAO, work correctly and preserve the integrity of the system.
@@ -85,7 +86,6 @@ You can find historic test coverage reports in [releases](https://github.com/ban
 - 97.36% Branches 479/492
 - 100% Functions 446/446
 - 99.31% Lines 1580/1591
-
 
 ![Coverage Report](./docs/images/coverage.png)
 
@@ -212,20 +212,6 @@ It can be run via:
 
 ```sh
 yarn deploy:fork
-```
-
-### Local Deployment
-
-It’s also possible to test the deployment to a local persistent node for further testing or simulations via:
-
-```sh
-yarn deploy:local
-```
-
-Please note that the framework will look for a local RPC node running on port 8545 with chainId 31337. One way to achieve this is to run a local hardhat node via:
-
-```sh
-yarn dev
 ```
 
 ## Community

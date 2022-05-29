@@ -62,7 +62,7 @@ describe('AutoCompoundingRewards', () => {
             {
                 tokenData,
                 balance: providerStake,
-                requestedLiquidity: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
+                requestedFunding: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
                 bntVirtualBalance: 1,
                 baseTokenVirtualBalance: 2
             },
@@ -103,7 +103,7 @@ describe('AutoCompoundingRewards', () => {
                     bntPool.address,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network settings contract', async () => {
@@ -115,7 +115,7 @@ describe('AutoCompoundingRewards', () => {
                     bntPool.address,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT contract', async () => {
@@ -127,7 +127,7 @@ describe('AutoCompoundingRewards', () => {
                     bntPool.address,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT pool contract', async () => {
@@ -139,7 +139,7 @@ describe('AutoCompoundingRewards', () => {
                     ZERO_ADDRESS,
                     externalRewardsVault.address
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid external rewards contract', async () => {
@@ -151,7 +151,7 @@ describe('AutoCompoundingRewards', () => {
                     bntPool.address,
                     ZERO_ADDRESS
                 )
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -163,7 +163,7 @@ describe('AutoCompoundingRewards', () => {
                 externalRewardsVault
             );
 
-            await expect(autoCompoundingRewards.initialize()).to.be.revertedWith(
+            await expect(autoCompoundingRewards.initialize()).to.be.revertedWithError(
                 'Initializable: contract is already initialized'
             );
         });
@@ -277,7 +277,7 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 START_TIME
                             )
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWithError('AccessDenied');
                     });
 
                     it('should revert when the reserve token is invalid', async () => {
@@ -289,7 +289,7 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 START_TIME
                             )
-                        ).to.revertedWith('InvalidAddress');
+                        ).to.revertedWithError('InvalidAddress');
                     });
 
                     it('should revert when the program already exists', async () => {
@@ -309,13 +309,13 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 START_TIME
                             )
-                        ).to.revertedWith('AlreadyExists');
+                        ).to.revertedWithError('AlreadyExists');
                     });
 
                     it('should revert when the total rewards are equal to 0', async () => {
                         await expect(
                             createProgram(distributionType, autoCompoundingRewards, token.address, 0, START_TIME)
-                        ).to.revertedWith('ZeroValue');
+                        ).to.revertedWithError('ZeroValue');
                     });
 
                     it('should revert when the pool is not whitelisted', async () => {
@@ -329,7 +329,7 @@ describe('AutoCompoundingRewards', () => {
                                 TOTAL_REWARDS,
                                 START_TIME
                             )
-                        ).to.revertedWith('NotWhitelisted');
+                        ).to.revertedWithError('NotWhitelisted');
                     });
 
                     switch (distributionType) {
@@ -389,7 +389,7 @@ describe('AutoCompoundingRewards', () => {
                                                                 startTime,
                                                                 endTime
                                                             )
-                                                        ).to.be.revertedWith('InvalidParam');
+                                                        ).to.be.revertedWithError('InvalidParam');
                                                     });
                                                 }
                                             }
@@ -459,7 +459,7 @@ describe('AutoCompoundingRewards', () => {
                                                                 startTime,
                                                                 halfLife
                                                             )
-                                                        ).to.be.revertedWith('InvalidParam');
+                                                        ).to.be.revertedWithError('InvalidParam');
                                                     });
                                                 }
                                             }
@@ -475,12 +475,12 @@ describe('AutoCompoundingRewards', () => {
                     it('should revert when a non-admin attempts to terminate a program', async () => {
                         await expect(
                             autoCompoundingRewards.connect(user).terminateProgram(token.address)
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWithError('AccessDenied');
                     });
 
                     context('when a program does not exist', () => {
                         it('should revert', async () => {
-                            await expect(autoCompoundingRewards.terminateProgram(token.address)).to.revertedWith(
+                            await expect(autoCompoundingRewards.terminateProgram(token.address)).to.revertedWithError(
                                 'DoesNotExist'
                             );
                         });
@@ -567,18 +567,18 @@ describe('AutoCompoundingRewards', () => {
                     it('should revert when a non-admin attempts to enable / disable a program', async () => {
                         await expect(
                             autoCompoundingRewards.connect(user).enableProgram(token.address, true)
-                        ).to.be.revertedWith('AccessDenied');
+                        ).to.be.revertedWithError('AccessDenied');
                     });
 
                     it('should revert when attempting to enable / disable a non-existing program', async () => {
                         const newToken = await createTestToken();
 
-                        await expect(autoCompoundingRewards.enableProgram(newToken.address, true)).to.be.revertedWith(
-                            'DoesNotExist'
-                        );
-                        await expect(autoCompoundingRewards.enableProgram(newToken.address, false)).to.be.revertedWith(
-                            'DoesNotExist'
-                        );
+                        await expect(
+                            autoCompoundingRewards.enableProgram(newToken.address, true)
+                        ).to.be.revertedWithError('DoesNotExist');
+                        await expect(
+                            autoCompoundingRewards.enableProgram(newToken.address, false)
+                        ).to.be.revertedWithError('DoesNotExist');
                     });
 
                     it('should enable a program', async () => {
@@ -1001,7 +1001,7 @@ describe('AutoCompoundingRewards', () => {
                                         maxTotalRewards.add(1),
                                         START_TIME
                                     )
-                                ).to.revertedWith('InsufficientFunds');
+                                ).to.revertedWithError('InsufficientFunds');
                             });
                         });
 
@@ -1078,7 +1078,7 @@ describe('AutoCompoundingRewards', () => {
                             const balance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
                             await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance.sub(1));
 
-                            await expect(autoCompoundingRewards.processRewards(token.address)).to.be.revertedWith(
+                            await expect(autoCompoundingRewards.processRewards(token.address)).to.be.revertedWithError(
                                 'InsufficientFunds'
                             );
                         });
@@ -1273,7 +1273,6 @@ describe('AutoCompoundingRewards', () => {
                 switch (program.distributionType) {
                     case RewardsDistributionType.Flat:
                         expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
-                            maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('0000000000000000000002'),
                             relation: Relation.LesserOrEqual
                         });
@@ -1286,12 +1285,10 @@ describe('AutoCompoundingRewards', () => {
 
                     case RewardsDistributionType.ExpDecay:
                         expect(actualUserTokenOwned).to.be.almostEqual(expectedUserTokenOwned, {
-                            maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('0000000000000000000002'),
                             relation: Relation.LesserOrEqual
                         });
                         expect(actualRewardsVaultTokenOwned).to.be.almostEqual(expectedRewardsVaultTokenOwned, {
-                            maxAbsoluteError: new Decimal(0),
                             maxRelativeError: new Decimal('00000000000000062'),
                             relation: Relation.GreaterOrEqual
                         });
@@ -1400,7 +1397,7 @@ describe('AutoCompoundingRewards', () => {
                                     it('should revert with an overflow', async () => {
                                         await expect(
                                             autoCompoundingRewards.processRewards(token.address)
-                                        ).to.be.revertedWith('Overflow');
+                                        ).to.be.revertedWithError('Overflow');
                                     });
 
                                     break;

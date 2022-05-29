@@ -15,12 +15,12 @@ describeDeployment(
         });
 
         beforeEach(async () => {
-            poolCollection = await DeployedContracts.PoolCollectionType1V1.deployed();
+            poolCollection = await DeployedContracts.PoolCollectionType1V3.deployed();
         });
 
         it('should transfer the ownership of the pool collection contract', async () => {
             expect(await poolCollection.owner()).to.equal(daoMultisig);
         });
     },
-    () => isLive()
+    { skip: isLive }
 );

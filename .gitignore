@@ -14,7 +14,7 @@ typechain-types
 
 contracts/hardhat-dependency-compiler
 
-deployments/localhost/*
+deployments/mainnet/solcInputs/*
 deployments/hardhat/*
 deployments/tenderly/*
 

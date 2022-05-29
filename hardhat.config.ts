@@ -10,6 +10,7 @@ import 'dotenv/config';
 import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
+import 'hardhat-storage-layout';
 import 'hardhat-watcher';
 import { HardhatUserConfig } from 'hardhat/config';
 import { MochaOptions } from 'mocha';
@@ -19,12 +20,12 @@ interface EnvOptions {
     ETHEREUM_PROVIDER_URL?: string;
     ETHEREUM_RINKEBY_PROVIDER_URL?: string;
     ETHERSCAN_API_KEY?: string;
-    FORKING?: boolean;
     GAS_PRICE?: number | 'auto';
     NIGHTLY?: boolean;
     PROFILE?: boolean;
     TENDERLY_FORK_ID?: string;
     TENDERLY_PROJECT?: string;
+    TENDERLY_TEST_PROJECT?: string;
     TENDERLY_USERNAME?: string;
 }
 
@@ -32,12 +33,12 @@ const {
     ETHEREUM_PROVIDER_URL = '',
     ETHEREUM_RINKEBY_PROVIDER_URL = '',
     ETHERSCAN_API_KEY,
-    FORKING: isForking,
     GAS_PRICE: gasPrice = 'auto',
     NIGHTLY: isNightly,
     PROFILE: isProfiling,
     TENDERLY_FORK_ID = '',
     TENDERLY_PROJECT = '',
+    TENDERLY_TEST_PROJECT = '',
     TENDERLY_USERNAME = ''
 }: EnvOptions = process.env as any as EnvOptions;
 
@@ -74,31 +75,13 @@ const mochaOptions = (): MochaOptions => {
 
 const config: HardhatUserConfig = {
     networks: {
-        [DeploymentNetwork.Hardhat]: isForking
-            ? /* eslint-disable indent */
-              {
-                  chainId: 1,
-                  forking: {
-                      enabled: true,
-                      url: ETHEREUM_PROVIDER_URL
-                  },
-                  saveDeployments: true,
-                  live: true
-              }
-            : {
-                  accounts: {
-                      count: 20,
-                      accountsBalance: '10000000000000000000000000000000000000000000000'
-                  },
-                  allowUnlimitedContractSize: true,
-                  saveDeployments: false,
-                  live: false
-              },
-        /* eslint-enable indent */
-        [DeploymentNetwork.Localhost]: {
-            chainId: 31337,
-            url: 'http://127.0.0.1:8545',
-            saveDeployments: true,
+        [DeploymentNetwork.Hardhat]: {
+            accounts: {
+                count: 20,
+                accountsBalance: '10000000000000000000000000000000000000000000000'
+            },
+            allowUnlimitedContractSize: true,
+            saveDeployments: false,
             live: false
         },
         [DeploymentNetwork.Mainnet]: {
@@ -129,7 +112,7 @@ const config: HardhatUserConfig = {
 
     tenderly: {
         forkNetwork: '1',
-        project: TENDERLY_PROJECT,
+        project: TENDERLY_PROJECT || TENDERLY_TEST_PROJECT,
         username: TENDERLY_USERNAME
     },
 

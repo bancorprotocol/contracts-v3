@@ -181,14 +181,14 @@ library TokenLibrary {
     }
 
     /**
-     * @dev utility function that converts an token to an IERC20
+     * @dev utility function that converts a token to an IERC20
      */
     function toIERC20(Token token) internal pure returns (IERC20) {
         return IERC20(address(token));
     }
 
     /**
-     * @dev utility function that converts an token to an ERC20
+     * @dev utility function that converts a token to an ERC20
      */
     function toERC20(Token token) internal pure returns (ERC20) {
         return ERC20(address(token));

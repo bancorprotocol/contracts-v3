@@ -1,7 +1,10 @@
+import Contracts from '../components/Contracts';
 import { MAX_UINT256, ZERO_ADDRESS } from '../utils/Constants';
 import { DeployedContracts, getNamedSigners, isTenderlyFork } from '../utils/Deploy';
+import Logger from '../utils/Logger';
 import '@nomiclabs/hardhat-ethers';
 import '@typechain/hardhat';
+import { getNamedAccounts } from 'hardhat';
 import 'hardhat-deploy';
 
 const main = async () => {
@@ -9,32 +12,36 @@ const main = async () => {
         throw new Error('Invalid network');
     }
 
-    const { deployer } = await getNamedSigners();
+    const { linkWhale } = await getNamedSigners();
+    const { link } = await getNamedAccounts();
 
-    const network = await DeployedContracts.BancorNetworkV1.deployed();
+    const network = await DeployedContracts.BancorNetwork.deployed();
 
     const bnt = await DeployedContracts.BNT.deployed();
-    const testToken = await DeployedContracts.TestToken1.deployed();
+    const linkToken = await Contracts.ERC20.attach(link);
     const amount = 5000;
 
-    console.log('Previous TKN balance', (await testToken.balanceOf(deployer.address)).toString());
-    console.log('Previous BNT balance', (await bnt.balanceOf(deployer.address)).toString());
-    console.log();
+    Logger.log('Previous LINK balance', (await linkToken.balanceOf(linkWhale.address)).toString());
+    Logger.log('Previous BNT balance', (await bnt.balanceOf(linkWhale.address)).toString());
 
-    await testToken.connect(deployer).approve(network.address, amount);
+    Logger.log();
+
+    await linkToken.connect(linkWhale).approve(network.address, amount);
     const res = await network
-        .connect(deployer)
-        .tradeBySourceAmount(testToken.address, bnt.address, amount, 1, MAX_UINT256, ZERO_ADDRESS);
+        .connect(linkWhale)
+        .tradeBySourceAmount(linkToken.address, bnt.address, amount, 1, MAX_UINT256, ZERO_ADDRESS);
 
-    console.log('Transaction Hash', res.hash);
+    Logger.log('Transaction Hash', res.hash);
+    Logger.log();
 
-    console.log('Current TKN balance', (await testToken.balanceOf(deployer.address)).toString());
-    console.log('Current BNT balance', (await bnt.balanceOf(deployer.address)).toString());
+    Logger.log('Current LINK balance', (await linkToken.balanceOf(linkWhale.address)).toString());
+    Logger.log('Current BNT balance', (await bnt.balanceOf(linkWhale.address)).toString());
+    Logger.log();
 };
 
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error(error);
+        Logger.error(error);
         process.exit(1);
     });
