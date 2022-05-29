@@ -297,6 +297,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             uint256 delta = token.balanceOf(address(this)) - previousBalances[i];
             if (whitelist[i]) {
                 deposited[i] = delta;
+
                 _deposit(token, deposited[i], provider);
             } else {
                 _transferToProvider(token, delta, provider);
@@ -327,6 +328,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             _network.depositFor{ value: amount }(provider, token, amount);
         } else {
             token.toIERC20().safeApprove(address(_network), amount);
+
             _network.depositFor(provider, token, amount);
         }
     }
@@ -376,7 +378,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     }
 
     /**
-     * @dev fetchs a UniswapV2 pair
+     * @dev fetches a UniswapV2 pair
      */
     function _getUniswapV2Pair(IUniswapV2Factory factory, Token[2] memory tokens)
         private
