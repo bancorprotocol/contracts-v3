@@ -10,6 +10,7 @@ import 'dotenv/config';
 import 'hardhat-contract-sizer';
 import 'hardhat-dependency-compiler';
 import 'hardhat-deploy';
+import 'hardhat-storage-layout';
 import 'hardhat-watcher';
 import { HardhatUserConfig } from 'hardhat/config';
 import { MochaOptions } from 'mocha';
