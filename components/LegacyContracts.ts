@@ -1,6 +1,12 @@
 /* eslint-disable camelcase */
+import {
+    IUniswapV2Factory,
+    IUniswapV2Factory__factory,
+    IUniswapV2Router02,
+    IUniswapV2Router02__factory
+} from '../typechain-types';
 import { toPPM } from '../utils/Types';
-import { deployOrAttach } from './ContractBuilder';
+import { attachOnly, deployOrAttach, FactoryConstructor } from './ContractBuilder';
 import {
     BancorNetwork__factory,
     CheckpointStore,
@@ -56,19 +62,18 @@ import {
     DSToken as VBNT,
     DSToken__factory as VBNT__factory
 } from '@bancor/token-governance';
-import { Signer, utils } from 'ethers';
+import { BaseContract, ContractFactory, Signer, utils } from 'ethers';
 
 const { formatBytes32String, id } = utils;
 
+export { BNT__factory, BNT, VBNT, VBNT__factory, DSToken, TokenGovernance };
+
 export {
-    BNT__factory,
-    BNT,
     CheckpointStore,
     ContractRegistry,
     ConverterFactory,
     ConverterRegistry,
     ConverterRegistryData,
-    DSToken,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
     LiquidityProtection,
@@ -83,14 +88,11 @@ export {
     TestLiquidityProtection,
     TestStandardPoolConverter,
     TestStandardPoolConverterFactory,
-    TokenGovernance,
     TokenHolder,
-    VBNT,
-    Owned,
-    VBNT__factory
+    Owned
 };
 
-/* eslint-enable camelcase */
+export { IUniswapV2Factory, IUniswapV2Factory__factory, IUniswapV2Router02, IUniswapV2Router02__factory };
 
 export const Registry = {
     BANCOR_NETWORK: formatBytes32String('BancorNetwork'),
@@ -128,6 +130,12 @@ export const Roles = {
 
 export const STANDARD_CONVERTER_TYPE = 3;
 export const STANDARD_POOL_CONVERTER_WEIGHT = toPPM(50);
+
+const stubLegacyFactory = <T extends BaseContract>(factory: any): FactoryConstructor<ContractFactory> => {
+    const deploy = factory.deploy as () => Promise<T>;
+
+    return { deploy, ...factory };
+};
 
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
@@ -170,7 +178,10 @@ const getContracts = (signer?: Signer) => ({
         TestStandardPoolConverterFactory__factory,
         signer
     ),
-    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer)
+    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
+
+    IUniswapV2Factory: attachOnly(stubLegacyFactory(IUniswapV2Factory__factory)),
+    IUniswapV2Router02: attachOnly(stubLegacyFactory(IUniswapV2Router02__factory))
 });
 
 export default getContracts();

@@ -16,16 +16,12 @@ contract MockUniswapV2Pair is TestERC20Token, Utils {
     using SafeERC20 for IERC20;
     using TokenLibrary for Token;
 
+    address private immutable _weth;
+
     Token public token0;
     Token public token1;
-    address private _weth;
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint256 totalSupply,
-        address weth
-    ) TestERC20Token(name, symbol, totalSupply) {
+    constructor(uint256 totalSupply, address weth) TestERC20Token("Uniswap V2", "UNI-V2", totalSupply) {
         _weth = weth;
     }
 
