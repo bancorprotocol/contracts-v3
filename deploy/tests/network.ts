@@ -380,8 +380,6 @@ import { getNamedAccounts } from 'hardhat';
                 const tknDepositAmount = toWei(1000);
 
                 for (const { token, whale } of Object.values(pools)) {
-                    await stabilizePoolV3(token, whale);
-
                     for (let i = 0; i < 5; i++) {
                         const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
 
@@ -633,7 +631,6 @@ import { getNamedAccounts } from 'hardhat';
                 let bnTKN: PoolToken;
 
                 beforeEach(async () => {
-                    await stabilizePoolV3(NATIVE_TOKEN_ADDRESS, ethWhale);
                     await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(1000));
 
                     const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
@@ -787,9 +784,6 @@ import { getNamedAccounts } from 'hardhat';
                                 value: NATIVE_TOKEN_DESIRED_AMOUNT,
                                 to: linkWhale.address
                             });
-
-                            await stabilizePoolV3(NATIVE_TOKEN_ADDRESS, ethWhale);
-                            await stabilizePoolV3(NATIVE_TOKEN_ADDRESS, ethWhale);
 
                             /* eslint-disable camelcase */
                             switch (type) {
