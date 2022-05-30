@@ -1,4 +1,10 @@
 /* eslint-disable camelcase */
+import {
+    IUniswapV2Factory,
+    IUniswapV2Factory__factory,
+    IUniswapV2Router02,
+    IUniswapV2Router02__factory
+} from '../typechain-types';
 import { toPPM } from '../utils/Types';
 import { deployOrAttach } from './ContractBuilder';
 import {
@@ -60,15 +66,14 @@ import { Signer, utils } from 'ethers';
 
 const { formatBytes32String, id } = utils;
 
+export { BNT__factory, BNT, VBNT, VBNT__factory, DSToken, TokenGovernance };
+
 export {
-    BNT__factory,
-    BNT,
     CheckpointStore,
     ContractRegistry,
     ConverterFactory,
     ConverterRegistry,
     ConverterRegistryData,
-    DSToken,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
     LiquidityProtection,
@@ -83,14 +88,11 @@ export {
     TestLiquidityProtection,
     TestStandardPoolConverter,
     TestStandardPoolConverterFactory,
-    TokenGovernance,
     TokenHolder,
-    VBNT,
-    Owned,
-    VBNT__factory
+    Owned
 };
 
-/* eslint-enable camelcase */
+export { IUniswapV2Factory, IUniswapV2Factory__factory, IUniswapV2Router02, IUniswapV2Router02__factory };
 
 export const Registry = {
     BANCOR_NETWORK: formatBytes32String('BancorNetwork'),

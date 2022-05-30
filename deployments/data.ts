@@ -35,6 +35,9 @@ const TokenNamedAccounts = {
     link: {
         ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA'),
         ...rinkeby('0x01be23585060835e02b77ef475b0cc51aa1e0709')
+    },
+    weth: {
+        ...mainnet('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
     }
 };
 
