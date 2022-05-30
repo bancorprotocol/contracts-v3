@@ -881,13 +881,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns whether the network is currently paused
-     */
-    function isPaused() external view returns (bool) {
-        return paused();
-    }
-
-    /**
      * @dev pauses the network
      *
      * requirements:

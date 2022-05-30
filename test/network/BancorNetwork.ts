@@ -288,7 +288,7 @@ describe('BancorNetwork', () => {
             await expectRole(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
 
-            expect(await network.isPaused()).to.be.false;
+            expect(await network.paused()).to.be.false;
             expect(await network.poolCollections()).to.be.empty;
             expect(await network.liquidityPools()).to.be.empty;
         });
@@ -329,7 +329,7 @@ describe('BancorNetwork', () => {
 
                     await expect(res).to.emit(network, 'Unpaused').withArgs(sender.address);
 
-                    expect(await network.isPaused()).to.be.false;
+                    expect(await network.paused()).to.be.false;
                 });
             });
         };
