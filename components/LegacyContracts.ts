@@ -6,7 +6,7 @@ import {
     IUniswapV2Router02__factory
 } from '../typechain-types';
 import { toPPM } from '../utils/Types';
-import { attachOnly, deployOrAttach, FactoryConstructor } from './ContractBuilder';
+import { deployOrAttach } from './ContractBuilder';
 import {
     BancorNetwork__factory,
     CheckpointStore,
@@ -62,7 +62,7 @@ import {
     DSToken as VBNT,
     DSToken__factory as VBNT__factory
 } from '@bancor/token-governance';
-import { BaseContract, ContractFactory, Signer, utils } from 'ethers';
+import { Signer, utils } from 'ethers';
 
 const { formatBytes32String, id } = utils;
 
@@ -131,12 +131,6 @@ export const Roles = {
 export const STANDARD_CONVERTER_TYPE = 3;
 export const STANDARD_POOL_CONVERTER_WEIGHT = toPPM(50);
 
-const stubLegacyFactory = <T extends BaseContract>(factory: any): FactoryConstructor<ContractFactory> => {
-    const deploy = factory.deploy as () => Promise<T>;
-
-    return { deploy, ...factory };
-};
-
 const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
@@ -178,10 +172,7 @@ const getContracts = (signer?: Signer) => ({
         TestStandardPoolConverterFactory__factory,
         signer
     ),
-    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer),
-
-    IUniswapV2Factory: attachOnly(stubLegacyFactory(IUniswapV2Factory__factory)),
-    IUniswapV2Router02: attachOnly(stubLegacyFactory(IUniswapV2Router02__factory))
+    TokenHolder: deployOrAttach('TokenHolder', TokenHolder__factory, signer)
 });
 
 export default getContracts();
