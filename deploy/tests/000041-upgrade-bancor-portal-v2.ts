@@ -1,4 +1,4 @@
-import { BancorPortal, ProxyAdmin } from '../../components/Contracts';
+import { BancorPortal } from '../../components/Contracts';
 import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -7,7 +7,6 @@ import { getNamedAccounts } from 'hardhat';
 
 describeDeployment(__filename, () => {
     let deployer: string;
-    let proxyAdmin: ProxyAdmin;
     let bancorPortal: BancorPortal;
 
     before(async () => {
@@ -15,13 +14,12 @@ describeDeployment(__filename, () => {
     });
 
     beforeEach(async () => {
-        proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
         bancorPortal = await DeployedContracts.BancorPortal.deployed();
     });
 
     it('should upgrade the bancor portal contract', async () => {
-        expect(await proxyAdmin.getProxyAdmin(bancorPortal.address)).to.equal(proxyAdmin.address);
         expect(await bancorPortal.version()).to.equal(2);
+
         await expectRoleMembers(bancorPortal, Roles.Upgradeable.ROLE_ADMIN, [deployer]);
     });
 });

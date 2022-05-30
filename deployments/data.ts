@@ -24,12 +24,6 @@ const TestNamedAccounts = {
     },
     bntWhale: {
         ...mainnet('0xf977814e90da44bfa03b6295a0616a897441acec')
-    },
-    daiLinkWhale: {
-        ...mainnet('0x60052284F19A2FF0d3e0265c93a554211d9Ed465')
-    },
-    daiEthWhale: {
-        ...mainnet('0xfD18D8638C1659b602905c29C0bc0E93c6d2426c')
     }
 };
 

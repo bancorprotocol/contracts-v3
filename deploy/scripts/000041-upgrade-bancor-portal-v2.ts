@@ -1,4 +1,4 @@
-import { DeployedContracts, InstanceName, isMainnet, setDeploymentMetadata, upgradeProxy } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, setDeploymentMetadata, upgradeProxy } from '../../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -7,27 +7,21 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         await getNamedAccounts();
 
     const bnt = await DeployedContracts.BNT.deployed();
-    const network = await DeployedContracts.BancorNetworkV1.deployed();
-    const networkSettings = await DeployedContracts.NetworkSettingsV1.deployed();
-
-    const args = [network.address, networkSettings.address, bnt.address];
-    if (isMainnet()) {
-        args.push(uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory);
-    } else {
-        const uniswapV2FactoryMock = await DeployedContracts.MockUniswapV2Factory.deployed();
-        const uniswapV2RouterMock = await DeployedContracts.MockUniswapV2Router02.deployed();
-        args.push(
-            uniswapV2RouterMock.address,
-            uniswapV2FactoryMock.address,
-            uniswapV2RouterMock.address,
-            uniswapV2FactoryMock.address
-        );
-    }
+    const network = await DeployedContracts.BancorNetwork.deployed();
+    const networkSettings = await DeployedContracts.NetworkSettings.deployed();
 
     await upgradeProxy({
         name: InstanceName.BancorPortal,
         from: deployer,
-        args
+        args: [
+            network.address,
+            networkSettings.address,
+            bnt.address,
+            uniswapV2Router02,
+            uniswapV2Factory,
+            sushiSwapRouter,
+            sushiSwapFactory
+        ]
     });
 
     return true;

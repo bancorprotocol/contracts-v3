@@ -6,8 +6,6 @@ import Contracts, {
     BNTPool,
     ExternalProtectionVault,
     ExternalRewardsVault,
-    IUniswapV2Factory__factory,
-    IUniswapV2Router02__factory,
     MasterVault,
     NetworkSettings,
     PendingWithdrawals,
@@ -19,6 +17,10 @@ import Contracts, {
 } from '../../components/Contracts';
 import LegacyContracts, {
     BNT,
+    IUniswapV2Factory,
+    IUniswapV2Factory__factory,
+    IUniswapV2Router02,
+    IUniswapV2Router02__factory,
     LegacyBancorNetwork,
     Registry as LegacyRegistry,
     LiquidityProtection,
@@ -37,7 +39,7 @@ import { MAX_UINT256, PPM_RESOLUTION, RATE_MAX_DEVIATION_PPM, ZERO_ADDRESS } fro
 import { DeployedContracts, fundAccount, getNamedSigners, isMainnet, runPendingDeployments } from '../../utils/Deploy';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { Fraction, toWei } from '../../utils/Types';
-import { StandardPoolConverter } from '@bancor/contracts-solidity';
+import { IERC20, StandardPoolConverter } from '@bancor/contracts-solidity';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -389,12 +391,12 @@ import { getNamedAccounts } from 'hardhat';
                         expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(tknDepositAmount));
 
                         expect({
-                            n: prevLiquidity.bntTradingLiquidity,
-                            d: prevLiquidity.baseTokenTradingLiquidity
+                            n: liquidity.bntTradingLiquidity,
+                            d: liquidity.baseTokenTradingLiquidity
                         }).to.be.almostEqual(
                             {
-                                n: liquidity.bntTradingLiquidity,
-                                d: liquidity.baseTokenTradingLiquidity
+                                n: prevLiquidity.bntTradingLiquidity,
+                                d: prevLiquidity.baseTokenTradingLiquidity
                             },
                             {
                                 maxRelativeError: new Decimal(i === 0 ? '0.01' : '0.0000000000000000001')
@@ -625,207 +627,323 @@ import { getNamedAccounts } from 'hardhat';
         });
 
         describe('migrations', () => {
-            context('with some deposits', () => {
+            describe('from v2', () => {
+                let anchor: Owned;
+                let converter: StandardPoolConverter;
+                let bnTKN: PoolToken;
+
                 beforeEach(async () => {
                     await stabilizePoolV3(NATIVE_TOKEN_ADDRESS, ethWhale);
-
                     await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(1000));
+
+                    const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
+                    const converterRegistryAddress = await contractRegistry.getAddress(
+                        LegacyRegistry.CONVERTER_REGISTRY
+                    );
+                    const converterRegistry = await LegacyContracts.ConverterRegistry.attach(converterRegistryAddress);
+
+                    const anchorAddress = await converterRegistry.getLiquidityPoolByConfig(
+                        STANDARD_CONVERTER_TYPE,
+                        [bnt.address, NATIVE_TOKEN_ADDRESS],
+                        [STANDARD_POOL_CONVERTER_WEIGHT, STANDARD_POOL_CONVERTER_WEIGHT]
+                    );
+
+                    anchor = await LegacyContracts.Owned.attach(anchorAddress);
+                    converter = await LegacyContracts.StandardPoolConverter.attach(await anchor.owner());
+
+                    await stabilizePoolV2(NATIVE_TOKEN_ADDRESS, anchor, converter, ethWhale);
+
+                    bnTKN = await Contracts.PoolToken.attach(await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS));
                 });
 
-                context('from v2', () => {
-                    let anchor: Owned;
-                    let converter: StandardPoolConverter;
-                    let bnTKN: PoolToken;
+                it('should migrate positions from V2', async () => {
+                    // ensure that there is enough space to perform the test
+                    await liquidityProtectionSettings
+                        .connect(deployer)
+                        .setNetworkTokenMintingLimit(anchor.address, MAX_UINT256.div(2));
 
-                    beforeEach(async () => {
-                        const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
-                        const converterRegistryAddress = await contractRegistry.getAddress(
-                            LegacyRegistry.CONVERTER_REGISTRY
-                        );
-                        const converterRegistry = await LegacyContracts.ConverterRegistry.attach(
-                            converterRegistryAddress
-                        );
+                    const initialTotalSupply = await bnt.totalSupply();
 
-                        const anchorAddress = await converterRegistry.getLiquidityPoolByConfig(
-                            STANDARD_CONVERTER_TYPE,
-                            [bnt.address, NATIVE_TOKEN_ADDRESS],
-                            [STANDARD_POOL_CONVERTER_WEIGHT, STANDARD_POOL_CONVERTER_WEIGHT]
-                        );
+                    // add some BNT to the V2 ETH-BNT pool
+                    const bntAmount = toWei(100);
 
-                        anchor = await LegacyContracts.Owned.attach(anchorAddress);
-                        converter = await LegacyContracts.StandardPoolConverter.attach(await anchor.owner());
+                    await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
 
-                        await stabilizePoolV2(NATIVE_TOKEN_ADDRESS, anchor, converter, ethWhale);
+                    const id1 = await liquidityProtection
+                        .connect(bntWhale)
+                        .callStatic.addLiquidity(anchor.address, bnt.address, bntAmount);
+                    await liquidityProtection.connect(bntWhale).addLiquidity(anchor.address, bnt.address, bntAmount);
 
-                        bnTKN = await Contracts.PoolToken.attach(await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS));
-                    });
-
-                    it('should migrate positions from V2', async () => {
-                        // ensure that there is enough space to perform the test
-                        await liquidityProtectionSettings
-                            .connect(deployer)
-                            .setNetworkTokenMintingLimit(anchor.address, MAX_UINT256.div(2));
-
-                        const initialTotalSupply = await bnt.totalSupply();
-
-                        // add some BNT to the V2 ETH-BNT pool
-                        const bntAmount = toWei(100);
-
-                        await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
-
-                        const id1 = await liquidityProtection
-                            .connect(bntWhale)
-                            .callStatic.addLiquidity(anchor.address, bnt.address, bntAmount);
-                        await liquidityProtection
-                            .connect(bntWhale)
-                            .addLiquidity(anchor.address, bnt.address, bntAmount);
-
-                        // add some ETH to the V2 ETH-BNT pool
-                        const nativeTokenAmount = toWei(100);
-                        const id2 = await liquidityProtection
-                            .connect(bntWhale)
-                            .callStatic.addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
-                                value: nativeTokenAmount
-                            });
-                        await liquidityProtection
-                            .connect(bntWhale)
-                            .addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
-                                value: nativeTokenAmount
-                            });
-
-                        const ids = [id1, id2].map((i) => i.toNumber());
-                        const prevIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map(
-                            (i) => i.toNumber()
-                        );
-                        expect(prevIds).to.include.members(ids);
-
-                        const nativeToken = { address: NATIVE_TOKEN_ADDRESS };
-
-                        const prevBNTBalance = await bnt.balanceOf(bntWhale.address);
-                        const prevTokenBalance = await getBalance(nativeToken, bntWhale);
-
-                        const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);
-                        const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhale.address);
-                        const prevBNTKNAmount = await getBalance(bnTKN, bntWhale);
-
-                        const prevVaultTokenBalance = await getBalance(nativeToken, masterVault.address);
-
-                        // migration both the BNT and ETH positions
-                        const res = await liquidityProtection.connect(bntWhale).migratePositions([
-                            {
-                                poolToken: anchor.address,
-                                reserveToken: bnt.address,
-                                positionIds: [id1]
-                            },
-                            {
-                                poolToken: anchor.address,
-                                reserveToken: NATIVE_TOKEN_ADDRESS,
-                                positionIds: [id2]
-                            }
-                        ]);
-
-                        const transactionCost = await getTransactionCost(res);
-
-                        const newIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map(
-                            (i) => i.toNumber()
-                        );
-                        expect(newIds).not.to.include.members(ids);
-
-                        expect(await bnt.balanceOf(bntWhale.address)).to.equal(prevBNTBalance);
-                        expect(await getBalance(nativeToken, bntWhale)).to.equal(prevTokenBalance.sub(transactionCost));
-
-                        expect(await bnBNT.balanceOf(bntWhale.address)).to.be.gt(prevBNBNTAmount);
-                        expect(await vbnt.balanceOf(bntWhale.address)).to.equal(prevVBNTTokenAmount);
-                        expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
-
-                        expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
-                            maxRelativeError: new Decimal('0.001')
+                    // add some ETH to the V2 ETH-BNT pool
+                    const nativeTokenAmount = toWei(100);
+                    const id2 = await liquidityProtection
+                        .connect(bntWhale)
+                        .callStatic.addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
+                            value: nativeTokenAmount
+                        });
+                    await liquidityProtection
+                        .connect(bntWhale)
+                        .addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
+                            value: nativeTokenAmount
                         });
 
-                        expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
-                            prevVaultTokenBalance.add(nativeTokenAmount),
-                            {
-                                maxRelativeError: new Decimal('0.001')
-                            }
-                        );
+                    const ids = [id1, id2].map((i) => i.toNumber());
+                    const prevIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map((i) =>
+                        i.toNumber()
+                    );
+                    expect(prevIds).to.include.members(ids);
+
+                    const nativeToken = { address: NATIVE_TOKEN_ADDRESS };
+
+                    const prevBNTBalance = await bnt.balanceOf(bntWhale.address);
+                    const prevTokenBalance = await getBalance(nativeToken, bntWhale);
+
+                    const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);
+                    const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhale.address);
+                    const prevBNTKNAmount = await getBalance(bnTKN, bntWhale);
+
+                    const prevVaultTokenBalance = await getBalance(nativeToken, masterVault.address);
+
+                    // migration both the BNT and ETH positions
+                    const res = await liquidityProtection.connect(bntWhale).migratePositions([
+                        {
+                            poolToken: anchor.address,
+                            reserveToken: bnt.address,
+                            positionIds: [id1]
+                        },
+                        {
+                            poolToken: anchor.address,
+                            reserveToken: NATIVE_TOKEN_ADDRESS,
+                            positionIds: [id2]
+                        }
+                    ]);
+
+                    const transactionCost = await getTransactionCost(res);
+
+                    const newIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map((i) =>
+                        i.toNumber()
+                    );
+                    expect(newIds).not.to.include.members(ids);
+
+                    expect(await bnt.balanceOf(bntWhale.address)).to.equal(prevBNTBalance);
+                    expect(await getBalance(nativeToken, bntWhale)).to.equal(prevTokenBalance.sub(transactionCost));
+
+                    expect(await bnBNT.balanceOf(bntWhale.address)).to.be.gt(prevBNBNTAmount);
+                    expect(await vbnt.balanceOf(bntWhale.address)).to.equal(prevVBNTTokenAmount);
+                    expect(await getBalance(bnTKN, bntWhale)).to.be.gt(prevBNTKNAmount);
+
+                    expect(await bnt.totalSupply()).to.be.almostEqual(initialTotalSupply.sub(bntAmount), {
+                        maxRelativeError: new Decimal('0.001')
                     });
+
+                    expect(await getBalance(nativeToken, masterVault.address)).to.be.almostEqual(
+                        prevVaultTokenBalance.add(nativeTokenAmount),
+                        {
+                            maxRelativeError: new Decimal('0.001')
+                        }
+                    );
                 });
             });
         });
 
-        it.skip('should perform portal migrations from UniswapV2 type pools', async () => {
-            const { uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory, dai, link, weth } =
-                await getNamedAccounts();
+        describe('portal', () => {
+            describe('Uniswap V2-like pools', () => {
+                let bancorPortal: BancorPortal;
+                let linkWhale: SignerWithAddress;
+                let weth: string;
+                let link: string;
 
-            const { daiEthWhale, daiLinkWhale } = await getNamedSigners();
+                before(async () => {
+                    ({ linkWhale } = await getNamedSigners());
+                    ({ link, weth } = await getNamedAccounts());
+                });
 
-            const testPools = [
-                { tokenA: dai, tokenB: link, whale: daiLinkWhale },
-                { tokenA: dai, tokenB: weth, whale: daiEthWhale }
-            ];
+                beforeEach(async () => {
+                    bancorPortal = await DeployedContracts.BancorPortal.deployed();
+                });
 
-            const uniswapV2Protocols = [
-                {
-                    migrator: bancorPortal.migrateUniswapV2Position,
-                    router: uniswapV2Router02,
-                    factory: uniswapV2Factory
-                },
-                {
-                    migrator: bancorPortal.migrateSushiSwapV1Position,
-                    router: sushiSwapRouter,
-                    factory: sushiSwapFactory
+                enum PoolType {
+                    UniswapV2 = 'UniswapV2',
+                    SushiSwapV1 = 'SushiSwapV1'
                 }
-            ];
 
-            const MAX_DEADLINE = 10800;
+                const testUniswapV2Migration = (type: PoolType) => {
+                    describe(type, () => {
+                        let router: IUniswapV2Router02;
+                        let factory: IUniswapV2Factory;
+                        let poolToken: IERC20;
+                        let poolTokenAmount: BigNumber;
 
-            for (const { tokenA, tokenB, whale } of testPools) {
-                for (const { migrator, router, factory } of uniswapV2Protocols) {
-                    // eslint-disable-next-line camelcase
-                    const routerContract = await IUniswapV2Router02__factory.connect(router, whale).deployed();
-                    // eslint-disable-next-line camelcase
-                    const factoryContract = await IUniswapV2Factory__factory.connect(factory, whale).deployed();
+                        let depositedNativeTokenAmount: BigNumber;
+                        let depositedLinkAmount: BigNumber;
 
-                    // create 3rd party positions
-                    const depositAmount = toWei(1);
-                    if ([tokenA, tokenB].includes(weth)) {
-                        const token = tokenA === weth ? tokenB : tokenA;
-                        const tokenContract = await Contracts.ERC20.attach(token);
-                        await tokenContract.connect(whale).approve(router, 0);
-                        await tokenContract.connect(whale).approve(router, depositAmount);
-                        await routerContract
-                            .connect(whale)
-                            .addLiquidityETH(token, depositAmount, 1, 1, whale.address, Date.now() + MAX_DEADLINE, {
-                                value: depositAmount
+                        const NATIVE_TOKEN_DESIRED_AMOUNT = toWei(10);
+
+                        beforeEach(async () => {
+                            const { uniswapV2Router02, uniswapV2Factory, sushiSwapRouter, sushiSwapFactory } =
+                                await getNamedAccounts();
+
+                            await ethWhale.sendTransaction({
+                                value: NATIVE_TOKEN_DESIRED_AMOUNT,
+                                to: linkWhale.address
                             });
-                    } else {
-                        for (const token of [tokenA, tokenB]) {
-                            const tokenContract = await Contracts.ERC20.attach(token);
-                            await tokenContract.connect(whale).approve(router, 0);
-                            await tokenContract.connect(whale).approve(router, depositAmount);
-                        }
-                        await routerContract
-                            .connect(whale)
-                            .addLiquidity(
-                                tokenA,
-                                tokenB,
-                                depositAmount,
-                                depositAmount,
-                                1,
-                                1,
-                                whale.address,
-                                Date.now() + MAX_DEADLINE
-                            );
-                    }
 
-                    // migrate postions
-                    const pair = await factoryContract.getPair(tokenA, tokenB);
-                    const pairContract = await Contracts.ERC20.attach(pair);
-                    await pairContract.connect(whale).approve(bancorPortal.address, 0);
-                    await pairContract.connect(whale).approve(bancorPortal.address, depositAmount);
-                    await migrator(tokenA, tokenB, depositAmount);
+                            await stabilizePoolV3(NATIVE_TOKEN_ADDRESS, ethWhale);
+                            await stabilizePoolV3(NATIVE_TOKEN_ADDRESS, ethWhale);
+
+                            /* eslint-disable camelcase */
+                            switch (type) {
+                                case PoolType.UniswapV2: {
+                                    router = await IUniswapV2Router02__factory.connect(
+                                        uniswapV2Router02,
+                                        linkWhale
+                                    ).deployed();
+
+                                    factory = await IUniswapV2Factory__factory.connect(
+                                        uniswapV2Factory,
+                                        linkWhale
+                                    ).deployed();
+
+                                    break;
+                                }
+
+                                case PoolType.SushiSwapV1: {
+                                    router = await IUniswapV2Router02__factory.connect(
+                                        sushiSwapRouter,
+                                        linkWhale
+                                    ).deployed();
+
+                                    factory = await IUniswapV2Factory__factory.connect(
+                                        sushiSwapFactory,
+                                        linkWhale
+                                    ).deployed();
+
+                                    break;
+                                }
+
+                                default:
+                                    throw new Error(`Unsupported type: ${type}`);
+                            }
+                            /* eslint-enable camelcase */
+
+                            // create an ETH-LINK position
+                            const token = await Contracts.ERC20.attach(link);
+                            await token.connect(linkWhale).approve(router.address, MAX_UINT256);
+
+                            ({
+                                amountETH: depositedNativeTokenAmount,
+                                amountToken: depositedLinkAmount,
+                                liquidity: poolTokenAmount
+                            } = await router
+                                .connect(linkWhale)
+                                .callStatic.addLiquidityETH(
+                                    token.address,
+                                    NATIVE_TOKEN_DESIRED_AMOUNT,
+                                    1,
+                                    1,
+                                    linkWhale.address,
+                                    MAX_UINT256,
+                                    {
+                                        value: NATIVE_TOKEN_DESIRED_AMOUNT
+                                    }
+                                ));
+
+                            await router
+                                .connect(linkWhale)
+                                .addLiquidityETH(
+                                    token.address,
+                                    NATIVE_TOKEN_DESIRED_AMOUNT,
+                                    1,
+                                    1,
+                                    linkWhale.address,
+                                    MAX_UINT256,
+                                    {
+                                        value: NATIVE_TOKEN_DESIRED_AMOUNT
+                                    }
+                                );
+
+                            const poolTokenAddress = await factory.getPair(weth, link);
+                            poolToken = await Contracts.ERC20.attach(poolTokenAddress);
+
+                            await poolToken.connect(linkWhale).approve(bancorPortal.address, poolTokenAmount);
+                        });
+
+                        it('should perform portal migrations', async () => {
+                            const { liquidity: prevLinkLiquidity } = await poolCollection.poolData(link);
+                            const { liquidity: prevNativeTokenLiquidity } = await poolCollection.poolData(
+                                NATIVE_TOKEN_ADDRESS
+                            );
+
+                            switch (type) {
+                                case PoolType.UniswapV2: {
+                                    await bancorPortal
+                                        .connect(linkWhale)
+                                        .migrateUniswapV2Position(weth, link, poolTokenAmount);
+                                    break;
+                                }
+
+                                case PoolType.SushiSwapV1: {
+                                    await bancorPortal
+                                        .connect(linkWhale)
+                                        .migrateSushiSwapV1Position(weth, link, poolTokenAmount);
+                                    break;
+                                }
+
+                                default:
+                                    throw new Error(`Unsupported type: ${type}`);
+                            }
+
+                            const { liquidity: newLinkLiquidity } = await poolCollection.poolData(link);
+
+                            expect(newLinkLiquidity.stakedBalance).to.be.almostEqual(
+                                prevLinkLiquidity.stakedBalance.add(depositedLinkAmount),
+                                {
+                                    maxRelativeError: new Decimal('0.0000000000000000001')
+                                }
+                            );
+                            expect({
+                                n: newLinkLiquidity.bntTradingLiquidity,
+                                d: newLinkLiquidity.baseTokenTradingLiquidity
+                            }).to.be.almostEqual(
+                                {
+                                    n: prevLinkLiquidity.bntTradingLiquidity,
+                                    d: prevLinkLiquidity.baseTokenTradingLiquidity
+                                },
+                                {
+                                    maxRelativeError: new Decimal('0.01')
+                                }
+                            );
+
+                            const { liquidity: newNativeTokenLiquidity } = await poolCollection.poolData(
+                                NATIVE_TOKEN_ADDRESS
+                            );
+
+                            expect(newNativeTokenLiquidity.stakedBalance).to.be.almostEqual(
+                                prevNativeTokenLiquidity.stakedBalance.add(depositedNativeTokenAmount),
+                                {
+                                    maxRelativeError: new Decimal('0.0000000000000000001')
+                                }
+                            );
+                            expect({
+                                n: newNativeTokenLiquidity.bntTradingLiquidity,
+                                d: newNativeTokenLiquidity.baseTokenTradingLiquidity
+                            }).to.be.almostEqual(
+                                {
+                                    n: prevNativeTokenLiquidity.bntTradingLiquidity,
+                                    d: prevNativeTokenLiquidity.baseTokenTradingLiquidity
+                                },
+                                {
+                                    maxRelativeError: new Decimal('0.01')
+                                }
+                            );
+                        });
+                    });
+                };
+
+                for (const type of [PoolType.UniswapV2, PoolType.SushiSwapV1]) {
+                    testUniswapV2Migration(type);
                 }
-            }
+            });
         });
     });
 });
