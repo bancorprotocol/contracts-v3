@@ -666,21 +666,9 @@ import { getNamedAccounts } from 'hardhat';
 
                         const initialTotalSupply = await bnt.totalSupply();
 
-                        // add some BNT to the V2 ETH-BNT pool
-                        const bntAmount = toWei(100);
-
-                        await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
-
-                        const id1 = await liquidityProtection
-                            .connect(bntWhale)
-                            .callStatic.addLiquidity(anchor.address, bnt.address, bntAmount);
-                        await liquidityProtection
-                            .connect(bntWhale)
-                            .addLiquidity(anchor.address, bnt.address, bntAmount);
-
                         // add some ETH to the V2 ETH-BNT pool
                         const nativeTokenAmount = toWei(100);
-                        const id2 = await liquidityProtection
+                        const id1 = await liquidityProtection
                             .connect(bntWhale)
                             .callStatic.addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
                                 value: nativeTokenAmount
@@ -690,6 +678,18 @@ import { getNamedAccounts } from 'hardhat';
                             .addLiquidity(anchor.address, NATIVE_TOKEN_ADDRESS, nativeTokenAmount, {
                                 value: nativeTokenAmount
                             });
+
+                        // add some BNT to the V2 ETH-BNT pool
+                        const bntAmount = toWei(100);
+
+                        await bnt.connect(bntWhale).approve(liquidityProtection.address, bntAmount);
+
+                        const id2 = await liquidityProtection
+                            .connect(bntWhale)
+                            .callStatic.addLiquidity(anchor.address, bnt.address, bntAmount);
+                        await liquidityProtection
+                            .connect(bntWhale)
+                            .addLiquidity(anchor.address, bnt.address, bntAmount);
 
                         const ids = [id1, id2].map((i) => i.toNumber());
                         const prevIds = (await liquidityProtectionStore.protectedLiquidityIds(bntWhale.address)).map(
@@ -712,12 +712,12 @@ import { getNamedAccounts } from 'hardhat';
                         const res = await liquidityProtection.connect(bntWhale).migratePositions([
                             {
                                 poolToken: anchor.address,
-                                reserveToken: bnt.address,
+                                reserveToken: NATIVE_TOKEN_ADDRESS,
                                 positionIds: [id1]
                             },
                             {
                                 poolToken: anchor.address,
-                                reserveToken: NATIVE_TOKEN_ADDRESS,
+                                reserveToken: bnt.address,
                                 positionIds: [id2]
                             }
                         ]);
