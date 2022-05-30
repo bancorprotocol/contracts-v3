@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { MochaOptions, reporters, Runner, Test } from 'mocha';
 
+const { Spec } = reporters;
 const { EVENT_RUN_BEGIN, EVENT_TEST_FAIL } = Runner.constants;
 
 interface EnvOptions {
@@ -9,7 +10,7 @@ interface EnvOptions {
 
 const { SENTRY_DSN }: EnvOptions = process.env as any as EnvOptions;
 
-class SentryReporter extends reporters.Base {
+class SentryReporter extends Spec {
     constructor(runner: Runner, options: MochaOptions) {
         super(runner, options);
 
