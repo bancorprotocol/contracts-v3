@@ -352,7 +352,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev unregisters an existing pool collection from the pool
+     * @dev unregisters an existing pool collection from the network
      *
      * requirements:
      *
