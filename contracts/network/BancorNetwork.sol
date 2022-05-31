@@ -342,12 +342,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         onlyAdmin
         nonReentrant
     {
-        // verify that the pool collection doesn't already exist and that there is no pool collection of the same type
-        // and version exists
-        _verifyPoolUniqueness(newPoolCollection);
+        // verify that there is no pool collection of the same type and version
+        uint16 newPoolType = newPoolCollection.poolType();
+        uint16 newPoolVersion = newPoolCollection.version();
 
-        // note that we don't need to check its return value due to the check in _verifyPoolUniqueness above
-        _poolCollections.add(address(newPoolCollection));
+        IPoolCollection poolCollection = _findPoolCollection(newPoolType, newPoolVersion);
+        if (poolCollection != IPoolCollection(address(0)) || !_poolCollections.add(address(newPoolCollection))) {
+            revert AlreadyExists();
+        }
 
         _setAccessRoles(newPoolCollection, true);
 
@@ -1362,24 +1364,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /*
-     * @dev verifies that the pool collection doesn't already exist and that there is no pool collection of the same
-     * type and version exists
+     * @dev finds a pool collection with the given type and version
      */
-    function _verifyPoolUniqueness(IPoolCollection poolCollection) private view {
-        uint16 poolType = poolCollection.poolType();
-        uint16 poolVersion = poolCollection.version();
-
-        // note that there's no risk of using an unbounded loop her since the list of all the active pool collections
+    function _findPoolCollection(uint16 poolType, uint16 poolVersion) private view returns (IPoolCollection) {
+        // note that there's no risk of using an unbounded loop here since the list of all the active pool collections
         // is always going to remain sufficiently small
         uint256 length = _poolCollections.length();
         for (uint256 i = 0; i < length; i++) {
-            IPoolCollection currPoolCollection = IPoolCollection(_poolCollections.at(i));
-            if (
-                currPoolCollection == poolCollection ||
-                (currPoolCollection.poolType() == poolType && currPoolCollection.version() == poolVersion)
-            ) {
-                revert AlreadyExists();
+            IPoolCollection poolCollection = IPoolCollection(_poolCollections.at(i));
+            if ((poolCollection.poolType() == poolType && poolCollection.version() == poolVersion)) {
+                return poolCollection;
             }
         }
+
+        return IPoolCollection(address(0));
     }
 }
