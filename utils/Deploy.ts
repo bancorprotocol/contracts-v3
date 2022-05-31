@@ -37,7 +37,12 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import { PoolCollectionType1V3, PoolCollectionType1V4, PoolMigratorV3 } from '../components/LegacyContractsV3';
+import {
+    BancorNetworkV5,
+    PoolCollectionType1V3,
+    PoolCollectionType1V4,
+    PoolMigratorV3
+} from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
@@ -92,6 +97,7 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
+    BancorNetworkV5 = 'BancorNetworkV5',
     PoolCollectionType1V3 = 'PoolCollectionType1V3',
     PoolCollectionType1V4 = 'PoolCollectionType1V4',
     PoolMigratorV3 = 'PoolMigratorV3'
@@ -159,6 +165,7 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
+    BancorNetworkV5: deployed<BancorNetworkV5>(InstanceName.BancorNetworkV5),
     PoolCollectionType1V3: deployed<PoolCollectionType1V3>(InstanceName.PoolCollectionType1V3),
     PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4),
     PoolMigratorV3: deployed<PoolMigratorV3>(InstanceName.PoolMigratorV3)

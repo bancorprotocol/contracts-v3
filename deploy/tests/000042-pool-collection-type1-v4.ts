@@ -1,6 +1,6 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
-import { BancorNetwork, PoolCollection } from '../../components/Contracts';
-import { PoolCollectionType1V3, PoolMigratorV3 } from '../../components/LegacyContractsV3';
+import { PoolCollection } from '../../components/Contracts';
+import { BancorNetworkV5, PoolCollectionType1V3, PoolMigratorV3 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -23,13 +23,13 @@ const savePreviousPoolData = async () => {
 describeDeployment(
     __filename,
     () => {
-        let network: BancorNetwork;
+        let network: BancorNetworkV5;
         let poolMigrator: PoolMigratorV3;
         let prevPoolCollection: PoolCollectionType1V3;
         let newPoolCollection: PoolCollection;
 
         beforeEach(async () => {
-            network = await DeployedContracts.BancorNetwork.deployed();
+            network = await DeployedContracts.BancorNetworkV5.deployed();
             poolMigrator = await DeployedContracts.PoolMigratorV3.deployed();
             prevPoolCollection = await DeployedContracts.PoolCollectionType1V3.deployed();
             newPoolCollection = await DeployedContracts.PoolCollectionType1V4.deployed();
