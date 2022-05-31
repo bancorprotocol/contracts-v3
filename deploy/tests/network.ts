@@ -79,7 +79,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V3.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V4.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -387,19 +387,6 @@ import { getNamedAccounts } from 'hardhat';
 
                         const liquidity = await poolCollection.poolLiquidity(token);
                         expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(tknDepositAmount));
-
-                        expect({
-                            n: liquidity.bntTradingLiquidity,
-                            d: liquidity.baseTokenTradingLiquidity
-                        }).to.be.almostEqual(
-                            {
-                                n: prevLiquidity.bntTradingLiquidity,
-                                d: prevLiquidity.baseTokenTradingLiquidity
-                            },
-                            {
-                                maxRelativeError: new Decimal(i === 0 ? '0.01' : '0.0000000000000000001')
-                            }
-                        );
                     }
                 }
 
@@ -895,18 +882,6 @@ import { getNamedAccounts } from 'hardhat';
                                     maxRelativeError: new Decimal('0.0000000000000000001')
                                 }
                             );
-                            expect({
-                                n: newLinkLiquidity.bntTradingLiquidity,
-                                d: newLinkLiquidity.baseTokenTradingLiquidity
-                            }).to.be.almostEqual(
-                                {
-                                    n: prevLinkLiquidity.bntTradingLiquidity,
-                                    d: prevLinkLiquidity.baseTokenTradingLiquidity
-                                },
-                                {
-                                    maxRelativeError: new Decimal('0.01')
-                                }
-                            );
 
                             const { liquidity: newNativeTokenLiquidity } = await poolCollection.poolData(
                                 NATIVE_TOKEN_ADDRESS
@@ -916,18 +891,6 @@ import { getNamedAccounts } from 'hardhat';
                                 prevNativeTokenLiquidity.stakedBalance.add(depositedNativeTokenAmount),
                                 {
                                     maxRelativeError: new Decimal('0.0000000000000000001')
-                                }
-                            );
-                            expect({
-                                n: newNativeTokenLiquidity.bntTradingLiquidity,
-                                d: newNativeTokenLiquidity.baseTokenTradingLiquidity
-                            }).to.be.almostEqual(
-                                {
-                                    n: prevNativeTokenLiquidity.bntTradingLiquidity,
-                                    d: prevNativeTokenLiquidity.baseTokenTradingLiquidity
-                                },
-                                {
-                                    maxRelativeError: new Decimal('0.01')
                                 }
                             );
                         });

@@ -355,7 +355,7 @@ describe('PoolCollection', () => {
                 poolTokenFactory.address,
                 poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(3);
+            expect(await poolCollection.version()).to.equal(4);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -3853,24 +3853,6 @@ describe('PoolCollection', () => {
                 await expect(
                     poolMigrator.migratePoolOutT(poolCollection.address, reserveToken.address, ZERO_ADDRESS)
                 ).to.be.revertedWithError('InvalidAddress');
-
-                const newPoolCollection = await createPoolCollection(
-                    network,
-                    bnt,
-                    networkSettings,
-                    masterVault,
-                    bntPool,
-                    externalProtectionVault,
-                    poolTokenFactory,
-                    poolMigrator
-                );
-                await expect(
-                    poolMigrator.migratePoolOutT(
-                        poolCollection.address,
-                        reserveToken.address,
-                        newPoolCollection.address
-                    )
-                ).to.be.revertedWithError('InvalidPoolCollection');
             });
 
             it('should revert when attempting to migrate a non-existing pool out of a pool collection', async () => {

@@ -17,23 +17,17 @@ interface IPoolCollectionBase {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
 }
 
-interface IPoolCollectionV2 is IPoolCollectionBase {
-    struct AverageRateV2 {
-        uint32 blockNumber;
-        Fraction112 rate;
-    }
-
-    struct PoolV2 {
+interface IPoolCollectionV3 is IPoolCollectionBase {
+    struct PoolV3 {
         IPoolToken poolToken; // the pool token of a given pool
         uint32 tradingFeePPM; // the trading fee (in units of PPM)
         bool tradingEnabled; // whether trading is enabled
         bool depositingEnabled; // whether depositing is enabled
-        AverageRateV2 averageRate; // the recent average rate
-        uint256 depositLimit; // the deposit limit
+        AverageRates averageRates; // the recent average rate
         PoolLiquidity liquidity; // the overall liquidity in the pool
     }
 
-    function poolData(Token token) external view returns (PoolV2 memory);
+    function poolData(Token token) external view returns (PoolV3 memory);
 }
 
 /**
@@ -89,7 +83,7 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**
@@ -115,8 +109,8 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
         }
 
         // migrate all relevant values based on a historical collection version into the new pool collection
-        if (prevPoolCollection.version() == 2) {
-            _migrateFromV2(pool, IPoolCollectionV2(address(prevPoolCollection)), newPoolCollection);
+        if (prevPoolCollection.version() == 3) {
+            _migrateFromV3(pool, IPoolCollectionV3(address(prevPoolCollection)), newPoolCollection);
 
             return newPoolCollection;
         }
@@ -125,15 +119,15 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     }
 
     /**
-     * @dev migrates a V1 pool to the latest pool version
+     * @dev migrates a pool to the latest pool version
      */
-    function _migrateFromV2(
+    function _migrateFromV3(
         Token pool,
-        IPoolCollectionV2 sourcePoolCollection,
+        IPoolCollectionV3 sourcePoolCollection,
         IPoolCollection targetPoolCollection
     ) private {
-        IPoolCollectionV2.PoolV2 memory data = sourcePoolCollection.poolData(pool);
-        IPoolCollectionV2.AverageRateV2 memory averageRate = data.averageRate;
+        IPoolCollectionV3.PoolV3 memory data = sourcePoolCollection.poolData(pool);
+        AverageRates memory averageRates = data.averageRates;
         PoolLiquidity memory liquidity = data.liquidity;
 
         Pool memory newData = Pool({
@@ -141,17 +135,8 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
             tradingFeePPM: data.tradingFeePPM,
             tradingEnabled: data.tradingEnabled,
             depositingEnabled: data.depositingEnabled,
-            averageRates: AverageRates({
-                blockNumber: averageRate.blockNumber,
-                rate: averageRate.rate,
-                invRate: Fraction({ n: liquidity.baseTokenTradingLiquidity, d: liquidity.bntTradingLiquidity })
-                    .toFraction112()
-            }),
-            liquidity: PoolLiquidity({
-                bntTradingLiquidity: liquidity.bntTradingLiquidity,
-                baseTokenTradingLiquidity: liquidity.baseTokenTradingLiquidity,
-                stakedBalance: liquidity.stakedBalance
-            })
+            averageRates: averageRates,
+            liquidity: liquidity
         });
 
         sourcePoolCollection.migratePoolOut(pool, targetPoolCollection);
