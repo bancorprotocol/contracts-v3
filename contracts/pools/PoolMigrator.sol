@@ -119,7 +119,7 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     }
 
     /**
-     * @dev migrates a V1 pool to the latest pool version
+     * @dev migrates a pool to the latest pool version
      */
     function _migrateFromV3(
         Token pool,
