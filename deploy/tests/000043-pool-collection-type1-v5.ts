@@ -25,13 +25,11 @@ describeDeployment(
     () => {
         let network: BancorNetwork;
         let poolMigrator: PoolMigrator;
-        let prevPoolCollection: PoolCollectionType1V4;
         let newPoolCollection: PoolCollection;
 
         beforeEach(async () => {
             network = await DeployedContracts.BancorNetwork.deployed();
             poolMigrator = await DeployedContracts.PoolMigrator.deployed();
-            prevPoolCollection = await DeployedContracts.PoolCollectionType1V4.deployed();
             newPoolCollection = await DeployedContracts.PoolCollectionType1V5.deployed();
         });
 
@@ -43,12 +41,16 @@ describeDeployment(
             expect(await newPoolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await newPoolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
 
-            expect(await network.poolCollections()).not.to.include(prevPoolCollection.address);
+            expect(await network.version()).to.equal(6);
+
+            expect(await network.poolCollections()).to.deep.equal([newPoolCollection.address]);
 
             const { dai, link } = await getNamedAccounts();
             expect(await newPoolCollection.pools()).to.deep.equal([NATIVE_TOKEN_ADDRESS, dai, link]);
 
             for (const pool of [NATIVE_TOKEN_ADDRESS, dai, link]) {
+                expect(await network.collectionByPool(pool)).to.equal(newPoolCollection.address);
+
                 const prevPoolData = prevState[pool];
                 const newPoolData = await newPoolCollection.poolData(pool);
 

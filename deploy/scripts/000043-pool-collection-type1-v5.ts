@@ -45,9 +45,26 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         ]
     });
 
+    const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
+    const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
+    const bnBNT = await DeployedContracts.bnBNT.deployed();
+
+    await upgradeProxy({
+        name: InstanceName.BancorNetwork,
+        args: [
+            bntGovernance.address,
+            vbntGovernance.address,
+            networkSettings.address,
+            masterVault.address,
+            externalProtectionVault.address,
+            bnBNT.address
+        ],
+        from: deployer
+    });
+
     await execute({
         name: InstanceName.BancorNetwork,
-        methodName: 'addPoolCollection',
+        methodName: 'registerPoolCollection',
         args: [newPoolCollectionAddress],
         from: deployer
     });
@@ -57,7 +74,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     await execute({
         name: InstanceName.BancorNetwork,
         methodName: 'migratePools',
-        args: [[NATIVE_TOKEN_ADDRESS, dai, link]],
+        args: [[NATIVE_TOKEN_ADDRESS, dai, link], newPoolCollectionAddress],
         from: deployer
     });
 
@@ -65,8 +82,8 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
 
     await execute({
         name: InstanceName.BancorNetwork,
-        methodName: 'removePoolCollection',
-        args: [prevPoolCollection.address, newPoolCollectionAddress],
+        methodName: 'unregisterPoolCollection',
+        args: [prevPoolCollection.address],
         from: deployer
     });
 

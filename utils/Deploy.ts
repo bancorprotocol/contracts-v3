@@ -37,12 +37,7 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import {
-    BancorNetworkV5,
-    PoolCollectionType1V3,
-    PoolCollectionType1V4,
-    PoolMigratorV3
-} from '../components/LegacyContractsV3';
+import { PoolCollectionType1V3, PoolCollectionType1V4 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
@@ -97,10 +92,8 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    BancorNetworkV5 = 'BancorNetworkV5',
     PoolCollectionType1V3 = 'PoolCollectionType1V3',
-    PoolCollectionType1V4 = 'PoolCollectionType1V4',
-    PoolMigratorV3 = 'PoolMigratorV3'
+    PoolCollectionType1V4 = 'PoolCollectionType1V4'
 }
 
 enum NewInstanceName {
@@ -165,10 +158,8 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
-    BancorNetworkV5: deployed<BancorNetworkV5>(InstanceName.BancorNetworkV5),
     PoolCollectionType1V3: deployed<PoolCollectionType1V3>(InstanceName.PoolCollectionType1V3),
-    PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4),
-    PoolMigratorV3: deployed<PoolMigratorV3>(InstanceName.PoolMigratorV3)
+    PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4)
 };
 
 const DeployedNewContracts = {
@@ -325,18 +316,18 @@ interface FunctionParams {
 const logParams = async (params: FunctionParams) => {
     const { name, contractName, contractArtifactData, methodName, args = [] } = params;
 
-    if (!name && !contractName && !contractArtifactData) {
-        throw new Error('Either name, contractName, or contractArtifactData must be provided!');
+    if (!name && !contractArtifactData && !contractName) {
+        throw new Error('Either name, contractArtifactData, or contractName must be provided!');
     }
 
     let contractInterface: ContractInterface;
 
     if (name) {
         ({ interface: contractInterface } = await ethers.getContract(name));
-    } else if (contractName) {
-        ({ interface: contractInterface } = await ethers.getContractFactory(contractName));
-    } else {
+    } else if (contractArtifactData) {
         contractInterface = new utils.Interface(contractArtifactData!.abi);
+    } else {
+        ({ interface: contractInterface } = await ethers.getContractFactory(contractName!));
     }
 
     const fragment = methodName ? contractInterface.getFunction(methodName) : contractInterface.deploy;
@@ -395,7 +386,7 @@ export const deploy = async (options: DeployOptions) => {
         Logger.log(`  deploying ${contractName}${customAlias}`);
     }
 
-    await logParams({ contractArtifactData, args });
+    await logParams({ contractName, contractArtifactData, args });
 
     const res = await deployContract(name, {
         contract: contractArtifactData ?? contractName,
