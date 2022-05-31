@@ -12,7 +12,7 @@ import Contracts, {
     TestPoolCollection,
     TestPoolMigrator
 } from '../../components/Contracts';
-import LegacyContractsV3, { PoolCollectionType1V2 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V3 } from '../../components/LegacyContractsV3';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -49,7 +49,7 @@ describe('PoolMigrator', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await poolMigrator.version()).to.equal(2);
+            expect(await poolMigrator.version()).to.equal(3);
 
             await expectRoles(poolMigrator, Roles.Upgradeable);
 
@@ -66,7 +66,7 @@ describe('PoolMigrator', () => {
         let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
         let bntPool: TestBNTPool;
-        let prevPoolCollection: PoolCollectionType1V2;
+        let prevPoolCollection: PoolCollectionType1V3;
         let poolMigrator: TestPoolMigrator;
         let poolTokenFactory: PoolTokenFactory;
         let poolToken: PoolToken;
@@ -95,7 +95,7 @@ describe('PoolMigrator', () => {
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V2.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V3.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -116,7 +116,6 @@ describe('PoolMigrator', () => {
             );
 
             await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
-            await prevPoolCollection.setDepositLimit(reserveToken.address, MAX_UINT256);
 
             await depositToPool(deployer, reserveToken, INITIAL_LIQUIDITY, network);
 
@@ -188,7 +187,7 @@ describe('PoolMigrator', () => {
             );
         });
 
-        context('from v2', () => {
+        context('from v3', () => {
             let newPoolCollection: TestPoolCollection;
 
             beforeEach(async () => {
@@ -229,12 +228,9 @@ describe('PoolMigrator', () => {
                 expect(newPoolData.tradingEnabled).to.equal(poolData.tradingEnabled);
                 expect(newPoolData.depositingEnabled).to.equal(poolData.depositingEnabled);
 
-                expect(newPoolData.averageRates.blockNumber).to.equal(poolData.averageRate.blockNumber);
-                expect(newPoolData.averageRates.rate).to.deep.equal(poolData.averageRate.rate);
-                expect(newPoolData.averageRates.invRate).to.deep.equal({
-                    n: poolData.liquidity.baseTokenTradingLiquidity,
-                    d: poolData.liquidity.bntTradingLiquidity
-                });
+                expect(newPoolData.averageRates.blockNumber).to.equal(poolData.averageRates.blockNumber);
+                expect(newPoolData.averageRates.rate).to.deep.equal(poolData.averageRates.rate);
+                expect(newPoolData.averageRates.invRate).to.deep.equal(poolData.averageRates.invRate);
 
                 expect(newPoolData.liquidity).to.deep.equal(poolData.liquidity);
 
