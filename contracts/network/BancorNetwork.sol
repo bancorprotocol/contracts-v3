@@ -342,27 +342,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         onlyAdmin
         nonReentrant
     {
-        // verify that no pool of the same type and version
-        uint16 newPoolType = newPoolCollection.poolType();
-        uint16 newPoolVersion = newPoolCollection.version();
-
-        // note that it is assumed that the list of all the pool collections is always going to remain sufficiently
-        // small
-        uint256 length = _poolCollections.length();
-        for (uint256 i = 0; i < length; i++) {
-            IPoolCollection poolCollection = IPoolCollection(_poolCollections.at(i));
-            if (poolCollection.poolType() == newPoolType && poolCollection.version() == newPoolVersion) {
-                revert AlreadyExists();
-            }
-        }
-
-        if (!_poolCollections.add(address(newPoolCollection))) {
-            revert AlreadyExists();
-        }
+        // verify that the pool collection doesn't already exist and that there is no pool collection of the same type
+        // and version exists
+        _verifyPoolUniqueness(newPoolCollection);
 
         _setAccessRoles(newPoolCollection, true);
 
-        emit PoolCollectionAdded({ poolType: newPoolType, poolCollection: newPoolCollection });
+        emit PoolCollectionAdded({ poolType: newPoolCollection.poolType(), poolCollection: newPoolCollection });
     }
 
     /**
@@ -1369,6 +1355,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             _bntPool.revokeRole(ROLE_FUNDING_MANAGER, poolCollectionAddress);
             _masterVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
             _externalProtectionVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
+        }
+    }
+
+    /*
+     * @dev verifies that the pool collection doesn't already exist and that there is no pool collection of the same
+     * type and version exists
+     */
+    function _verifyPoolUniqueness(IPoolCollection poolCollection) private view {
+        uint16 poolType = poolCollection.poolType();
+        uint16 poolVersion = poolCollection.version();
+
+        // note that it is assumed that the list of all the pool collections is always going to remain sufficiently
+        // small
+        uint256 length = _poolCollections.length();
+        for (uint256 i = 0; i < length; i++) {
+            IPoolCollection currPoolCollection = IPoolCollection(_poolCollections.at(i));
+            if (
+                currPoolCollection == poolCollection ||
+                (currPoolCollection.poolType() == poolType && currPoolCollection.version() == poolVersion)
+            ) {
+                revert AlreadyExists();
+            }
         }
     }
 }
