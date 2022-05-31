@@ -27,7 +27,7 @@ import {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
-import LegacyContractsV3, { PoolCollectionType1V3 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V4 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
@@ -374,8 +374,6 @@ describe('BancorNetwork', () => {
         let masterVault: MasterVault;
         let externalProtectionVault: ExternalProtectionVault;
 
-        let poolType: number;
-
         beforeEach(async () => {
             ({
                 network,
@@ -388,8 +386,6 @@ describe('BancorNetwork', () => {
                 masterVault,
                 externalProtectionVault
             } = await createSystem());
-
-            poolType = await poolCollection.poolType();
         });
 
         const verifyPoolCollectionRoles = async (poolCollection: TestPoolCollection, state: boolean) => {
@@ -402,47 +398,44 @@ describe('BancorNetwork', () => {
             ).to.equal(state);
         };
 
-        describe('adding new pool collection', () => {
-            it('should revert when a non-owner attempts to add a new pool collection', async () => {
+        describe('registering new pool collections', () => {
+            it('should revert when a non-owner attempts to register a new pool collection', async () => {
                 await expect(
-                    network.connect(nonOwner).addPoolCollection(poolCollection.address)
+                    network.connect(nonOwner).registerPoolCollection(poolCollection.address)
                 ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to add an invalid pool collection', async () => {
-                await expect(network.connect(nonOwner).addPoolCollection(ZERO_ADDRESS)).to.be.revertedWithError(
+                await expect(network.connect(nonOwner).registerPoolCollection(ZERO_ADDRESS)).to.be.revertedWithError(
                     'InvalidAddress'
                 );
             });
 
-            it('should add a new pool collections', async () => {
+            it('should register a new pool collection', async () => {
                 expect(await network.poolCollections()).to.be.empty;
-                expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
 
-                const res = await network.addPoolCollection(poolCollection.address);
-                await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(poolType, poolCollection.address);
+                const res = await network.registerPoolCollection(poolCollection.address);
                 await expect(res)
-                    .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(poolType, ZERO_ADDRESS, poolCollection.address);
+                    .to.emit(network, 'PoolCollectionAdded')
+                    .withArgs(await poolCollection.poolType(), poolCollection.address);
 
                 await verifyPoolCollectionRoles(poolCollection, true);
 
                 expect(await network.poolCollections()).to.have.members([poolCollection.address]);
-                expect(await network.latestPoolCollection(poolType)).to.equal(poolCollection.address);
             });
 
             context('with an existing pool collection', () => {
                 beforeEach(async () => {
-                    await network.addPoolCollection(poolCollection.address);
+                    await network.registerPoolCollection(poolCollection.address);
                 });
 
-                it('should revert when attempting to add the same pool collection', async () => {
-                    await expect(network.addPoolCollection(poolCollection.address)).to.be.revertedWithError(
+                it('should revert when attempting to register the same pool collection', async () => {
+                    await expect(network.registerPoolCollection(poolCollection.address)).to.be.revertedWithError(
                         'AlreadyExists'
                     );
                 });
 
-                it('should revert when attempting to add a pool collection with the same version', async () => {
+                it('should revert when attempting to register a pool collection with the same type and version', async () => {
                     const newPoolCollection = await createPoolCollection(
                         network,
                         bnt,
@@ -455,12 +448,12 @@ describe('BancorNetwork', () => {
                         await poolCollection.version()
                     );
 
-                    await expect(network.addPoolCollection(newPoolCollection.address)).to.be.revertedWithError(
+                    await expect(network.registerPoolCollection(newPoolCollection.address)).to.be.revertedWithError(
                         'AlreadyExists'
                     );
                 });
 
-                it('should add a new pool collection with the same type', async () => {
+                it('should register a new pool collection', async () => {
                     expect(await network.poolCollections()).to.have.members([poolCollection.address]);
 
                     const newPoolCollection = await createPoolCollection(
@@ -474,15 +467,12 @@ describe('BancorNetwork', () => {
                         poolMigrator,
                         (await poolCollection.version()) + 1
                     );
-                    const poolType = await newPoolCollection.poolType();
+                    const poolType2 = await newPoolCollection.poolType();
 
-                    const res = await network.addPoolCollection(newPoolCollection.address);
+                    const res = await network.registerPoolCollection(newPoolCollection.address);
                     await expect(res)
                         .to.emit(network, 'PoolCollectionAdded')
-                        .withArgs(poolType, newPoolCollection.address);
-                    await expect(res)
-                        .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(poolType, poolCollection.address, newPoolCollection.address);
+                        .withArgs(poolType2, newPoolCollection.address);
 
                     expect(await network.poolCollections()).to.have.members([
                         poolCollection.address,
@@ -492,220 +482,21 @@ describe('BancorNetwork', () => {
             });
         });
 
-        describe('removing existing pool collections', () => {
+        describe('unregistering existing pool collections', () => {
             beforeEach(async () => {
-                await network.addPoolCollection(poolCollection.address);
+                await network.registerPoolCollection(poolCollection.address);
             });
 
-            it('should add another new pool collection with the same type', async () => {
-                expect(await network.poolCollections()).to.have.members([poolCollection.address]);
-
-                const newPoolCollection = await createPoolCollection(
-                    network,
-                    bnt,
-                    networkSettings,
-                    masterVault,
-                    bntPool,
-                    externalProtectionVault,
-                    poolTokenFactory,
-                    poolMigrator,
-                    (await poolCollection.version()) + 1
-                );
-                const poolType = await newPoolCollection.poolType();
-
-                const res = await network.addPoolCollection(newPoolCollection.address);
-                await expect(res).to.emit(network, 'PoolCollectionAdded').withArgs(poolType, newPoolCollection.address);
-                await expect(res)
-                    .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(poolType, poolCollection.address, newPoolCollection.address);
-
-                expect(await network.poolCollections()).to.have.members([
-                    poolCollection.address,
-                    newPoolCollection.address
-                ]);
-            });
-
-            it('should revert when a attempting to remove a pool with a non-existing alternative pool collection', async () => {
-                const newPoolCollection = await createPoolCollection(
-                    network,
-                    bnt,
-                    networkSettings,
-                    masterVault,
-                    bntPool,
-                    externalProtectionVault,
-                    poolTokenFactory,
-                    poolMigrator,
-                    (await poolCollection.version()) + 1
-                );
+            it('should revert when a non-owner attempts to unregister an existing pool collection', async () => {
                 await expect(
-                    network.removePoolCollection(poolCollection.address, newPoolCollection.address)
-                ).to.be.revertedWithError('DoesNotExist');
-            });
-
-            context('with an exiting alternative pool collection', () => {
-                let newPoolCollection: TestPoolCollection;
-                let lastCollection: TestPoolCollection;
-
-                beforeEach(async () => {
-                    newPoolCollection = await createPoolCollection(
-                        network,
-                        bnt,
-                        networkSettings,
-                        masterVault,
-                        bntPool,
-                        externalProtectionVault,
-                        poolTokenFactory,
-                        poolMigrator,
-                        (await poolCollection.version()) + 1
-                    );
-                    lastCollection = await createPoolCollection(
-                        network,
-                        bnt,
-                        networkSettings,
-                        masterVault,
-                        bntPool,
-                        externalProtectionVault,
-
-                        poolTokenFactory,
-                        poolMigrator,
-                        (await newPoolCollection.version()) + 1
-                    );
-
-                    await network.addPoolCollection(newPoolCollection.address);
-                    await network.addPoolCollection(lastCollection.address);
-                });
-
-                it('should revert when a non-owner attempts to remove an existing pool collection', async () => {
-                    await expect(
-                        network
-                            .connect(nonOwner)
-                            .removePoolCollection(poolCollection.address, newPoolCollection.address)
-                    ).to.be.revertedWithError('AccessDenied');
-                });
-
-                it('should revert when attempting to remove a non-existing pool collection', async () => {
-                    await expect(
-                        network.removePoolCollection(ZERO_ADDRESS, newPoolCollection.address)
-                    ).to.be.revertedWithError('InvalidAddress');
-
-                    const otherCollection = await createPoolCollection(
-                        network,
-                        bnt,
-                        networkSettings,
-                        masterVault,
-                        bntPool,
-                        externalProtectionVault,
-                        poolTokenFactory,
-                        poolMigrator
-                    );
-                    await expect(
-                        network.removePoolCollection(otherCollection.address, newPoolCollection.address)
-                    ).to.be.revertedWithError('DoesNotExist');
-                });
-
-                it('should revert when attempting to remove a pool collection and specifying it as the latest', async () => {
-                    await expect(
-                        network.removePoolCollection(poolCollection.address, poolCollection.address)
-                    ).to.be.revertedWithError('InvalidPoolCollection');
-                });
-
-                it('should remove an existing pool collection', async () => {
-                    expect(await network.poolCollections()).to.have.members([
-                        poolCollection.address,
-                        newPoolCollection.address,
-                        lastCollection.address
-                    ]);
-                    expect(await network.latestPoolCollection(poolType)).to.equal(lastCollection.address);
-
-                    const res = await network.removePoolCollection(poolCollection.address, newPoolCollection.address);
-                    await expect(res)
-                        .to.emit(network, 'PoolCollectionRemoved')
-                        .withArgs(poolType, poolCollection.address);
-                    await expect(res)
-                        .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(poolType, lastCollection.address, newPoolCollection.address);
-
-                    expect(await network.poolCollections()).to.have.members([
-                        newPoolCollection.address,
-                        lastCollection.address
-                    ]);
-                    expect(await network.latestPoolCollection(poolType)).to.equal(newPoolCollection.address);
-
-                    await verifyPoolCollectionRoles(poolCollection, false);
-
-                    const res2 = await network.removePoolCollection(newPoolCollection.address, lastCollection.address);
-                    await expect(res2)
-                        .to.emit(network, 'PoolCollectionRemoved')
-                        .withArgs(poolType, newPoolCollection.address);
-                    await expect(res2)
-                        .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(poolType, newPoolCollection.address, lastCollection.address);
-
-                    expect(await network.poolCollections()).to.have.members([lastCollection.address]);
-                    expect(await network.latestPoolCollection(poolType)).to.equal(lastCollection.address);
-
-                    await verifyPoolCollectionRoles(newPoolCollection, false);
-
-                    const res3 = await network.removePoolCollection(lastCollection.address, ZERO_ADDRESS);
-                    await expect(res3)
-                        .to.emit(network, 'PoolCollectionRemoved')
-                        .withArgs(poolType, lastCollection.address);
-                    await expect(res3)
-                        .to.emit(network, 'LatestPoolCollectionReplaced')
-                        .withArgs(poolType, lastCollection.address, ZERO_ADDRESS);
-
-                    expect(await network.poolCollections()).to.be.empty;
-                    expect(await network.latestPoolCollection(poolType)).to.equal(ZERO_ADDRESS);
-
-                    await verifyPoolCollectionRoles(lastCollection, false);
-                });
-
-                it('should revert when attempting to remove a pool collection with associated pools', async () => {
-                    const reserveToken = await createTestToken();
-                    await createPool(reserveToken, network, networkSettings, lastCollection);
-
-                    await expect(
-                        network.removePoolCollection(lastCollection.address, newPoolCollection.address)
-                    ).to.be.revertedWithError('NotEmpty');
-                });
-
-                // eslint-disable-next-line @typescript-eslint/no-empty-function
-                it.skip('should revert when attempting to remove a pool collection with an alternative with a different type', async () => {});
-            });
-        });
-
-        describe('setting the latest pool collections', () => {
-            let newPoolCollection: TestPoolCollection;
-
-            beforeEach(async () => {
-                newPoolCollection = await createPoolCollection(
-                    network,
-                    bnt,
-                    networkSettings,
-                    masterVault,
-                    bntPool,
-                    externalProtectionVault,
-                    poolTokenFactory,
-                    poolMigrator,
-                    (await poolCollection.version()) + 1
-                );
-
-                await network.addPoolCollection(newPoolCollection.address);
-                await network.addPoolCollection(poolCollection.address);
-            });
-
-            it('should revert when a non-owner attempts to set the latest pool collection', async () => {
-                await expect(
-                    network.connect(nonOwner).setLatestPoolCollection(poolCollection.address)
+                    network.connect(nonOwner).unregisterPoolCollection(poolCollection.address)
                 ).to.be.revertedWithError('AccessDenied');
             });
 
-            it('should revert when attempting to set the latest pool collection to an invalid pool collection', async () => {
-                await expect(network.connect(nonOwner).setLatestPoolCollection(ZERO_ADDRESS)).to.be.revertedWithError(
-                    'InvalidAddress'
-                );
+            it('should revert when attempting to unregister a non-existing pool collection', async () => {
+                await expect(network.unregisterPoolCollection(ZERO_ADDRESS)).to.be.revertedWithError('InvalidAddress');
 
-                const newPoolCollection2 = await createPoolCollection(
+                const nonExistingPoolCollection = await createPoolCollection(
                     network,
                     bnt,
                     networkSettings,
@@ -715,34 +506,58 @@ describe('BancorNetwork', () => {
                     poolTokenFactory,
                     poolMigrator
                 );
-                await expect(network.setLatestPoolCollection(newPoolCollection2.address)).to.be.revertedWithError(
-                    'DoesNotExist'
+
+                await expect(
+                    network.unregisterPoolCollection(nonExistingPoolCollection.address)
+                ).to.be.revertedWithError('DoesNotExist');
+            });
+
+            it('should unregister an existing pool collection', async () => {
+                const newPoolCollection = await createPoolCollection(
+                    network,
+                    bnt,
+                    networkSettings,
+                    masterVault,
+                    bntPool,
+                    externalProtectionVault,
+                    poolTokenFactory,
+                    poolMigrator,
+                    (await poolCollection.version()) + 1
                 );
-            });
+                await network.registerPoolCollection(newPoolCollection.address);
 
-            it('should ignore setting to the same latest pool collection', async () => {
-                await network.setLatestPoolCollection(newPoolCollection.address);
+                expect(await network.poolCollections()).to.have.members([
+                    poolCollection.address,
+                    newPoolCollection.address
+                ]);
 
-                const res = await network.setLatestPoolCollection(newPoolCollection.address);
-                await expect(res).not.to.emit(network, 'LatestPoolCollectionReplaced');
-            });
-
-            it('should set the latest pool collection', async () => {
-                expect(await network.latestPoolCollection(poolType)).to.equal(poolCollection.address);
-
-                const res = await network.setLatestPoolCollection(newPoolCollection.address);
+                const res = await network.unregisterPoolCollection(poolCollection.address);
                 await expect(res)
-                    .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(poolType, poolCollection.address, newPoolCollection.address);
+                    .to.emit(network, 'PoolCollectionRemoved')
+                    .withArgs(await poolCollection.poolType(), poolCollection.address);
 
-                expect(await network.latestPoolCollection(poolType)).to.equal(newPoolCollection.address);
+                expect(await network.poolCollections()).to.have.members([newPoolCollection.address]);
 
-                const res2 = await network.setLatestPoolCollection(poolCollection.address);
+                await verifyPoolCollectionRoles(poolCollection, false);
+
+                const res2 = await network.unregisterPoolCollection(newPoolCollection.address);
                 await expect(res2)
-                    .to.emit(network, 'LatestPoolCollectionReplaced')
-                    .withArgs(poolType, newPoolCollection.address, poolCollection.address);
+                    .to.emit(network, 'PoolCollectionRemoved')
+                    .withArgs(await newPoolCollection.poolType(), newPoolCollection.address);
+                await expect(res2);
 
-                expect(await network.latestPoolCollection(poolType)).to.equal(poolCollection.address);
+                expect(await network.poolCollections()).to.be.empty;
+
+                await verifyPoolCollectionRoles(newPoolCollection, false);
+            });
+
+            it('should revert when attempting to unregister a pool collection with associated pools', async () => {
+                const reserveToken = await createTestToken();
+                await createPool(reserveToken, network, networkSettings, poolCollection);
+
+                await expect(network.unregisterPoolCollection(poolCollection.address)).to.be.revertedWithError(
+                    'NotEmpty'
+                );
             });
         });
     });
@@ -752,48 +567,64 @@ describe('BancorNetwork', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
+        let bntPool: TestBNTPool;
+        let poolTokenFactory: PoolTokenFactory;
         let poolCollection: TestPoolCollection;
-        let poolType: number;
+        let poolMigrator: TestPoolMigrator;
+        let masterVault: MasterVault;
+        let externalProtectionVault: ExternalProtectionVault;
 
         const testCreatePool = (tokenData: TokenData) => {
             beforeEach(async () => {
-                ({ network, networkSettings, poolCollection } = await createSystem());
+                ({
+                    network,
+                    networkSettings,
+                    bnt,
+                    bntPool,
+                    poolCollection,
+                    poolTokenFactory,
+                    poolMigrator,
+                    masterVault,
+                    externalProtectionVault
+                } = await createSystem());
 
-                await network.addPoolCollection(poolCollection.address);
+                await network.registerPoolCollection(poolCollection.address);
 
                 reserveToken = await createToken(tokenData);
-
-                poolType = await poolCollection.poolType();
-            });
-
-            it('should revert when attempting to create a pool for an invalid reserve token', async () => {
-                await expect(network.createPool(poolType, ZERO_ADDRESS)).to.be.revertedWithError('InvalidAddress');
-            });
-
-            it('should revert when attempting to create a pool for an unsupported type', async () => {
-                await expect(network.createPool(12_345, reserveToken.address)).to.be.revertedWithError('InvalidType');
-            });
-
-            it('should revert when attempting to create multiple pools for an invalid reserve token', async () => {
-                await expect(network.createPools(poolType, [ZERO_ADDRESS])).to.be.revertedWithError('InvalidAddress');
-            });
-
-            it('should revert when attempting to create multiple pools for an unsupported type', async () => {
-                await expect(network.createPools(12_345, [reserveToken.address])).to.be.revertedWithError(
-                    'InvalidType'
-                );
-            });
-
-            it('should revert when a non-owner attempts to create a pool', async () => {
-                await expect(
-                    network.connect(nonOwner).createPool(poolType, reserveToken.address)
-                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when a non-owner attempts create multiple pools', async () => {
                 await expect(
-                    network.connect(nonOwner).createPools(poolType, [reserveToken.address])
+                    network.connect(nonOwner).createPools([reserveToken.address], poolCollection.address)
                 ).to.be.revertedWithError('AccessDenied');
+            });
+
+            it('should revert when attempting to create a pool for an invalid reserve token', async () => {
+                await expect(network.createPools([ZERO_ADDRESS], poolCollection.address)).to.be.revertedWithError(
+                    'InvalidAddress'
+                );
+            });
+
+            it('should revert when attempting to create a pool for an invalid pool collection', async () => {
+                await expect(network.createPools([reserveToken.address], ZERO_ADDRESS)).to.be.revertedWithError(
+                    'InvalidAddress'
+                );
+
+                const nonExistingPoolCollection = await createPoolCollection(
+                    network,
+                    bnt,
+                    networkSettings,
+                    masterVault,
+                    bntPool,
+                    externalProtectionVault,
+                    poolTokenFactory,
+                    poolMigrator
+                );
+                await networkSettings.addTokenToWhitelist(reserveToken.address);
+
+                await expect(
+                    network.createPools([reserveToken.address], nonExistingPoolCollection.address)
+                ).to.be.revertedWithError('DoesNotExist');
             });
 
             context('with a whitelisted token', () => {
@@ -807,7 +638,7 @@ describe('BancorNetwork', () => {
 
                     expect(await network.liquidityPools()).to.be.empty;
 
-                    const res = await network.createPool(poolType, reserveToken.address);
+                    const res = await network.createPools([reserveToken.address], poolCollection.address);
                     await expect(res)
                         .to.emit(network, 'PoolCreated')
                         .withArgs(reserveToken.address, poolCollection.address);
@@ -833,7 +664,7 @@ describe('BancorNetwork', () => {
 
                     expect(await network.liquidityPools()).to.be.empty;
 
-                    const res = await network.createPools(poolType, tokens);
+                    const res = await network.createPools(tokens, poolCollection.address);
 
                     for (const token of tokens) {
                         await expect(res).to.emit(network, 'PoolCreated').withArgs(token, poolCollection.address);
@@ -845,22 +676,27 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should revert when attempting to create a pool for the same reserve token twice', async () => {
-                    await network.createPool(poolType, reserveToken.address);
-                    await expect(network.createPool(poolType, reserveToken.address)).to.be.revertedWithError(
-                        'AlreadyExists'
-                    );
-                });
+                    const reserveToken2 = await createToken(new TokenData(TokenSymbol.TKN2));
+                    await networkSettings.addTokenToWhitelist(reserveToken2.address);
 
-                it('should revert when attempting to create multiple pools for the same reserve token in different transactions', async () => {
-                    await network.createPools(poolType, [reserveToken.address]);
-                    await expect(network.createPools(poolType, [reserveToken.address])).to.be.revertedWithError(
-                        'AlreadyExists'
-                    );
+                    await network.createPools([reserveToken.address, reserveToken2.address], poolCollection.address);
+                    await expect(
+                        network.createPools([reserveToken.address], poolCollection.address)
+                    ).to.be.revertedWithError('AlreadyExists');
+                    await expect(
+                        network.createPools([reserveToken.address, reserveToken2.address], poolCollection.address)
+                    ).to.be.revertedWithError('AlreadyExists');
+                    await expect(
+                        network.createPools([reserveToken2.address, reserveToken.address], poolCollection.address)
+                    ).to.be.revertedWithError('AlreadyExists');
+                    await expect(
+                        network.createPools([reserveToken2.address, reserveToken2.address], poolCollection.address)
+                    ).to.be.revertedWithError('AlreadyExists');
                 });
 
                 it('should revert when attempting to create multiple pools for the same reserve token in the same transaction', async () => {
                     await expect(
-                        network.createPools(poolType, [reserveToken.address, reserveToken.address])
+                        network.createPools([reserveToken.address, reserveToken.address], poolCollection.address)
                     ).to.be.revertedWithError('AlreadyExists');
                 });
             });
@@ -876,22 +712,18 @@ describe('BancorNetwork', () => {
             beforeEach(async () => {
                 ({ network, bnt, poolCollection } = await createSystem());
 
-                await network.addPoolCollection(poolCollection.address);
-
-                poolType = await poolCollection.poolType();
-            });
-
-            it('should revert when attempting to create a pool', async () => {
-                await expect(network.createPool(poolType, bnt.address)).to.be.revertedWithError('InvalidToken');
+                await network.registerPoolCollection(poolCollection.address);
             });
 
             it('should revert when attempting to create multiple pools', async () => {
-                await expect(network.createPools(poolType, [bnt.address])).to.be.revertedWithError('InvalidToken');
+                await expect(network.createPools([bnt.address], poolCollection.address)).to.be.revertedWithError(
+                    'InvalidToken'
+                );
             });
         });
     });
 
-    describe('migrate pools', () => {
+    describe.only('migrate pools', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
@@ -900,7 +732,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let prevPoolCollection: PoolCollectionType1V3;
+        let prevPoolCollection: PoolCollectionType1V4;
         let poolMigrator: TestPoolMigrator;
         let newPoolCollection: PoolCollection;
 
@@ -931,7 +763,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V3.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V4.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -942,7 +774,7 @@ describe('BancorNetwork', () => {
                 poolMigrator.address
             );
 
-            await network.addPoolCollection(prevPoolCollection.address);
+            await network.registerPoolCollection(prevPoolCollection.address);
 
             for (const symbol of reserveTokenSymbol) {
                 const token = await createToken(new TokenData(symbol));
@@ -968,20 +800,43 @@ describe('BancorNetwork', () => {
                 poolMigrator.address
             );
 
-            await network.addPoolCollection(newPoolCollection.address);
+            await network.registerPoolCollection(newPoolCollection.address);
 
             await network.setTime(await latest());
         });
 
-        it('should revert when attempting to migrate a pool that was already migrated', async () => {
-            await network.migratePools(reserveTokenAddresses);
+        it.only('should revert when attempting to migrate a pool that was already migrated', async () => {
+            // TODO: the old pool collections are trying to call latestPoolCollection and revert
 
-            await expect(network.migratePools(reserveTokenAddresses)).to.be.revertedWithError('InvalidPoolCollection');
+            await network.migratePools(reserveTokenAddresses, newPoolCollection.address);
+
+            await expect(
+                network.migratePools(reserveTokenAddresses, newPoolCollection.address)
+            ).to.be.revertedWithError('InvalidPoolCollection');
+        });
+
+        it('should revert when attempting to migrate a pool to a non-existing pool collection', async () => {
+            const nonExistingPoolCollection = await createPoolCollection(
+                network,
+                bnt,
+                networkSettings,
+                masterVault,
+                bntPool,
+                externalProtectionVault,
+                poolTokenFactory,
+                poolMigrator
+            );
+
+            await expect(
+                network.migratePools(reserveTokenAddresses, nonExistingPoolCollection.address)
+            ).to.be.revertedWithError('DoesNotExists');
         });
 
         it('should revert when attempting to migrate invalid pools', async () => {
             const reserveTokenAddresses2 = [ZERO_ADDRESS, ZERO_ADDRESS, ...reserveTokenAddresses, ZERO_ADDRESS];
-            await expect(network.migratePools(reserveTokenAddresses2)).to.be.revertedWithError('InvalidPool');
+            await expect(
+                network.migratePools(reserveTokenAddresses2, newPoolCollection.address)
+            ).to.be.revertedWithError('InvalidPool');
         });
 
         it('should migrate pools', async () => {
@@ -992,7 +847,7 @@ describe('BancorNetwork', () => {
                 expect(await network.collectionByPool(reserveTokenAddress)).to.equal(prevPoolCollection.address);
             }
 
-            const res = await network.migratePools(reserveTokenAddresses);
+            const res = await network.migratePools(reserveTokenAddresses, newPoolCollection.address);
 
             expect(await prevPoolCollection.poolCount()).to.equal(0);
             expect(await newPoolCollection.poolCount()).to.equal(reserveTokenAddresses.length);

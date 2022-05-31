@@ -37,7 +37,7 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import { PoolCollectionType1V3 } from '../components/LegacyContractsV3';
+import { PoolCollectionType1V3, PoolCollectionType1V4, PoolMigratorV3 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
@@ -92,7 +92,9 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V3 = 'PoolCollectionType1V3'
+    PoolCollectionType1V3 = 'PoolCollectionType1V3',
+    PoolCollectionType1V4 = 'PoolCollectionType1V4',
+    PoolMigratorV3 = 'PoolMigratorV3'
 }
 
 enum NewInstanceName {
@@ -110,7 +112,7 @@ enum NewInstanceName {
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V4 = 'PoolCollectionType1V4',
+    PoolCollectionType1V5 = 'PoolCollectionType1V5',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -157,7 +159,9 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
-    PoolCollectionType1V3: deployed<PoolCollectionType1V3>(InstanceName.PoolCollectionType1V3)
+    PoolCollectionType1V3: deployed<PoolCollectionType1V3>(InstanceName.PoolCollectionType1V3),
+    PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4),
+    PoolMigratorV3: deployed<PoolMigratorV3>(InstanceName.PoolMigratorV3)
 };
 
 const DeployedNewContracts = {
@@ -175,7 +179,7 @@ const DeployedNewContracts = {
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V4: deployed<PoolCollection>(InstanceName.PoolCollectionType1V4),
+    PoolCollectionType1V5: deployed<PoolCollection>(InstanceName.PoolCollectionType1V5),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),

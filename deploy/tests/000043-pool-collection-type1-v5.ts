@@ -1,6 +1,6 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
-import { BancorNetwork, PoolCollection } from '../../components/Contracts';
-import { PoolCollectionType1V3, PoolMigratorV3 } from '../../components/LegacyContractsV3';
+import { BancorNetwork, PoolCollection, PoolMigrator } from '../../components/Contracts';
+import { PoolCollectionType1V4 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -8,10 +8,10 @@ import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { expect } from 'chai';
 import { getNamedAccounts } from 'hardhat';
 
-const prevState: Record<string, AsyncReturnType<PoolCollectionType1V3['poolData']>> = {};
+const prevState: Record<string, AsyncReturnType<PoolCollectionType1V4['poolData']>> = {};
 
 const savePreviousPoolData = async () => {
-    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V3.deployed();
+    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V4.deployed();
 
     const { dai, link } = await getNamedAccounts();
 
@@ -24,21 +24,21 @@ describeDeployment(
     __filename,
     () => {
         let network: BancorNetwork;
-        let poolMigrator: PoolMigratorV3;
-        let prevPoolCollection: PoolCollectionType1V3;
+        let poolMigrator: PoolMigrator;
+        let prevPoolCollection: PoolCollectionType1V4;
         let newPoolCollection: PoolCollection;
 
         beforeEach(async () => {
             network = await DeployedContracts.BancorNetwork.deployed();
-            poolMigrator = await DeployedContracts.PoolMigratorV3.deployed();
-            prevPoolCollection = await DeployedContracts.PoolCollectionType1V3.deployed();
-            newPoolCollection = await DeployedContracts.PoolCollectionType1V4.deployed();
+            poolMigrator = await DeployedContracts.PoolMigrator.deployed();
+            prevPoolCollection = await DeployedContracts.PoolCollectionType1V4.deployed();
+            newPoolCollection = await DeployedContracts.PoolCollectionType1V5.deployed();
         });
 
         it('should deploy and migrate the new pool migration and pool collection contracts', async () => {
-            expect(await poolMigrator.version()).to.equal(3);
+            expect(await poolMigrator.version()).to.equal(4);
 
-            expect(await newPoolCollection.version()).to.equal(4);
+            expect(await newPoolCollection.version()).to.equal(5);
 
             expect(await newPoolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await newPoolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);

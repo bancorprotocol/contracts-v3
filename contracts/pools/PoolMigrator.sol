@@ -11,23 +11,23 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { FractionLibrary, Fraction, Fraction112 } from "../utility/FractionLibrary.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
-import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
 
 interface IPoolCollectionBase {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
 }
 
-interface IPoolCollectionV3 is IPoolCollectionBase {
-    struct PoolV3 {
-        IPoolToken poolToken; // the pool token of a given pool
-        uint32 tradingFeePPM; // the trading fee (in units of PPM)
-        bool tradingEnabled; // whether trading is enabled
-        bool depositingEnabled; // whether depositing is enabled
-        AverageRates averageRates; // the recent average rate
-        PoolLiquidity liquidity; // the overall liquidity in the pool
+interface IPoolCollectionV4 is IPoolCollectionBase {
+    struct PoolV4 {
+        IPoolToken poolToken;
+        uint32 tradingFeePPM;
+        bool tradingEnabled;
+        bool depositingEnabled;
+        AverageRates averageRates;
+        PoolLiquidity liquidity;
     }
 
-    function poolData(Token token) external view returns (PoolV3 memory);
+    function poolData(Token token) external view returns (PoolV4 memory);
 }
 
 /**
@@ -37,6 +37,7 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     using FractionLibrary for Fraction;
     using FractionLibrary for Fraction112;
 
+    error InvalidPoolType();
     error UnsupportedVersion();
 
     IPoolCollection private constant INVALID_POOL_COLLECTION = IPoolCollection(address(0));
@@ -83,13 +84,17 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
      * @inheritdoc IPoolMigrator
      */
-    function migratePool(Token pool) external only(address(_network)) returns (IPoolCollection) {
+    function migratePool(Token pool, IPoolCollection newPoolCollection)
+        external
+        validAddress(address(newPoolCollection))
+        only(address(_network))
+    {
         if (address(pool) == address(0)) {
             revert InvalidPool();
         }
@@ -100,33 +105,33 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
             revert InvalidPool();
         }
 
-        // get the latest pool collection corresponding to its type and ensure that a migration is necessary
-        // note that it's currently not possible to add two pool collections with the same version and type
-        uint16 poolType = prevPoolCollection.poolType();
-        IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
-        if (address(newPoolCollection) == address(prevPoolCollection)) {
-            revert InvalidPoolCollection();
+        if (prevPoolCollection == newPoolCollection) {
+            revert AlreadyExists();
+        }
+
+        if (prevPoolCollection.poolType() != newPoolCollection.poolType()) {
+            revert InvalidPoolType();
         }
 
         // migrate all relevant values based on a historical collection version into the new pool collection
-        if (prevPoolCollection.version() == 3) {
-            _migrateFromV3(pool, IPoolCollectionV3(address(prevPoolCollection)), newPoolCollection);
+        if (prevPoolCollection.version() == 4) {
+            _migrateFromV4(pool, IPoolCollectionV4(address(prevPoolCollection)), newPoolCollection);
 
-            return newPoolCollection;
+            return;
         }
 
         revert UnsupportedVersion();
     }
 
     /**
-     * @dev migrates a pool to the latest pool version
+     * @dev migrates a pool to the given pool version
      */
-    function _migrateFromV3(
+    function _migrateFromV4(
         Token pool,
-        IPoolCollectionV3 sourcePoolCollection,
+        IPoolCollectionV4 sourcePoolCollection,
         IPoolCollection targetPoolCollection
     ) private {
-        IPoolCollectionV3.PoolV3 memory data = sourcePoolCollection.poolData(pool);
+        IPoolCollectionV4.PoolV4 memory data = sourcePoolCollection.poolData(pool);
         AverageRates memory averageRates = data.averageRates;
         PoolLiquidity memory liquidity = data.liquidity;
 

@@ -280,7 +280,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolType() external pure returns (uint16) {
+    function poolType() external view virtual returns (uint16) {
         return POOL_TYPE;
     }
 

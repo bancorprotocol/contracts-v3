@@ -355,7 +355,7 @@ describe('PoolCollection', () => {
                 poolTokenFactory.address,
                 poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(4);
+            expect(await poolCollection.version()).to.equal(5);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -3731,7 +3731,7 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe('pool migrations', () => {
+    describe.only('pool migrations', () => {
         let network: TestBancorNetwork;
         let bnt: IERC20;
         let networkSettings: NetworkSettings;
@@ -3773,8 +3773,7 @@ describe('PoolCollection', () => {
                 poolMigrator,
                 (await poolCollection.version()) + 1
             );
-            await network.addPoolCollection(targetPoolCollection.address);
-            await network.setLatestPoolCollection(targetPoolCollection.address);
+            await network.registerPoolCollection(targetPoolCollection.address);
         });
 
         describe('in', () => {

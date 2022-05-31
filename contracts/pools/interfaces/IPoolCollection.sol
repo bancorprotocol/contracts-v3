@@ -53,7 +53,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns the type of the pool
      */
-    function poolType() external pure returns (uint16);
+    function poolType() external view returns (uint16);
 
     /**
      * @dev returns the default trading fee (in units of PPM)
