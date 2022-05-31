@@ -346,6 +346,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // and version exists
         _verifyPoolUniqueness(newPoolCollection);
 
+        // note that we don't need to check its return value due to the check in _verifyPoolUniqueness above
+        _poolCollections.add(address(newPoolCollection));
+
         _setAccessRoles(newPoolCollection, true);
 
         emit PoolCollectionAdded({ poolType: newPoolCollection.poolType(), poolCollection: newPoolCollection });
