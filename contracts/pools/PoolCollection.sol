@@ -274,7 +274,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
@@ -871,10 +871,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         validAddress(address(targetPoolCollection))
         only(address(_poolMigrator))
     {
-        if (_network.latestPoolCollection(POOL_TYPE) != targetPoolCollection) {
-            revert InvalidPoolCollection();
-        }
-
         IPoolToken cachedPoolToken = _poolData[pool].poolToken;
 
         _removePool(pool);
