@@ -168,7 +168,7 @@ describe('PoolMigrator', () => {
             ).to.be.revertedWithError('InvalidPool');
         });
 
-        it('should revert when attempting to migrate a pool already existing in the pool collection', async () => {
+        it('should revert when attempting to migrate a pool that already exists in the pool collection', async () => {
             await expect(
                 network.migratePoolT(poolMigrator.address, reserveToken.address, prevPoolCollection.address)
             ).to.be.revertedWithError('AlreadyExists');
