@@ -49,7 +49,7 @@ describe('PoolMigrator', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await poolMigrator.version()).to.equal(3);
+            expect(await poolMigrator.version()).to.equal(4);
 
             await expectRoles(poolMigrator, Roles.Upgradeable);
 
@@ -59,7 +59,7 @@ describe('PoolMigrator', () => {
         });
     });
 
-    describe.only('pool migration', () => {
+    describe('pool migration', () => {
         let network: TestBancorNetwork;
         let bnt: IERC20;
         let networkSettings: NetworkSettings;
@@ -158,7 +158,7 @@ describe('PoolMigrator', () => {
         it('should revert when attempting to migrate to an invalid pool collection', async () => {
             await expect(
                 network.migratePoolT(poolMigrator.address, reserveToken.address, ZERO_ADDRESS)
-            ).to.be.revertedWithError('InvalidPool');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to migrate a non-existing pool', async () => {
@@ -174,7 +174,7 @@ describe('PoolMigrator', () => {
             ).to.be.revertedWithError('AlreadyExists');
         });
 
-        it.only('should revert when attempting to migrate a pool to a pool collection of a different type', async () => {
+        it('should revert when attempting to migrate a pool to a pool collection of a different type', async () => {
             const newPoolCollection2 = await createPoolCollection(
                 network,
                 bnt,
@@ -184,7 +184,7 @@ describe('PoolMigrator', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
-                (await newPoolCollection.poolType()) + 10,
+                (await prevPoolCollection.poolType()) + 10,
                 await newPoolCollection.version()
             );
 
@@ -204,7 +204,8 @@ describe('PoolMigrator', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
-                1000
+                await prevPoolCollection.poolType(),
+                (await newPoolCollection.version()) + 1000
             );
             await createPool(reserveToken2, network, networkSettings, poolCollection2);
 
@@ -218,6 +219,7 @@ describe('PoolMigrator', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
+                await poolCollection2.poolType(),
                 (await poolCollection2.version()) + 1
             );
             await createPool(reserveToken3, network, networkSettings, poolCollection3);
@@ -228,14 +230,6 @@ describe('PoolMigrator', () => {
         });
 
         it('should migrate', async () => {
-            const newPoolCollectionAddress = await network.callStatic.migratePoolT(
-                poolMigrator.address,
-                reserveToken.address,
-                newPoolCollection.address
-            );
-
-            expect(newPoolCollectionAddress).to.equal(newPoolCollection.address);
-
             let poolData = await prevPoolCollection.poolData(reserveToken.address);
             let newPoolData = await newPoolCollection.poolData(reserveToken.address);
             expect(newPoolData.poolToken).to.equal(ZERO_ADDRESS);

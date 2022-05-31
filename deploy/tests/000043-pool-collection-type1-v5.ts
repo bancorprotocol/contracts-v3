@@ -43,7 +43,6 @@ describeDeployment(
             expect(await newPoolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await newPoolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
 
-            expect(await network.latestPoolCollection(PoolType.Standard)).to.equal(newPoolCollection.address);
             expect(await network.poolCollections()).not.to.include(prevPoolCollection.address);
 
             const { dai, link } = await getNamedAccounts();

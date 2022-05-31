@@ -6,7 +6,7 @@
 import type {
   PoolMigrator,
   PoolMigratorInterface,
-} from "../../../../contracts/pools/PoolMigratorV3";
+} from "../../../contracts/pools/PoolMigratorV3";
 import type { Provider, TransactionRequest } from "@ethersproject/providers";
 import { Signer, utils, Contract, ContractFactory, Overrides } from "ethers";
 

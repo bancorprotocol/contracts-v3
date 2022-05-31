@@ -49,7 +49,7 @@ import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, Contract, utils } from 'ethers';
+import { BigNumber, Contract, ContractInterface, utils } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
 import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
@@ -317,19 +317,29 @@ const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
 interface FunctionParams {
     name?: string;
     contractName?: string;
+    contractArtifactData?: ArtifactData;
     methodName?: string;
     args?: any[];
 }
 
 const logParams = async (params: FunctionParams) => {
-    const { name, contractName, methodName, args = [] } = params;
+    const { name, contractName, contractArtifactData, methodName, args = [] } = params;
 
-    if (!name && !contractName) {
-        throw new Error('Either name of contractName must be provided!');
+    if (!name && !contractName && !contractArtifactData) {
+        throw new Error('Either name, contractName, or contractArtifactData must be provided!');
     }
 
-    const contract = name ? await ethers.getContract(name) : await ethers.getContractFactory(contractName!);
-    const fragment = methodName ? contract.interface.getFunction(methodName) : contract.interface.deploy;
+    let contractInterface: ContractInterface;
+
+    if (name) {
+        ({ interface: contractInterface } = await ethers.getContract(name));
+    } else if (contractName) {
+        ({ interface: contractInterface } = await ethers.getContractFactory(contractName));
+    } else {
+        contractInterface = new utils.Interface(contractArtifactData!.abi);
+    }
+
+    const fragment = methodName ? contractInterface.getFunction(methodName) : contractInterface.deploy;
 
     Logger.log(`  ${methodName ?? 'constructor'} params: ${args.length === 0 ? '[]' : ''}`);
     if (args.length === 0) {
@@ -385,7 +395,7 @@ export const deploy = async (options: DeployOptions) => {
         Logger.log(`  deploying ${contractName}${customAlias}`);
     }
 
-    await logParams({ contractName, args });
+    await logParams({ contractArtifactData, args });
 
     const res = await deployContract(name, {
         contract: contractArtifactData ?? contractName,

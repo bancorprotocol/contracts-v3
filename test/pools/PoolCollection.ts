@@ -3731,7 +3731,7 @@ describe('PoolCollection', () => {
         });
     });
 
-    describe.only('pool migrations', () => {
+    describe('migrations', () => {
         let network: TestBancorNetwork;
         let bnt: IERC20;
         let networkSettings: NetworkSettings;
@@ -3771,6 +3771,7 @@ describe('PoolCollection', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
+                await poolCollection.poolType(),
                 (await poolCollection.version()) + 1
             );
             await network.registerPoolCollection(targetPoolCollection.address);

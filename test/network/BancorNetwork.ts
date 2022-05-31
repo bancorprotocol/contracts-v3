@@ -445,6 +445,7 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
+                        await poolCollection.poolType(),
                         await poolCollection.version()
                     );
 
@@ -465,6 +466,7 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
+                        await poolCollection.poolType(),
                         (await poolCollection.version()) + 1
                     );
                     const poolType2 = await newPoolCollection.poolType();
@@ -522,6 +524,7 @@ describe('BancorNetwork', () => {
                     externalProtectionVault,
                     poolTokenFactory,
                     poolMigrator,
+                    await poolCollection.poolType(),
                     (await poolCollection.version()) + 1
                 );
                 await network.registerPoolCollection(newPoolCollection.address);
@@ -723,7 +726,7 @@ describe('BancorNetwork', () => {
         });
     });
 
-    describe.only('migrate pools', () => {
+    describe('migrate pools', () => {
         let network: TestBancorNetwork;
         let networkSettings: NetworkSettings;
         let bnt: IERC20;
@@ -805,14 +808,12 @@ describe('BancorNetwork', () => {
             await network.setTime(await latest());
         });
 
-        it.only('should revert when attempting to migrate a pool that was already migrated', async () => {
-            // TODO: the old pool collections are trying to call latestPoolCollection and revert
-
+        it('should revert when attempting to migrate a pool that was already migrated', async () => {
             await network.migratePools(reserveTokenAddresses, newPoolCollection.address);
 
             await expect(
                 network.migratePools(reserveTokenAddresses, newPoolCollection.address)
-            ).to.be.revertedWithError('InvalidPoolCollection');
+            ).to.be.revertedWithError('AlreadyExists');
         });
 
         it('should revert when attempting to migrate a pool to a non-existing pool collection', async () => {
@@ -829,7 +830,7 @@ describe('BancorNetwork', () => {
 
             await expect(
                 network.migratePools(reserveTokenAddresses, nonExistingPoolCollection.address)
-            ).to.be.revertedWithError('DoesNotExists');
+            ).to.be.revertedWithError('DoesNotExist');
         });
 
         it('should revert when attempting to migrate invalid pools', async () => {
