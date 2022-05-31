@@ -1366,8 +1366,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint16 poolType = poolCollection.poolType();
         uint16 poolVersion = poolCollection.version();
 
-        // note that it is assumed that the list of all the pool collections is always going to remain sufficiently
-        // small
+        // note that there's no risk of using an unbounded loop her since the list of all the active pool collections
+        // is always going to remain sufficiently small
         uint256 length = _poolCollections.length();
         for (uint256 i = 0; i < length; i++) {
             IPoolCollection currPoolCollection = IPoolCollection(_poolCollections.at(i));
