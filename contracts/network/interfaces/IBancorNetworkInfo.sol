@@ -23,6 +23,11 @@ import { IBancorNetwork } from "./IBancorNetwork.sol";
 import { INetworkSettings } from "./INetworkSettings.sol";
 import { IPendingWithdrawals } from "./IPendingWithdrawals.sol";
 
+struct TradingLiquidity {
+    uint128 bntTradingLiquidity;
+    uint128 baseTokenTradingLiquidity;
+}
+
 /**
  * @dev Bancor Network Information interface
  */
@@ -43,12 +48,12 @@ interface IBancorNetworkInfo is IUpgradeable {
     function bntGovernance() external view returns (ITokenGovernance);
 
     /**
-     * @dev returns the VBNT contract
+     * @dev returns the vBNT contract
      */
     function vbnt() external view returns (IERC20);
 
     /**
-     * @dev returns the VBNT governance contract
+     * @dev returns the vBNT governance contract
      */
     function vbntGovernance() external view returns (ITokenGovernance);
 
@@ -81,6 +86,36 @@ interface IBancorNetworkInfo is IUpgradeable {
      * @dev returns the pool token contract for a given pool
      */
     function poolToken(Token pool) external view returns (IPoolToken);
+
+    /**
+     * @dev returns the staked balance in a given pool
+     */
+    function stakedBalance(Token pool) external view returns (uint256);
+
+    /**
+     * @dev returns the trading liquidity in a given pool
+     */
+    function tradingLiquidity(Token pool) external view returns (TradingLiquidity memory);
+
+    /**
+     * @dev returns the trading fee (in units of PPM)
+     */
+    function tradingFeePPM(Token pool) external view returns (uint32);
+
+    /**
+     * @dev returns whether trading is enabled
+     */
+    function tradingEnabled(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns whether depositing is enabled
+     */
+    function depositingEnabled(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns whether the pool is stable
+     */
+    function isPoolStable(Token pool) external view returns (bool);
 
     /**
      * @dev returns the pending withdrawals contract

@@ -25,7 +25,9 @@ describe('Upgradeable', () => {
 
     describe('construction', () => {
         it('should revert when attempting to reinitialize', async () => {
-            await expect(upgradeable.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(upgradeable.initialize()).to.be.revertedWithError(
+                'Initializable: contract is already initialized'
+            );
         });
 
         it('should be properly initialized', async () => {
@@ -38,7 +40,7 @@ describe('Upgradeable', () => {
         });
 
         it('should revert when a non-admin is attempting to call a restricted function', async () => {
-            await expect(upgradeable.connect(nonAdmin).restricted()).to.be.revertedWith('AccessDenied');
+            await expect(upgradeable.connect(nonAdmin).restricted()).to.be.revertedWithError('AccessDenied');
         });
     });
 
@@ -58,7 +60,7 @@ describe('Upgradeable', () => {
 
             it('should not allow executing the post-upgrade callback twice per-version', async () => {
                 await expect(upgradeable.postUpgrade([])).not.to.be.reverted;
-                await expect(upgradeable.postUpgrade([])).to.be.revertedWith('AlreadyInitialized');
+                await expect(upgradeable.postUpgrade([])).to.be.revertedWithError('AlreadyInitialized');
             });
         });
 
@@ -71,7 +73,7 @@ describe('Upgradeable', () => {
                 });
 
                 it('should revert when attempting to execute the post-upgrade callback', async () => {
-                    await expect(upgradeable.postUpgrade([])).to.be.revertedWith('AlreadyInitialized');
+                    await expect(upgradeable.postUpgrade([])).to.be.revertedWithError('AlreadyInitialized');
                 });
             }
         });

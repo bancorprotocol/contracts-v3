@@ -2,11 +2,12 @@
 pragma solidity 0.8.13;
 
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { Fraction } from "./Fraction.sol";
+import { Fraction, InvalidFraction } from "./Fraction.sol";
 
 import { PPM_RESOLUTION } from "./Constants.sol";
 
-uint256 constant ONE = 1 << 127;
+uint256 constant ONE = 0x80000000000000000000000000000000;
+uint256 constant LN2 = 0x58b90bfbe8e7bcd5e4f1d9cc01f97b57;
 
 struct Uint512 {
     uint256 hi; // 256 most significant bits
@@ -25,15 +26,15 @@ library MathEx {
     error Overflow();
 
     /**
-     * @dev returns `e ^ f`, where `e` is Euler's number and `f` is the input exponent:
+     * @dev returns `2 ^ f` by calculating `e ^ (f * ln(2))`, where `e` is Euler's number:
      * - Rewrite the input as a sum of binary exponents and a single residual r, as small as possible
      * - The exponentiation of each binary exponent is given (pre-calculated)
      * - The exponentiation of r is calculated via Taylor series for e^x, where x = r
      * - The exponentiation of the input is calculated by multiplying the intermediate results above
      * - For example: e^5.521692859 = e^(4 + 1 + 0.5 + 0.021692859) = e^4 * e^1 * e^0.5 * e^0.021692859
      */
-    function exp(Fraction memory f) internal pure returns (Fraction memory) {
-        uint256 x = MathEx.mulDivF(ONE, f.n, f.d);
+    function exp2(Fraction memory f) internal pure returns (Fraction memory) {
+        uint256 x = MathEx.mulDivF(LN2, f.n, f.d);
         uint256 y;
         uint256 z;
         uint256 n;
@@ -85,19 +86,19 @@ library MathEx {
             n = n / 0x21c3677c82b40000 + y + ONE; // divide by 20! and then add y^1 / 1! + y^0 / 0!
 
             if ((x & (ONE >> 3)) != 0)
-                n = (n * 0x1c3d6a24ed82218787d624d3e5eba95f9) / 0x18ebef9eac820ae8682b9793ac6d1e776; // multiply by e^2^(-3)
+                n = (n * 0x1c3d6a24ed82218787d624d3e5eba95f9) / 0x18ebef9eac820ae8682b9793ac6d1e776; // multiply by e^(2^-3)
             if ((x & (ONE >> 2)) != 0)
-                n = (n * 0x18ebef9eac820ae8682b9793ac6d1e778) / 0x1368b2fc6f9609fe7aceb46aa619baed4; // multiply by e^2^(-2)
+                n = (n * 0x18ebef9eac820ae8682b9793ac6d1e778) / 0x1368b2fc6f9609fe7aceb46aa619baed4; // multiply by e^(2^-2)
             if ((x & (ONE >> 1)) != 0)
-                n = (n * 0x1368b2fc6f9609fe7aceb46aa619baed5) / 0x0bc5ab1b16779be3575bd8f0520a9f21f; // multiply by e^2^(-1)
+                n = (n * 0x1368b2fc6f9609fe7aceb46aa619baed5) / 0x0bc5ab1b16779be3575bd8f0520a9f21f; // multiply by e^(2^-1)
             if ((x & (ONE << 0)) != 0)
-                n = (n * 0x0bc5ab1b16779be3575bd8f0520a9f21e) / 0x0454aaa8efe072e7f6ddbab84b40a55c9; // multiply by e^2^(+0)
+                n = (n * 0x0bc5ab1b16779be3575bd8f0520a9f21e) / 0x0454aaa8efe072e7f6ddbab84b40a55c9; // multiply by e^(2^+0)
             if ((x & (ONE << 1)) != 0)
-                n = (n * 0x0454aaa8efe072e7f6ddbab84b40a55c5) / 0x00960aadc109e7a3bf4578099615711ea; // multiply by e^2^(+1)
+                n = (n * 0x0454aaa8efe072e7f6ddbab84b40a55c5) / 0x00960aadc109e7a3bf4578099615711ea; // multiply by e^(2^+1)
             if ((x & (ONE << 2)) != 0)
-                n = (n * 0x00960aadc109e7a3bf4578099615711d7) / 0x0002bf84208204f5977f9a8cf01fdce3d; // multiply by e^2^(+2)
+                n = (n * 0x00960aadc109e7a3bf4578099615711d7) / 0x0002bf84208204f5977f9a8cf01fdce3d; // multiply by e^(2^+2)
             if ((x & (ONE << 3)) != 0)
-                n = (n * 0x0002bf84208204f5977f9a8cf01fdc307) / 0x0000003c6ab775dd0b95b4cbee7e65d11; // multiply by e^2^(+3)
+                n = (n * 0x0002bf84208204f5977f9a8cf01fdc307) / 0x0000003c6ab775dd0b95b4cbee7e65d11; // multiply by e^(2^+3)
         }
 
         return Fraction({ n: n, d: ONE });
@@ -108,7 +109,12 @@ library MathEx {
      */
     function reducedFraction(Fraction memory fraction, uint256 max) internal pure returns (Fraction memory) {
         uint256 scale = Math.ceilDiv(Math.max(fraction.n, fraction.d), max);
-        return Fraction({ n: fraction.n / scale, d: fraction.d / scale });
+        Fraction memory reduced = Fraction({ n: fraction.n / scale, d: fraction.d / scale });
+        if (reduced.d == 0) {
+            revert InvalidFraction();
+        }
+
+        return reduced;
     }
 
     /**

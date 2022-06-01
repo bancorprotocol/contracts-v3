@@ -25,17 +25,19 @@ describe('MasterVault', () => {
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(masterVault.initialize()).to.be.revertedWith('Initializable: contract is already initialized');
+            await expect(masterVault.initialize()).to.be.revertedWithError(
+                'Initializable: contract is already initialized'
+            );
         });
 
         it('should revert when initialized with an invalid BNT governance contract', async () => {
-            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS, vbntGovernance.address)).to.be.revertedWith(
+            await expect(Contracts.MasterVault.deploy(ZERO_ADDRESS, vbntGovernance.address)).to.be.revertedWithError(
                 'InvalidAddress'
             );
         });
 
         it('should revert when initialized with an invalid BNT governance contract', async () => {
-            await expect(Contracts.MasterVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWith(
+            await expect(Contracts.MasterVault.deploy(bntGovernance.address, ZERO_ADDRESS)).to.be.revertedWithError(
                 'InvalidAddress'
             );
         });
@@ -84,7 +86,7 @@ describe('MasterVault', () => {
             it('should revert', async () => {
                 await expect(
                     masterVault.connect(user).withdrawFunds(token.address, user.address, amount)
-                ).to.revertedWith('AccessDenied');
+                ).to.revertedWithError('AccessDenied');
             });
         };
 

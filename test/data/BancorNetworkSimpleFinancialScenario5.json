@@ -1,0 +1,384 @@
+{
+  "tradingFee": "0.25%",
+  "networkFee": "0%",
+  "withdrawalFee": "0.25%",
+  "epVaultBalance": "0",
+  "tknDecimals": 18,
+  "bntMinLiquidity": "10000",
+  "bntFundingLimit": "10000000",
+  "users": [
+    {
+      "id": "tknProvider",
+      "tknBalance": "100",
+      "bntBalance": "0"
+    }
+  ],
+  "operations": [
+    {
+      "type": "depositTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "20",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "80",
+          "masterVault": "20",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "0"
+        },
+        "bntknBalances": {
+          "tknProvider": "20"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "0"
+        },
+        "bntCurrentPoolFunding": "0",
+        "tknStakedBalance": "20",
+        "bntStakedBalance": "0",
+        "tknTradingLiquidity": "0",
+        "bntTradingLiquidity": "0",
+        "averageRateN": "0",
+        "averageRateD": "1",
+        "averageInvRateN": "0",
+        "averageInvRateD": "1"
+      }
+    },
+    {
+      "type": "enableTrading",
+      "userId": "",
+      "mined": true,
+      "amount": {
+        "bntVirtualBalance": 1000,
+        "baseTokenVirtualBalance": 1
+      },
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "80",
+          "masterVault": "20",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "20000"
+        },
+        "bntknBalances": {
+          "tknProvider": "20"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "20000"
+        },
+        "bntCurrentPoolFunding": "20000",
+        "tknStakedBalance": "20",
+        "bntStakedBalance": "20000",
+        "tknTradingLiquidity": "20",
+        "bntTradingLiquidity": "20000",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "withdrawTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "10",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "89.975",
+          "masterVault": "10.025",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "10025"
+        },
+        "bntknBalances": {
+          "tknProvider": "10"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "10025"
+        },
+        "bntCurrentPoolFunding": "10025",
+        "tknStakedBalance": "10",
+        "bntStakedBalance": "10025",
+        "tknTradingLiquidity": "10.025",
+        "bntTradingLiquidity": "10025",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "depositTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "20",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "69.975",
+          "masterVault": "30.025",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "20050"
+        },
+        "bntknBalances": {
+          "tknProvider": "30"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "20050"
+        },
+        "bntCurrentPoolFunding": "20050",
+        "tknStakedBalance": "30",
+        "bntStakedBalance": "20050",
+        "tknTradingLiquidity": "20.05",
+        "bntTradingLiquidity": "20050",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "withdrawTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "10",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "79.95",
+          "masterVault": "20.05",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "20050"
+        },
+        "bntknBalances": {
+          "tknProvider": "20"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "20050"
+        },
+        "bntCurrentPoolFunding": "20050",
+        "tknStakedBalance": "20",
+        "bntStakedBalance": "20050",
+        "tknTradingLiquidity": "20.05",
+        "bntTradingLiquidity": "20050",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "depositTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "20",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "59.95",
+          "masterVault": "40.05",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "40050"
+        },
+        "bntknBalances": {
+          "tknProvider": "40"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "40050"
+        },
+        "bntCurrentPoolFunding": "40050",
+        "tknStakedBalance": "40",
+        "bntStakedBalance": "40050",
+        "tknTradingLiquidity": "40.05",
+        "bntTradingLiquidity": "40050",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "withdrawTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "10",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "69.925",
+          "masterVault": "30.075",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "30075"
+        },
+        "bntknBalances": {
+          "tknProvider": "30"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "30075"
+        },
+        "bntCurrentPoolFunding": "30075",
+        "tknStakedBalance": "30",
+        "bntStakedBalance": "30075",
+        "tknTradingLiquidity": "30.075",
+        "bntTradingLiquidity": "30075",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "depositTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "20",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "49.925",
+          "masterVault": "50.075",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "50075"
+        },
+        "bntknBalances": {
+          "tknProvider": "50"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "50075"
+        },
+        "bntCurrentPoolFunding": "50075",
+        "tknStakedBalance": "50",
+        "bntStakedBalance": "50075",
+        "tknTradingLiquidity": "50.075",
+        "bntTradingLiquidity": "50075",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "withdrawTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "10",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "59.9",
+          "masterVault": "40.1",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "40100"
+        },
+        "bntknBalances": {
+          "tknProvider": "40"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "40100"
+        },
+        "bntCurrentPoolFunding": "40100",
+        "tknStakedBalance": "40",
+        "bntStakedBalance": "40100",
+        "tknTradingLiquidity": "40.1",
+        "bntTradingLiquidity": "40100",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "depositTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "20",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "39.9",
+          "masterVault": "60.1",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "60100"
+        },
+        "bntknBalances": {
+          "tknProvider": "60"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "60100"
+        },
+        "bntCurrentPoolFunding": "60100",
+        "tknStakedBalance": "60",
+        "bntStakedBalance": "60100",
+        "tknTradingLiquidity": "60.1",
+        "bntTradingLiquidity": "60100",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    },
+    {
+      "type": "withdrawTKN",
+      "userId": "tknProvider",
+      "mined": true,
+      "amount": "10",
+      "expected": {
+        "tknBalances": {
+          "tknProvider": "49.875",
+          "masterVault": "50.125",
+          "epVault": "0"
+        },
+        "bntBalances": {
+          "tknProvider": "0",
+          "masterVault": "50125"
+        },
+        "bntknBalances": {
+          "tknProvider": "50"
+        },
+        "bnbntBalances": {
+          "tknProvider": "0",
+          "bntPool": "50125"
+        },
+        "bntCurrentPoolFunding": "50125",
+        "tknStakedBalance": "50",
+        "bntStakedBalance": "50125",
+        "tknTradingLiquidity": "50.125",
+        "bntTradingLiquidity": "50125",
+        "averageRateN": "1000",
+        "averageRateD": "1",
+        "averageInvRateN": "1",
+        "averageInvRateD": "1000"
+      }
+    }
+  ]
+}

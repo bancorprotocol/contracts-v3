@@ -6,6 +6,7 @@ import Contracts, {
     ExternalProtectionVault,
     ExternalRewardsVault,
     IERC20,
+    IPoolCollection,
     MasterVault,
     NetworkSettings,
     PoolMigrator,
@@ -33,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const V1 = 1;
+const V4 = 4;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -58,7 +59,7 @@ export const proxyAdmin = async () => {
 
 const createLogic = async <F extends ContractFactory>(factory: ContractBuilder<F>, ctorArgs: CtorArgs = []) => {
     // eslint-disable-next-line @typescript-eslint/ban-types
-    return (factory.deploy as Function)(...(ctorArgs || []));
+    return (factory.deploy as Function)(...(ctorArgs ?? []));
 };
 
 const createTransparentProxy = async (
@@ -93,7 +94,7 @@ export const upgradeProxy = async <F extends ContractFactory>(
     await admin.upgradeAndCall(
         proxy.address,
         logicContract.address,
-        logicContract.interface.encodeFunctionData('postUpgrade', [args?.upgradeCallData || []])
+        logicContract.interface.encodeFunctionData('postUpgrade', [args?.upgradeCallData ?? []])
     );
 
     return factory.attach(proxy.address);
@@ -169,7 +170,7 @@ const createGovernedToken = async (
         token = testToken;
     } else {
         const legacyToken = await legacyFactory.deploy(name, symbol, decimals);
-        legacyToken.issue(deployer.address, totalSupply);
+        await legacyToken.issue(deployer.address, totalSupply);
 
         tokenGovernance = await LegacyContracts.TokenGovernance.deploy(legacyToken.address);
         await tokenGovernance.grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer.address);
@@ -214,7 +215,7 @@ export const createPoolCollection = async (
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
-    version: number = V1
+    version: number = V4
 ) =>
     Contracts.TestPoolCollection.deploy(
         version,
@@ -277,7 +278,7 @@ export const createPool = async (
     reserveToken: TokenWithAddress,
     network: TestBancorNetwork,
     networkSettings: NetworkSettings,
-    poolCollection: TestPoolCollection
+    poolCollection: IPoolCollection
 ) => {
     await networkSettings.addTokenToWhitelist(reserveToken.address);
 
@@ -287,8 +288,8 @@ export const createPool = async (
     }
     await network.createPool(await poolCollection.poolType(), reserveToken.address);
 
-    const pool = await poolCollection.poolData(reserveToken.address);
-    return Contracts.PoolToken.attach(pool.poolToken);
+    const poolToken = await poolCollection.poolToken(reserveToken.address);
+    return Contracts.PoolToken.attach(poolToken);
 };
 
 const createNetwork = async (
@@ -438,7 +439,7 @@ export interface PoolSpec {
     tokenData: TokenData;
     token?: TokenWithAddress;
     balance: BigNumberish;
-    requestedLiquidity: BigNumberish;
+    requestedFunding?: BigNumberish;
     bntVirtualBalance: BigNumberish;
     baseTokenVirtualBalance: BigNumberish;
     tradingFeePPM?: number;
@@ -467,18 +468,19 @@ const setupPool = async (
         await createPool(reserveToken, network, networkSettings, poolCollection);
 
         await networkSettings.setFundingLimit(reserveToken.address, MAX_UINT256);
-        await poolCollection.requestFundingT(formatBytes32String(''), reserveToken.address, spec.requestedLiquidity);
+        if (spec.requestedFunding) {
+            await poolCollection.requestFundingT(formatBytes32String(''), reserveToken.address, spec.requestedFunding);
+        }
 
         await depositToPool(provider, bnt, spec.balance, network);
 
         return { poolToken, token: bnt };
     }
 
-    const token = spec.token || (await createToken(spec.tokenData));
+    const token = spec.token ?? (await createToken(spec.tokenData));
     const poolToken = await createPool(token, network, networkSettings, poolCollection);
 
     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
     await poolCollection.setTradingFeePPM(token.address, spec.tradingFeePPM ?? 0);
 
     await depositToPool(provider, token, spec.balance, network);
@@ -530,10 +532,7 @@ export const createToken = async (
 
         case TokenSymbol.TKN:
         case TokenSymbol.TKN1:
-        case TokenSymbol.TKN2:
-        case TokenSymbol.TKN3:
-        case TokenSymbol.TKN4:
-        case TokenSymbol.TKN5: {
+        case TokenSymbol.TKN2: {
             const token = await (burnable ? Contracts.TestERC20Burnable : Contracts.TestERC20Token).deploy(
                 tokenData.name(),
                 tokenData.symbol(),

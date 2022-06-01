@@ -17,9 +17,9 @@ import Contracts, {
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { Profiler } from '../../components/Profiler';
-import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/helpers/TestPoolCollection';
+import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
-    ExponentialDecay,
+    EXP2_INPUT_TOO_HIGH,
     MAX_UINT256,
     PPM_RESOLUTION,
     RewardsDistributionType,
@@ -105,7 +105,6 @@ describe('Profile @profile', () => {
                     await createPool(token, network, networkSettings, poolCollection);
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
 
                     // ensure that the trading is enabled with sufficient funding
                     if (tokenData.isNative()) {
@@ -180,7 +179,7 @@ describe('Profile @profile', () => {
                                 }
                             };
 
-                            const testDepositAmount = async (amount: BigNumber) => {
+                            const testDepositAmount = (amount: BigNumber) => {
                                 const COUNT = 3;
 
                                 const testMultipleDeposits = async () => {
@@ -338,7 +337,7 @@ describe('Profile @profile', () => {
                                 }
                             };
 
-                            const testDepositAmount = async (amount: BigNumber) => {
+                            const testDepositAmount = (amount: BigNumber) => {
                                 const test = async () =>
                                     profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
@@ -428,7 +427,7 @@ describe('Profile @profile', () => {
             creationTime: number;
         }
 
-        const testWithdraw = async (tokenData: TokenData) => {
+        const testWithdraw = (tokenData: TokenData) => {
             let provider: SignerWithAddress;
             let poolToken: PoolToken;
             let token: TokenWithAddress;
@@ -456,7 +455,6 @@ describe('Profile @profile', () => {
                     poolToken = await createPool(token, network, networkSettings, poolCollection);
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                    await poolCollection.setDepositLimit(token.address, MAX_UINT256);
                 }
 
                 await depositToPool(provider, token, INITIAL_LIQUIDITY, network);
@@ -943,14 +941,14 @@ describe('Profile @profile', () => {
                 {
                     tokenData: sourceTokenData,
                     balance: toWei(1_000_000),
-                    requestedLiquidity: toWei(1_000_000).mul(1000),
+                    requestedFunding: toWei(1_000_000).mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
                 {
                     tokenData: targetTokenData,
                     balance: toWei(5_000_000),
-                    requestedLiquidity: toWei(5_000_000).mul(1000),
+                    requestedFunding: toWei(5_000_000).mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
@@ -970,7 +968,7 @@ describe('Profile @profile', () => {
                                         {
                                             tokenData: new TokenData(sourceSymbol),
                                             balance: sourceBalance,
-                                            requestedLiquidity: sourceBalance.mul(1000),
+                                            requestedFunding: sourceBalance.mul(1000),
                                             tradingFeePPM: sourceTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
@@ -980,7 +978,7 @@ describe('Profile @profile', () => {
                                         {
                                             tokenData: new TokenData(targetSymbol),
                                             balance: targetBalance,
-                                            requestedLiquidity: targetBalance.mul(1000),
+                                            requestedFunding: targetBalance.mul(1000),
                                             tradingFeePPM: targetTokenData.isBNT()
                                                 ? undefined
                                                 : toPPM(tradingFeePercent),
@@ -996,7 +994,7 @@ describe('Profile @profile', () => {
                                             {
                                                 tokenData: new TokenData(sourceSymbol),
                                                 balance: sourceBalance,
-                                                requestedLiquidity: sourceBalance.mul(1000),
+                                                requestedFunding: sourceBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent),
                                                 bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                                                 baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
@@ -1004,7 +1002,7 @@ describe('Profile @profile', () => {
                                             {
                                                 tokenData: new TokenData(targetSymbol),
                                                 balance: targetBalance,
-                                                requestedLiquidity: targetBalance.mul(1000),
+                                                requestedFunding: targetBalance.mul(1000),
                                                 tradingFeePPM: toPPM(tradingFeePercent2),
                                                 bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                                                 baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
@@ -1041,7 +1039,7 @@ describe('Profile @profile', () => {
             recipient = await Contracts.TestFlashLoanRecipient.deploy(network.address);
         });
 
-        const testFlashLoan = async (tokenData: TokenData, flashLoanFeePPM: number) => {
+        const testFlashLoan = (tokenData: TokenData, flashLoanFeePPM: number) => {
             const FEE_AMOUNT = LOAN_AMOUNT.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
@@ -1049,7 +1047,7 @@ describe('Profile @profile', () => {
                     {
                         tokenData,
                         balance: BALANCE,
-                        requestedLiquidity: BALANCE.mul(1000),
+                        requestedFunding: BALANCE.mul(1000),
                         bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                         baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                     },
@@ -1121,7 +1119,7 @@ describe('Profile @profile', () => {
                 {
                     tokenData: new TokenData(TokenSymbol.TKN),
                     balance: BALANCE,
-                    requestedLiquidity: BALANCE.mul(1000),
+                    requestedFunding: BALANCE.mul(1000),
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
@@ -1183,6 +1181,9 @@ describe('Profile @profile', () => {
     });
 
     describe('auto-compounding rewards', () => {
+        const EXP_DECAY_HALF_LIFE = duration.days(561);
+        const EXP_DECAY_MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(EXP_DECAY_HALF_LIFE).sub(1).ceil().toNumber();
+
         let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
@@ -1203,7 +1204,7 @@ describe('Profile @profile', () => {
                 {
                     tokenData,
                     balance: providerStake,
-                    requestedLiquidity: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
+                    requestedFunding: tokenData.isBNT() ? max(providerStake, totalRewards).mul(1000) : 0,
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
@@ -1262,13 +1263,21 @@ describe('Profile @profile', () => {
                     beforeEach(async () => {
                         startTime = await latest();
 
-                        await autoCompoundingRewards.createProgram(
-                            token.address,
-                            totalRewards,
-                            distributionType,
-                            startTime,
-                            distributionType === RewardsDistributionType.Flat ? startTime + programDuration : 0
-                        );
+                        if (distributionType === RewardsDistributionType.Flat) {
+                            await autoCompoundingRewards.createFlatProgram(
+                                token.address,
+                                totalRewards,
+                                startTime,
+                                startTime + programDuration
+                            );
+                        } else {
+                            await autoCompoundingRewards.createExpDecayProgram(
+                                token.address,
+                                totalRewards,
+                                startTime,
+                                EXP_DECAY_HALF_LIFE
+                            );
+                        }
                     });
 
                     const testMultipleDistributions = (step: number, totalSteps: number) => {
@@ -1304,7 +1313,7 @@ describe('Profile @profile', () => {
 
                             break;
 
-                        case RewardsDistributionType.ExponentialDecay:
+                        case RewardsDistributionType.ExpDecay:
                             for (const step of [duration.hours(1), duration.weeks(1)]) {
                                 for (const totalSteps of [5]) {
                                     testMultipleDistributions(step, totalSteps);
@@ -1332,8 +1341,8 @@ describe('Profile @profile', () => {
 
                     break;
 
-                case RewardsDistributionType.ExponentialDecay:
-                    for (const programDuration of [ExponentialDecay.MAX_DURATION]) {
+                case RewardsDistributionType.ExpDecay:
+                    for (const programDuration of [EXP_DECAY_MAX_DURATION]) {
                         context(
                             `program duration of ${humanizeDuration(programDuration * 1000, { units: ['y'] })}`,
                             () => {
@@ -1420,7 +1429,7 @@ describe('Profile @profile', () => {
                 {
                     tokenData: poolData,
                     balance: initialBalance,
-                    requestedLiquidity: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
+                    requestedFunding: poolData.isBNT() ? BigNumber.from(initialBalance).mul(1000) : 0,
                     bntVirtualBalance: 1,
                     baseTokenVirtualBalance: 2
                 },

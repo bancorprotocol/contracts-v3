@@ -1,17 +1,9 @@
 import Contracts, { IERC20, NetworkSettings, TestERC20Token } from '../../components/Contracts';
-import LegacyContractsV3, { NetworkSettingsV1 } from '../../components/LegacyContractsV3';
 import { DEFAULT_FLASH_LOAN_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
-import {
-    createProxy,
-    createSystem,
-    createTestToken,
-    createToken,
-    TokenWithAddress,
-    upgradeProxy
-} from '../helpers/Factory';
+import { createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
@@ -39,11 +31,11 @@ describe('NetworkSettings', () => {
 
     describe('construction', () => {
         it('should revert when attempting to create with an invalid BNT token contract', async () => {
-            await expect(Contracts.NetworkSettings.deploy(ZERO_ADDRESS)).to.be.revertedWith('InvalidAddress');
+            await expect(Contracts.NetworkSettings.deploy(ZERO_ADDRESS)).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to reinitialize', async () => {
-            await expect(networkSettings.initialize()).to.be.revertedWith(
+            await expect(networkSettings.initialize()).to.be.revertedWithError(
                 'Initializable: contract is already initialized'
             );
         });
@@ -69,53 +61,6 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('upgrade', () => {
-        const networkFeePPM = toPPM(33);
-        const withdrawalFeePPM = toPPM(1);
-        const minLiquidityForTrading = toWei(500_000);
-        const flashLoanPPM = toPPM(20);
-        const vortexRewards = {
-            burnRewardPPM: toPPM(10),
-            burnRewardMaxAmount: toWei(100)
-        };
-        const fundingLimit = toWei(100_000);
-
-        let networkSettings: NetworkSettingsV1;
-
-        beforeEach(async () => {
-            networkSettings = await createProxy(LegacyContractsV3.NetworkSettingsV1);
-
-            await networkSettings.setNetworkFeePPM(networkFeePPM);
-            await networkSettings.setWithdrawalFeePPM(withdrawalFeePPM);
-            await networkSettings.setMinLiquidityForTrading(minLiquidityForTrading);
-            await networkSettings.setFlashLoanFeePPM(flashLoanPPM);
-            await networkSettings.setVortexRewards(vortexRewards);
-            await networkSettings.addTokenToWhitelist(reserveToken.address);
-            await networkSettings.setFundingLimit(reserveToken.address, fundingLimit);
-        });
-
-        it('should upgrade and preserve existing settings', async () => {
-            const upgradedNetworkSettings = await upgradeProxy(networkSettings, Contracts.NetworkSettings, {
-                ctorArgs: [bnt.address]
-            });
-
-            expect(await upgradedNetworkSettings.networkFeePPM()).to.equal(networkFeePPM);
-            expect(await upgradedNetworkSettings.withdrawalFeePPM()).to.equal(withdrawalFeePPM);
-            expect(await upgradedNetworkSettings.minLiquidityForTrading()).to.equal(minLiquidityForTrading);
-
-            const newVortexRewards = await upgradedNetworkSettings.vortexRewards();
-            expect(newVortexRewards.burnRewardPPM).to.equal(vortexRewards.burnRewardPPM);
-            expect(newVortexRewards.burnRewardMaxAmount).to.equal(vortexRewards.burnRewardMaxAmount);
-
-            expect(await upgradedNetworkSettings.isTokenWhitelisted(reserveToken.address)).to.be.true;
-            expect(await upgradedNetworkSettings.poolFundingLimit(reserveToken.address)).to.equal(fundingLimit);
-            expect(await upgradedNetworkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
-            expect(await upgradedNetworkSettings.flashLoanFeePPM(reserveToken.address)).to.equal(
-                DEFAULT_FLASH_LOAN_FEE_PPM
-            );
-        });
-    });
-
     describe('protected tokens whitelist', () => {
         beforeEach(async () => {
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
@@ -125,18 +70,18 @@ describe('NetworkSettings', () => {
             it('should revert when a non-admin attempts to add a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).addTokenToWhitelist(reserveToken.address)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when adding an invalid address', async () => {
-                await expect(networkSettings.addTokenToWhitelist(ZERO_ADDRESS)).to.be.revertedWith(
+                await expect(networkSettings.addTokenToWhitelist(ZERO_ADDRESS)).to.be.revertedWithError(
                     'InvalidExternalAddress'
                 );
             });
 
             it('should revert when adding an already whitelisted token', async () => {
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
-                await expect(networkSettings.addTokenToWhitelist(reserveToken.address)).to.be.revertedWith(
+                await expect(networkSettings.addTokenToWhitelist(reserveToken.address)).to.be.revertedWithError(
                     'AlreadyExists'
                 );
             });
@@ -155,11 +100,11 @@ describe('NetworkSettings', () => {
             it('should revert when a non-admin attempts to add tokens', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).addTokensToWhitelist([reserveToken.address])
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when adding invalid addresses', async () => {
-                await expect(networkSettings.addTokensToWhitelist([ZERO_ADDRESS])).to.be.revertedWith(
+                await expect(networkSettings.addTokensToWhitelist([ZERO_ADDRESS])).to.be.revertedWithError(
                     'InvalidExternalAddress'
                 );
             });
@@ -167,12 +112,12 @@ describe('NetworkSettings', () => {
             it('should revert when adding already whitelisted tokens in the same transaction', async () => {
                 await expect(
                     networkSettings.addTokensToWhitelist([reserveToken.address, reserveToken.address])
-                ).to.be.revertedWith('AlreadyExists');
+                ).to.be.revertedWithError('AlreadyExists');
             });
 
             it('should revert when adding already whitelisted tokens in different transactions', async () => {
                 await networkSettings.addTokensToWhitelist([reserveToken.address]);
-                await expect(networkSettings.addTokensToWhitelist([reserveToken.address])).to.be.revertedWith(
+                await expect(networkSettings.addTokensToWhitelist([reserveToken.address])).to.be.revertedWithError(
                     'AlreadyExists'
                 );
             });
@@ -207,14 +152,16 @@ describe('NetworkSettings', () => {
             it('should revert when a non-admin attempts to remove a token', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).removeTokenFromWhitelist(reserveToken.address)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when removing a non-whitelisted token', async () => {
-                await expect(networkSettings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWith('DoesNotExist');
+                await expect(networkSettings.removeTokenFromWhitelist(ZERO_ADDRESS)).to.be.revertedWithError(
+                    'DoesNotExist'
+                );
 
                 const reserveToken2 = await createTestToken();
-                await expect(networkSettings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWith(
+                await expect(networkSettings.removeTokenFromWhitelist(reserveToken2.address)).to.be.revertedWithError(
                     'DoesNotExist'
                 );
             });
@@ -238,29 +185,29 @@ describe('NetworkSettings', () => {
         it('should revert when a non-admin attempts to set a pool limit', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setFundingLimit(reserveToken.address, poolFundingLimit)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when setting a pool limit of an invalid address token', async () => {
-            await expect(networkSettings.setFundingLimit(ZERO_ADDRESS, poolFundingLimit)).to.be.revertedWith(
+            await expect(networkSettings.setFundingLimit(ZERO_ADDRESS, poolFundingLimit)).to.be.revertedWithError(
                 'InvalidAddress'
             );
         });
 
         it('should revert when setting a pool limit of a non-whitelisted token', async () => {
-            await expect(networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit)).to.be.revertedWith(
-                'NotWhitelisted'
-            );
+            await expect(
+                networkSettings.setFundingLimit(reserveToken.address, poolFundingLimit)
+            ).to.be.revertedWithError('NotWhitelisted');
         });
 
         it('should revert when a non-admin attempts to set multiple pool limits', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setFundingLimits([reserveToken.address], [poolFundingLimit])
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when setting multiple pool limits of an invalid address token', async () => {
-            await expect(networkSettings.setFundingLimits([ZERO_ADDRESS], [poolFundingLimit])).to.be.revertedWith(
+            await expect(networkSettings.setFundingLimits([ZERO_ADDRESS], [poolFundingLimit])).to.be.revertedWithError(
                 'InvalidAddress'
             );
         });
@@ -268,7 +215,7 @@ describe('NetworkSettings', () => {
         it('should revert when setting multiple pool limits of a non-whitelisted token', async () => {
             await expect(
                 networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit])
-            ).to.be.revertedWith('NotWhitelisted');
+            ).to.be.revertedWithError('NotWhitelisted');
         });
 
         context('whitelisted', () => {
@@ -340,11 +287,11 @@ describe('NetworkSettings', () => {
             it('should revert when setting multiple pool limits with invalid input', async () => {
                 await expect(
                     networkSettings.setFundingLimits([reserveToken.address], [poolFundingLimit, poolFundingLimit])
-                ).to.be.revertedWith('InvalidParam');
+                ).to.be.revertedWithError('InvalidParam');
 
                 await expect(
                     networkSettings.setFundingLimits([reserveToken.address, reserveToken.address], [poolFundingLimit])
-                ).to.be.revertedWith('InvalidParam');
+                ).to.be.revertedWithError('InvalidParam');
             });
         });
     });
@@ -355,20 +302,20 @@ describe('NetworkSettings', () => {
         it('should revert when a non-admin attempts to add a token', async () => {
             await expect(
                 networkSettings.connect(nonOwner).addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when adding an invalid address', async () => {
             await expect(
                 networkSettings.addTokenToWhitelistWithLimit(ZERO_ADDRESS, poolFundingLimit)
-            ).to.be.revertedWith('InvalidExternalAddress');
+            ).to.be.revertedWithError('InvalidExternalAddress');
         });
 
         it('should revert when adding an already whitelisted token', async () => {
             await networkSettings.addTokenToWhitelist(reserveToken.address);
             await expect(
                 networkSettings.addTokenToWhitelistWithLimit(reserveToken.address, poolFundingLimit)
-            ).to.be.revertedWith('AlreadyExists');
+            ).to.be.revertedWithError('AlreadyExists');
         });
 
         it('should whitelist a token with funding limit', async () => {
@@ -393,7 +340,7 @@ describe('NetworkSettings', () => {
         it('should revert when a non-admin attempts to set the minimum liquidity for trading', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setMinLiquidityForTrading(minLiquidityForTrading)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should ignore setting to the same minimum liquidity for trading', async () => {
@@ -431,13 +378,13 @@ describe('NetworkSettings', () => {
         });
 
         it('should revert when a non-admin attempts to set the withdrawal fee', async () => {
-            await expect(networkSettings.connect(nonOwner).setWithdrawalFeePPM(newWithdrawalFee)).to.be.revertedWith(
-                'AccessDenied'
-            );
+            await expect(
+                networkSettings.connect(nonOwner).setWithdrawalFeePPM(newWithdrawalFee)
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when setting the withdrawal fee to an invalid value', async () => {
-            await expect(networkSettings.setWithdrawalFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith('InvalidFee');
+            await expect(networkSettings.setWithdrawalFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
         });
 
         it('should ignore updating to the same withdrawal fee', async () => {
@@ -472,11 +419,11 @@ describe('NetworkSettings', () => {
         it('should revert when a non-admin attempts to set the default flash-loan fee', async () => {
             await expect(
                 networkSettings.connect(nonOwner).setDefaultFlashLoanFeePPM(newDefaultFlashLoanFee)
-            ).to.be.revertedWith('AccessDenied');
+            ).to.be.revertedWithError('AccessDenied');
         });
 
         it('should revert when setting the default flash-loan fee to an invalid value', async () => {
-            await expect(networkSettings.setDefaultFlashLoanFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWith(
+            await expect(networkSettings.setDefaultFlashLoanFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError(
                 'InvalidFee'
             );
         });
@@ -509,13 +456,13 @@ describe('NetworkSettings', () => {
             it('should revert when a non-admin attempts to set the flash-loan fee', async () => {
                 await expect(
                     networkSettings.connect(nonOwner).setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee)
-                ).to.be.revertedWith('AccessDenied');
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to set the flash-loan fee of a non-whitelisted token', async () => {
                 await expect(
                     networkSettings.setFlashLoanFeePPM(reserveToken.address, newFlashLoanFee)
-                ).to.be.revertedWith('NotWhitelisted');
+                ).to.be.revertedWithError('NotWhitelisted');
             });
 
             const testSetFlashLoan = (tokenData: TokenData) => {
@@ -534,7 +481,7 @@ describe('NetworkSettings', () => {
                 it('should revert when setting an invalid flash-loan fee', async () => {
                     await expect(
                         networkSettings.setFlashLoanFeePPM(reserveToken.address, PPM_RESOLUTION + 1)
-                    ).to.be.revertedWith('InvalidFee');
+                    ).to.be.revertedWithError('InvalidFee');
                 });
 
                 it('should ignore updating to the same flash-loan fee', async () => {
@@ -626,7 +573,7 @@ describe('NetworkSettings', () => {
         };
 
         it('should revert when a non-admin attempts to set the vortex settings', async () => {
-            await expect(networkSettings.connect(nonOwner).setVortexRewards(newVortexRewards)).to.be.revertedWith(
+            await expect(networkSettings.connect(nonOwner).setVortexRewards(newVortexRewards)).to.be.revertedWithError(
                 'AccessDenied'
             );
         });
@@ -637,14 +584,14 @@ describe('NetworkSettings', () => {
                     burnRewardPPM: PPM_RESOLUTION + 1,
                     burnRewardMaxAmount: toWei(100)
                 })
-            ).to.be.revertedWith('InvalidFee');
+            ).to.be.revertedWithError('InvalidFee');
 
             await expect(
                 networkSettings.setVortexRewards({
                     burnRewardPPM: toPPM(10),
                     burnRewardMaxAmount: 0
                 })
-            ).to.be.revertedWith('ZeroValue');
+            ).to.be.revertedWithError('ZeroValue');
         });
 
         it('should ignore updating to the same vortex settings', async () => {

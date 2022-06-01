@@ -23,6 +23,7 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidType,
+    InvalidPool,
     InvalidPoolCollection,
     NotEmpty
 } from "../utility/Utils.sol";
@@ -102,10 +103,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the address of the BNT token governance
     ITokenGovernance private immutable _bntGovernance;
 
-    // the address of the VBNT token
+    // the address of the vBNT token
     IERC20 private immutable _vbnt;
 
-    // the address of the VBNT token governance
+    // the address of the vBNT token governance
     ITokenGovernance private immutable _vbntGovernance;
 
     // the network settings contract
@@ -167,9 +168,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     );
 
     /**
-     * @dev triggered when a new pool is added
+     * @dev triggered when a pool is created
+     */
+    event PoolCreated(Token indexed pool, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when a new pool is added to a pool collection
      */
     event PoolAdded(Token indexed pool, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when a new pool is removed from a pool collection
+     */
+    event PoolRemoved(Token indexed pool, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when funds are migrated
@@ -297,7 +308,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 5;
     }
 
     /**
@@ -463,13 +474,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function isPoolValid(Token pool) external view returns (bool) {
-        return address(pool) == address(_bnt) || _liquidityPools.contains(address(pool));
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
     function createPool(uint16 poolType, Token token) external onlyAdmin nonReentrant {
         _createPool(poolType, token);
     }
@@ -510,6 +514,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // add the pool collection to the reverse pool collection lookup
         _collectionByPool[token] = poolCollection;
 
+        emit PoolCreated({ pool: token, poolCollection: poolCollection });
         emit PoolAdded({ pool: token, poolCollection: poolCollection });
     }
 
@@ -523,12 +528,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
             // request the pool migrator to migrate the pool and get the new pool collection it exists in
             IPoolCollection newPoolCollection = _poolMigrator.migratePool(pool);
-            if (newPoolCollection == IPoolCollection(address(0))) {
-                continue;
-            }
+            IPoolCollection prevPoolCollection = _collectionByPool[pool];
 
             // update the mapping between pools and their respective pool collections
             _collectionByPool[pool] = newPoolCollection;
+
+            emit PoolRemoved(pool, prevPoolCollection);
+            emit PoolAdded(pool, newPoolCollection);
         }
     }
 
@@ -650,8 +656,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function cancelWithdrawal(uint256 id) external whenNotPaused nonReentrant {
-        _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
+    function cancelWithdrawal(uint256 id) external whenNotPaused nonReentrant returns (uint256) {
+        return _pendingWithdrawals.cancelWithdrawal(msg.sender, id);
     }
 
     /**
@@ -681,15 +687,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable whenNotPaused nonReentrant {
+    ) external payable whenNotPaused nonReentrant returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
 
-        _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
@@ -705,17 +712,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external whenNotPaused nonReentrant {
+    ) external whenNotPaused nonReentrant returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
 
         sourceToken.permit(msg.sender, address(this), sourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
-        _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
@@ -728,15 +736,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable whenNotPaused nonReentrant {
+    ) external payable whenNotPaused nonReentrant returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
 
-        _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
@@ -752,17 +761,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external whenNotPaused nonReentrant {
+    ) external whenNotPaused nonReentrant returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
 
         sourceToken.permit(msg.sender, address(this), maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
-        _trade(
-            TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-            TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-            deadline
-        );
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
@@ -854,10 +864,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
+        returns (uint256)
     {
         uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
         if (currentPendingNetworkFeeAmount == 0) {
-            return;
+            return 0;
         }
 
         _pendingNetworkFeeAmount = 0;
@@ -865,6 +876,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), currentPendingNetworkFeeAmount);
 
         emit NetworkFeesWithdrawn(msg.sender, recipient, currentPendingNetworkFeeAmount);
+
+        return currentPendingNetworkFeeAmount;
     }
 
     /**
@@ -1057,15 +1070,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         IBNTPool cachedBNTPool = _bntPool;
 
-        // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.poolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the BNT pool
+        completedRequest.poolToken.transferFrom(
+            address(_pendingWithdrawals),
+            address(cachedBNTPool),
+            completedRequest.poolTokenAmount
+        );
 
-        // transfer VBNT from the caller to the BNT pool
+        // transfer vBNT from the caller to the BNT pool
         _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the BNT pool
-        return cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
+        return
+            cachedBNTPool.withdraw(
+                contextId,
+                provider,
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
+            );
     }
 
     /**
@@ -1081,12 +1103,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // approve the pool collection to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the pool collection
+        completedRequest.poolToken.transferFrom(
+            address(_pendingWithdrawals),
+            address(poolCollection),
+            completedRequest.poolTokenAmount
+        );
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        return poolCollection.withdraw(contextId, provider, pool, completedRequest.poolTokenAmount);
+        return
+            poolCollection.withdraw(
+                contextId,
+                provider,
+                pool,
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
+            );
     }
 
     /**
@@ -1132,7 +1164,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         TradeParams memory params,
         TraderInfo memory traderInfo,
         uint256 deadline
-    ) private {
+    ) private returns (uint256) {
         // ensure the beneficiary is set
         if (traderInfo.beneficiary == address(0)) {
             traderInfo.beneficiary = traderInfo.trader;
@@ -1153,18 +1185,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         );
 
         // perform either a single or double hop trade, based on the source and the target pool
-        bool fromBNT = tokens.sourceToken.isEqual(_bnt);
         TradeResult memory firstHopTradeResult;
         TradeResult memory lastHopTradeResult;
         uint256 networkFeeAmount;
 
-        if (fromBNT || tokens.targetToken.isEqual(_bnt)) {
-            lastHopTradeResult = _tradeBNT(
-                contextId,
-                fromBNT ? tokens.targetToken : tokens.sourceToken,
-                fromBNT,
-                params
-            );
+        if (tokens.sourceToken.isEqual(_bnt)) {
+            lastHopTradeResult = _tradeBNT(contextId, tokens.targetToken, true, params);
 
             firstHopTradeResult = lastHopTradeResult;
 
@@ -1176,9 +1202,27 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 targetToken: tokens.targetToken,
                 sourceAmount: lastHopTradeResult.sourceAmount,
                 targetAmount: lastHopTradeResult.targetAmount,
-                bntAmount: fromBNT ? lastHopTradeResult.sourceAmount : lastHopTradeResult.targetAmount,
+                bntAmount: lastHopTradeResult.sourceAmount,
                 targetFeeAmount: lastHopTradeResult.tradingFeeAmount,
-                bntFeeAmount: fromBNT ? 0 : lastHopTradeResult.tradingFeeAmount,
+                bntFeeAmount: 0,
+                trader: traderInfo.trader
+            });
+        } else if (tokens.targetToken.isEqual(_bnt)) {
+            lastHopTradeResult = _tradeBNT(contextId, tokens.sourceToken, false, params);
+
+            firstHopTradeResult = lastHopTradeResult;
+
+            networkFeeAmount = lastHopTradeResult.networkFeeAmount;
+
+            emit TokensTraded({
+                contextId: contextId,
+                sourceToken: tokens.sourceToken,
+                targetToken: tokens.targetToken,
+                sourceAmount: lastHopTradeResult.sourceAmount,
+                targetAmount: lastHopTradeResult.targetAmount,
+                bntAmount: lastHopTradeResult.targetAmount,
+                targetFeeAmount: lastHopTradeResult.tradingFeeAmount,
+                bntFeeAmount: lastHopTradeResult.tradingFeeAmount,
                 trader: traderInfo.trader
             });
         } else {
@@ -1211,6 +1255,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // update the pending network fee amount to be burned by the vortex
         _pendingNetworkFeeAmount += networkFeeAmount;
+
+        return params.bySourceAmount ? lastHopTradeResult.targetAmount : lastHopTradeResult.sourceAmount;
     }
 
     /**
@@ -1376,6 +1422,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolToken poolToken,
         uint256 poolTokenAmount
     ) private returns (uint256) {
+        if (poolToken != _bntPoolToken) {
+            Token reserveToken = poolToken.reserveToken();
+            if (_poolCollection(reserveToken).poolToken(reserveToken) != poolToken) {
+                revert InvalidPool();
+            }
+        }
+
         // transfer the pool tokens from the provider. Note, that the provider should have either previously approved
         // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);

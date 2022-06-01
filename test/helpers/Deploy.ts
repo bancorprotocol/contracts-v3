@@ -1,36 +1,47 @@
-import { deploymentMetadata, deploymentTagExists, isLive, isMainnetFork } from '../../utils/Deploy';
+import { deploymentMetadata, deploymentTagExists, isLive } from '../../utils/Deploy';
 import { deployments } from 'hardhat';
 import { Suite } from 'mocha';
 
 const { run } = deployments;
 
-export const performTestDeployment = async (tag: string) => {
-    if (isLive()) {
-        throw new Error('Unsupported network');
-    }
+interface Options {
+    skip?: () => boolean;
+    beforeDeployments?: () => Promise<void>;
+}
 
-    return run(tag, {
-        resetMemory: false,
-        deletePreviousDeployments: !isMainnetFork(),
-        writeDeploymentsToFiles: isMainnetFork()
-    });
-};
-
-export const describeDeployment = async (
+export const describeDeployment = (
     filename: string,
     fn: (this: Suite) => void,
-    skip: () => boolean = () => false
-): Promise<Suite | void> => {
+    options: Options = {}
+): Suite | void => {
     const { id, tag } = deploymentMetadata(filename);
 
+    const { skip = () => false, beforeDeployments = () => Promise.resolve() } = options;
+
     // if we're running against a mainnet fork, ensure to skip tests for already existing deployments
-    if (skip() || (isMainnetFork() && (await deploymentTagExists(tag)))) {
+    if (skip() || deploymentTagExists(tag)) {
         return describe.skip(id, fn);
     }
 
     return describe(id, async function (this: Suite) {
+        before(async () => {
+            if (isLive()) {
+                throw new Error('Unsupported network');
+            }
+
+            await beforeDeployments();
+        });
+
         beforeEach(async () => {
-            await performTestDeployment(tag);
+            if (isLive()) {
+                throw new Error('Unsupported network');
+            }
+
+            return run(tag, {
+                resetMemory: false,
+                deletePreviousDeployments: false,
+                writeDeploymentsToFiles: true
+            });
         });
 
         fn.apply(this);

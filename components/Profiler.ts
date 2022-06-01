@@ -1,4 +1,5 @@
 import { getTransactionGas } from '../test/helpers/Utils';
+import Logger from '../utils/Logger';
 import { ContractTransaction } from 'ethers';
 import { mean } from 'lodash';
 
@@ -11,7 +12,7 @@ export class Profiler {
         const res = await tx;
 
         const gas = await getTransactionGas(res);
-        console.log(`${description}: ${gas}`);
+        Logger.log(`${description}: ${gas}`);
 
         this.summary[description] ||= [];
 
@@ -21,11 +22,11 @@ export class Profiler {
     }
 
     printSummary() {
-        console.log();
-        console.log('Summary:');
+        Logger.log();
+        Logger.log('Summary:');
 
         for (const [desc, samples] of Object.entries(this.summary)) {
-            console.log(`${desc},${mean(samples)}`);
+            Logger.log(`${desc},${mean(samples)}`);
         }
     }
 }

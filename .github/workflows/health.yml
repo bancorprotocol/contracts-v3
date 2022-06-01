@@ -1,0 +1,53 @@
+name: Health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *' # every 30 minutes
+
+jobs:
+  test:
+    name: Health Checks
+
+    runs-on: [self-hosted, HEALTH]
+    timeout-minutes: 600
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: |
+            **/node_modules
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      - name: Test deployment and network health
+        run: yarn test:health
+        env:
+          TENDERLY_PROJECT: v3-temp-forks
+          TENDERLY_TEST_PROJECT: v3-temp-forks
+          TENDERLY_USERNAME: bancor
+          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

@@ -9,7 +9,7 @@ import Contracts, {
     TestPoolCollection
 } from '../../components/Contracts';
 import { DSToken, TestStandardPoolConverter, TokenGovernance } from '../../components/LegacyContracts';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
+import { PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toPPM } from '../../utils/Types';
 import { createPool, createSystem, createToken, TokenWithAddress } from '../helpers/Factory';
@@ -76,19 +76,19 @@ describe('BancorV1Migration', () => {
         it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
                 Contracts.BancorV1Migration.deploy(ZERO_ADDRESS, networkSettings.address, bnt.address)
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid network settings contract', async () => {
             await expect(
                 Contracts.BancorV1Migration.deploy(network.address, ZERO_ADDRESS, bnt.address)
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should revert when attempting to create with an invalid BNT contract', async () => {
             await expect(
                 Contracts.BancorV1Migration.deploy(network.address, networkSettings.address, ZERO_ADDRESS)
-            ).to.be.revertedWith('InvalidAddress');
+            ).to.be.revertedWithError('InvalidAddress');
         });
 
         it('should be properly initialized', async () => {
@@ -115,7 +115,6 @@ describe('BancorV1Migration', () => {
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
 
         await networkSettings.setFundingLimit(baseToken.address, FUNDING_LIMIT);
-        await poolCollection.setDepositLimit(baseToken.address, MAX_UINT256);
 
         await pendingWithdrawals.setLockDuration(0);
 

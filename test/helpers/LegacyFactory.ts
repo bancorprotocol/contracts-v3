@@ -1,24 +1,9 @@
 import { IERC20, MasterVault, TestBancorNetwork } from '../../components/Contracts';
-import LegacyContracts, { TokenGovernance } from '../../components/LegacyContracts';
+import LegacyContracts, { Registry, Roles, TokenGovernance } from '../../components/LegacyContracts';
 import { PPM_RESOLUTION } from '../../utils/Constants';
 import { DEFAULT_DECIMALS } from '../../utils/TokenData';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { utils } from 'ethers';
-
-const { formatBytes32String, id } = utils;
-
-const Registry = {
-    BANCOR_NETWORK: formatBytes32String('BancorNetwork'),
-    NETWORK_SETTINGS: formatBytes32String('NetworkSettings'),
-    CONVERTER_FACTORY: formatBytes32String('ConverterFactory'),
-    CONVERTER_REGISTRY: formatBytes32String('BancorConverterRegistry'),
-    CONVERTER_REGISTRY_DATA: formatBytes32String('BancorConverterRegistryData')
-};
-
-const Roles = {
-    ROLE_OWNER: id('ROLE_OWNER')
-};
 
 export const createLegacySystem = async (
     owner: SignerWithAddress,
@@ -45,7 +30,6 @@ export const createLegacySystem = async (
     await contractRegistry.registerAddress(Registry.BANCOR_NETWORK, legacyNetwork.address);
     await contractRegistry.registerAddress(Registry.NETWORK_SETTINGS, legacyNetworkSettings.address);
 
-    const checkpointStore = await LegacyContracts.TestCheckpointStore.deploy();
     const liquidityProtectionStore = await LegacyContracts.LiquidityProtectionStore.deploy();
     const liquidityProtectionStats = await LegacyContracts.LiquidityProtectionStats.deploy();
     const liquidityProtectionSystemStore = await LegacyContracts.LiquidityProtectionSystemStore.deploy();
@@ -63,14 +47,18 @@ export const createLegacySystem = async (
         liquidityProtectionSystemStore.address,
         liquidityProtectionWallet.address,
         bntGovernance.address,
-        vbntGovernance.address,
-        checkpointStore.address
+        vbntGovernance.address
     );
 
-    await checkpointStore.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionSettings.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionStats.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
-    await liquidityProtectionSystemStore.grantRole(Roles.ROLE_OWNER, liquidityProtection.address);
+    await liquidityProtectionSettings.grantRole(
+        Roles.LiquidityProtectionSettings.ROLE_OWNER,
+        liquidityProtection.address
+    );
+    await liquidityProtectionStats.grantRole(Roles.LiquidityProtectionStats.ROLE_OWNER, liquidityProtection.address);
+    await liquidityProtectionSystemStore.grantRole(
+        Roles.LiquidityProtectionSystemStore.ROLE_OWNER,
+        liquidityProtection.address
+    );
     await liquidityProtectionStore.transferOwnership(liquidityProtection.address);
     await liquidityProtection.acceptStoreOwnership();
     await liquidityProtectionWallet.transferOwnership(liquidityProtection.address);
@@ -102,7 +90,6 @@ export const createLegacySystem = async (
         legacyNetwork,
         legacyNetworkSettings,
         standardPoolConverterFactory,
-        checkpointStore,
         liquidityProtectionStore,
         liquidityProtectionStats,
         liquidityProtectionSystemStore,
