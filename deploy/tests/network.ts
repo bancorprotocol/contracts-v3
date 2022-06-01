@@ -688,6 +688,12 @@ import { getNamedAccounts } from 'hardhat';
 
                     const prevVaultTokenBalance = await getBalance(nativeToken, masterVault.address);
 
+                    // ensure that a block is mined before attempting to migrate positions
+                    await ethWhale.sendTransaction({
+                        value: toWei(1),
+                        to: ethWhale.address
+                    });
+
                     // migration both the BNT and ETH positions
                     const res = await liquidityProtection.connect(bntWhale).migratePositions([
                         {
