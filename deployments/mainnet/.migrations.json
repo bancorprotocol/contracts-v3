@@ -38,5 +38,7 @@
   "000037-legacy-staking-rewards-claim": 1652702295,
   "000038-pool-collection-type1-v3": 1653322141,
   "000039-network-v5": 1653660294,
-  "000040-pending-withdrawals-v4": 1653660423
+  "000040-pending-withdrawals-v4": 1653660423,
+  "000041-upgrade-bancor-portal-v2": 1654104354,
+  "000042-pool-collection-type1-v4": 1654104737
 }
