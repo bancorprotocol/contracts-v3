@@ -23,9 +23,11 @@ import { Token } from "../token/Token.sol";
 import { TestBlockNumber } from "./TestBlockNumber.sol";
 
 contract TestPoolCollection is PoolCollection, TestBlockNumber {
+    uint16 private immutable _poolType;
     uint16 private immutable _version;
 
     constructor(
+        uint16 initPoolType,
         uint16 initVersion,
         IBancorNetwork initNetwork,
         IERC20 initBNT,
@@ -47,7 +49,12 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
             initPoolMigrator
         )
     {
+        _poolType = initPoolType;
         _version = initVersion;
+    }
+
+    function poolType() external view override returns (uint16) {
+        return _poolType;
     }
 
     function version() external view override returns (uint16) {

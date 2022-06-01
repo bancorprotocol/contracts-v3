@@ -22,7 +22,7 @@ import Contracts, {
 } from '../../components/Contracts';
 import LegacyContracts, { BNT__factory, TokenGovernance, VBNT__factory } from '../../components/LegacyContracts';
 import { isProfiling } from '../../components/Profiler';
-import { MAX_UINT256 } from '../../utils/Constants';
+import { MAX_UINT256, PoolType } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, fromPPM, toWei } from '../../utils/Types';
@@ -34,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const V4 = 4;
+const V5 = 5;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -215,9 +215,11 @@ export const createPoolCollection = async (
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
-    version: number = V4
+    type: number = PoolType.Standard,
+    version: number = V5
 ) =>
     Contracts.TestPoolCollection.deploy(
+        type,
         version,
         toAddress(network),
         toAddress(bnt),
@@ -284,9 +286,9 @@ export const createPool = async (
 
     const poolCollections = await network.poolCollections();
     if (!poolCollections.includes(poolCollection.address)) {
-        await network.addPoolCollection(poolCollection.address);
+        await network.registerPoolCollection(poolCollection.address);
     }
-    await network.createPool(await poolCollection.poolType(), reserveToken.address);
+    await network.createPools([reserveToken.address], poolCollection.address);
 
     const poolToken = await poolCollection.poolToken(reserveToken.address);
     return Contracts.PoolToken.attach(poolToken);

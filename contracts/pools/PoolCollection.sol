@@ -274,13 +274,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 4;
+        return 5;
     }
 
     /**
      * @inheritdoc IPoolCollection
      */
-    function poolType() external pure returns (uint16) {
+    function poolType() external view virtual returns (uint16) {
         return POOL_TYPE;
     }
 
@@ -1454,7 +1454,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             result.sourceAmount = tradeAmountAndFee.amount;
 
             // ensure that the user has provided enough tokens to make the trade
-            if (result.sourceAmount > result.limit) {
+            if (result.sourceAmount == 0 || result.sourceAmount > result.limit) {
                 revert InsufficientSourceAmount();
             }
         }

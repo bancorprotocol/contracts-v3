@@ -37,14 +37,14 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import { PoolCollectionType1V3 } from '../components/LegacyContractsV3';
+import { PoolCollectionType1V4 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, Contract, utils } from 'ethers';
+import { BigNumber, Contract, ContractInterface, utils } from 'ethers';
 import fs from 'fs';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
 import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
@@ -92,7 +92,7 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V3 = 'PoolCollectionType1V3'
+    PoolCollectionType1V4 = 'PoolCollectionType1V4'
 }
 
 enum NewInstanceName {
@@ -110,7 +110,7 @@ enum NewInstanceName {
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V4 = 'PoolCollectionType1V4',
+    PoolCollectionType1V5 = 'PoolCollectionType1V5',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -157,7 +157,7 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
-    PoolCollectionType1V3: deployed<PoolCollectionType1V3>(InstanceName.PoolCollectionType1V3)
+    PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4)
 };
 
 const DeployedNewContracts = {
@@ -175,7 +175,7 @@ const DeployedNewContracts = {
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V4: deployed<PoolCollection>(InstanceName.PoolCollectionType1V4),
+    PoolCollectionType1V5: deployed<PoolCollection>(InstanceName.PoolCollectionType1V5),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
@@ -306,19 +306,29 @@ const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
 interface FunctionParams {
     name?: string;
     contractName?: string;
+    contractArtifactData?: ArtifactData;
     methodName?: string;
     args?: any[];
 }
 
 const logParams = async (params: FunctionParams) => {
-    const { name, contractName, methodName, args = [] } = params;
+    const { name, contractName, contractArtifactData, methodName, args = [] } = params;
 
-    if (!name && !contractName) {
-        throw new Error('Either name of contractName must be provided!');
+    if (!name && !contractArtifactData && !contractName) {
+        throw new Error('Either name, contractArtifactData, or contractName must be provided!');
     }
 
-    const contract = name ? await ethers.getContract(name) : await ethers.getContractFactory(contractName!);
-    const fragment = methodName ? contract.interface.getFunction(methodName) : contract.interface.deploy;
+    let contractInterface: ContractInterface;
+
+    if (name) {
+        ({ interface: contractInterface } = await ethers.getContract(name));
+    } else if (contractArtifactData) {
+        contractInterface = new utils.Interface(contractArtifactData!.abi);
+    } else {
+        ({ interface: contractInterface } = await ethers.getContractFactory(contractName!));
+    }
+
+    const fragment = methodName ? contractInterface.getFunction(methodName) : contractInterface.deploy;
 
     Logger.log(`  ${methodName ?? 'constructor'} params: ${args.length === 0 ? '[]' : ''}`);
     if (args.length === 0) {
@@ -374,7 +384,7 @@ export const deploy = async (options: DeployOptions) => {
         Logger.log(`  deploying ${contractName}${customAlias}`);
     }
 
-    await logParams({ contractName, args });
+    await logParams({ contractName, contractArtifactData, args });
 
     const res = await deployContract(name, {
         contract: contractArtifactData ?? contractName,
