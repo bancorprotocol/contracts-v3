@@ -1454,7 +1454,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             result.sourceAmount = tradeAmountAndFee.amount;
 
             // ensure that the user has provided enough tokens to make the trade
-            if (result.sourceAmount > result.limit) {
+            if (result.sourceAmount == 0 || result.sourceAmount > result.limit) {
                 revert InsufficientSourceAmount();
             }
         }

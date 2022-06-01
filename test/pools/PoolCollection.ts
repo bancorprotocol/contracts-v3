@@ -2349,6 +2349,33 @@ describe('PoolCollection', () => {
         const MIN_RETURN_AMOUNT = 1;
         const MAX_SOURCE_AMOUNT = MAX_UINT256;
 
+        const expectedTargetAmountAndFee = (
+            sourceAmount: BigNumber,
+            tradingFeePPM: number,
+            sourceTokenBalance: BigNumber,
+            targetTokenBalance: BigNumber
+        ) => {
+            const amount = targetTokenBalance.mul(sourceAmount).div(sourceTokenBalance.add(sourceAmount).toString());
+            const tradingFeeAmount = amount.mul(tradingFeePPM).div(PPM_RESOLUTION);
+
+            return { amount: amount.sub(tradingFeeAmount), tradingFeeAmount };
+        };
+
+        const expectedSourceAmountAndFee = (
+            targetAmount: BigNumberish,
+            tradingFeePPM: number,
+            sourceTokenBalance: BigNumber,
+            targetTokenBalance: BigNumber
+        ) => {
+            const tradingFeeAmount = BigNumber.from(targetAmount)
+                .mul(tradingFeePPM)
+                .div(PPM_RESOLUTION - tradingFeePPM);
+            const fullTargetAmount = BigNumber.from(targetAmount).add(tradingFeeAmount);
+            const sourceAmount = sourceTokenBalance.mul(fullTargetAmount).div(targetTokenBalance.sub(fullTargetAmount));
+
+            return { amount: sourceAmount, tradingFeeAmount };
+        };
+
         beforeEach(async () => {
             ({ network, bnt, networkSettings, bntPool, poolCollection } = await createSystem());
 
@@ -2374,8 +2401,8 @@ describe('PoolCollection', () => {
                     stakedBalance: baseTokenTradingLiquidity
                 });
 
-            const fromTokenName = isSourceBNT ? 'BNT' : 'base token';
-            const toTokenName = isSourceBNT ? 'base token' : 'BNT';
+            const fromTokenName = isSourceBNT ? 'BNT' : 'TKN';
+            const toTokenName = isSourceBNT ? 'TKN' : 'BNT';
 
             context(`from ${fromTokenName} to ${toTokenName}`, () => {
                 let sourceToken: IERC20;
@@ -2760,7 +2787,7 @@ describe('PoolCollection', () => {
                                 ).to.be.revertedWithError('InsufficientTargetAmount');
                             });
 
-                            it('should revert when a trade by providing the target amount requires more tokens than provided', async () => {
+                            it('should revert when the target amount requires more tokens than provided', async () => {
                                 await expect(
                                     network.tradeByTargetPoolCollectionT(
                                         poolCollection.address,
@@ -2768,6 +2795,56 @@ describe('PoolCollection', () => {
                                         sourceToken.address,
                                         targetToken.address,
                                         toWei(100_000),
+                                        1
+                                    )
+                                ).to.be.revertedWithError('InsufficientSourceAmount');
+                            });
+
+                            it('should revert when the target amount requires no tokens to be provided', async () => {
+                                const targetAmount = 1;
+                                let sourceTokenBalance: BigNumber;
+                                let targetTokenBalance: BigNumber;
+
+                                if (isSourceBNT) {
+                                    const liquidity = await poolCollection.poolLiquidity(targetToken.address);
+
+                                    sourceTokenBalance = liquidity.bntTradingLiquidity;
+                                    targetTokenBalance = liquidity.bntTradingLiquidity.add(targetAmount).add(1);
+
+                                    await poolCollection.setTradingLiquidityT(targetToken.address, {
+                                        bntTradingLiquidity: sourceTokenBalance,
+                                        baseTokenTradingLiquidity: targetTokenBalance,
+                                        stakedBalance: liquidity.stakedBalance
+                                    });
+                                } else {
+                                    const liquidity = await poolCollection.poolLiquidity(sourceToken.address);
+
+                                    sourceTokenBalance = liquidity.baseTokenTradingLiquidity;
+                                    targetTokenBalance = liquidity.baseTokenTradingLiquidity.add(targetAmount).add(1);
+
+                                    await poolCollection.setTradingLiquidityT(sourceToken.address, {
+                                        baseTokenTradingLiquidity: sourceTokenBalance,
+                                        bntTradingLiquidity: targetTokenBalance,
+                                        stakedBalance: liquidity.stakedBalance
+                                    });
+                                }
+
+                                // ensure that the specified target amount results in a zero required source amount
+                                const { amount } = expectedSourceAmountAndFee(
+                                    targetAmount,
+                                    0,
+                                    sourceTokenBalance,
+                                    targetTokenBalance
+                                );
+                                expect(amount).to.equal(0);
+
+                                await expect(
+                                    network.tradeByTargetPoolCollectionT(
+                                        poolCollection.address,
+                                        CONTEXT_ID,
+                                        sourceToken.address,
+                                        targetToken.address,
+                                        targetAmount,
                                         1
                                     )
                                 ).to.be.revertedWithError('InsufficientSourceAmount');
@@ -3142,37 +3219,6 @@ describe('PoolCollection', () => {
                                     }
 
                                     return { bntFeeAmount: targetNetworkFeeAmount, targetNetworkFeeAmount: 0 };
-                                };
-
-                                const expectedTargetAmountAndFee = (
-                                    sourceAmount: BigNumber,
-                                    tradingFeePPM: number,
-                                    sourceTokenBalance: BigNumber,
-                                    targetTokenBalance: BigNumber
-                                ) => {
-                                    const amount = targetTokenBalance
-                                        .mul(sourceAmount)
-                                        .div(sourceTokenBalance.add(sourceAmount).toString());
-                                    const tradingFeeAmount = amount.mul(tradingFeePPM).div(PPM_RESOLUTION);
-
-                                    return { amount: amount.sub(tradingFeeAmount), tradingFeeAmount };
-                                };
-
-                                const expectedSourceAmountAndFee = (
-                                    targetAmount: BigNumber,
-                                    tradingFeePPM: number,
-                                    sourceTokenBalance: BigNumber,
-                                    targetTokenBalance: BigNumber
-                                ) => {
-                                    const tradingFeeAmount = targetAmount
-                                        .mul(tradingFeePPM)
-                                        .div(PPM_RESOLUTION - tradingFeePPM);
-                                    const fullTargetAmount = targetAmount.add(tradingFeeAmount);
-                                    const sourceAmount = sourceTokenBalance
-                                        .mul(fullTargetAmount)
-                                        .div(targetTokenBalance.sub(fullTargetAmount));
-
-                                    return { amount: sourceAmount, tradingFeeAmount };
                                 };
 
                                 beforeEach(async () => {
