@@ -37,7 +37,7 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import { PoolCollectionType1V3, PoolCollectionType1V4 } from '../components/LegacyContractsV3';
+import { PoolCollectionType1V4 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
@@ -92,7 +92,6 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V3 = 'PoolCollectionType1V3',
     PoolCollectionType1V4 = 'PoolCollectionType1V4'
 }
 
@@ -158,7 +157,6 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
-    PoolCollectionType1V3: deployed<PoolCollectionType1V3>(InstanceName.PoolCollectionType1V3),
     PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4)
 };
 
