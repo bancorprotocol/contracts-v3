@@ -10,7 +10,7 @@ import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied, AlreadyExists, DoesNotExist, InvalidPool } from "../utility/Utils.sol";
+import { Utils, AccessDenied, AlreadyExists, DoesNotExist } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -137,7 +137,7 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 4;
     }
 
     /**
@@ -235,37 +235,25 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         // remove the withdrawal request and its id from the storage
         _removeWithdrawalRequest(provider, id);
 
-        // get the pool token value in reserve/pool tokens
-        uint256 currentReserveTokenAmount = _poolTokenToUnderlying(request.reserveToken, request.poolTokenAmount);
-
-        // note that since pool token value can only go up - the current underlying amount can't be lower than at the time
-        // of the request
-        assert(currentReserveTokenAmount >= request.reserveTokenAmount);
-
-        // burn the delta between the recorded pool token amount and the amount represented by the reserve token value
-        uint256 currentPoolTokenAmount = request.reserveTokenAmount == currentReserveTokenAmount
-            ? request.poolTokenAmount
-            : MathEx.mulDivF(request.poolTokenAmount, request.reserveTokenAmount, currentReserveTokenAmount);
-
-        // since pool token value can only go up, there’s usually burning
-        if (request.poolTokenAmount > currentPoolTokenAmount) {
-            request.poolToken.burn(request.poolTokenAmount - currentPoolTokenAmount);
-        }
-
-        // transfer the locked pool tokens back to the caller
-        request.poolToken.safeTransfer(msg.sender, currentPoolTokenAmount);
+        // approve the caller to transfer the locked pool tokens
+        request.poolToken.approve(msg.sender, request.poolTokenAmount);
 
         emit WithdrawalCompleted({
             contextId: contextId,
             pool: request.reserveToken,
             provider: provider,
             requestId: id,
-            poolTokenAmount: currentPoolTokenAmount,
-            reserveTokenAmount: currentReserveTokenAmount,
+            poolTokenAmount: request.poolTokenAmount,
+            reserveTokenAmount: request.reserveTokenAmount,
             timeElapsed: currentTime - request.createdAt
         });
 
-        return CompletedWithdrawal({ poolToken: request.poolToken, poolTokenAmount: currentPoolTokenAmount });
+        return
+            CompletedWithdrawal({
+                poolToken: request.poolToken,
+                poolTokenAmount: request.poolTokenAmount,
+                reserveTokenAmount: request.reserveTokenAmount
+            });
     }
 
     /**
@@ -304,16 +292,11 @@ contract PendingWithdrawals is IPendingWithdrawals, Upgradeable, Time, Utils {
         IPoolToken poolToken,
         uint256 poolTokenAmount
     ) private returns (uint256) {
-        // make sure that the pool is valid
-        Token pool = poolToken.reserveToken();
-        if (!_network.isPoolValid(pool)) {
-            revert InvalidPool();
-        }
-
         // record the current withdrawal request alongside previous pending withdrawal requests
         uint256 id = _nextWithdrawalRequestId++;
 
         // get the pool token value in reserve/pool tokens
+        Token pool = poolToken.reserveToken();
         uint256 reserveTokenAmount = _poolTokenToUnderlying(pool, poolTokenAmount);
         _withdrawalRequests[id] = WithdrawalRequest({
             provider: provider,

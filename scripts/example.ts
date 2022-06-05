@@ -1,6 +1,7 @@
 import Contracts from '../components/Contracts';
 import { MAX_UINT256, ZERO_ADDRESS } from '../utils/Constants';
 import { DeployedContracts, getNamedSigners, isTenderlyFork } from '../utils/Deploy';
+import Logger from '../utils/Logger';
 import '@nomiclabs/hardhat-ethers';
 import '@typechain/hardhat';
 import { getNamedAccounts } from 'hardhat';
@@ -20,27 +21,27 @@ const main = async () => {
     const linkToken = await Contracts.ERC20.attach(link);
     const amount = 5000;
 
-    console.log('Previous LINK balance', (await linkToken.balanceOf(linkWhale.address)).toString());
-    console.log('Previous BNT balance', (await bnt.balanceOf(linkWhale.address)).toString());
+    Logger.log('Previous LINK balance', (await linkToken.balanceOf(linkWhale.address)).toString());
+    Logger.log('Previous BNT balance', (await bnt.balanceOf(linkWhale.address)).toString());
 
-    console.log();
+    Logger.log();
 
     await linkToken.connect(linkWhale).approve(network.address, amount);
     const res = await network
         .connect(linkWhale)
         .tradeBySourceAmount(linkToken.address, bnt.address, amount, 1, MAX_UINT256, ZERO_ADDRESS);
 
-    console.log('Transaction Hash', res.hash);
-    console.log();
+    Logger.log('Transaction Hash', res.hash);
+    Logger.log();
 
-    console.log('Current LINK balance', (await linkToken.balanceOf(linkWhale.address)).toString());
-    console.log('Current BNT balance', (await bnt.balanceOf(linkWhale.address)).toString());
-    console.log();
+    Logger.log('Current LINK balance', (await linkToken.balanceOf(linkWhale.address)).toString());
+    Logger.log('Current BNT balance', (await bnt.balanceOf(linkWhale.address)).toString());
+    Logger.log();
 };
 
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error(error);
+        Logger.error(error);
         process.exit(1);
     });

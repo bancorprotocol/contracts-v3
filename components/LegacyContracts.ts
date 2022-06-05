@@ -1,4 +1,10 @@
 /* eslint-disable camelcase */
+import {
+    IUniswapV2Factory,
+    IUniswapV2Factory__factory,
+    IUniswapV2Router02,
+    IUniswapV2Router02__factory
+} from '../typechain-types';
 import { toPPM } from '../utils/Types';
 import { deployOrAttach } from './ContractBuilder';
 import {
@@ -30,8 +36,11 @@ import {
     Owned__factory,
     StakingRewards,
     StakingRewards__factory,
+    StakingRewardsClaim,
+    StakingRewardsClaim__factory,
     StakingRewardsStore,
     StakingRewardsStore__factory,
+    StandardPoolConverter__factory,
     TestCheckpointStore,
     TestCheckpointStore__factory,
     TestLiquidityProtection,
@@ -57,15 +66,14 @@ import { Signer, utils } from 'ethers';
 
 const { formatBytes32String, id } = utils;
 
+export { BNT__factory, BNT, VBNT, VBNT__factory, DSToken, TokenGovernance };
+
 export {
-    BNT__factory,
-    BNT,
     CheckpointStore,
     ContractRegistry,
     ConverterFactory,
     ConverterRegistry,
     ConverterRegistryData,
-    DSToken,
     LegacyBancorNetwork,
     LegacyNetworkSettings,
     LiquidityProtection,
@@ -74,19 +82,17 @@ export {
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
     StakingRewards,
+    StakingRewardsClaim,
     StakingRewardsStore,
     TestCheckpointStore,
     TestLiquidityProtection,
     TestStandardPoolConverter,
     TestStandardPoolConverterFactory,
-    TokenGovernance,
     TokenHolder,
-    VBNT,
-    Owned,
-    VBNT__factory
+    Owned
 };
 
-/* eslint-enable camelcase */
+export { IUniswapV2Factory, IUniswapV2Factory__factory, IUniswapV2Router02, IUniswapV2Router02__factory };
 
 export const Registry = {
     BANCOR_NETWORK: formatBytes32String('BancorNetwork'),
@@ -155,7 +161,9 @@ const getContracts = (signer?: Signer) => ({
         signer
     ),
     StakingRewards: deployOrAttach('StakingRewards', StakingRewards__factory, signer),
+    StakingRewardsClaim: deployOrAttach('StakingRewardsClaim', StakingRewardsClaim__factory, signer),
     StakingRewardsStore: deployOrAttach('StakingRewardsStore', StakingRewardsStore__factory, signer),
+    StandardPoolConverter: deployOrAttach('StandardPoolConverter', StandardPoolConverter__factory, signer),
     TestCheckpointStore: deployOrAttach('TestCheckpointStore', TestCheckpointStore__factory, signer),
     TestLiquidityProtection: deployOrAttach('TestLiquidityProtection', TestLiquidityProtection__factory, signer),
     TestStandardPoolConverter: deployOrAttach('TestStandardPoolConverter', TestStandardPoolConverter__factory, signer),

@@ -9,23 +9,16 @@ import { MockUniswapV2Pair } from "./MockUniswapV2Pair.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { Utils } from "../utility/Utils.sol";
-
-import { TestERC20Token } from "./TestERC20Token.sol";
-
-contract MockUniswapV2Router02 is TestERC20Token, Utils {
+contract MockUniswapV2Router02 {
     using SafeERC20 for IERC20;
     using TokenLibrary for Token;
 
-    MockUniswapV2Pair private _pair;
+    MockUniswapV2Pair private immutable _pair;
+    IERC20 private immutable _weth;
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint256 totalSupply,
-        MockUniswapV2Pair pair
-    ) TestERC20Token(name, symbol, totalSupply) {
-        _pair = pair;
+    constructor(MockUniswapV2Pair initPair, IERC20 initWeth) {
+        _pair = initPair;
+        _weth = initWeth;
     }
 
     function removeLiquidity(
@@ -39,6 +32,7 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
     ) external returns (uint256 amountA, uint256 amountB) {
         // mimic approval
         Token(address(_pair)).safeTransferFrom(msg.sender, address(_pair), liquidity);
+
         // mimic Uniswap burn
         _pair.burn(msg.sender, liquidity);
 
@@ -62,5 +56,10 @@ contract MockUniswapV2Router02 is TestERC20Token, Utils {
 
         amountToken = liquidity;
         amountETH = liquidity;
+    }
+
+    //solhint-disable-next-line func-name-mixedcase
+    function WETH() external view returns (address) {
+        return address(_weth);
     }
 }

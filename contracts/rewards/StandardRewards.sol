@@ -75,7 +75,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     // the BNT contract
     IERC20 private immutable _bnt;
 
-    // the VBNT contract
+    // the vBNT contract
     IERC20 private immutable _vbnt;
 
     // the BNT pool token contract

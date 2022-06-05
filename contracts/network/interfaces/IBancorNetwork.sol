@@ -36,11 +36,6 @@ interface IBancorNetwork is IUpgradeable {
     function poolCollections() external view returns (IPoolCollection[] memory);
 
     /**
-     * @dev returns the most recent collection that was added to the pool collections set for a specific type
-     */
-    function latestPoolCollection(uint16 poolType) external view returns (IPoolCollection);
-
-    /**
      * @dev returns the set of all liquidity pools
      */
     function liquidityPools() external view returns (Token[] memory);
@@ -51,27 +46,13 @@ interface IBancorNetwork is IUpgradeable {
     function collectionByPool(Token pool) external view returns (IPoolCollection);
 
     /**
-     * @dev returns whether the pool is valid
-     */
-    function isPoolValid(Token pool) external view returns (bool);
-
-    /**
-     * @dev creates a new pool
-     *
-     * requirements:
-     *
-     * - the pool doesn't already exist
-     */
-    function createPool(uint16 poolType, Token token) external;
-
-    /**
      * @dev creates new pools
      *
      * requirements:
      *
      * - none of the pools already exists
      */
-    function createPools(uint16 poolType, Token[] calldata tokens) external;
+    function createPools(Token[] calldata tokens, IPoolCollection poolCollection) external;
 
     /**
      * @dev migrates a list of pools between pool collections
@@ -80,7 +61,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - invalid or incompatible pools will be skipped gracefully
      */
-    function migratePools(Token[] calldata pools) external;
+    function migratePools(Token[] calldata pools, IPoolCollection newPoolCollection) external;
 
     /**
      * @dev deposits liquidity for the specified provider and returns the respective pool token amount
@@ -183,7 +164,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the provider must have already initiated a withdrawal and received the specified id
      * - the specified withdrawal request is eligible for completion
-     * - the provider must have approved the network to transfer VBNT amount on its behalf, when withdrawing BNT
+     * - the provider must have approved the network to transfer vBNT amount on its behalf, when withdrawing BNT
      * liquidity
      */
     function withdraw(uint256 id) external returns (uint256);

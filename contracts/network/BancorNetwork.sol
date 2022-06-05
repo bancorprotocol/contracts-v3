@@ -22,7 +22,7 @@ import {
     AlreadyExists,
     DoesNotExist,
     InvalidToken,
-    InvalidType,
+    InvalidPool,
     InvalidPoolCollection,
     NotEmpty
 } from "../utility/Utils.sol";
@@ -102,10 +102,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the address of the BNT token governance
     ITokenGovernance private immutable _bntGovernance;
 
-    // the address of the VBNT token
+    // the address of the vBNT token
     IERC20 private immutable _vbnt;
 
-    // the address of the VBNT token governance
+    // the address of the vBNT token governance
     ITokenGovernance private immutable _vbntGovernance;
 
     // the network settings contract
@@ -132,8 +132,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the set of all valid pool collections
     EnumerableSetUpgradeable.AddressSet private _poolCollections;
 
-    // a mapping between the last pool collection that was added to the pool collections set and its type
-    mapping(uint16 => IPoolCollection) private _latestPoolCollections;
+    // DEPRECATED (mapping(uint16 => IPoolCollection) _latestPoolCollections)
+    uint256 private _deprecated0;
 
     // the set of all pools
     EnumerableSetUpgradeable.AddressSet private _liquidityPools;
@@ -158,18 +158,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     event PoolCollectionRemoved(uint16 indexed poolType, IPoolCollection indexed poolCollection);
 
     /**
-     * @dev triggered when the latest pool collection, for a specific type, is replaced
+     * @dev triggered when a pool is created
      */
-    event LatestPoolCollectionReplaced(
-        uint16 indexed poolType,
-        IPoolCollection indexed prevPoolCollection,
-        IPoolCollection indexed newPoolCollection
-    );
+    event PoolCreated(Token indexed pool, IPoolCollection indexed poolCollection);
 
     /**
-     * @dev triggered when a new pool is added
+     * @dev triggered when a new pool is added to a pool collection
      */
     event PoolAdded(Token indexed pool, IPoolCollection indexed poolCollection);
+
+    /**
+     * @dev triggered when a new pool is removed from a pool collection
+     */
+    event PoolRemoved(Token indexed pool, IPoolCollection indexed poolCollection);
 
     /**
      * @dev triggered when funds are migrated
@@ -297,7 +298,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 6;
     }
 
     /**
@@ -329,58 +330,45 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev adds new pool collection to the network
+     * @dev registers new pool collection with the network
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
-    function addPoolCollection(IPoolCollection poolCollection)
+    function registerPoolCollection(IPoolCollection newPoolCollection)
         external
-        validAddress(address(poolCollection))
+        validAddress(address(newPoolCollection))
         onlyAdmin
         nonReentrant
     {
-        if (!_poolCollections.add(address(poolCollection))) {
+        // verify that there is no pool collection of the same type and version
+        uint16 newPoolType = newPoolCollection.poolType();
+        uint16 newPoolVersion = newPoolCollection.version();
+
+        IPoolCollection poolCollection = _findPoolCollection(newPoolType, newPoolVersion);
+        if (poolCollection != IPoolCollection(address(0)) || !_poolCollections.add(address(newPoolCollection))) {
             revert AlreadyExists();
         }
 
-        // ensure that we're not adding a pool collection with the same type and version
-        uint16 poolType = poolCollection.poolType();
-        IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
-        if (
-            address(prevLatestPoolCollection) != address(0) &&
-            prevLatestPoolCollection.version() == poolCollection.version()
-        ) {
-            revert AlreadyExists();
-        }
+        _setAccessRoles(newPoolCollection, true);
 
-        _setLatestPoolCollection(poolType, poolCollection);
-        _setAccessRoles(poolCollection, true);
-
-        emit PoolCollectionAdded({ poolType: poolType, poolCollection: poolCollection });
+        emit PoolCollectionAdded({ poolType: newPoolCollection.poolType(), poolCollection: newPoolCollection });
     }
 
     /**
-     * @dev removes an existing pool collection from the pool
+     * @dev unregisters an existing pool collection from the network
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
-    function removePoolCollection(IPoolCollection poolCollection, IPoolCollection newLatestPoolCollection)
+    function unregisterPoolCollection(IPoolCollection poolCollection)
         external
         validAddress(address(poolCollection))
         onlyAdmin
         nonReentrant
     {
-        if (poolCollection == newLatestPoolCollection) {
-            revert InvalidPoolCollection();
-        }
-
-        // verify that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
-        _verifyLatestPoolCollectionCandidate(newLatestPoolCollection);
-
         // verify that no pools are associated with the specified pool collection
         if (poolCollection.poolCount() != 0) {
             revert NotEmpty();
@@ -390,36 +378,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             revert DoesNotExist();
         }
 
-        uint16 poolType = poolCollection.poolType();
-        if (address(newLatestPoolCollection) != address(0)) {
-            uint16 newLatestPoolCollectionType = newLatestPoolCollection.poolType();
-            if (poolType != newLatestPoolCollectionType) {
-                revert InvalidType();
-            }
-        }
-
-        _setLatestPoolCollection(poolType, newLatestPoolCollection);
         _setAccessRoles(poolCollection, false);
 
-        emit PoolCollectionRemoved({ poolType: poolType, poolCollection: poolCollection });
-    }
-
-    /**
-     * @dev sets the new latest pool collection for the given type
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function setLatestPoolCollection(IPoolCollection poolCollection)
-        external
-        validAddress(address(poolCollection))
-        onlyAdmin
-        nonReentrant
-    {
-        _verifyLatestPoolCollectionCandidate(poolCollection);
-
-        _setLatestPoolCollection(poolCollection.poolType(), poolCollection);
+        emit PoolCollectionRemoved({ poolType: poolCollection.poolType(), poolCollection: poolCollection });
     }
 
     /**
@@ -432,13 +393,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             list[i] = IPoolCollection(_poolCollections.at(i));
         }
         return list;
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function latestPoolCollection(uint16 poolType) external view returns (IPoolCollection) {
-        return _latestPoolCollections[poolType];
     }
 
     /**
@@ -463,32 +417,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function isPoolValid(Token pool) external view returns (bool) {
-        return address(pool) == address(_bnt) || _liquidityPools.contains(address(pool));
-    }
+    function createPools(Token[] calldata tokens, IPoolCollection poolCollection)
+        external
+        validAddress(address(poolCollection))
+        onlyAdmin
+        nonReentrant
+    {
+        if (!_poolCollections.contains(address(poolCollection))) {
+            revert DoesNotExist();
+        }
 
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function createPool(uint16 poolType, Token token) external onlyAdmin nonReentrant {
-        _createPool(poolType, token);
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function createPools(uint16 poolType, Token[] calldata tokens) external onlyAdmin nonReentrant {
         uint256 length = tokens.length;
-
         for (uint256 i = 0; i < length; i++) {
-            _createPool(poolType, tokens[i]);
+            _createPool(tokens[i], poolCollection);
         }
     }
 
     /**
      * @dev creates a new pool
      */
-    function _createPool(uint16 poolType, Token token) private validAddress(address(token)) {
+    function _createPool(Token token, IPoolCollection poolCollection) private {
+        _validAddress(address(token));
+
         if (token.isEqual(_bnt)) {
             revert InvalidToken();
         }
@@ -497,38 +447,38 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             revert AlreadyExists();
         }
 
-        // get the latest pool collection, corresponding to the requested type of the new pool, and use it to create the
-        // pool
-        IPoolCollection poolCollection = _latestPoolCollections[poolType];
-        if (address(poolCollection) == address(0)) {
-            revert InvalidType();
-        }
-
         // this is where the magic happens...
         poolCollection.createPool(token);
 
         // add the pool collection to the reverse pool collection lookup
         _collectionByPool[token] = poolCollection;
 
+        emit PoolCreated({ pool: token, poolCollection: poolCollection });
         emit PoolAdded({ pool: token, poolCollection: poolCollection });
     }
 
     /**
      * @inheritdoc IBancorNetwork
      */
-    function migratePools(Token[] calldata pools) external nonReentrant {
+    function migratePools(Token[] calldata pools, IPoolCollection newPoolCollection) external nonReentrant {
+        if (!_poolCollections.contains(address(newPoolCollection))) {
+            revert DoesNotExist();
+        }
+
         uint256 length = pools.length;
         for (uint256 i = 0; i < length; i++) {
             Token pool = pools[i];
 
-            // request the pool migrator to migrate the pool and get the new pool collection it exists in
-            IPoolCollection newPoolCollection = _poolMigrator.migratePool(pool);
-            if (newPoolCollection == IPoolCollection(address(0))) {
-                continue;
-            }
+            // request the pool migrator to migrate the pool to the new pool collection
+            _poolMigrator.migratePool(pool, newPoolCollection);
+
+            IPoolCollection prevPoolCollection = _collectionByPool[pool];
 
             // update the mapping between pools and their respective pool collections
             _collectionByPool[pool] = newPoolCollection;
+
+            emit PoolRemoved(pool, prevPoolCollection);
+            emit PoolAdded(pool, newPoolCollection);
         }
     }
 
@@ -875,13 +825,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns whether the network is currently paused
-     */
-    function isPaused() external view returns (bool) {
-        return paused();
-    }
-
-    /**
      * @dev pauses the network
      *
      * requirements:
@@ -901,37 +844,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function resume() external onlyRoleMember(ROLE_EMERGENCY_STOPPER) {
         _unpause();
-    }
-
-    /**
-     * @dev sets the new latest pool collection for the given type
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function _setLatestPoolCollection(uint16 poolType, IPoolCollection poolCollection) private {
-        IPoolCollection prevLatestPoolCollection = _latestPoolCollections[poolType];
-        if (prevLatestPoolCollection == poolCollection) {
-            return;
-        }
-
-        _latestPoolCollections[poolType] = poolCollection;
-
-        emit LatestPoolCollectionReplaced({
-            poolType: poolType,
-            prevPoolCollection: prevLatestPoolCollection,
-            newPoolCollection: poolCollection
-        });
-    }
-
-    /**
-     * @dev verifies that a pool collection is a valid latest pool collection (e.g., it either exists or a reset to zero)
-     */
-    function _verifyLatestPoolCollectionCandidate(IPoolCollection poolCollection) private view {
-        if (address(poolCollection) != address(0) && !_poolCollections.contains(address(poolCollection))) {
-            revert DoesNotExist();
-        }
     }
 
     /**
@@ -1064,15 +976,24 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         IBNTPool cachedBNTPool = _bntPool;
 
-        // approve the BNT pool to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(cachedBNTPool), completedRequest.poolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the BNT pool
+        completedRequest.poolToken.transferFrom(
+            address(_pendingWithdrawals),
+            address(cachedBNTPool),
+            completedRequest.poolTokenAmount
+        );
 
-        // transfer VBNT from the caller to the BNT pool
+        // transfer vBNT from the caller to the BNT pool
         _vbnt.transferFrom(provider, address(cachedBNTPool), completedRequest.poolTokenAmount);
 
         // call withdraw on the BNT pool
-        return cachedBNTPool.withdraw(contextId, provider, completedRequest.poolTokenAmount);
+        return
+            cachedBNTPool.withdraw(
+                contextId,
+                provider,
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
+            );
     }
 
     /**
@@ -1088,12 +1009,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // get the pool collection that manages this pool
         IPoolCollection poolCollection = _poolCollection(pool);
 
-        // approve the pool collection to transfer pool tokens, which we have received from the completion of the
-        // pending withdrawal, on behalf of the network
-        completedRequest.poolToken.approve(address(poolCollection), completedRequest.poolTokenAmount);
+        // transfer the pool tokens to from the pending withdrawals contract to the pool collection
+        completedRequest.poolToken.transferFrom(
+            address(_pendingWithdrawals),
+            address(poolCollection),
+            completedRequest.poolTokenAmount
+        );
 
         // call withdraw on the base token pool - returns the amounts/breakdown
-        return poolCollection.withdraw(contextId, provider, pool, completedRequest.poolTokenAmount);
+        return
+            poolCollection.withdraw(
+                contextId,
+                provider,
+                pool,
+                completedRequest.poolTokenAmount,
+                completedRequest.reserveTokenAmount
+            );
     }
 
     /**
@@ -1397,6 +1328,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IPoolToken poolToken,
         uint256 poolTokenAmount
     ) private returns (uint256) {
+        if (poolToken != _bntPoolToken) {
+            Token reserveToken = poolToken.reserveToken();
+            if (_poolCollection(reserveToken).poolToken(reserveToken) != poolToken) {
+                revert InvalidPool();
+            }
+        }
+
         // transfer the pool tokens from the provider. Note, that the provider should have either previously approved
         // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
         poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
@@ -1423,5 +1361,22 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             _masterVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
             _externalProtectionVault.revokeRole(ROLE_ASSET_MANAGER, poolCollectionAddress);
         }
+    }
+
+    /*
+     * @dev finds a pool collection with the given type and version
+     */
+    function _findPoolCollection(uint16 poolType, uint16 poolVersion) private view returns (IPoolCollection) {
+        // note that there's no risk of using an unbounded loop here since the list of all the active pool collections
+        // is always going to remain sufficiently small
+        uint256 length = _poolCollections.length();
+        for (uint256 i = 0; i < length; i++) {
+            IPoolCollection poolCollection = IPoolCollection(_poolCollections.at(i));
+            if ((poolCollection.poolType() == poolType && poolCollection.version() == poolVersion)) {
+                return poolCollection;
+            }
+        }
+
+        return IPoolCollection(address(0));
     }
 }

@@ -3,44 +3,41 @@ pragma solidity 0.8.13;
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 
-import { Pool, PoolLiquidity, IPoolCollection, AverageRate } from "./interfaces/IPoolCollection.sol";
+import { Pool, PoolLiquidity, IPoolCollection, AverageRates } from "./interfaces/IPoolCollection.sol";
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { Fraction } from "../utility/FractionLibrary.sol";
+import { FractionLibrary, Fraction, Fraction112 } from "../utility/FractionLibrary.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
-import { Utils, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
 
 interface IPoolCollectionBase {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
 }
 
-interface IPoolCollectionV1 is IPoolCollectionBase {
-    struct PoolLiquidityV1 {
-        uint128 bntTradingLiquidity; // the BNT trading liquidity
-        uint128 baseTokenTradingLiquidity; // the base token trading liquidity
-        uint256 stakedBalance; // the staked balance
+interface IPoolCollectionV4 is IPoolCollectionBase {
+    struct PoolV4 {
+        IPoolToken poolToken;
+        uint32 tradingFeePPM;
+        bool tradingEnabled;
+        bool depositingEnabled;
+        AverageRates averageRates;
+        PoolLiquidity liquidity;
     }
 
-    struct PoolV1 {
-        IPoolToken poolToken; // the pool token of a given pool
-        uint32 tradingFeePPM; // the trading fee (in units of PPM)
-        bool tradingEnabled; // whether trading is enabled
-        bool depositingEnabled; // whether depositing is enabled
-        AverageRate averageRate; // the recent average rate
-        uint256 depositLimit; // the deposit limit
-        PoolLiquidityV1 liquidity; // the overall liquidity in the pool
-    }
-
-    function poolData(Token token) external view returns (PoolV1 memory);
+    function poolData(Token token) external view returns (PoolV4 memory);
 }
 
 /**
  * @dev Pool Migrator contract
  */
 contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
+    using FractionLibrary for Fraction;
+    using FractionLibrary for Fraction112;
+
+    error InvalidPoolType();
     error UnsupportedVersion();
 
     IPoolCollection private constant INVALID_POOL_COLLECTION = IPoolCollection(address(0));
@@ -50,11 +47,6 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 0] private __gap;
-
-    /**
-     * @dev triggered when an existing pool is migrated between pool collections
-     */
-    event PoolMigrated(Token indexed pool, IPoolCollection prevPoolCollection, IPoolCollection newPoolCollection);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -92,13 +84,17 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 1;
+        return 4;
     }
 
     /**
      * @inheritdoc IPoolMigrator
      */
-    function migratePool(Token pool) external only(address(_network)) returns (IPoolCollection) {
+    function migratePool(Token pool, IPoolCollection newPoolCollection)
+        external
+        validAddress(address(newPoolCollection))
+        only(address(_network))
+    {
         if (address(pool) == address(0)) {
             revert InvalidPool();
         }
@@ -109,53 +105,43 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
             revert InvalidPool();
         }
 
-        // get the latest pool collection corresponding to its type and ensure that a migration is necessary
-        // note that it's currently not possible to add two pool collections with the same version or type
-        uint16 poolType = prevPoolCollection.poolType();
-        IPoolCollection newPoolCollection = _network.latestPoolCollection(poolType);
-        if (address(newPoolCollection) == address(prevPoolCollection)) {
-            revert InvalidPoolCollection();
+        if (prevPoolCollection == newPoolCollection) {
+            revert AlreadyExists();
+        }
+
+        if (prevPoolCollection.poolType() != newPoolCollection.poolType()) {
+            revert InvalidPoolType();
         }
 
         // migrate all relevant values based on a historical collection version into the new pool collection
-        if (prevPoolCollection.version() == 1) {
-            _migrateFromV1(pool, IPoolCollectionV1(address(prevPoolCollection)), newPoolCollection);
+        if (prevPoolCollection.version() == 4) {
+            _migrateFromV4(pool, IPoolCollectionV4(address(prevPoolCollection)), newPoolCollection);
 
-            emit PoolMigrated({
-                pool: pool,
-                prevPoolCollection: prevPoolCollection,
-                newPoolCollection: newPoolCollection
-            });
-
-            return newPoolCollection;
+            return;
         }
 
         revert UnsupportedVersion();
     }
 
     /**
-     * @dev migrates a V1 pool to the latest pool version
+     * @dev migrates a pool to the given pool collection
      */
-    function _migrateFromV1(
+    function _migrateFromV4(
         Token pool,
-        IPoolCollectionV1 sourcePoolCollection,
+        IPoolCollectionV4 sourcePoolCollection,
         IPoolCollection targetPoolCollection
     ) private {
-        IPoolCollectionV1.PoolV1 memory data = sourcePoolCollection.poolData(pool);
+        IPoolCollectionV4.PoolV4 memory data = sourcePoolCollection.poolData(pool);
+        AverageRates memory averageRates = data.averageRates;
+        PoolLiquidity memory liquidity = data.liquidity;
 
-        // since the latest pool collection is also v1, currently not additional pre- or post-processing is needed
         Pool memory newData = Pool({
             poolToken: data.poolToken,
             tradingFeePPM: data.tradingFeePPM,
             tradingEnabled: data.tradingEnabled,
             depositingEnabled: data.depositingEnabled,
-            averageRate: data.averageRate,
-            depositLimit: data.depositLimit,
-            liquidity: PoolLiquidity({
-                bntTradingLiquidity: data.liquidity.bntTradingLiquidity,
-                baseTokenTradingLiquidity: data.liquidity.baseTokenTradingLiquidity,
-                stakedBalance: data.liquidity.stakedBalance
-            })
+            averageRates: averageRates,
+            liquidity: liquidity
         });
 
         sourcePoolCollection.migratePoolOut(pool, targetPoolCollection);

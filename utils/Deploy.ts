@@ -24,37 +24,30 @@ import {
     BNT,
     CheckpointStore,
     ContractRegistry,
+    LegacyBancorNetwork,
     LiquidityProtection,
     LiquidityProtectionSettings,
     LiquidityProtectionStats,
     LiquidityProtectionStore,
     LiquidityProtectionSystemStore,
     StakingRewards,
+    StakingRewardsClaim,
     StakingRewardsStore,
     TokenGovernance,
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import {
-    BancorNetworkV1,
-    BancorNetworkV2,
-    NetworkSettingsV1,
-    PendingWithdrawalsV1,
-    PoolCollectionType1V1,
-    StandardRewardsV1,
-    StandardRewardsV2
-} from '../components/LegacyContractsV3';
+import { PoolCollectionType1V4 } from '../components/LegacyContractsV3';
 import { ExternalContracts } from '../deployments/data';
+import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
 import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import axios from 'axios';
-import { BigNumber, Contract } from 'ethers';
+import { BigNumber, Contract, ContractInterface, utils } from 'ethers';
 import fs from 'fs';
-import { config, deployments, ethers, getNamedAccounts, network, tenderly } from 'hardhat';
+import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
 import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
-import { HttpNetworkUserConfig } from 'hardhat/types';
 import path from 'path';
 
 const {
@@ -67,23 +60,15 @@ const {
     run
 } = deployments;
 
+const { AbiCoder } = utils;
+
 const tenderlyNetwork = tenderly.network();
 
 interface EnvOptions {
-    TENDERLY_FORK_ID?: string;
-    TENDERLY_USERNAME: string;
-    TENDERLY_PROJECT: string;
-    TENDERLY_ACCESS_KEY: string;
-    TEMP_FORK?: boolean;
+    TEST_FORK?: boolean;
 }
 
-let {
-    TENDERLY_FORK_ID: forkId,
-    TENDERLY_USERNAME,
-    TENDERLY_PROJECT,
-    TENDERLY_ACCESS_KEY,
-    TEMP_FORK: isTempFork
-}: EnvOptions = process.env as any as EnvOptions;
+const { TEST_FORK: isTestFork }: EnvOptions = process.env as any as EnvOptions;
 
 enum LegacyInstanceNameV2 {
     BNT = 'BNT',
@@ -91,21 +76,23 @@ enum LegacyInstanceNameV2 {
     VBNT = 'VBNT',
     VBNTGovernance = 'VBNTGovernance',
     ContractRegistry = 'ContractRegistry',
-    LiquidityProtection = 'LiquidityProtection',
+    LegacyBancorNetwork = 'LegacyBancorNetwork',
     LegacyLiquidityProtection = 'LegacyLiquidityProtection',
     LegacyLiquidityProtection2 = 'LegacyLiquidityProtection2',
+    LiquidityProtection = 'LiquidityProtection',
     LiquidityProtectionSettings = 'LiquidityProtectionSettings',
     LiquidityProtectionStats = 'LiquidityProtectionStats',
     LiquidityProtectionStore = 'LiquidityProtectionStore',
     LiquidityProtectionSystemStore = 'LiquidityProtectionSystemStore',
     LiquidityProtectionWallet = 'LiquidityProtectionWallet',
     StakingRewards = 'StakingRewards',
+    StakingRewardsClaim = 'StakingRewardsClaim',
     StakingRewardsStore = 'StakingRewardsStore',
     CheckpointStore = 'CheckpointStore'
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V1 = 'PoolCollectionType1V1'
+    PoolCollectionType1V4 = 'PoolCollectionType1V4'
 }
 
 enum NewInstanceName {
@@ -123,7 +110,7 @@ enum NewInstanceName {
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V2 = 'PoolCollectionType1V2',
+    PoolCollectionType1V5 = 'PoolCollectionType1V5',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -152,6 +139,7 @@ const DeployedLegacyContractsV2 = {
     VBNT: deployed<VBNT>(InstanceName.VBNT),
     VBNTGovernance: deployed<TokenGovernance>(InstanceName.VBNTGovernance),
     ContractRegistry: deployed<ContractRegistry>(InstanceName.ContractRegistry),
+    LegacyBancorNetwork: deployed<LegacyBancorNetwork>(InstanceName.LegacyBancorNetwork),
     LegacyLiquidityProtection: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection),
     LegacyLiquidityProtection2: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection2),
     LiquidityProtection: deployed<LiquidityProtection>(InstanceName.LiquidityProtection),
@@ -163,18 +151,13 @@ const DeployedLegacyContractsV2 = {
     ),
     LiquidityProtectionWallet: deployed<TokenHolder>(InstanceName.LiquidityProtectionWallet),
     StakingRewards: deployed<StakingRewards>(InstanceName.StakingRewards),
+    StakingRewardsClaim: deployed<StakingRewardsClaim>(InstanceName.StakingRewardsClaim),
     StakingRewardsStore: deployed<StakingRewardsStore>(InstanceName.StakingRewardsStore),
     CheckpointStore: deployed<CheckpointStore>(InstanceName.CheckpointStore)
 };
 
 const DeployedLegacyContracts = {
-    BancorNetworkV1: deployed<BancorNetworkV1>(InstanceName.BancorNetwork),
-    BancorNetworkV2: deployed<BancorNetworkV2>(InstanceName.BancorNetwork),
-    NetworkSettingsV1: deployed<NetworkSettingsV1>(InstanceName.NetworkSettings),
-    StandardRewardsV1: deployed<StandardRewardsV1>(InstanceName.StandardRewards),
-    StandardRewardsV2: deployed<StandardRewardsV2>(InstanceName.StandardRewards),
-    PendingWithdrawalsV1: deployed<PendingWithdrawalsV1>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V1: deployed<PoolCollectionType1V1>(InstanceName.PoolCollectionType1V1)
+    PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4)
 };
 
 const DeployedNewContracts = {
@@ -192,7 +175,7 @@ const DeployedNewContracts = {
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V2: deployed<PoolCollection>(InstanceName.PoolCollectionType1V2),
+    PoolCollectionType1V5: deployed<PoolCollection>(InstanceName.PoolCollectionType1V5),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
@@ -204,42 +187,6 @@ export const DeployedContracts = {
     ...DeployedLegacyContracts,
     ...DeployedNewContracts
 };
-
-interface CreateForkOptions {
-    projectName: string;
-}
-
-export const createTenderlyFork = async (options: CreateForkOptions = { projectName: TENDERLY_PROJECT }) => {
-    config.tenderly.project = options.projectName;
-
-    await tenderlyNetwork.initializeFork();
-    forkId = tenderlyNetwork.getFork()!;
-    tenderlyNetwork.setFork(forkId);
-
-    console.log(`Created temporary fork: ${forkId}`);
-    console.log();
-
-    const networkConfig = network.config as HttpNetworkUserConfig;
-    networkConfig.url = `https://rpc.tenderly.co/fork/${forkId}`;
-};
-
-interface DeleteForkOptions extends CreateForkOptions {
-    targetForkId?: string;
-}
-
-export const deleteTenderlyFork = async (options: DeleteForkOptions = { projectName: TENDERLY_PROJECT }) =>
-    axios.delete(
-        `https://api.tenderly.co/api/v1/account/${TENDERLY_USERNAME}/project/${options.projectName}/fork/${
-            options.targetForkId || forkId
-        }`,
-        {
-            headers: {
-                'X-Access-Key': TENDERLY_ACCESS_KEY as string
-            }
-        }
-    );
-
-export const getForkId = () => forkId;
 
 export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
 export const isMainnetFork = () => isTenderlyFork();
@@ -356,10 +303,65 @@ const POST_UPGRADE = 'postUpgrade';
 
 const WAIT_CONFIRMATIONS = isLive() ? 2 : 1;
 
+interface FunctionParams {
+    name?: string;
+    contractName?: string;
+    contractArtifactData?: ArtifactData;
+    methodName?: string;
+    args?: any[];
+}
+
+const logParams = async (params: FunctionParams) => {
+    const { name, contractName, contractArtifactData, methodName, args = [] } = params;
+
+    if (!name && !contractArtifactData && !contractName) {
+        throw new Error('Either name, contractArtifactData, or contractName must be provided!');
+    }
+
+    let contractInterface: ContractInterface;
+
+    if (name) {
+        ({ interface: contractInterface } = await ethers.getContract(name));
+    } else if (contractArtifactData) {
+        contractInterface = new utils.Interface(contractArtifactData!.abi);
+    } else {
+        ({ interface: contractInterface } = await ethers.getContractFactory(contractName!));
+    }
+
+    const fragment = methodName ? contractInterface.getFunction(methodName) : contractInterface.deploy;
+
+    Logger.log(`  ${methodName ?? 'constructor'} params: ${args.length === 0 ? '[]' : ''}`);
+    if (args.length === 0) {
+        return;
+    }
+
+    for (const [i, arg] of args.entries()) {
+        const input = fragment.inputs[i];
+        Logger.log(`    ${input.name} (${input.type}): ${arg.toString()}`);
+    }
+};
+
+interface TypedParam {
+    name: string;
+    type: string;
+    value: any;
+}
+
+const logTypedParams = async (methodName: string, params: TypedParam[] = []) => {
+    Logger.log(`  ${methodName} params: ${params.length === 0 ? '[]' : ''}`);
+    if (params.length === 0) {
+        return;
+    }
+
+    for (const { name, type, value } of params) {
+        Logger.log(`    ${name} (${type}): ${value.toString()}`);
+    }
+};
+
 export const deploy = async (options: DeployOptions) => {
     const { name, contract, from, value, args, contractArtifactData, proxy } = options;
     const isProxy = !!proxy;
-    const contractName = contract || name;
+    const contractName = contract ?? name;
 
     await fundAccount(from);
 
@@ -377,13 +379,15 @@ export const deploy = async (options: DeployOptions) => {
             execute: proxy.skipInitialization ? undefined : { init: { methodName: INITIALIZE, args: [] } }
         };
 
-        console.log(`deploying proxy ${contractName}${customAlias}`);
+        Logger.log(`  deploying proxy ${contractName}${customAlias}`);
     } else {
-        console.log(`deploying ${contractName}${customAlias}`);
+        Logger.log(`  deploying ${contractName}${customAlias}`);
     }
 
+    await logParams({ contractName, contractArtifactData, args });
+
     const res = await deployContract(name, {
-        contract: contractArtifactData || contractName,
+        contract: contractArtifactData ?? contractName,
         from,
         value,
         args,
@@ -392,9 +396,10 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    if (!proxy || !proxy.skipInitialization) {
+    if (!proxy) {
         const data = { name, contract: contractName };
-        saveTypes(data);
+
+        await saveTypes(data);
 
         await verifyTenderlyFork({
             address: res.address,
@@ -413,13 +418,29 @@ export const deployProxy = async (options: DeployOptions, proxy: ProxyOptions = 
         proxy
     });
 
+// an array of typed parameters which will be encoded and passed to the postUpgrade callback
+//
+// for example:
+//
+// postUpgradeArgs: [
+//    {
+//        name: 'x',
+//        type: 'uint256',
+//        value: 12
+//    },
+//    {
+//        name: 'y',
+//        type: 'string',
+//        value: 'Hello World!'
+//    }
+// ]
 interface UpgradeProxyOptions extends DeployOptions {
-    upgradeArgs?: string;
+    postUpgradeArgs?: TypedParam[];
 }
 
 export const upgradeProxy = async (options: UpgradeProxyOptions) => {
-    const { name, contract, from, value, args, upgradeArgs, contractArtifactData } = options;
-    const contractName = contract || name;
+    const { name, contract, from, value, args, postUpgradeArgs, contractArtifactData } = options;
+    const contractName = contract ?? name;
 
     await fundAccount(from);
 
@@ -428,18 +449,34 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
         throw new Error(`Proxy ${name} can't be found!`);
     }
 
+    const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
     const prevVersion = await (deployed as IVersioned).version();
 
-    const proxyAdmin = await DeployedContracts.ProxyAdmin.deployed();
+    let upgradeCallData;
+    if (postUpgradeArgs && postUpgradeArgs.length) {
+        const types = postUpgradeArgs.map(({ type }) => type);
+        const values = postUpgradeArgs.map(({ value }) => value);
+        const abiCoder = new AbiCoder();
+
+        upgradeCallData = [abiCoder.encode(types, values)];
+    } else {
+        upgradeCallData = [ZERO_BYTES];
+    }
+
     const proxyOptions = {
         proxyContract: PROXY_CONTRACT,
         owner: await proxyAdmin.owner(),
         viaAdminContract: InstanceName.ProxyAdmin,
-        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeArgs || [ZERO_BYTES] } }
+        execute: { onUpgrade: { methodName: POST_UPGRADE, args: upgradeCallData } }
     };
 
+    Logger.log(`  upgrading proxy ${contractName} V${prevVersion}`);
+
+    await logTypedParams(POST_UPGRADE, postUpgradeArgs);
+    await logParams({ contractName, args });
+
     const res = await deployContract(name, {
-        contract: contractArtifactData || contractName,
+        contract: contractArtifactData ?? contractName,
         from,
         value,
         args,
@@ -450,16 +487,14 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
 
     const newVersion = await (deployed as IVersioned).version();
 
-    console.log(`upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
-
-    const data = { name, contract: contractName };
-    saveTypes(data);
+    Logger.log(`  upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
     await verifyTenderlyFork({
+        name,
+        contract: contractName,
         address: res.address,
         proxy: true,
-        implementation: res.implementation,
-        ...data
+        implementation: res.implementation
     });
 
     return res.address;
@@ -475,14 +510,19 @@ interface ExecuteOptions {
 
 export const execute = async (options: ExecuteOptions) => {
     const { name, methodName, from, value, args } = options;
+    const contract = await ethers.getContract(name);
+
+    Logger.info(`  executing ${name}.${methodName} (${contract.address})`);
 
     await fundAccount(from);
+
+    await logParams({ name, args, methodName });
 
     return executeTransaction(
         name,
         { from, value, waitConfirmations: WAIT_CONFIRMATIONS, log: true },
         methodName,
-        ...(args || [])
+        ...(args ?? [])
     );
 };
 
@@ -496,7 +536,7 @@ interface InitializeProxyOptions {
 export const initializeProxy = async (options: InitializeProxyOptions) => {
     const { name, proxyName, args, from } = options;
 
-    console.log(`initializing proxy ${name}`);
+    Logger.log(`  initializing proxy ${name}`);
 
     await execute({
         name: proxyName,
@@ -552,20 +592,14 @@ interface Deployment {
     address: Address;
     proxy?: boolean;
     implementation?: Address;
-    skipTypechain?: boolean;
     skipVerification?: boolean;
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address, proxy, skipVerification, skipTypechain } = deployment;
+    const { name, contract, address, proxy, skipVerification } = deployment;
 
-    const contractName = contract || name;
+    const contractName = contract ?? name;
     const { abi } = await getExtendedArtifact(contractName);
-
-    // save the typechain for future use
-    if (!skipTypechain) {
-        saveTypes({ name, contract: contractName });
-    }
 
     // save the deployment json data in the deployments folder
     await saveContract(name, { abi, address });
@@ -588,7 +622,7 @@ interface ContractData {
 
 const verifyTenderlyFork = async (deployment: Deployment) => {
     // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isTenderlyFork() || isTempFork) {
+    if (!isTenderlyFork() || isTestFork) {
         return;
     }
 
@@ -607,20 +641,18 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
     }
 
     contracts.push({
-        name: contract || name,
+        name: contract ?? name,
         address: contractAddress
     });
 
-    tenderlyNetwork.setHead('');
-
     for (const contract of contracts) {
-        console.log('verifying on tenderly', contract.name, 'at', contract.address);
+        Logger.log('  verifying on tenderly', contract.name, 'at', contract.address);
 
         await tenderlyNetwork.verify(contract);
     }
 };
 
-export const deploymentTagExists = async (tag: string) => {
+export const deploymentTagExists = (tag: string) => {
     const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
     const migrationsPath = path.resolve(
         __dirname,

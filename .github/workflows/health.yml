@@ -44,8 +44,10 @@ jobs:
         run: yarn build
 
       - name: Test deployment and network health
-        run: yarn test:deploy
+        run: yarn test:health
         env:
-          TENDERLY_TEMP_PROJECT: v3-temp-forks
+          TENDERLY_PROJECT: v3-temp-forks
+          TENDERLY_TEST_PROJECT: v3-temp-forks
           TENDERLY_USERNAME: bancor
           TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

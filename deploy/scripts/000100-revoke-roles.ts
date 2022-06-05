@@ -29,10 +29,17 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // renounce the VBNT ROLE_GOVERNOR role from the deployer
+    // renounce the vBNT ROLE_GOVERNOR role from the deployer
     await renounceRole({
         name: InstanceName.VBNTGovernance,
         id: Roles.TokenGovernance.ROLE_GOVERNOR,
+        from: deployer
+    });
+
+    // renounce the ROLE_EMERGENCY_STOPPER role from the deployer
+    await renounceRole({
+        name: InstanceName.BancorNetwork,
+        id: Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER,
         from: deployer
     });
 

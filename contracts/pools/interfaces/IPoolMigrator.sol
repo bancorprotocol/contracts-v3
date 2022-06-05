@@ -22,5 +22,5 @@ interface IPoolMigrator is IVersioned {
      *
      * - the caller must be the network contract
      */
-    function migratePool(Token pool) external returns (IPoolCollection);
+    function migratePool(Token pool, IPoolCollection newPoolCollection) external;
 }

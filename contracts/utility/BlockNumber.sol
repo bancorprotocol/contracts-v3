@@ -4,7 +4,7 @@ pragma solidity 0.8.13;
 /**
  * @dev this contract abstracts the block number in order to allow for more flexible control in tests
  */
-contract BlockNumber {
+abstract contract BlockNumber {
     /**
      * @dev returns the current block-number
      */

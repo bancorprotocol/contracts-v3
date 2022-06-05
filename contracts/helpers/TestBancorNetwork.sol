@@ -2,7 +2,6 @@
 pragma solidity 0.8.13;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
@@ -25,8 +24,6 @@ import { Token } from "../token/Token.sol";
 import { TestTime } from "./TestTime.sol";
 
 contract TestBancorNetwork is BancorNetwork, TestTime {
-    using SafeERC20 for IERC20;
-
     constructor(
         ITokenGovernance initBNTGovernance,
         ITokenGovernance initVBNTGovernance,
@@ -57,8 +54,12 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.createPool(token);
     }
 
-    function migratePoolT(IPoolMigrator poolMigrator, Token pool) external returns (IPoolCollection) {
-        return poolMigrator.migratePool(pool);
+    function migratePoolT(
+        IPoolMigrator poolMigrator,
+        Token pool,
+        IPoolCollection newPoolCollection
+    ) external {
+        poolMigrator.migratePool(pool, newPoolCollection);
     }
 
     function completeWithdrawalT(
@@ -92,9 +93,10 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
     function withdrawFromBNTPoolT(
         bytes32 contextId,
         address provider,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 bntAmount
     ) external returns (uint256) {
-        return _bntPool.withdraw(contextId, provider, poolTokenAmount);
+        return _bntPool.withdraw(contextId, provider, poolTokenAmount, bntAmount);
     }
 
     function withdrawFromPoolCollectionT(
@@ -102,9 +104,10 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         bytes32 contextId,
         address provider,
         Token pool,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 reserveTokenAmount
     ) external returns (uint256) {
-        return poolCollection.withdraw(contextId, provider, pool, poolTokenAmount);
+        return poolCollection.withdraw(contextId, provider, pool, poolTokenAmount, reserveTokenAmount);
     }
 
     function onBNTFeesCollectedT(
@@ -143,14 +146,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 maxSourceAmount
     ) external returns (TradeAmountAndFee memory) {
         return poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, targetAmount, maxSourceAmount);
-    }
-
-    function approveT(
-        IERC20 token,
-        address spender,
-        uint256 amount
-    ) external {
-        token.safeApprove(spender, amount);
     }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {

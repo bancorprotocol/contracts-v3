@@ -13,7 +13,6 @@ error InvalidPool();
 error InvalidPoolCollection();
 error InvalidStakedBalance();
 error InvalidToken();
-error InvalidType();
 error InvalidParam();
 error NotEmpty();
 error NotPayable();
@@ -22,7 +21,7 @@ error ZeroValue();
 /**
  * @dev common utilities
  */
-contract Utils {
+abstract contract Utils {
     // allows execution by the caller only
     modifier only(address caller) {
         _only(caller);

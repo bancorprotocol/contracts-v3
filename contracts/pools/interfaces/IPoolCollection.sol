@@ -14,9 +14,10 @@ struct PoolLiquidity {
     uint256 stakedBalance; // the staked balance
 }
 
-struct AverageRate {
+struct AverageRates {
     uint32 blockNumber;
     Fraction112 rate;
+    Fraction112 invRate;
 }
 
 struct Pool {
@@ -24,8 +25,7 @@ struct Pool {
     uint32 tradingFeePPM; // the trading fee (in units of PPM)
     bool tradingEnabled; // whether trading is enabled
     bool depositingEnabled; // whether depositing is enabled
-    AverageRate averageRate; // the recent average rate
-    uint256 depositLimit; // the deposit limit
+    AverageRates averageRates; // the recent average rates
     PoolLiquidity liquidity; // the overall liquidity in the pool
 }
 
@@ -53,7 +53,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev returns the type of the pool
      */
-    function poolType() external pure returns (uint16);
+    function poolType() external view returns (uint16);
 
     /**
      * @dev returns the default trading fee (in units of PPM)
@@ -76,11 +76,6 @@ interface IPoolCollection is IVersioned {
     function isPoolValid(Token pool) external view returns (bool);
 
     /**
-     * @dev returns specific pool's data
-     */
-    function poolData(Token pool) external view returns (Pool memory);
-
-    /**
      * @dev returns the overall liquidity in the pool
      */
     function poolLiquidity(Token pool) external view returns (PoolLiquidity memory);
@@ -89,6 +84,26 @@ interface IPoolCollection is IVersioned {
      * @dev returns the pool token of the pool
      */
     function poolToken(Token pool) external view returns (IPoolToken);
+
+    /**
+     * @dev returns the trading fee (in units of PPM)
+     */
+    function tradingFeePPM(Token pool) external view returns (uint32);
+
+    /**
+     * @dev returns whether trading is enabled
+     */
+    function tradingEnabled(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns whether depositing is enabled
+     */
+    function depositingEnabled(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns whether the pool is stable
+     */
+    function isPoolStable(Token pool) external view returns (bool);
 
     /**
      * @dev converts the specified pool token amount to the underlying base token amount
@@ -148,7 +163,8 @@ interface IPoolCollection is IVersioned {
         bytes32 contextId,
         address provider,
         Token pool,
-        uint256 poolTokenAmount
+        uint256 poolTokenAmount,
+        uint256 baseTokenAmount
     ) external returns (uint256);
 
     /**

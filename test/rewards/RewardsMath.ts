@@ -24,10 +24,9 @@ describe('RewardsMath', () => {
                     const expected = BigNumber.from(totalRewards).mul(timeElapsed).div(programDuration);
                     expect(actual).to.equal(expected);
                 } else {
-                    await expect(rewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration)).to.be
-                        .reverted;
-                    // TODO: test for the exact revert reason once the issue with ethers is fixed
-                    // TODO: revertedWith('panic code 0x1 (Assertion error)')
+                    await expect(
+                        rewardsMath.calcFlatRewards(totalRewards, timeElapsed, programDuration)
+                    ).to.be.revertedWithError('panic code 0x1');
                 }
             });
 
@@ -66,9 +65,9 @@ describe('RewardsMath', () => {
                         relation: Relation.LesserOrEqual
                     });
                 } else {
-                    await expect(rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife)).to.revertedWith(
-                        'Overflow'
-                    );
+                    await expect(
+                        rewardsMath.calcExpDecayRewards(totalRewards, timeElapsed, halfLife)
+                    ).to.revertedWithError('Overflow');
                 }
             });
 

@@ -30,15 +30,15 @@ describe('FractionLibrary', () => {
         });
     };
 
-    const isPositive256 = (fraction: Fraction<BigNumber>, expected: boolean) => {
-        it(`isPositive256(${toString(fraction)}) should return ${expected}`, async () => {
-            expect(await fractionLibrary.isPositive256(fraction)).to.equal(expected);
-        });
-    };
-
     const isValid112 = (fraction: Fraction<BigNumber>, expected: boolean) => {
         it(`isValid112(${toString(fraction)}) should return ${expected}`, async () => {
             expect(await fractionLibrary.isValid112(fraction)).to.equal(expected);
+        });
+    };
+
+    const isPositive256 = (fraction: Fraction<BigNumber>, expected: boolean) => {
+        it(`isPositive256(${toString(fraction)}) should return ${expected}`, async () => {
+            expect(await fractionLibrary.isPositive256(fraction)).to.equal(expected);
         });
     };
 
@@ -63,6 +63,26 @@ describe('FractionLibrary', () => {
         });
     };
 
+    const inverse256 = (fraction: Fraction<BigNumber>) => {
+        it(`inverse256(${toString(fraction)})`, async () => {
+            if (fraction.n.isZero()) {
+                await expect(fractionLibrary.inverse256(fraction)).to.be.revertedWithError('InvalidFraction');
+            } else {
+                expect(await fractionLibrary.inverse256(fraction)).to.equal({ n: fraction.d, d: fraction.n });
+            }
+        });
+    };
+
+    const inverse112 = (fraction: Fraction<BigNumber>) => {
+        it(`inverse112(${toString(fraction)})`, async () => {
+            if (fraction.n.isZero()) {
+                await expect(fractionLibrary.inverse112(fraction)).to.be.revertedWithError('InvalidFraction');
+            } else {
+                expect(await fractionLibrary.inverse112(fraction)).to.equal({ n: fraction.d, d: fraction.n });
+            }
+        });
+    };
+
     for (const n of [0, 1, 2, 1000, 2000, MAX_UINT112]) {
         for (const d of [0, 1, 2, 1000, 2000, MAX_UINT112]) {
             const fraction = { n: BigNumber.from(n), d: BigNumber.from(d) };
@@ -70,6 +90,8 @@ describe('FractionLibrary', () => {
             isValid112(fraction, !fraction.d.eq(0));
             isPositive256(fraction, !fraction.n.eq(0) && !fraction.d.eq(0));
             isPositive112(fraction, !fraction.n.eq(0) && !fraction.d.eq(0));
+            inverse256(fraction);
+            inverse112(fraction);
         }
     }
 

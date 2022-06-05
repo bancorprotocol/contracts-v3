@@ -11,7 +11,7 @@
   "000010-network-proxy": 1650287631,
   "000011-bnt-pool": 1650287947,
   "000012-pending-withdrawals": 1650288069,
-  "000013-pool-collection-upgrader": 1650288159,
+  "000013-pool-migrator": 1650288159,
   "000014-network": 1650288370,
   "000015-network-info": 1650288471,
   "000016-pool-collection-type1-v1": 1650288570,
@@ -34,5 +34,11 @@
   "000033-upgrade-network-v3": 1652039004,
   "000034-upgrade-liquidity-protection": 1652091055,
   "000035-pause-legacy-programs": 1652091254,
-  "000036-set-up-beta-rewards-programs": 1652299089
+  "000036-set-up-beta-rewards-programs": 1652299089,
+  "000037-legacy-staking-rewards-claim": 1652702295,
+  "000038-pool-collection-type1-v3": 1653322141,
+  "000039-network-v5": 1653660294,
+  "000040-pending-withdrawals-v4": 1653660423,
+  "000041-upgrade-bancor-portal-v2": 1654104354,
+  "000042-pool-collection-type1-v4": 1654104737
 }

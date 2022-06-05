@@ -35,6 +35,9 @@ const TokenNamedAccounts = {
     link: {
         ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA'),
         ...rinkeby('0x01be23585060835e02b77ef475b0cc51aa1e0709')
+    },
+    weth: {
+        ...mainnet('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
     }
 };
 
@@ -56,6 +59,7 @@ export const NamedAccounts = {
     deployerV2: { ...mainnet('0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E') },
     foundationMultisig: { ...mainnet('0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83') },
     daoMultisig: { ...mainnet('0x7e3692a6d8c34a762079fa9057aed87be7e67cb8') },
+    daoPauserMultisig: { ...mainnet('0xc140c1CD2e587fC04DAa780d49b616F768476660') },
 
     ...TokenNamedAccounts,
     ...TestNamedAccounts,
