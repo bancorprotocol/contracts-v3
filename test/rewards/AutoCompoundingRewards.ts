@@ -846,9 +846,9 @@ describe('AutoCompoundingRewards', () => {
 
                         for (let j = 0; j < AUTO_PROCESS_REWARDS_COUNT; j++) {
                             const index = (AUTO_PROCESS_REWARDS_COUNT * i + j) % tokens.length;
-                            const prgramData = await autoCompoundingRewards.program(tokens[index].address);
+                            const programData = await autoCompoundingRewards.program(tokens[index].address);
                             const { tokenAmountToDistribute, poolTokenAmountToBurn } = await getRewards(
-                                prgramData,
+                                programData,
                                 tokens[index],
                                 rewardsMath,
                                 new TokenData(setups[index].tokenSymbol),
@@ -856,7 +856,7 @@ describe('AutoCompoundingRewards', () => {
                             );
                             tokenAmountToDistributeArray[j] = tokenAmountToDistribute;
                             poolTokenAmountToBurnArray[j] = poolTokenAmountToBurn;
-                            remainingRewardsArray[j] = prgramData.remainingRewards;
+                            remainingRewardsArray[j] = programData.remainingRewards;
                         }
 
                         const res = await autoCompoundingRewards.autoProcessRewards();
