@@ -31,7 +31,7 @@ describeDeployment(__filename, () => {
 
     it('should create and whitelist all V2 pools', async () => {
         for (const { symbol, address, fundingLimit, tradingFeePercents } of POOLS) {
-            Logger.trace(`Testing ${symbol}...`);
+            Logger.log(`Testing ${symbol}...`);
 
             expect(await networkSetting.isTokenWhitelisted(address)).to.be.true;
 
