@@ -42,7 +42,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     error InsufficientFunds();
 
-    // minimum time elapsed before the rewards of a program can be auto-processed
+    // the minimum time elapsed before the rewards of a program can be auto-processed
     uint16 private constant AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = 1 hours;
 
     // the network contract
@@ -356,8 +356,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
-     * @dev processes the rewards of a given pool
-     * returns true if the rewards processing was completed, and false if it was skipped
+     * @dev processes the rewards of a given pool and returns true if the rewards processing was completed, and false
+     * if it was skipped
      */
     function _processRewards(Token pool, bool skipRecent) private returns (bool) {
         ProgramData memory p = _programs[pool];
