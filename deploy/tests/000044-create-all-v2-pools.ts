@@ -1,6 +1,7 @@
 import { BancorNetworkInfo, NetworkSettings, PoolTokenFactory } from '../../components/Contracts';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DeployedContracts } from '../../utils/Deploy';
+import Logger from '../../utils/Logger';
 import { percentsToPPM, toWei } from '../../utils/Types';
 import { POOLS, TOKEN_OVERRIDES } from '../scripts/000044-create-all-v2-pools';
 import { expect } from 'chai';
@@ -29,7 +30,9 @@ describeDeployment(__filename, () => {
     });
 
     it('should create and whitelist all V2 pools', async () => {
-        for (const { address, fundingLimit, tradingFeePercents } of POOLS) {
+        for (const { symbol, address, fundingLimit, tradingFeePercents } of POOLS) {
+            Logger.trace(`Testing ${symbol}...`);
+
             expect(await networkSetting.isTokenWhitelisted(address)).to.be.true;
 
             expect(await networkInfo.tradingEnabled(address)).to.be.false;
