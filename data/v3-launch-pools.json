@@ -330,7 +330,7 @@
     "tradingFeePercents": 0.2
   },
   {
-    "symbol": "FTX Token",
+    "symbol": "FTT",
     "address": "0x50d1c9771902476076ecfc8b2a83ad6b9355a4c9",
     "fundingLimit": 350000,
     "tradingFeePercents": 0.5
