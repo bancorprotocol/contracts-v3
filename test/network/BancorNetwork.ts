@@ -33,7 +33,7 @@ import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../uti
 import Logger from '../../utils/Logger';
 import { permitSignature, Signature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, toPPM, toWei } from '../../utils/Types';
+import { fromPPM, percentsToPPM, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import {
     createBurnableToken,
@@ -3975,14 +3975,10 @@ describe('BancorNetwork Financial Verification', () => {
         return new Decimal(`${value}e-${decimals}`);
     };
 
-    const percentageToPPM = (percentage: string) => {
-        return decimalToInteger(percentage.replace('%', ''), 4);
-    };
-
     const toWei = async (userId: string, amount: string, decimals: number, token: IERC20) => {
         if (amount.endsWith('%')) {
             const balance = await token.balanceOf(users[userId].address);
-            return balance.mul(percentageToPPM(amount)).div(PPM_RESOLUTION);
+            return balance.mul(percentsToPPM(amount)).div(PPM_RESOLUTION);
         }
         return decimalToInteger(amount, decimals);
     };
@@ -4140,14 +4136,14 @@ describe('BancorNetwork Financial Verification', () => {
         await bntGovernance.burn(await bnt.balanceOf(signers[0].address));
         await bntGovernance.mint(signers[0].address, bntAmount);
 
-        await networkSettings.setNetworkFeePPM(percentageToPPM(flow.networkFee));
-        await networkSettings.setWithdrawalFeePPM(percentageToPPM(flow.withdrawalFee));
+        await networkSettings.setNetworkFeePPM(percentsToPPM(flow.networkFee));
+        await networkSettings.setWithdrawalFeePPM(percentsToPPM(flow.withdrawalFee));
         await networkSettings.setMinLiquidityForTrading(decimalToInteger(flow.bntMinLiquidity, bntDecimals));
         await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));
 
         await pendingWithdrawals.setLockDuration(0);
 
-        await poolCollection.setTradingFeePPM(baseToken.address, percentageToPPM(flow.tradingFee));
+        await poolCollection.setTradingFeePPM(baseToken.address, percentsToPPM(flow.tradingFee));
 
         await baseToken.transfer(externalProtectionVault.address, decimalToInteger(flow.epVaultBalance, tknDecimals));
 

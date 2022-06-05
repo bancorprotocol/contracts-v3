@@ -1,0 +1,908 @@
+[
+  {
+    "symbol": "1INCH",
+    "address": "0x111111111117dc0aa78b770fa6a738034120c302",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "1ONE",
+    "address": "0xd5cd84d6f044abe314ee7e414d37cae8773ef9d3",
+    "fundingLimit": 150000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "AAVE",
+    "address": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+    "fundingLimit": 3500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ALCX",
+    "address": "0xdbdb4d16eda451d0503b854cf79d55697f90c8df",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ALEPH",
+    "address": "0x27702a26126e0b3702af63ee09ac4d1a084ef628",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ALPHA",
+    "address": "0xa1faa113cbe53436df28ff0aee54275c13b40975",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "AMP",
+    "address": "0xff20817765cb7f73d4bde2e66e067e58d11095c2",
+    "fundingLimit": 2000000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "ANKR",
+    "address": "0x8290333cef9e6d528dd5618fb97a76f268f3edd4",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ANT",
+    "address": "0x960b236a07cf122663c4303350609a66a7b288c0",
+    "fundingLimit": 106310,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "APW",
+    "address": "0x4104b135dbc9609fc1a9490e61369036497660c8",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ARCONA",
+    "address": "0x0f71b8de197a1c84d31de0f1fa7926c365f052b3",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 5.0
+  },
+  {
+    "symbol": "ARMOR",
+    "address": "0x1337def16f9b486faed0293eb623dc8395dfe46a",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "AST",
+    "address": "0x27054b13b1b798b345b591a4d22e6562d47ea75a",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "AUC",
+    "address": "0xc12d099be31567add4e4e4d0d45691c3f58f5663",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "BAL",
+    "address": "0xba100000625a3754423978a60c9317c58a424e3d",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "BAND",
+    "address": "0xba11d00c5f74255f56a5e366f4f77f5a186d7f55",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "BAT",
+    "address": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+    "fundingLimit": 2421139,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "bBADGER",
+    "address": "0x19d97d8fa813ee2f51ad4b4e04ea08baf4dffc28",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.3
+  },
+  {
+    "symbol": "BBS",
+    "address": "0xfe459828c90c0ba4bc8b42f5c5d44f316700b430",
+    "fundingLimit": 102612,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "bDIGG",
+    "address": "0x7e7e112a68d8d2e221e11047a72ffc1065c38e1a",
+    "fundingLimit": 91634,
+    "tradingFeePercents": 0.25
+  },
+  {
+    "symbol": "BMI",
+    "address": "0x725c263e32c72ddc3a19bea12c5a0479a81ee688",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "BNB",
+    "address": "0xb8c77482e45f1f44de1745f52c74426c631bdd52",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "BOBA",
+    "address": "0x42bbfa2e77757c645eeaad1655e0911a7553efbc",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "BOND",
+    "address": "0x0391d2021f89dc339f60fff84546ea23e337750f",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "BOR",
+    "address": "0x3c9d6c1c73b31c837832c72e04d3152f051fc1a9",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "BORING",
+    "address": "0xbc19712feb3a26080ebf6f2f7849b417fdd792ca",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.3
+  },
+  {
+    "symbol": "BUSD",
+    "address": "0x4fabb145d64652a948d72533023f6e7a623c7c53",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "BZRX",
+    "address": "0x56d811088235f11c8920698a204a5010a788f4b3",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "CEL",
+    "address": "0xaaaebe6fe48e54f431b0c390cfaf0b017d09d42d",
+    "fundingLimit": 304203,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "CHZ",
+    "address": "0x3506424f91fd33084466f402d5d97f05f8e3b4af",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "COMP",
+    "address": "0xc00e94cb662c3520282e6f5717214004a7f26888",
+    "fundingLimit": 2000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "COT",
+    "address": "0x5c872500c00565505f3624ab435c222e558e9ff8",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 3.0
+  },
+  {
+    "symbol": "CRO",
+    "address": "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "CRV",
+    "address": "0xd533a949740bb3306d119cc777fa900ba034cd52",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "CTSI",
+    "address": "0x491604c0fdf08347dd1fa4ee062a822a5dd06b5d",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DAO",
+    "address": "0x0f51bb10119727a7e5ea3538074fb341f56b09ad",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DAPP",
+    "address": "0x939b462ee3311f8926c047d2b576c389092b1649",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DATA",
+    "address": "0x8f693ca8d21b157107184d29d398a8d082b38b76",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DDX",
+    "address": "0x3a880652f47bfaa771908c07dd8673a787daed3a",
+    "fundingLimit": 300000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "DEXE",
+    "address": "0xde4ee8057785a7e8e800db58f9784845a5c2cbd6",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DIP",
+    "address": "0xc719d010b63e5bbf2c0551872cd5316ed26acd83",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DRC",
+    "address": "0xa150db9b1fa65b44799d4dd949d922c0a33ee606",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DUSK",
+    "address": "0x940a2db1b7008b6c776d4faaca729d6d4a4aa551",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "DXD",
+    "address": "0xa1d65e8fb6e87b60feccbc582f7f97804b725521",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "DYDX",
+    "address": "0x92d6c1e31e14520e676a687f0a93788b716beff5",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "EDEN",
+    "address": "0x1559fa1b8f28238fd5d76d9f434ad86fd20d1559",
+    "fundingLimit": 2000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ELF",
+    "address": "0xbf2179859fc6d5bee9bf9158632dc51678a4100e",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ENJ",
+    "address": "0xf629cbd94d3791c9250152bd8dfbdf380e2a3b9c",
+    "fundingLimit": 3608873,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "ENS",
+    "address": "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "eRSDL",
+    "address": "0x5218e472cfcfe0b64a064f055b43b4cdc9efd3a6",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "EWTB",
+    "address": "0x178c820f862b14f316509ec36b13123da19a6054",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.3
+  },
+  {
+    "symbol": "FARM",
+    "address": "0xa0246c9032bc3a600820415ae600c6388619a14d",
+    "fundingLimit": 637223,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "FODL",
+    "address": "0x4c2e59d098df7b6cbae0848d66de2f8a4889b9c3",
+    "fundingLimit": 800000,
+    "tradingFeePercents": 0.3
+  },
+  {
+    "symbol": "FOX",
+    "address": "0xc770eefad204b5180df6a14ee197d99d808ee52d",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "FRM",
+    "address": "0xe5caef4af8780e59df925470b050fb23c43ca68c",
+    "fundingLimit": 300000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "FTX Token",
+    "address": "0x50d1c9771902476076ecfc8b2a83ad6b9355a4c9",
+    "fundingLimit": 350000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "FXS",
+    "address": "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "GNO",
+    "address": "0x6810e776880c02933d47db1b9fc05908e5386b96",
+    "fundingLimit": 127235,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "GRT",
+    "address": "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "GTC",
+    "address": "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "GUSD",
+    "address": "0x056fd409e1d7a124bd7017459dfea2f387b6d5cd",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "HEGIC",
+    "address": "0x584bc13c7d411c00c01a62e8019472de68768430",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "HOT",
+    "address": "0x6c6ee5e31d828de241282b9606c8e98ea48526e2",
+    "fundingLimit": 800000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "HY",
+    "address": "0x9b53e429b0badd98ef7f01f03702986c516a5715",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ICHI",
+    "address": "0x903bef1736cddf2a537176cf3c64579c3867a881",
+    "fundingLimit": 2163946,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "IDLE",
+    "address": "0x875773784af8135ea0ef43b5a374aad105c5d39e",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "INDEX",
+    "address": "0x0954906da0bf32d5479e25f46056d22f08464cab",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "INST",
+    "address": "0x6f40d4a6237c257fff2db00fa0510deeecd303eb",
+    "fundingLimit": 900000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "JRT",
+    "address": "0x8a9c67fee641579deba04928c4bc45f66e26343a",
+    "fundingLimit": 74566,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "KNC",
+    "address": "0xdd974d5c2e2928dea5f71b9825b8b646686bd200",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "KTN",
+    "address": "0x491e136ff7ff03e6ab097e54734697bb5802fc1c",
+    "fundingLimit": 150000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "LPL",
+    "address": "0x99295f1141d58a99e939f7be6bbe734916a875b8",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "LQTY",
+    "address": "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d",
+    "fundingLimit": 150000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "LRC",
+    "address": "0xbbbbca6a901c926f240b89eacb641d8aec7aeafd",
+    "fundingLimit": 300000,
+    "tradingFeePercents": 0.3
+  },
+  {
+    "symbol": "MANA",
+    "address": "0x0f5d2fb29fb7d3cfee444a200298f468908cc942",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "MASK",
+    "address": "0x69af81e73a73b40adf4f3d4223cd9b1ece623074",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "MATIC",
+    "address": "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "MFG",
+    "address": "0x6710c63432a2de02954fc0f851db07146a6c0312",
+    "fundingLimit": 400000,
+    "tradingFeePercents": 0.3
+  },
+  {
+    "symbol": "MFI",
+    "address": "0xaa4e3edb11afa93c41db59842b29de64b72e355b",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "MKR",
+    "address": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+    "fundingLimit": 2000000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "MLN",
+    "address": "0xec67005c4e498ec7f55e092bd1d35cbc47c91892",
+    "fundingLimit": 348012,
+    "tradingFeePercents": 0.3
+  },
+  {
+    "symbol": "MONA",
+    "address": "0x275f5ad03be0fa221b4c6649b8aee09a42d9412a",
+    "fundingLimit": 350000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "MPH",
+    "address": "0x8888801af4d980682e47f1a9036e589479e835c5",
+    "fundingLimit": 700000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "MTA",
+    "address": "0xa3bed4e1c75d00fa6f4e5e6922db7261b5e9acd2",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "NDX",
+    "address": "0x86772b1409b61c639eaac9ba0acfbb6e238e5f83",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "NEXO",
+    "address": "0xb62132e35a6c13ee1ee0f84dc5d40bad8d815206",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "NMR",
+    "address": "0x1776e1f26f98b1a5df9cd347953a26dd3cb46671",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "NOIA",
+    "address": "0xa8c8cfb141a3bb59fea1e2ea6b79b5ecbcd7b6ca",
+    "fundingLimit": 159235,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "OCEAN",
+    "address": "0x967da4048cd07ab37855c090aaf366e4ce1b9f48",
+    "fundingLimit": 2750000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "OMG",
+    "address": "0xd26114cd6ee289accf82350c8d8487fedb8a0c07",
+    "fundingLimit": 138462,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "OPIUM",
+    "address": "0x888888888889c00c67689029d7856aac1065ec11",
+    "fundingLimit": 150000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "PATH",
+    "address": "0x2a2550e0a75acec6d811ae3930732f7f3ad67588",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "PERP",
+    "address": "0xbc396689893d065f41bc2c6ecbee5e0085233447",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "PHTR",
+    "address": "0xe1fc4455f62a6e89476f1072530c20cf1a0622da",
+    "fundingLimit": 801950,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "PLR",
+    "address": "0xe3818504c1b32bf1557b16c238b2e01fd3149c17",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "POOLZ",
+    "address": "0x69a95185ee2a045cdc4bcd1b1df10710395e4e23",
+    "fundingLimit": 50000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "POWR",
+    "address": "0x595832f8fc6bf59c85c527fec3740a1b7a361269",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "PSP",
+    "address": "0xcafe001067cdef266afb7eb5a286dcfd277f3de5",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "QNT",
+    "address": "0x4a220e6096b25eadb88358cb44068a3248254675",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "QUICK",
+    "address": "0x6c28aef8977c9b773996d0e8376d2ee379446f2f",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "RAIL",
+    "address": "0xe76c6c83af64e4c60245d8c7de953df673a7a33d",
+    "fundingLimit": 75000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "RARI",
+    "address": "0xfca59cd816ab1ead66534d82bc21e7515ce441cf",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "REN",
+    "address": "0x408e41876cccdc0f92210600ef50372656052a38",
+    "fundingLimit": 3000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "renBTC",
+    "address": "0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
+    "fundingLimit": 1500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "renZEC",
+    "address": "0x1c5db575e2ff833e46a2e9864c22f4b22e0b37c2",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "REQ",
+    "address": "0x8f8221afbb33998d8584a2b05749ba73c37a938a",
+    "fundingLimit": 1750000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "rETH",
+    "address": "0xae78736cd615f374d3085123a210448e74fc6393",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "RLC",
+    "address": "0x607f4c5bb672230e8672085532f7e901544a7375",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "RNB",
+    "address": "0x2a039b1d9bbdccbb91be28691b730ca893e5e743",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ROOK",
+    "address": "0xfa5047c9c78b8877af97bdcb85db743fd7313d4a",
+    "fundingLimit": 2500000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "RPL",
+    "address": "0xd33526068d116ce69f19a9ee46f0bd304f21a51f",
+    "fundingLimit": 1000840,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "RUNE",
+    "address": "0x3155ba85d5f96b2d030a4966af206230e46849cb",
+    "fundingLimit": 600000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "SAO",
+    "address": "0x3ef389f264e07fff3106a3926f2a166d1393086f",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "SATA",
+    "address": "0x3ebb4a4e91ad83be51f8d596533818b246f4bee1",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "sBTC",
+    "address": "0xfe18be6b3bd88a2d2a7f928d00292e7a9963cfc6",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "SFI",
+    "address": "0xb753428af26e81097e7fd17f40c88aaa3e04902c",
+    "fundingLimit": 285459,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "SHEESHA",
+    "address": "0x232fb065d9d24c34708eedbf03724f2e95abe768",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "SMARTCREDIT",
+    "address": "0x72e9d9038ce484ee986fea183f8d8df93f9ada13",
+    "fundingLimit": 75000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "SNX",
+    "address": "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f",
+    "fundingLimit": 9000000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "SRM",
+    "address": "0x476c5e26a75bd202a9683ffd34359c0cc15be0ff",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "STAKE",
+    "address": "0x0ae055097c6d159879521c384f1d2123d1f195e6",
+    "fundingLimit": 32753,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "sUSD",
+    "address": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "SUSHI",
+    "address": "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "SXP",
+    "address": "0x8ce9137d39326ad0cd6491fb5cc0cba0e089b6a9",
+    "fundingLimit": 0,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "TEMP",
+    "address": "0xa36fdbbae3c9d55a1d67ee5821d53b50b63a1ab9",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "TOMOE",
+    "address": "0x05d3606d5c81eb9b7b18530995ec9b29da05faba",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "TRAC",
+    "address": "0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f",
+    "fundingLimit": 1000000,
+    "tradingFeePercents": 2.0
+  },
+  {
+    "symbol": "TRU",
+    "address": "0x4c19596f5aaff459fa38b0f7ed92f11ae6543784",
+    "fundingLimit": 250000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "UMA",
+    "address": "0x04fa0d235c4abf4bcf4787af4cf447de572ef828",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "UNI",
+    "address": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
+    "fundingLimit": 2000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "UOS",
+    "address": "0xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c",
+    "fundingLimit": 150000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "USDC",
+    "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    "fundingLimit": 5674363,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "USDT",
+    "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    "fundingLimit": 5276720,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "vBNT",
+    "address": "0x48fb253446873234f2febbf9bdeaa72d9d387f94",
+    "fundingLimit": 1186633,
+    "tradingFeePercents": 1.5
+  },
+  {
+    "symbol": "VISION",
+    "address": "0xf406f7a9046793267bc276908778b29563323996",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "VITA",
+    "address": "0x81f8f0bb1cb2a06649e51913a151f0e7ef6fa321",
+    "fundingLimit": 500000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "VLX",
+    "address": "0x8c543aed163909142695f2d2acd0d55791a9edb9",
+    "fundingLimit": 152251,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "WBTC",
+    "address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+    "fundingLimit": 64127511,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "wNXM",
+    "address": "0x0d438f3b5175bebc262bf23753c1e53d03432bde",
+    "fundingLimit": 3325000,
+    "tradingFeePercents": 1.0
+  },
+  {
+    "symbol": "WOO",
+    "address": "0x4691937a7508860f876c9c0a2a617e7d9e945d4b",
+    "fundingLimit": 1720838,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "wstETH",
+    "address": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "WXT",
+    "address": "0xa02120696c7b8fe16c09c749e4598819b2b0e915",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "xSUSHI",
+    "address": "0x8798249c2e607446efb7ad49ec89dd1865ff4272",
+    "fundingLimit": 200000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "YFI",
+    "address": "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e",
+    "fundingLimit": 5000000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "ZCN",
+    "address": "0xb9ef770b6a5e12e45983c5d80545258aa38f3b78",
+    "fundingLimit": 924132,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "ZRX",
+    "address": "0xe41d2489571d322189246dafa5ebde1f4699f498",
+    "fundingLimit": 20000,
+    "tradingFeePercents": 0.5
+  },
+  {
+    "symbol": "LYRA",
+    "address": "0x01BA67AAC7f75f647D94220Cc98FB30FCc5105Bf",
+    "fundingLimit": 175000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "POOL",
+    "address": "0x0cec1a9154ff802e7934fc916ed7ca50bde6844e",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "PDI",
+    "address": "0x632806BF5c8f062932Dd121244c9fbe7becb8B48",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "THALES",
+    "address": "0x8947da500eb47f82df21143d0c01a29862a8c3c5",
+    "fundingLimit": 100000,
+    "tradingFeePercents": 0.2
+  },
+  {
+    "symbol": "SHIBGF",
+    "address": "0x505a84a03e382331a1be487b632cf357748b65d6",
+    "fundingLimit": 30000,
+    "tradingFeePercents": 0.2
+  }
+]

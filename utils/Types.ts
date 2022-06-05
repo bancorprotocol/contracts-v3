@@ -103,11 +103,22 @@ export const toWei = <T extends ToWeiInput>(v: T, decimals = DEFAULT_DECIMALS): 
         return BigNumber.from((v as Decimal).mul(new Decimal(10).pow(decimals)).toFixed());
     }
 
-    return BigNumber.from(v).mul(BigNumber.from(10).pow(DEFAULT_DECIMALS));
+    return BigNumber.from(v).mul(BigNumber.from(10).pow(decimals));
 };
 
 export const toPPM = (percent: number | undefined): number => (percent ? percent * (PPM_RESOLUTION / 100) : 0);
 export const fromPPM = (ppm: number | undefined): number => (ppm ? ppm / (PPM_RESOLUTION / 100) : 0);
+
+export const percentsToPPM = (percents: number | string) => {
+    let value: number;
+    if (typeof percents === 'string') {
+        value = Number(percents.endsWith('%') ? percents.slice(0, -1) : percents);
+    } else {
+        value = percents;
+    }
+
+    return (value * PPM_RESOLUTION) / 100;
+};
 
 export const toCents = (dollars: number) => Math.ceil(dollars * 100);
 
