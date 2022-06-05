@@ -45,6 +45,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     // the minimum time elapsed before the rewards of a program can be auto-processed
     uint16 private constant AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = 1 hours;
 
+    // the factor used to calculate the maximum number of programs to attempt to auto-process in a single attempt
+    uint8 private constant AUTO_PROCESS_MAX_PROGRAMS_FACTOR = 2;
+
     // the network contract
     IBancorNetwork private immutable _network;
 
@@ -332,7 +335,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 numOfPools = _pools.length();
         uint256 index = _autoProcessRewardsIndex;
         uint256 count = _autoProcessRewardsCount;
-        uint256 maxCount = Math.min(count * 2, numOfPools);
+        uint256 maxCount = Math.min(count * AUTO_PROCESS_MAX_PROGRAMS_FACTOR, numOfPools);
 
         for (uint256 i = 0; i < maxCount; i++) {
             bool completed = _processRewards(Token(_pools.at(index % numOfPools)), true);
