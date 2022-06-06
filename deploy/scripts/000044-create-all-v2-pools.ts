@@ -24,7 +24,7 @@ interface TokenOverride {
 }
 
 export const TOKEN_OVERRIDES: TokenOverride[] = JSON.parse(
-    fs.readFileSync(path.resolve(__dirname, '../../data/v3-tokens-overrides.json'), 'utf-8')
+    fs.readFileSync(path.resolve(__dirname, '../../data/token-overrides.json'), 'utf-8')
 );
 
 const BATCH_SIZE = 20;
