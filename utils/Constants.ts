@@ -44,6 +44,8 @@ export const RATE_MAX_DEVIATION_PPM = toPPM(1);
 export const EMA_AVERAGE_RATE_WEIGHT = 4;
 export const EMA_SPOT_RATE_WEIGHT = 1;
 
+export const AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = duration.hours(1);
+
 export enum PoolType {
     Standard = 1
 }
