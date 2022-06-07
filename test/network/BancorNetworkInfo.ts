@@ -512,16 +512,19 @@ describe('BancorNetworkInfo', () => {
     });
 
     describe('pending withdrawals', () => {
-        let poolToken: PoolToken;
-        let token: TokenWithAddress;
+        let network: TestBancorNetwork;
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
-        let network: TestBancorNetwork;
+        let bnt: IERC20;
+        let poolToken: PoolToken;
+        let token: TokenWithAddress;
+        let bntPoolToken: PoolToken;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
 
         let provider: SignerWithAddress;
         let poolTokenAmount: BigNumber;
+        let bntPoolTokenAmount: BigNumber;
 
         const BALANCE = toWei(1_000_000);
 
@@ -530,7 +533,8 @@ describe('BancorNetworkInfo', () => {
         });
 
         beforeEach(async () => {
-            ({ network, networkInfo, networkSettings, poolCollection, pendingWithdrawals } = await createSystem());
+            ({ network, networkInfo, networkSettings, bnt, bntPoolToken, poolCollection, pendingWithdrawals } =
+                await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -552,6 +556,11 @@ describe('BancorNetworkInfo', () => {
             ));
 
             poolTokenAmount = await poolToken.balanceOf(provider.address);
+
+            await depositToPool(provider, bnt, toWei(1234), network);
+
+            bntPoolTokenAmount = await bntPoolToken.balanceOf(provider.address);
+            console.log('bntPoolTokenAmount', bntPoolTokenAmount.toString());
         });
 
         it('should return withdrawal status', async () => {
@@ -581,13 +590,21 @@ describe('BancorNetworkInfo', () => {
         });
 
         it('should return withdrawal amounts', async () => {
-            const { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
+            let { totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
                 token.address,
                 poolTokenAmount
             );
             expect(totalAmount).to.equal(poolTokenAmount);
             expect(baseTokenAmount).to.equal(poolTokenAmount);
             expect(bntAmount).to.equal(0);
+
+            ({ totalAmount, baseTokenAmount, bntAmount } = await networkInfo.withdrawalAmounts(
+                bnt.address,
+                bntPoolTokenAmount
+            ));
+            expect(totalAmount).to.equal(bntPoolTokenAmount);
+            expect(baseTokenAmount).to.equal(0);
+            expect(bntAmount).to.equal(bntPoolTokenAmount);
         });
     });
 
