@@ -6,6 +6,9 @@
   "tknDecimals": 18,
   "bntMinLiquidity": "10000",
   "bntFundingLimit": "10000000",
+  "rewardsToken": "TKN",
+  "rewardsAmount": "500000",
+  "rewardsDuration": 31536000,
   "users": [
     {
       "id": "tknProvider",
@@ -17,7 +20,7 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
@@ -50,7 +53,7 @@
     {
       "type": "enableTrading",
       "userId": "",
-      "mined": true,
+      "elapsed": 1,
       "amount": {
         "bntVirtualBalance": 1000,
         "baseTokenVirtualBalance": 1
@@ -86,7 +89,7 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
@@ -119,7 +122,7 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
@@ -152,7 +155,7 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
@@ -185,7 +188,7 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
@@ -218,7 +221,7 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
@@ -251,7 +254,7 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
@@ -284,7 +287,7 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
@@ -317,7 +320,7 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
@@ -350,7 +353,7 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {

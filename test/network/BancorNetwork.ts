@@ -1,6 +1,7 @@
 import Contracts, {
     BancorNetworkInfo,
     ExternalProtectionVault,
+    ExternalRewardsVault,
     IERC20,
     IPoolCollection,
     MasterVault,
@@ -14,7 +15,8 @@ import Contracts, {
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolMigrator
+    TestPoolMigrator,
+    TestStandardRewards
 } from '../../components/Contracts';
 import {
     DSToken,
@@ -39,6 +41,7 @@ import {
     createBurnableToken,
     createPool,
     createPoolCollection,
+    createStandardRewards,
     createSystem,
     createTestToken,
     createToken,
@@ -3929,7 +3932,7 @@ describe('BancorNetwork Financial Verification', () => {
         type: string;
         userId: string;
         amount: string;
-        mined: boolean;
+        elapsed: number;
         expected: State;
     }
 
@@ -3941,6 +3944,10 @@ describe('BancorNetwork Financial Verification', () => {
         tknDecimals: number;
         bntMinLiquidity: number;
         bntFundingLimit: number;
+        rewardsToken: string;
+        rewardsAmount: number;
+        rewardsDuration: number;
+        rewardsEndTime: number;
         users: User[];
         operations: Operation[];
     }
@@ -3955,6 +3962,8 @@ describe('BancorNetwork Financial Verification', () => {
     let bntGovernance: TokenGovernance;
     let pendingWithdrawals: TestPendingWithdrawals;
     let poolCollection: TestPoolCollection;
+    let standardRewards: TestStandardRewards;
+    let externalRewardsVault: ExternalRewardsVault;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let baseToken: TestERC20Burnable;
@@ -3966,6 +3975,8 @@ describe('BancorNetwork Financial Verification', () => {
     let bntknDecimals: number;
     let bnbntDecimals: number;
     let blockNumber: number;
+    let currentTime: number;
+    let programId: BigNumber;
 
     const decimalToInteger = (value: string | number, decimals: number) => {
         return BigNumber.from(new Decimal(`${value}e+${decimals}`).toFixed());
@@ -4021,6 +4032,26 @@ describe('BancorNetwork Financial Verification', () => {
         await network
             .connect(users[userId])
             .tradeBySourceAmount(bnt.address, baseToken.address, wei, 1, MAX_UINT256, users[userId].address);
+    };
+
+    const joinTKN = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, tknDecimals, baseToken);
+        await standardRewards.connect(users[userId]).join(programId, wei);
+    };
+
+    const joinBNT = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, bntDecimals, bnt);
+        await standardRewards.connect(users[userId]).join(programId, wei);
+    };
+
+    const leaveTKN = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, tknDecimals, baseToken);
+        await standardRewards.connect(users[userId]).leave(programId, wei);
+    };
+
+    const leaveBNT = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, bntDecimals, bnt);
+        await standardRewards.connect(users[userId]).leave(programId, wei);
     };
 
     const setFundingLimit = async (amount: string) => {
@@ -4111,11 +4142,27 @@ describe('BancorNetwork Financial Verification', () => {
         bntknDecimals = DEFAULT_DECIMALS;
         bnbntDecimals = DEFAULT_DECIMALS;
 
+        let tknRewardsAmount = BigNumber.from(0);
+        let bntRewardsAmount = BigNumber.from(0);
+
+        switch (flow.rewardsToken) {
+            case 'TKN':
+                tknRewardsAmount = BigNumber.from(flow.rewardsAmount);
+                break;
+
+            case 'BNT':
+                bntRewardsAmount = BigNumber.from(flow.rewardsAmount);
+                break;
+
+            default:
+                throw new Error('Invalid Rewards Token');
+        }
+
         const tknAmount = flow.users
-            .reduce((sum, user) => sum.add(user.tknBalance), BigNumber.from(flow.epVaultBalance))
+            .reduce((sum, user) => sum.add(user.tknBalance), tknRewardsAmount.add(flow.epVaultBalance))
             .mul(BigNumber.from(10).pow(tknDecimals));
         const bntAmount = flow.users
-            .reduce((sum, user) => sum.add(user.bntBalance), BigNumber.from(0))
+            .reduce((sum, user) => sum.add(user.bntBalance), bntRewardsAmount)
             .mul(BigNumber.from(10).pow(bntDecimals));
 
         ({
@@ -4129,8 +4176,18 @@ describe('BancorNetwork Financial Verification', () => {
             pendingWithdrawals,
             poolCollection,
             masterVault,
+            externalRewardsVault,
             externalProtectionVault
         } = await createSystem());
+
+        standardRewards = await createStandardRewards(
+            network,
+            networkSettings,
+            bntGovernance,
+            vbnt,
+            bntPool,
+            externalRewardsVault
+        );
 
         baseToken = await createBurnableToken(new TokenData(TokenSymbol.TKN), tknAmount);
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
@@ -4163,18 +4220,50 @@ describe('BancorNetwork Financial Verification', () => {
             await bnt.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }
 
+        blockNumber = await poolCollection.currentBlockNumber();
+        currentTime = await standardRewards.currentTime();
+
+        let rewardsToken: IERC20;
+        let rewardsAmount: BigNumber;
+
+        switch (flow.rewardsToken) {
+            case 'TKN':
+                rewardsToken = baseToken;
+                rewardsAmount = decimalToInteger(flow.rewardsAmount, tknDecimals);
+                break;
+
+            case 'BNT':
+                rewardsToken = bnt;
+                rewardsAmount = decimalToInteger(flow.rewardsAmount, tknDecimals);
+                break;
+
+            default:
+                throw new Error('Invalid Rewards Token');
+        }
+
+        programId = await standardRewards.nextProgramId();
+        await rewardsToken.transfer(externalRewardsVault.address, rewardsAmount);
+        await standardRewards.createProgram(
+            baseToken.address,
+            rewardsToken.address,
+            rewardsAmount,
+            currentTime,
+            currentTime + flow.rewardsDuration
+        );
+
         expect(await baseToken.balanceOf(signers[0].address)).to.equal(0);
         expect(await bnt.balanceOf(signers[0].address)).to.equal(0);
-
-        blockNumber = await poolCollection.currentBlockNumber();
     };
 
     const execute = async () => {
-        for (const [n, { type, userId, amount, mined, expected }] of flow.operations.entries()) {
+        for (const [n, { type, userId, amount, elapsed, expected }] of flow.operations.entries()) {
             Logger.log(`${n + 1} out of ${flow.operations.length}: ${type}(${amount})`);
 
-            if (mined) {
-                await poolCollection.setBlockNumber(++blockNumber);
+            if (elapsed > 0) {
+                blockNumber += 1;
+                currentTime += elapsed;
+                await poolCollection.setBlockNumber(blockNumber);
+                await standardRewards.setTime(currentTime);
             }
 
             switch (type) {
@@ -4200,6 +4289,22 @@ describe('BancorNetwork Financial Verification', () => {
 
                 case 'tradeBNT':
                     await tradeBNT(userId, amount);
+                    break;
+
+                case 'joinTKN':
+                    await joinTKN(userId, amount);
+                    break;
+
+                case 'joinBNT':
+                    await joinBNT(userId, amount);
+                    break;
+
+                case 'leaveTKN':
+                    await leaveTKN(userId, amount);
+                    break;
+
+                case 'leaveBNT':
+                    await leaveBNT(userId, amount);
                     break;
 
                 case 'setFundingLimit':

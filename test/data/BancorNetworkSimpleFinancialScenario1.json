@@ -6,6 +6,9 @@
   "tknDecimals": 18,
   "bntMinLiquidity": "1000000",
   "bntFundingLimit": "10000000",
+  "rewardsToken": "TKN",
+  "rewardsAmount": "500000",
+  "rewardsDuration": 31536000,
   "users": [
     {
       "id": "dayTrader",
@@ -27,7 +30,7 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": false,
+      "elapsed": 0,
       "amount": "1000000",
       "expected": {
         "tknBalances": {
@@ -68,7 +71,7 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": false,
+      "elapsed": 0,
       "amount": "100%",
       "expected": {
         "tknBalances": {
@@ -109,7 +112,7 @@
     {
       "type": "enableTrading",
       "userId": "",
-      "mined": false,
+      "elapsed": 0,
       "amount": {
         "bntVirtualBalance": 1,
         "baseTokenVirtualBalance": 1
@@ -153,7 +156,7 @@
     {
       "type": "depositBNT",
       "userId": "bntProvider",
-      "mined": false,
+      "elapsed": 0,
       "amount": "10%",
       "expected": {
         "tknBalances": {
@@ -194,7 +197,7 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": false,
+      "elapsed": 0,
       "amount": "50%",
       "expected": {
         "tknBalances": {
@@ -235,7 +238,7 @@
     {
       "type": "withdrawBNT",
       "userId": "bntProvider",
-      "mined": false,
+      "elapsed": 0,
       "amount": "50%",
       "expected": {
         "tknBalances": {
