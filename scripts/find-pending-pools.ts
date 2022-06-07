@@ -103,12 +103,13 @@ const main = async () => {
         const estimatedRequiredLiquidity = new Decimal(minLiquidityForTrading.toString())
             .mul(rate)
             .mul(MIN_STAKED_BALANCE_FACTOR)
-            .div(rateScale);
+            .div(rateScale)
+            .ceil();
         const decimalsScale = new Decimal(10).pow(decimals);
 
-        Logger.log(`  Current staked ${symbol} balance (wei): ${stakedBalance.toFixed(4)}`);
+        Logger.log(`  Current staked ${symbol} balance (wei): ${stakedBalance.toFixed()}`);
         Logger.log(`  Current staked ${symbol} balance: ${stakedBalance.div(decimalsScale).toFixed(4)}`);
-        Logger.log(`  Estimating minimum required ${symbol} liquidity (wei): ${estimatedRequiredLiquidity.toFixed(4)}`);
+        Logger.log(`  Estimating minimum required ${symbol} liquidity (wei): ${estimatedRequiredLiquidity.toFixed()}`);
         Logger.log(
             `  Estimating minimum required ${symbol} liquidity: ${estimatedRequiredLiquidity
                 .div(decimalsScale)
