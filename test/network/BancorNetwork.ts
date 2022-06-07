@@ -4211,11 +4211,13 @@ describe('BancorNetwork Financial Verification', () => {
         for (const [i, { id, tknBalance, bntBalance }] of flow.users.entries()) {
             expect(id in users).to.equal(false, `user id '${id}' is not unique`);
             users[id] = signers[1 + i];
-            await vbnt.connect(users[id]).approve(network.address, MAX_UINT256);
-            await baseToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await bnt.connect(users[id]).approve(network.address, MAX_UINT256);
-            await basePoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await bntPoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
+            for (const contract of [network, standardRewards]) {
+                await vbnt.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await baseToken.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await bnt.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await basePoolToken.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await bntPoolToken.connect(users[id]).approve(contract.address, MAX_UINT256);
+            }
             await baseToken.transfer(users[id].address, decimalToInteger(tknBalance, tknDecimals));
             await bnt.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }
