@@ -21,6 +21,12 @@ const TOKEN_OVERRIDES: TokenOverride[] = JSON.parse(
 
 const MIN_STAKED_BALANCE_FACTOR = 2;
 
+interface PoolData {
+    address: string;
+    bntVirtualBalance: Decimal;
+    tokenVirtualBalance: Decimal;
+}
+
 const main = async () => {
     const { deployer } = await getNamedSigners();
     const bnt = await DeployedContracts.BNT.deployed();
@@ -52,7 +58,7 @@ const main = async () => {
 
     const unknownTokens: Record<string, string> = {};
 
-    const pools: Record<string, string> = {};
+    const pools: Record<string, PoolData> = {};
     for (let i = 0; i < allPools.length; i++) {
         const pool = allPools[i];
         let symbol: string;
@@ -95,8 +101,8 @@ const main = async () => {
         const tokenPrice = new Decimal(tokenPriceData.usd);
         const rate = bntPrice.div(tokenPrice);
 
-        Logger.log(`  ${TokenSymbol.BNT} price: $${bntPrice.toFixed(4)}`);
-        Logger.log(`  ${symbol} price: $${tokenPrice.toFixed(4)}`);
+        Logger.log(`  ${TokenSymbol.BNT} price: $${bntPrice.toFixed()}`);
+        Logger.log(`  ${symbol} price: $${tokenPrice.toFixed()}`);
         Logger.log(`  ${symbol} to ${TokenSymbol.BNT} rate: ${rate.toFixed(4)}`);
 
         const rateNormalizationFactor = new Decimal(10).pow(DEFAULT_DECIMALS - decimals);
@@ -124,29 +130,44 @@ const main = async () => {
 
         Logger.log(`  Found pending pool ${symbol} [${pool}]...`);
 
-        pools[symbol] = pool;
+        const maxDecimals = Math.max(bntPrice.decimalPlaces(), tokenPrice.decimalPlaces());
+        const maxDecimalsFactor = new Decimal(10).pow(maxDecimals);
+        const bntVirtualBalance = bntPrice.mul(maxDecimalsFactor);
+        const tokenVirtualBalance = tokenPrice.mul(maxDecimalsFactor);
+
+        Logger.log(`  Suggested ${TokenSymbol.BNT} virtual balance: ${bntVirtualBalance.toFixed()}`);
+        Logger.log(`  Suggested ${symbol} virtual balance: ${tokenVirtualBalance.toFixed()}`);
+
+        pools[symbol] = {
+            address: pool,
+            bntVirtualBalance,
+            tokenVirtualBalance
+        };
     }
 
     Logger.log('');
     Logger.log('********************************************************************************');
     Logger.log('');
 
-    const symbols = Object.keys(pools);
-    if (symbols.length === 0) {
+    const entries = Object.entries(pools);
+    if (entries.length === 0) {
         Logger.log('Did not found any pending pools...');
         Logger.log();
 
         return;
     }
 
-    Logger.log(`Found ${symbols.length} pending pools:`);
+    Logger.log(`Found ${entries.length} pending pools:`);
     Logger.log();
 
-    for (const symbol of symbols) {
-        Logger.log(`${symbol} - ${pools[symbol]}`);
+    for (const [symbol, poolData] of entries) {
+        Logger.log(`${symbol}:`);
+        Logger.log(`  Pool: ${poolData.address}`);
+        Logger.log(`  Suggested ${TokenSymbol.BNT} virtual balance: ${poolData.bntVirtualBalance.toFixed()}`);
+        Logger.log(`  Suggested ${symbol} virtual balance: ${poolData.tokenVirtualBalance.toFixed()}`);
+        Logger.log('');
     }
 
-    Logger.log('');
     Logger.log('********************************************************************************');
     Logger.log('');
 
