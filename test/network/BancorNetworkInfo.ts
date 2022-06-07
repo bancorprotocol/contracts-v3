@@ -560,7 +560,6 @@ describe('BancorNetworkInfo', () => {
             await depositToPool(provider, bnt, toWei(1234), network);
 
             bntPoolTokenAmount = await bntPoolToken.balanceOf(provider.address);
-            console.log('bntPoolTokenAmount', bntPoolTokenAmount.toString());
         });
 
         it('should return withdrawal status', async () => {
