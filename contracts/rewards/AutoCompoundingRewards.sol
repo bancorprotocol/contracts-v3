@@ -76,7 +76,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     uint256 private _autoProcessRewardsCount;
 
     // the index of the next program to auto-process the rewards for
-    uint256 private _autoProcessRewardsIndex;
+    uint256 internal _autoProcessRewardsIndex;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 5] private __gap;
@@ -352,7 +352,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             }
         }
 
-        _autoProcessRewardsIndex = index;
+        _autoProcessRewardsIndex = index % numOfPools;
     }
 
     /**

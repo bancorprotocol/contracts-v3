@@ -24,6 +24,10 @@ contract TestAutoCompoundingRewards is AutoCompoundingRewards, TestTime {
         IExternalRewardsVault initExternalRewardsVault
     ) AutoCompoundingRewards(initNetwork, initNetworkSettings, initBNT, initBNTPool, initExternalRewardsVault) {}
 
+    function autoProcessRewardsIndex() external view returns (uint256) {
+        return _autoProcessRewardsIndex;
+    }
+
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {
         return TestTime._time();
     }

@@ -12,6 +12,7 @@ import Contracts, {
     TestRewardsMath
 } from '../../components/Contracts';
 import {
+    AUTO_PROCESS_MAX_PROGRAMS_FACTOR,
     AUTO_PROCESS_REWARDS_MIN_TIME_DELTA,
     EXP2_INPUT_TOO_HIGH,
     RewardsDistributionType,
@@ -59,6 +60,11 @@ describe('AutoCompoundingRewards', () => {
 
     before(async () => {
         [deployer, user, rewardsProvider] = await ethers.getSigners();
+    });
+
+    beforeEach(async () => {
+        ({ network, networkInfo, networkSettings, bnt, bntPool, bntPoolToken, poolCollection, externalRewardsVault } =
+            await createSystem());
     });
 
     const prepareSimplePool = async (tokenData: TokenData, providerStake: BigNumberish, totalRewards: BigNumberish) => {
@@ -162,11 +168,53 @@ describe('AutoCompoundingRewards', () => {
         return { tokenAmountToDistribute, poolTokenAmountToBurn };
     };
 
-    describe('construction', () => {
-        beforeEach(async () => {
-            ({ network, networkSettings, bnt, bntPool, poolCollection, externalRewardsVault } = await createSystem());
-        });
+    const START_TIME = 1000;
+    const FLAT_TOTAL_DURATION = duration.days(10);
+    const EXP_DECAY_HALF_LIFE = duration.days(560);
+    const EXP_DECAY_MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(EXP_DECAY_HALF_LIFE).sub(1).ceil().toNumber();
 
+    const programEndTimes = {
+        [RewardsDistributionType.Flat]: START_TIME + FLAT_TOTAL_DURATION,
+        [RewardsDistributionType.ExpDecay]: 0
+    };
+
+    const programHalfLives = {
+        [RewardsDistributionType.Flat]: 0,
+        [RewardsDistributionType.ExpDecay]: EXP_DECAY_HALF_LIFE
+    };
+
+    const programDurations = {
+        [RewardsDistributionType.Flat]: FLAT_TOTAL_DURATION,
+        [RewardsDistributionType.ExpDecay]: EXP_DECAY_MAX_DURATION
+    };
+
+    const createProgram = async (
+        distributionType: RewardsDistributionType,
+        autoCompoundingRewards: TestAutoCompoundingRewards,
+        pool: string,
+        totalRewards: BigNumberish,
+        startTime: number
+    ) => {
+        switch (distributionType) {
+            case RewardsDistributionType.Flat:
+                return autoCompoundingRewards.createFlatProgram(
+                    pool,
+                    totalRewards,
+                    startTime,
+                    programEndTimes[distributionType]
+                );
+
+            case RewardsDistributionType.ExpDecay:
+                return autoCompoundingRewards.createExpDecayProgram(
+                    pool,
+                    totalRewards,
+                    startTime,
+                    programHalfLives[distributionType]
+                );
+        }
+    };
+
+    describe('construction', () => {
         it('should revert when attempting to create with an invalid network contract', async () => {
             await expect(
                 Contracts.AutoCompoundingRewards.deploy(
@@ -258,7 +306,8 @@ describe('AutoCompoundingRewards', () => {
                 deployer.address
             ]);
 
-            expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.be.gt(0);
+            expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.equal(1);
+            expect(await autoCompoundingRewards.autoProcessRewardsIndex()).to.equal(0);
         });
     });
 
@@ -267,63 +316,7 @@ describe('AutoCompoundingRewards', () => {
         const TOTAL_REWARDS = toWei(10_000);
         const INITIAL_USER_STAKE = toWei(10_000);
 
-        const START_TIME = 1000;
-        const FLAT_TOTAL_DURATION = duration.days(10);
-        const EXP_DECAY_HALF_LIFE = duration.days(560);
-        const EXP_DECAY_MAX_DURATION = EXP2_INPUT_TOO_HIGH.mul(EXP_DECAY_HALF_LIFE).sub(1).ceil().toNumber();
-
-        const programEndTime = {
-            [RewardsDistributionType.Flat]: START_TIME + FLAT_TOTAL_DURATION,
-            [RewardsDistributionType.ExpDecay]: 0
-        };
-
-        const programHalfLife = {
-            [RewardsDistributionType.Flat]: 0,
-            [RewardsDistributionType.ExpDecay]: EXP_DECAY_HALF_LIFE
-        };
-
-        const programDuration = {
-            [RewardsDistributionType.Flat]: FLAT_TOTAL_DURATION,
-            [RewardsDistributionType.ExpDecay]: EXP_DECAY_MAX_DURATION
-        };
-
-        const createProgram = async (
-            distributionType: RewardsDistributionType,
-            autoCompoundingRewards: TestAutoCompoundingRewards,
-            pool: string,
-            totalRewards: BigNumberish,
-            startTime: number
-        ) => {
-            switch (distributionType) {
-                case RewardsDistributionType.Flat:
-                    return autoCompoundingRewards.createFlatProgram(
-                        pool,
-                        totalRewards,
-                        startTime,
-                        programEndTime[distributionType]
-                    );
-                case RewardsDistributionType.ExpDecay:
-                    return autoCompoundingRewards.createExpDecayProgram(
-                        pool,
-                        totalRewards,
-                        startTime,
-                        programHalfLife[distributionType]
-                    );
-            }
-        };
-
         beforeEach(async () => {
-            ({
-                network,
-                networkInfo,
-                networkSettings,
-                bnt,
-                bntPool,
-                bntPoolToken,
-                poolCollection,
-                externalRewardsVault
-            } = await createSystem());
-
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
 
@@ -481,6 +474,7 @@ describe('AutoCompoundingRewards', () => {
                                 }
                             }
                             break;
+
                         case RewardsDistributionType.ExpDecay:
                             for (let startTime = 0; startTime < 4; startTime++) {
                                 for (let halfLife = 0; halfLife < 4; halfLife++) {
@@ -591,7 +585,7 @@ describe('AutoCompoundingRewards', () => {
 
                             await expect(res)
                                 .to.emit(autoCompoundingRewards, 'ProgramTerminated')
-                                .withArgs(token.address, programEndTime[distributionType], TOTAL_REWARDS);
+                                .withArgs(token.address, programEndTimes[distributionType], TOTAL_REWARDS);
 
                             const program = await autoCompoundingRewards.program(token.address);
 
@@ -619,7 +613,7 @@ describe('AutoCompoundingRewards', () => {
 
                             await expect(res)
                                 .to.emit(autoCompoundingRewards, 'ProgramTerminated')
-                                .withArgs(token.address, programEndTime[distributionType], TOTAL_REWARDS);
+                                .withArgs(token.address, programEndTimes[distributionType], TOTAL_REWARDS);
 
                             const program = await autoCompoundingRewards.program(token.address);
 
@@ -717,7 +711,7 @@ describe('AutoCompoundingRewards', () => {
                     });
                 });
 
-                describe('updating the number of programs to auto-process the rewards for', () => {
+                describe('setting the auto-process count', () => {
                     it('should revert when the new value is zero', async () => {
                         await expect(autoCompoundingRewards.setAutoProcessRewardsCount(0)).to.be.revertedWith(
                             'ZeroValue'
@@ -771,7 +765,7 @@ describe('AutoCompoundingRewards', () => {
                     });
 
                     it('should distribute tokens only when the program is enabled', async () => {
-                        await autoCompoundingRewards.setTime(START_TIME + programDuration[distributionType]);
+                        await autoCompoundingRewards.setTime(START_TIME + programDurations[distributionType]);
                         await autoCompoundingRewards.enableProgram(token.address, false);
                         const res1 = await autoCompoundingRewards.processRewards(token.address);
                         await expect(res1).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
@@ -808,176 +802,6 @@ describe('AutoCompoundingRewards', () => {
                                 }
                             });
                         }
-                    }
-                });
-
-                describe('auto-processing rewards', () => {
-                    const AUTO_PROCESS_REWARDS_COUNT = 3;
-
-                    const setups = [
-                        { tokenSymbol: TokenSymbol.ETH, initialUserStake: toWei(10_000), totalRewards: toWei(11_000) },
-                        { tokenSymbol: TokenSymbol.BNT, initialUserStake: toWei(20_000), totalRewards: toWei(12_000) },
-                        { tokenSymbol: TokenSymbol.TKN, initialUserStake: toWei(30_000), totalRewards: toWei(13_000) },
-                        { tokenSymbol: TokenSymbol.TKN1, initialUserStake: toWei(40_000), totalRewards: toWei(14_000) },
-                        { tokenSymbol: TokenSymbol.TKN2, initialUserStake: toWei(50_000), totalRewards: toWei(15_000) },
-                        { tokenSymbol: TokenSymbol.TKN2, initialUserStake: toWei(60_000), totalRewards: toWei(16_000) },
-                        { tokenSymbol: TokenSymbol.TKN1, initialUserStake: toWei(70_000), totalRewards: toWei(17_000) },
-                        { tokenSymbol: TokenSymbol.TKN, initialUserStake: toWei(80_000), totalRewards: toWei(18_000) }
-                    ];
-
-                    const tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
-                    const poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
-
-                    const autoProcessNoRewards = async () => {
-                        const res = await autoCompoundingRewards.autoProcessRewards();
-                        await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
-                    };
-
-                    const autoProcessSomeRewards = async (i: number) => {
-                        const tokenAmountToDistributeArray: BigNumber[] = new Array<BigNumber>(
-                            AUTO_PROCESS_REWARDS_COUNT
-                        );
-
-                        const poolTokenAmountToBurnArray: BigNumber[] = new Array<BigNumber>(
-                            AUTO_PROCESS_REWARDS_COUNT
-                        );
-
-                        const remainingRewardsArray: BigNumber[] = new Array<BigNumber>(AUTO_PROCESS_REWARDS_COUNT);
-
-                        for (let j = 0; j < AUTO_PROCESS_REWARDS_COUNT; j++) {
-                            const index = (AUTO_PROCESS_REWARDS_COUNT * i + j) % tokens.length;
-                            const programData = await autoCompoundingRewards.program(tokens[index].address);
-                            const { tokenAmountToDistribute, poolTokenAmountToBurn } = await getRewards(
-                                programData,
-                                tokens[index],
-                                rewardsMath,
-                                new TokenData(setups[index].tokenSymbol),
-                                setups[index].tokenSymbol === TokenSymbol.BNT ? bntPool : externalRewardsVault
-                            );
-                            tokenAmountToDistributeArray[j] = tokenAmountToDistribute;
-                            poolTokenAmountToBurnArray[j] = poolTokenAmountToBurn;
-                            remainingRewardsArray[j] = programData.remainingRewards;
-                        }
-
-                        const res = await autoCompoundingRewards.autoProcessRewards();
-
-                        for (let j = 0; j < AUTO_PROCESS_REWARDS_COUNT; j++) {
-                            const index = AUTO_PROCESS_REWARDS_COUNT * i + j;
-                            if (index >= tokens.length) {
-                                break;
-                            }
-                            if (tokenAmountToDistributeArray[j].gt(0) && poolTokenAmountToBurnArray[j].gt(0)) {
-                                await expect(res)
-                                    .to.emit(autoCompoundingRewards, 'RewardsDistributed')
-                                    .withArgs(
-                                        tokens[index].address,
-                                        tokenAmountToDistributeArray[j],
-                                        poolTokenAmountToBurnArray[j],
-                                        remainingRewardsArray[j].sub(tokenAmountToDistributeArray[j])
-                                    );
-                            }
-                        }
-                    };
-
-                    const createPrograms = async (overrideTotalRewards = false, overrideStakedBalance = false) => {
-                        for (const [index, setup] of setups.entries()) {
-                            ({ token: tokens[index], poolToken: poolTokens[index] } = await prepareSimplePool(
-                                new TokenData(setup.tokenSymbol),
-                                setup.initialUserStake,
-                                setup.totalRewards
-                            ));
-
-                            // overriding the staked balance of each pool with a value twice as large
-                            // reduces the amount of pool tokens which will be burned when rewards are processed
-                            if (overrideStakedBalance) {
-                                const poolData = await poolCollection.poolData(tokens[index].address);
-                                await poolCollection.setTradingLiquidityT(tokens[index].address, {
-                                    bntTradingLiquidity: poolData.liquidity.bntTradingLiquidity,
-                                    baseTokenTradingLiquidity: poolData.liquidity.baseTokenTradingLiquidity,
-                                    stakedBalance: poolData.liquidity.stakedBalance.mul(2)
-                                });
-                            }
-
-                            // when `overrideTotalRewards == true`, using `index + 1` as the total rewards value
-                            // yields some cases where the total amount of tokens to distribute is equal to zero
-                            // and some cases where the total amount of tokens to distribute is larger than zero
-                            await createProgram(
-                                distributionType,
-                                autoCompoundingRewards,
-                                tokens[index].address,
-                                overrideTotalRewards ? index + 1 : setup.totalRewards,
-                                START_TIME
-                            );
-                        }
-                    };
-
-                    let rewardsMath: TestRewardsMath;
-
-                    beforeEach(async () => {
-                        rewardsMath = await Contracts.TestRewardsMath.deploy();
-                        await autoCompoundingRewards.setAutoProcessRewardsCount(AUTO_PROCESS_REWARDS_COUNT);
-                    });
-
-                    if (distributionType === RewardsDistributionType.Flat) {
-                        it('should distribute all tokens', async () => {
-                            await createPrograms();
-                            await autoCompoundingRewards.setTime(programEndTime[distributionType]);
-                            for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
-                                await autoProcessSomeRewards(i);
-                            }
-                            await autoProcessNoRewards();
-                        });
-
-                        it('should distribute some tokens', async () => {
-                            await createPrograms();
-                            for (let i = 0; i < 5; i++) {
-                                await autoCompoundingRewards.setTime(
-                                    Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
-                                );
-                                await autoProcessSomeRewards(i);
-                            }
-                        });
-
-                        it('should distribute tokens only when the amount of tokens to distribute is larger than zero', async () => {
-                            // override the total rewards of each program with a very small value
-                            await createPrograms(true);
-                            for (let i = 0; i < 5; i++) {
-                                await autoCompoundingRewards.setTime(
-                                    Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
-                                );
-                                await autoProcessSomeRewards(i);
-                            }
-                        });
-
-                        it('should distribute tokens only when the amount of pool tokens to burn is larger than zero', async () => {
-                            // override the total rewards of each program with a very small value
-                            // override the staked balance of each pool with a much larger value
-                            await createPrograms(true, true);
-                            for (let i = 0; i < 5; i++) {
-                                await autoCompoundingRewards.setTime(
-                                    Math.floor(START_TIME + (programDuration[distributionType] * 2 ** i) / (2 ** i + 1))
-                                );
-                                await autoProcessSomeRewards(i);
-                            }
-                        });
-
-                        it('should distribute tokens only when the minimum time period has elapsed', async () => {
-                            await createPrograms();
-                            await autoCompoundingRewards.setTime(
-                                Math.floor(START_TIME + programDuration[distributionType] / 2)
-                            );
-                            for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
-                                await autoProcessSomeRewards(i);
-                            }
-                            await autoCompoundingRewards.setTime(
-                                Math.floor(START_TIME + programDuration[distributionType] / 2) +
-                                    AUTO_PROCESS_REWARDS_MIN_TIME_DELTA -
-                                    1
-                            );
-                            for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT) + 1; i++) {
-                                await autoProcessNoRewards();
-                            }
-                        });
                     }
                 });
 
@@ -1130,7 +954,7 @@ describe('AutoCompoundingRewards', () => {
                                 START_TIME
                             );
 
-                            await autoCompoundingRewards.setTime(START_TIME + programDuration[distributionType] + 1);
+                            await autoCompoundingRewards.setTime(START_TIME + programDurations[distributionType] + 1);
                         });
 
                         switch (distributionType) {
@@ -1271,7 +1095,7 @@ describe('AutoCompoundingRewards', () => {
                                                 token.address,
                                                 maxTotalRewards,
                                                 START_TIME,
-                                                programEndTime[distributionType]
+                                                programEndTimes[distributionType]
                                             );
                                         break;
                                     case RewardsDistributionType.ExpDecay:
@@ -1281,7 +1105,7 @@ describe('AutoCompoundingRewards', () => {
                                                 token.address,
                                                 maxTotalRewards,
                                                 START_TIME,
-                                                programHalfLife[distributionType]
+                                                programHalfLives[distributionType]
                                             );
                                         break;
                                 }
@@ -1317,7 +1141,7 @@ describe('AutoCompoundingRewards', () => {
                                             token.address,
                                             TOTAL_REWARDS,
                                             START_TIME,
-                                            programEndTime[distributionType]
+                                            programEndTimes[distributionType]
                                         );
                                     break;
                                 case RewardsDistributionType.ExpDecay:
@@ -1327,7 +1151,7 @@ describe('AutoCompoundingRewards', () => {
                                             token.address,
                                             TOTAL_REWARDS,
                                             START_TIME,
-                                            programHalfLife[distributionType]
+                                            programHalfLives[distributionType]
                                         );
                                     break;
                             }
@@ -1339,8 +1163,8 @@ describe('AutoCompoundingRewards', () => {
                             expect(program.remainingRewards).to.equal(TOTAL_REWARDS);
                             expect(program.distributionType).to.equal(distributionType);
                             expect(program.startTime).to.equal(START_TIME);
-                            expect(program.endTime).to.equal(programEndTime[distributionType]);
-                            expect(program.halfLife).to.equal(programHalfLife[distributionType]);
+                            expect(program.endTime).to.equal(programEndTimes[distributionType]);
+                            expect(program.halfLife).to.equal(programHalfLives[distributionType]);
                             expect(program.prevDistributionTimestamp).to.equal(0);
                             expect(program.isEnabled).to.be.true;
                         });
@@ -1368,7 +1192,7 @@ describe('AutoCompoundingRewards', () => {
                                 await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, deployer.address);
                             }
 
-                            await autoCompoundingRewards.setTime(START_TIME + programDuration[distributionType]);
+                            await autoCompoundingRewards.setTime(START_TIME + programDurations[distributionType]);
 
                             const balance = await (poolToken as PoolToken).balanceOf(rewardsVault.address);
                             await rewardsVault.withdrawFunds(poolToken.address, deployer.address, balance.sub(1));
@@ -1413,17 +1237,6 @@ describe('AutoCompoundingRewards', () => {
             const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
 
             beforeEach(async () => {
-                ({
-                    network,
-                    networkInfo,
-                    networkSettings,
-                    bnt,
-                    bntPool,
-                    bntPoolToken,
-                    poolCollection,
-                    externalRewardsVault
-                } = await createSystem());
-
                 rewardsMath = await Contracts.TestRewardsMath.deploy();
 
                 await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -1802,5 +1615,250 @@ describe('AutoCompoundingRewards', () => {
         describe('@stress tests', () => {
             testRewardsMatrix([toWei(5_000), toWei(100_000)], [100_000, toWei(200_000)]);
         });
+    });
+
+    describe('auto-processing rewards', () => {
+        const AUTO_PROCESS_REWARDS_COUNT = 3;
+
+        const setups = [
+            {
+                tokenSymbol: TokenSymbol.ETH,
+                initialUserStake: toWei(10_000),
+                totalRewards: toWei(11_000)
+            },
+            {
+                tokenSymbol: TokenSymbol.BNT,
+                initialUserStake: toWei(20_000),
+                totalRewards: toWei(12_000)
+            },
+            {
+                tokenSymbol: TokenSymbol.TKN,
+                initialUserStake: toWei(30_000),
+                totalRewards: toWei(13_000)
+            },
+            {
+                tokenSymbol: TokenSymbol.TKN1,
+                initialUserStake: toWei(40_000),
+                totalRewards: toWei(14_000)
+            },
+            {
+                tokenSymbol: TokenSymbol.TKN2,
+                initialUserStake: toWei(50_000),
+                totalRewards: toWei(15_000)
+            },
+            {
+                tokenSymbol: TokenSymbol.TKN2,
+                initialUserStake: toWei(60_000),
+                totalRewards: toWei(16_000)
+            },
+            {
+                tokenSymbol: TokenSymbol.TKN1,
+                initialUserStake: toWei(70_000),
+                totalRewards: toWei(17_000)
+            },
+            {
+                tokenSymbol: TokenSymbol.TKN,
+                initialUserStake: toWei(80_000),
+                totalRewards: toWei(18_000)
+            }
+        ];
+
+        const tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
+        const poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
+
+        let rewardsMath: TestRewardsMath;
+
+        beforeEach(async () => {
+            rewardsMath = await Contracts.TestRewardsMath.deploy();
+
+            autoCompoundingRewards = await createAutoCompoundingRewards(
+                network,
+                networkSettings,
+                bnt,
+                bntPool,
+                externalRewardsVault
+            );
+
+            await autoCompoundingRewards.setAutoProcessRewardsCount(AUTO_PROCESS_REWARDS_COUNT);
+        });
+
+        const autoProcessNoRewards = async () => {
+            const maxCount = AUTO_PROCESS_MAX_PROGRAMS_FACTOR * AUTO_PROCESS_REWARDS_COUNT;
+            const prevIndex = (await autoCompoundingRewards.autoProcessRewardsIndex()).toNumber();
+
+            const res = await autoCompoundingRewards.autoProcessRewards();
+            await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
+
+            expect(await autoCompoundingRewards.autoProcessRewardsIndex()).to.equal(
+                (prevIndex + maxCount) % setups.length
+            );
+        };
+
+        const autoProcessSomeRewards = async () => {
+            const maxCount = AUTO_PROCESS_MAX_PROGRAMS_FACTOR * AUTO_PROCESS_REWARDS_COUNT;
+
+            const tokenAmountsToDistribute: BigNumber[] = new Array<BigNumber>(maxCount);
+            const poolTokenAmountsToBurn: BigNumber[] = new Array<BigNumber>(maxCount);
+            const remainingRewards: BigNumber[] = new Array<BigNumber>(maxCount);
+            const prevDistributionTimestamps: number[] = new Array<number>(maxCount);
+
+            const prevIndex = (await autoCompoundingRewards.autoProcessRewardsIndex()).toNumber();
+
+            for (let i = 0; i < maxCount; i++) {
+                const index = (prevIndex + i) % setups.length;
+                const programData = await autoCompoundingRewards.program(tokens[index].address);
+                const { tokenAmountToDistribute, poolTokenAmountToBurn } = await getRewards(
+                    programData,
+                    tokens[index],
+                    rewardsMath,
+                    new TokenData(setups[index].tokenSymbol),
+                    setups[index].tokenSymbol === TokenSymbol.BNT ? bntPool : externalRewardsVault
+                );
+                tokenAmountsToDistribute[index] = tokenAmountToDistribute;
+                poolTokenAmountsToBurn[index] = poolTokenAmountToBurn;
+                remainingRewards[index] = programData.remainingRewards;
+                prevDistributionTimestamps[index] = programData.prevDistributionTimestamp;
+            }
+
+            const res = await autoCompoundingRewards.autoProcessRewards();
+
+            let expectedIndex = prevIndex;
+
+            let count = AUTO_PROCESS_REWARDS_COUNT;
+
+            for (let i = 0; i < maxCount; i++) {
+                const index = (prevIndex + i) % setups.length;
+                const programData = await autoCompoundingRewards.program(tokens[index].address);
+
+                expectedIndex = (expectedIndex + 1) % setups.length;
+
+                const currTime = await autoCompoundingRewards.currentTime();
+                if (
+                    programData.isEnabled &&
+                    currTime >= prevDistributionTimestamps[index] + AUTO_PROCESS_REWARDS_MIN_TIME_DELTA
+                ) {
+                    if (tokenAmountsToDistribute[index].gt(0) && poolTokenAmountsToBurn[index].gt(0)) {
+                        await expect(res)
+                            .to.emit(autoCompoundingRewards, 'RewardsDistributed')
+                            .withArgs(
+                                tokens[index].address,
+                                tokenAmountsToDistribute[index],
+                                poolTokenAmountsToBurn[index],
+                                remainingRewards[index].sub(tokenAmountsToDistribute[index])
+                            );
+                    }
+
+                    count -= 1;
+                    if (count === 0) {
+                        break;
+                    }
+                }
+            }
+
+            expect(await autoCompoundingRewards.autoProcessRewardsIndex()).to.equal(expectedIndex);
+        };
+
+        const testAutoProcessing = (distributionType: RewardsDistributionType) => {
+            interface Overrides {
+                totalRewards?: BigNumber;
+            }
+
+            const createPrograms = async (overrides: Overrides = {}) => {
+                for (const [index, setup] of setups.entries()) {
+                    ({ token: tokens[index], poolToken: poolTokens[index] } = await prepareSimplePool(
+                        new TokenData(setup.tokenSymbol),
+                        setup.initialUserStake,
+                        setup.totalRewards
+                    ));
+
+                    await createProgram(
+                        distributionType,
+                        autoCompoundingRewards,
+                        tokens[index].address,
+                        overrides.totalRewards ?? setup.totalRewards,
+                        START_TIME
+                    );
+                }
+            };
+
+            context('regular rewards', () => {
+                beforeEach(async () => {
+                    await createPrograms();
+                });
+
+                it('should distribute all tokens', async () => {
+                    await autoCompoundingRewards.setTime(programEndTimes[distributionType]);
+
+                    for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
+                        await autoProcessSomeRewards();
+                    }
+
+                    await autoProcessNoRewards();
+                });
+
+                it('should distribute some tokens', async () => {
+                    for (let i = 0; i < 5; i++) {
+                        await autoCompoundingRewards.setTime(
+                            Math.floor(START_TIME + (programDurations[distributionType] * 2 ** i) / (2 ** i + 1))
+                        );
+
+                        await autoProcessSomeRewards();
+                    }
+                });
+
+                it('should distribute tokens only when the minimum time period has elapsed', async () => {
+                    await autoCompoundingRewards.setTime(
+                        Math.floor(START_TIME + programDurations[distributionType] / 2)
+                    );
+
+                    for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
+                        await autoProcessSomeRewards();
+                    }
+
+                    await autoCompoundingRewards.setTime(
+                        Math.floor(START_TIME + programDurations[distributionType] / 2) +
+                            AUTO_PROCESS_REWARDS_MIN_TIME_DELTA -
+                            1
+                    );
+
+                    for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT) + 1; i++) {
+                        await autoProcessNoRewards();
+                    }
+                });
+            });
+
+            context('small rewards', () => {
+                beforeEach(async () => {
+                    // using small the total rewards values yields some cases where the total amount of tokens to
+                    // distribute is equal to zero and some cases where the total amount of tokens to distribute is
+                    // larger than zero
+                    await createPrograms({ totalRewards: BigNumber.from(1) });
+                });
+
+                it('should distribute tokens only when the amount of tokens to distribute is larger than zero', async () => {
+                    for (let i = 0; i < 5; i++) {
+                        await autoCompoundingRewards.setTime(
+                            Math.floor(START_TIME + (programDurations[distributionType] * 2 ** i) / (2 ** i + 1))
+                        );
+                        await autoProcessSomeRewards();
+                    }
+                });
+
+                it('should distribute tokens only when the amount of pool tokens to burn is larger than zero', async () => {
+                    for (let i = 0; i < 5; i++) {
+                        await autoCompoundingRewards.setTime(
+                            Math.floor(START_TIME + (programDurations[distributionType] * 2 ** i) / (2 ** i + 1))
+                        );
+                        await autoProcessSomeRewards();
+                    }
+                });
+            });
+        };
+
+        for (const distributionType of [RewardsDistributionType.Flat, RewardsDistributionType.ExpDecay]) {
+            context(distributionType === RewardsDistributionType.Flat ? 'flat' : 'exponential decay', () => {
+                testAutoProcessing(distributionType);
+            });
+        }
     });
 });
