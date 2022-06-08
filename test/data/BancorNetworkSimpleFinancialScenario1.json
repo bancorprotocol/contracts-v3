@@ -6,9 +6,10 @@
   "tknDecimals": 18,
   "bntMinLiquidity": "1000000",
   "bntFundingLimit": "10000000",
-  "rewardsToken": "TKN",
-  "rewardsAmount": "500000",
-  "rewardsDuration": 31536000,
+  "tknRewardsAmount": "500000",
+  "tknRewardsDuration": 31536000,
+  "bntRewardsAmount": "500000",
+  "bntRewardsDuration": 31536000,
   "users": [
     {
       "id": "dayTrader",
@@ -38,13 +39,15 @@
           "tknProvider": "9000000",
           "bntProvider": "0",
           "masterVault": "1000000",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "10000",
           "tknProvider": "0",
           "bntProvider": "10000000",
-          "masterVault": "0"
+          "masterVault": "0",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "dayTrader": "0",
@@ -79,13 +82,15 @@
           "tknProvider": "0",
           "bntProvider": "0",
           "masterVault": "10000000",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "10000",
           "tknProvider": "0",
           "bntProvider": "10000000",
-          "masterVault": "0"
+          "masterVault": "0",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "dayTrader": "0",
@@ -123,13 +128,15 @@
           "tknProvider": "0",
           "bntProvider": "0",
           "masterVault": "10000000",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "10000",
           "tknProvider": "0",
           "bntProvider": "10000000",
-          "masterVault": "2000000"
+          "masterVault": "2000000",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "dayTrader": "0",
@@ -164,13 +171,15 @@
           "tknProvider": "0",
           "bntProvider": "0",
           "masterVault": "10000000",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "10000",
           "tknProvider": "0",
           "bntProvider": "9000000",
-          "masterVault": "2000000"
+          "masterVault": "2000000",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "dayTrader": "0",
@@ -205,13 +214,15 @@
           "tknProvider": "4987500",
           "bntProvider": "0",
           "masterVault": "5012500",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "10000",
           "tknProvider": "0",
           "bntProvider": "9000000",
-          "masterVault": "2000000"
+          "masterVault": "2000000",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "dayTrader": "0",
@@ -246,13 +257,15 @@
           "tknProvider": "4987500",
           "bntProvider": "0",
           "masterVault": "5012500",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "10000",
           "tknProvider": "0",
           "bntProvider": "9498750",
-          "masterVault": "2000000"
+          "masterVault": "2000000",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "dayTrader": "0",

@@ -3944,10 +3944,10 @@ describe('BancorNetwork Financial Verification', () => {
         tknDecimals: number;
         bntMinLiquidity: number;
         bntFundingLimit: number;
-        rewardsToken: string;
-        rewardsAmount: number;
-        rewardsDuration: number;
-        rewardsEndTime: number;
+        tknRewardsAmount: number;
+        tknRewardsDuration: number;
+        bntRewardsAmount: number;
+        bntRewardsDuration: number;
         users: User[];
         operations: Operation[];
     }
@@ -3976,7 +3976,8 @@ describe('BancorNetwork Financial Verification', () => {
     let bnbntDecimals: number;
     let blockNumber: number;
     let currentTime: number;
-    let programId: BigNumber;
+    let tknProgramId: BigNumber;
+    let bntProgramId: BigNumber;
 
     const decimalToInteger = (value: string | number, decimals: number) => {
         return BigNumber.from(new Decimal(`${value}e+${decimals}`).toFixed());
@@ -4036,22 +4037,22 @@ describe('BancorNetwork Financial Verification', () => {
 
     const joinTKN = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, tknDecimals, baseToken);
-        await standardRewards.connect(users[userId]).join(programId, wei);
+        await standardRewards.connect(users[userId]).join(tknProgramId, wei);
     };
 
     const joinBNT = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bntDecimals, bnt);
-        await standardRewards.connect(users[userId]).join(programId, wei);
+        await standardRewards.connect(users[userId]).join(bntProgramId, wei);
     };
 
     const leaveTKN = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, tknDecimals, baseToken);
-        await standardRewards.connect(users[userId]).leave(programId, wei);
+        await standardRewards.connect(users[userId]).leave(tknProgramId, wei);
     };
 
     const leaveBNT = async (userId: string, amount: string) => {
         const wei = await toWei(userId, amount, bntDecimals, bnt);
-        await standardRewards.connect(users[userId]).leave(programId, wei);
+        await standardRewards.connect(users[userId]).leave(bntProgramId, wei);
     };
 
     const setFundingLimit = async (amount: string) => {
@@ -4105,11 +4106,16 @@ describe('BancorNetwork Financial Verification', () => {
         }
 
         actual.tknBalances.masterVault = integerToDecimal(await baseToken.balanceOf(masterVault.address), tknDecimals);
+        actual.tknBalances.erVault = integerToDecimal(
+            await baseToken.balanceOf(externalRewardsVault.address),
+            tknDecimals
+        );
         actual.tknBalances.epVault = integerToDecimal(
             await baseToken.balanceOf(externalProtectionVault.address),
             tknDecimals
         );
         actual.bntBalances.masterVault = integerToDecimal(await bnt.balanceOf(masterVault.address), bntDecimals);
+        actual.bntBalances.erVault = integerToDecimal(await bnt.balanceOf(externalRewardsVault.address), bntDecimals);
         actual.bnbntBalances.bntPool = integerToDecimal(await bntPoolToken.balanceOf(bntPool.address), bnbntDecimals);
 
         const poolData = await poolCollection.poolData(baseToken.address);
@@ -4129,6 +4135,26 @@ describe('BancorNetwork Financial Verification', () => {
         expect(actual).to.deep.equal(expected);
     };
 
+    const createProgram = async (
+        token: IERC20,
+        rewardsAmount: number,
+        decimals: number,
+        currentTime: number,
+        rewardsDuration: number
+    ) => {
+        const programId = await standardRewards.nextProgramId();
+        const rewardsAmountWei = decimalToInteger(rewardsAmount, decimals);
+        await token.transfer(externalRewardsVault.address, rewardsAmountWei);
+        await standardRewards.createProgram(
+            token.address,
+            token.address,
+            rewardsAmountWei,
+            currentTime,
+            currentTime + rewardsDuration
+        );
+        return programId;
+    };
+
     const init = async (fileName: string) => {
         const signers = await ethers.getSigners();
 
@@ -4142,27 +4168,14 @@ describe('BancorNetwork Financial Verification', () => {
         bntknDecimals = DEFAULT_DECIMALS;
         bnbntDecimals = DEFAULT_DECIMALS;
 
-        let tknRewardsAmount = BigNumber.from(0);
-        let bntRewardsAmount = BigNumber.from(0);
-
-        switch (flow.rewardsToken) {
-            case 'TKN':
-                tknRewardsAmount = BigNumber.from(flow.rewardsAmount);
-                break;
-
-            case 'BNT':
-                bntRewardsAmount = BigNumber.from(flow.rewardsAmount);
-                break;
-
-            default:
-                throw new Error('Invalid Rewards Token');
-        }
-
         const tknAmount = flow.users
-            .reduce((sum, user) => sum.add(user.tknBalance), tknRewardsAmount.add(flow.epVaultBalance))
+            .reduce(
+                (sum, user) => sum.add(user.tknBalance),
+                BigNumber.from(flow.tknRewardsAmount).add(flow.epVaultBalance)
+            )
             .mul(BigNumber.from(10).pow(tknDecimals));
         const bntAmount = flow.users
-            .reduce((sum, user) => sum.add(user.bntBalance), bntRewardsAmount)
+            .reduce((sum, user) => sum.add(user.bntBalance), BigNumber.from(flow.bntRewardsAmount))
             .mul(BigNumber.from(10).pow(bntDecimals));
 
         ({
@@ -4225,32 +4238,19 @@ describe('BancorNetwork Financial Verification', () => {
         blockNumber = await poolCollection.currentBlockNumber();
         currentTime = await standardRewards.currentTime();
 
-        let rewardsToken: IERC20;
-        let rewardsAmount: BigNumber;
-
-        switch (flow.rewardsToken) {
-            case 'TKN':
-                rewardsToken = baseToken;
-                rewardsAmount = decimalToInteger(flow.rewardsAmount, tknDecimals);
-                break;
-
-            case 'BNT':
-                rewardsToken = bnt;
-                rewardsAmount = decimalToInteger(flow.rewardsAmount, tknDecimals);
-                break;
-
-            default:
-                throw new Error('Invalid Rewards Token');
-        }
-
-        programId = await standardRewards.nextProgramId();
-        await rewardsToken.transfer(externalRewardsVault.address, rewardsAmount);
-        await standardRewards.createProgram(
-            baseToken.address,
-            rewardsToken.address,
-            rewardsAmount,
+        tknProgramId = await createProgram(
+            baseToken,
+            flow.tknRewardsAmount,
+            tknDecimals,
             currentTime,
-            currentTime + flow.rewardsDuration
+            flow.tknRewardsDuration
+        );
+        bntProgramId = await createProgram(
+            bnt,
+            flow.bntRewardsAmount,
+            bntDecimals,
+            currentTime,
+            flow.bntRewardsDuration
         );
 
         expect(await baseToken.balanceOf(signers[0].address)).to.equal(0);
