@@ -1906,9 +1906,9 @@ describe('AutoCompoundingRewards', () => {
 
             context('small rewards', () => {
                 beforeEach(async () => {
-                    // using small the total rewards values yields some cases where the total amount of tokens to
-                    // distribute is equal to zero and some cases where the total amount of tokens to distribute is
-                    // larger than zero
+                    // using small total rewards values yields some cases where the total amount of tokens to distribute
+                    // is equal to zero and some cases where the total amount of tokens to distribute is larger than
+                    // zero
                     await createPrograms({ totalRewards: BigNumber.from(1) });
                 });
 
