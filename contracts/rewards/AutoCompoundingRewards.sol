@@ -104,7 +104,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev triggered when the number of programs to auto-process the rewards for is updated
      */
-    event AutoProcessRewardsCountUpdated(uint256 prevAutoProcessRewardsCount, uint256 newAutoProcessRewardsCount);
+    event AutoProcessRewardsCountUpdated(uint256 prevCount, uint256 newCount);
 
     /**
      * @dev triggered when rewards are distributed
@@ -217,22 +217,15 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      *
      * - the caller must be the admin of the contract
      */
-    function setAutoProcessRewardsCount(uint256 newAutoProcessRewardsCount)
-        external
-        greaterThanZero(newAutoProcessRewardsCount)
-        onlyAdmin
-    {
-        uint256 prevAutoProcessRewardsCount = _autoProcessRewardsCount;
-        if (prevAutoProcessRewardsCount == newAutoProcessRewardsCount) {
+    function setAutoProcessRewardsCount(uint256 newCount) external greaterThanZero(newCount) onlyAdmin {
+        uint256 prevCount = _autoProcessRewardsCount;
+        if (prevCount == newCount) {
             return;
         }
 
-        _autoProcessRewardsCount = newAutoProcessRewardsCount;
+        _autoProcessRewardsCount = newCount;
 
-        emit AutoProcessRewardsCountUpdated({
-            prevAutoProcessRewardsCount: prevAutoProcessRewardsCount,
-            newAutoProcessRewardsCount: newAutoProcessRewardsCount
-        });
+        emit AutoProcessRewardsCountUpdated({ prevCount: prevCount, newCount: newCount });
     }
 
     /**
