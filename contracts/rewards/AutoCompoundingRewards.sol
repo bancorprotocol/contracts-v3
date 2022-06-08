@@ -211,6 +211,31 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
+     * @dev sets the number of programs to auto-process the rewards for
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function setAutoProcessRewardsCount(uint256 newAutoProcessRewardsCount)
+        external
+        greaterThanZero(newAutoProcessRewardsCount)
+        onlyAdmin
+    {
+        uint256 prevAutoProcessRewardsCount = _autoProcessRewardsCount;
+        if (prevAutoProcessRewardsCount == newAutoProcessRewardsCount) {
+            return;
+        }
+
+        _autoProcessRewardsCount = newAutoProcessRewardsCount;
+
+        emit AutoProcessRewardsCountUpdated({
+            prevAutoProcessRewardsCount: prevAutoProcessRewardsCount,
+            newAutoProcessRewardsCount: newAutoProcessRewardsCount
+        });
+    }
+
+    /**
      * @inheritdoc IAutoCompoundingRewards
      */
     function isProgramActive(Token pool) external view returns (bool) {
@@ -305,27 +330,6 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         _programs[pool].isEnabled = status;
 
         emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
-    }
-
-    /**
-     * @inheritdoc IAutoCompoundingRewards
-     */
-    function setAutoProcessRewardsCount(uint256 newAutoProcessRewardsCount)
-        external
-        greaterThanZero(newAutoProcessRewardsCount)
-        onlyAdmin
-    {
-        uint256 prevAutoProcessRewardsCount = _autoProcessRewardsCount;
-        if (prevAutoProcessRewardsCount == newAutoProcessRewardsCount) {
-            return;
-        }
-
-        _autoProcessRewardsCount = newAutoProcessRewardsCount;
-
-        emit AutoProcessRewardsCountUpdated({
-            prevAutoProcessRewardsCount: prevAutoProcessRewardsCount,
-            newAutoProcessRewardsCount: newAutoProcessRewardsCount
-        });
     }
 
     /**
