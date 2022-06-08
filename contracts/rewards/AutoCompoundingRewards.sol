@@ -343,9 +343,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         for (uint256 i = 0; i < maxCount; i++) {
             bool completed = _processRewards(Token(_pools.at(index % numOfPools)), true);
-            index += 1;
+            index++;
             if (completed) {
-                count -= 1;
+                count--;
                 if (count == 0) {
                     break;
                 }
