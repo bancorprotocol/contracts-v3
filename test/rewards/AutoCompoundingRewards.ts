@@ -812,100 +812,178 @@ describe('AutoCompoundingRewards', () => {
                         });
                     });
 
+                    interface TimeSpec {
+                        startTime: number;
+                        creationTime: number;
+                        elapsedTime: number;
+                    }
+
+                    interface FlatProgramTimeSpec extends TimeSpec {
+                        endTime: number;
+                    }
+
+                    interface ExpDecayProgramTimeSpec extends TimeSpec {
+                        halfLife: number;
+                    }
+
+                    const testProgramActive = (spec: FlatProgramTimeSpec | ExpDecayProgramTimeSpec) => {
+                        const { startTime, creationTime, elapsedTime } = spec;
+
+                        switch (distributionType) {
+                            case RewardsDistributionType.Flat: {
+                                const { endTime } = spec as FlatProgramTimeSpec;
+                                const currTime = creationTime + elapsedTime;
+                                const isProgramTimingValid = creationTime <= startTime && startTime < endTime;
+                                if (!isProgramTimingValid) {
+                                    return;
+                                }
+
+                                const isProgramTimingActive = startTime <= currTime && currTime <= endTime;
+
+                                context(
+                                    `[startTime, endTime, creationTime, elapsedTime] = ${[
+                                        startTime,
+                                        endTime,
+                                        creationTime,
+                                        elapsedTime
+                                    ]}`,
+                                    () => {
+                                        beforeEach(async () => {
+                                            await autoCompoundingRewards.setTime(creationTime);
+
+                                            await autoCompoundingRewards.createFlatProgram(
+                                                token.address,
+                                                TOTAL_REWARDS,
+                                                startTime,
+                                                endTime
+                                            );
+
+                                            await autoCompoundingRewards.setTime(currTime);
+                                        });
+
+                                        it(`should return ${isProgramTimingActive}`, async () => {
+                                            expect(
+                                                await autoCompoundingRewards.isProgramActive(token.address)
+                                            ).to.equal(isProgramTimingActive);
+                                        });
+                                    }
+                                );
+
+                                break;
+                            }
+
+                            case RewardsDistributionType.ExpDecay: {
+                                const { halfLife } = spec as ExpDecayProgramTimeSpec;
+                                const currTime = creationTime + elapsedTime;
+
+                                const isProgramTimingValid = creationTime <= startTime && halfLife !== 0;
+                                if (!isProgramTimingValid) {
+                                    return;
+                                }
+
+                                const isProgramTimingActive = startTime <= currTime;
+
+                                context(
+                                    `[startTime, halfLife, creationTime, elapsedTime] = ${[
+                                        startTime,
+                                        halfLife,
+                                        creationTime,
+                                        elapsedTime
+                                    ]}`,
+                                    () => {
+                                        beforeEach(async () => {
+                                            await autoCompoundingRewards.setTime(creationTime);
+
+                                            await autoCompoundingRewards.createExpDecayProgram(
+                                                token.address,
+                                                TOTAL_REWARDS,
+                                                startTime,
+                                                halfLife
+                                            );
+
+                                            await autoCompoundingRewards.setTime(currTime);
+                                        });
+
+                                        it(`should return ${isProgramTimingActive}`, async () => {
+                                            expect(
+                                                await autoCompoundingRewards.isProgramActive(token.address)
+                                            ).to.equal(isProgramTimingActive);
+                                        });
+                                    }
+                                );
+                                break;
+                            }
+                        }
+                    };
+
                     switch (distributionType) {
-                        case RewardsDistributionType.Flat:
-                            for (let startTime = 0; startTime < 5; startTime++) {
-                                for (let endTime = 0; endTime < 5; endTime++) {
-                                    for (let creationTime = 0; creationTime < 5; creationTime++) {
-                                        for (let elapsedTime = 0; elapsedTime < 5; elapsedTime++) {
-                                            const currTime = creationTime + elapsedTime;
-                                            const isProgramTimingValid =
-                                                creationTime <= startTime && startTime < endTime;
-                                            const isProgramTimingActive = startTime <= currTime && currTime <= endTime;
+                        case RewardsDistributionType.Flat: {
+                            describe('regular tests', () => {
+                                for (const startTime of [0, 50]) {
+                                    for (const elapsedTime of [0, 100, 1000]) {
+                                        testProgramActive({
+                                            startTime,
+                                            endTime: 500,
+                                            creationTime: 0,
+                                            elapsedTime
+                                        });
+                                    }
+                                }
+                            });
 
-                                            if (isProgramTimingValid) {
-                                                context(
-                                                    `[startTime, endTime, creationTime, elapsedTime] = ${[
-                                                        startTime,
-                                                        endTime,
-                                                        creationTime,
-                                                        elapsedTime
-                                                    ]}`,
-                                                    () => {
-                                                        beforeEach(async () => {
-                                                            await autoCompoundingRewards.setTime(creationTime);
-
-                                                            await autoCompoundingRewards.createFlatProgram(
-                                                                token.address,
-                                                                TOTAL_REWARDS,
-                                                                startTime,
-                                                                endTime
-                                                            );
-
-                                                            await autoCompoundingRewards.setTime(currTime);
-                                                        });
-
-                                                        it(`should return ${isProgramTimingActive}`, async () => {
-                                                            expect(
-                                                                await autoCompoundingRewards.isProgramActive(
-                                                                    token.address
-                                                                )
-                                                            ).to.equal(isProgramTimingActive);
-                                                        });
-                                                    }
-                                                );
+                            describe('@stress tests', () => {
+                                for (let startTime = 0; startTime < 5; startTime++) {
+                                    for (let endTime = 0; endTime < 5; endTime++) {
+                                        for (let creationTime = 0; creationTime < 5; creationTime++) {
+                                            for (let elapsedTime = 0; elapsedTime < 5; elapsedTime++) {
+                                                testProgramActive({
+                                                    startTime,
+                                                    endTime,
+                                                    creationTime,
+                                                    elapsedTime
+                                                });
                                             }
                                         }
                                     }
                                 }
-                            }
+                            });
+
                             break;
-                        case RewardsDistributionType.ExpDecay:
-                            for (let startTime = 0; startTime < 5; startTime++) {
-                                for (let halfLife = 0; halfLife < 5; halfLife++) {
-                                    for (let creationTime = 0; creationTime < 5; creationTime++) {
-                                        for (let elapsedTime = 0; elapsedTime < 5; elapsedTime++) {
-                                            const currTime = creationTime + elapsedTime;
-                                            const isProgramTimingValid = creationTime <= startTime && halfLife !== 0;
-                                            const isProgramTimingActive = startTime <= currTime;
+                        }
 
-                                            if (isProgramTimingValid) {
-                                                context(
-                                                    `[startTime, halfLife, creationTime, elapsedTime] = ${[
-                                                        startTime,
-                                                        halfLife,
-                                                        creationTime,
-                                                        elapsedTime
-                                                    ]}`,
-                                                    () => {
-                                                        beforeEach(async () => {
-                                                            await autoCompoundingRewards.setTime(creationTime);
+                        case RewardsDistributionType.ExpDecay: {
+                            describe('regular tests', () => {
+                                for (const startTime of [0, 50]) {
+                                    for (const elapsedTime of [0, 100, 1000]) {
+                                        testProgramActive({
+                                            startTime,
+                                            halfLife: 500,
+                                            creationTime: 0,
+                                            elapsedTime
+                                        });
+                                    }
+                                }
+                            });
 
-                                                            await autoCompoundingRewards.createExpDecayProgram(
-                                                                token.address,
-                                                                TOTAL_REWARDS,
-                                                                startTime,
-                                                                halfLife
-                                                            );
-
-                                                            await autoCompoundingRewards.setTime(currTime);
-                                                        });
-
-                                                        it(`should return ${isProgramTimingActive}`, async () => {
-                                                            expect(
-                                                                await autoCompoundingRewards.isProgramActive(
-                                                                    token.address
-                                                                )
-                                                            ).to.equal(isProgramTimingActive);
-                                                        });
-                                                    }
-                                                );
+                            describe('@stress tests', () => {
+                                for (let startTime = 0; startTime < 5; startTime++) {
+                                    for (let halfLife = 0; halfLife < 5; halfLife++) {
+                                        for (let creationTime = 0; creationTime < 5; creationTime++) {
+                                            for (let elapsedTime = 0; elapsedTime < 5; elapsedTime++) {
+                                                testProgramActive({
+                                                    startTime,
+                                                    halfLife,
+                                                    creationTime,
+                                                    elapsedTime
+                                                });
                                             }
                                         }
                                     }
                                 }
-                            }
+                            });
+
                             break;
+                        }
                     }
 
                     context('before a program has started', () => {
