@@ -27,6 +27,8 @@ interface PoolData {
     tokenVirtualBalance: Decimal;
 }
 
+const MAX_PRECISION = 16;
+
 const main = async () => {
     const { deployer } = await getNamedSigners();
     const bnt = await DeployedContracts.BNT.deployed();
@@ -61,6 +63,7 @@ const main = async () => {
     const pools: Record<string, PoolData> = {};
     for (let i = 0; i < allPools.length; i++) {
         const pool = allPools[i];
+
         let symbol: string;
         let decimals: number;
 
@@ -103,22 +106,32 @@ const main = async () => {
 
         Logger.log(`  ${TokenSymbol.BNT} price: $${bntPrice.toFixed()}`);
         Logger.log(`  ${symbol} price: $${tokenPrice.toFixed()}`);
-        Logger.log(`  ${symbol} to ${TokenSymbol.BNT} rate: ${rate.toFixed(4)}`);
+        Logger.log(`  ${symbol} to ${TokenSymbol.BNT} rate: ${rate.toFixed(MAX_PRECISION)}`);
 
-        const rateNormalizationFactor = new Decimal(10).pow(DEFAULT_DECIMALS - decimals);
+        const tokenPriceNormalizationFactor = new Decimal(10).pow(DEFAULT_DECIMALS - decimals);
+
+        if (decimals !== DEFAULT_DECIMALS) {
+            Logger.log(`  ${symbol} decimals: ${decimals}`);
+            Logger.log(
+                `  ${symbol} to ${TokenSymbol.BNT} rate normalized: ${rate
+                    .div(tokenPriceNormalizationFactor)
+                    .toFixed(MAX_PRECISION)}`
+            );
+        }
+
         const estimatedRequiredLiquidity = new Decimal(minLiquidityForTrading.toString())
             .mul(rate)
             .mul(MIN_STAKED_BALANCE_FACTOR)
-            .div(rateNormalizationFactor)
+            .div(tokenPriceNormalizationFactor)
             .ceil();
-        const decimalsScale = new Decimal(10).pow(decimals);
+        const decimalsFactor = new Decimal(10).pow(decimals);
 
         Logger.log(`  Current staked ${symbol} balance (wei): ${stakedBalance.toFixed()}`);
-        Logger.log(`  Current staked ${symbol} balance: ${stakedBalance.div(decimalsScale).toFixed(4)}`);
+        Logger.log(`  Current staked ${symbol} balance: ${stakedBalance.div(decimalsFactor).toFixed(4)}`);
         Logger.log(`  Estimating minimum required ${symbol} liquidity (wei): ${estimatedRequiredLiquidity.toFixed()}`);
         Logger.log(
             `  Estimating minimum required ${symbol} liquidity: ${estimatedRequiredLiquidity
-                .div(decimalsScale)
+                .div(decimalsFactor)
                 .toFixed(4)}`
         );
 
@@ -130,10 +143,13 @@ const main = async () => {
 
         Logger.log(`  Found pending pool ${symbol} [${pool}]...`);
 
-        const maxDecimals = Math.max(bntPrice.decimalPlaces(), tokenPrice.decimalPlaces());
+        const normalizedTokenPrice = tokenPrice.div(decimalsFactor);
+        const normalizedBNTPrice = bntPrice.div(new Decimal(10).pow(DEFAULT_DECIMALS));
+
+        const maxDecimals = Math.max(normalizedBNTPrice.decimalPlaces(), normalizedTokenPrice.decimalPlaces());
         const maxDecimalsFactor = new Decimal(10).pow(maxDecimals);
-        const bntVirtualBalance = bntPrice.mul(maxDecimalsFactor);
-        const tokenVirtualBalance = tokenPrice.mul(maxDecimalsFactor);
+        const bntVirtualBalance = normalizedTokenPrice.mul(maxDecimalsFactor);
+        const tokenVirtualBalance = normalizedBNTPrice.mul(maxDecimalsFactor);
 
         Logger.log(`  Suggested ${TokenSymbol.BNT} virtual balance: ${bntVirtualBalance.toFixed()}`);
         Logger.log(`  Suggested ${symbol} virtual balance: ${tokenVirtualBalance.toFixed()}`);
