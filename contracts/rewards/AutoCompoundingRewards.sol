@@ -42,6 +42,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     error InsufficientFunds();
 
+    // the default number of programs to auto-process the rewards for
+    uint8 private constant DEFAULT_AUTO_PROCESS_REWARDS_COUNT = 3;
+
     // the minimum time elapsed before the rewards of a program can be auto-processed
     uint16 private constant AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = 1 hours;
 
@@ -163,7 +166,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * @dev performs contract-specific initialization
      */
     function __AutoCompoundingRewards_init_unchained() internal onlyInitializing {
-        _autoProcessRewardsCount = 1;
+        _autoProcessRewardsCount = DEFAULT_AUTO_PROCESS_REWARDS_COUNT;
     }
 
     // solhint-enable func-name-mixedcase

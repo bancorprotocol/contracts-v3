@@ -14,6 +14,7 @@ import Contracts, {
 import {
     AUTO_PROCESS_MAX_PROGRAMS_FACTOR,
     AUTO_PROCESS_REWARDS_MIN_TIME_DELTA,
+    DEFAULT_AUTO_PROCESS_REWARDS_COUNT,
     EXP2_INPUT_TOO_HIGH,
     RewardsDistributionType,
     ZERO_ADDRESS
@@ -306,7 +307,7 @@ describe('AutoCompoundingRewards', () => {
                 deployer.address
             ]);
 
-            expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.equal(1);
+            expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.equal(DEFAULT_AUTO_PROCESS_REWARDS_COUNT);
             expect(await autoCompoundingRewards.autoProcessRewardsIndex()).to.equal(0);
         });
     });
@@ -1696,8 +1697,6 @@ describe('AutoCompoundingRewards', () => {
     });
 
     describe('auto-processing rewards', () => {
-        const AUTO_PROCESS_REWARDS_COUNT = 3;
-
         const setups = [
             {
                 tokenSymbol: TokenSymbol.ETH,
@@ -1744,6 +1743,7 @@ describe('AutoCompoundingRewards', () => {
         const tokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
         const poolTokens: TokenWithAddress[] = new Array<TokenWithAddress>(setups.length);
 
+        let autoProcessRewardsCount: number;
         let rewardsMath: TestRewardsMath;
 
         beforeEach(async () => {
@@ -1757,11 +1757,11 @@ describe('AutoCompoundingRewards', () => {
                 externalRewardsVault
             );
 
-            await autoCompoundingRewards.setAutoProcessRewardsCount(AUTO_PROCESS_REWARDS_COUNT);
+            autoProcessRewardsCount = (await autoCompoundingRewards.autoProcessRewardsCount()).toNumber();
         });
 
         const autoProcessNoRewards = async () => {
-            const maxCount = AUTO_PROCESS_MAX_PROGRAMS_FACTOR * AUTO_PROCESS_REWARDS_COUNT;
+            const maxCount = AUTO_PROCESS_MAX_PROGRAMS_FACTOR * autoProcessRewardsCount;
             const prevIndex = (await autoCompoundingRewards.autoProcessRewardsIndex()).toNumber();
 
             const res = await autoCompoundingRewards.autoProcessRewards();
@@ -1773,7 +1773,7 @@ describe('AutoCompoundingRewards', () => {
         };
 
         const autoProcessSomeRewards = async () => {
-            const maxCount = AUTO_PROCESS_MAX_PROGRAMS_FACTOR * AUTO_PROCESS_REWARDS_COUNT;
+            const maxCount = AUTO_PROCESS_MAX_PROGRAMS_FACTOR * autoProcessRewardsCount;
 
             const tokenAmountsToDistribute: BigNumber[] = new Array<BigNumber>(maxCount);
             const poolTokenAmountsToBurn: BigNumber[] = new Array<BigNumber>(maxCount);
@@ -1802,8 +1802,7 @@ describe('AutoCompoundingRewards', () => {
 
             let expectedIndex = prevIndex;
 
-            let count = AUTO_PROCESS_REWARDS_COUNT;
-
+            let count = autoProcessRewardsCount;
             for (let i = 0; i < maxCount; i++) {
                 const index = (prevIndex + i) % setups.length;
                 const programData = await autoCompoundingRewards.program(tokens[index].address);
@@ -1867,7 +1866,7 @@ describe('AutoCompoundingRewards', () => {
                 it('should distribute all tokens', async () => {
                     await autoCompoundingRewards.setTime(programEndTimes[distributionType]);
 
-                    for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
+                    for (let i = 0; i < Math.ceil(setups.length / autoProcessRewardsCount); i++) {
                         await autoProcessSomeRewards();
                     }
 
@@ -1889,7 +1888,7 @@ describe('AutoCompoundingRewards', () => {
                         Math.floor(START_TIME + programDurations[distributionType] / 2)
                     );
 
-                    for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT); i++) {
+                    for (let i = 0; i < Math.ceil(setups.length / autoProcessRewardsCount); i++) {
                         await autoProcessSomeRewards();
                     }
 
@@ -1899,7 +1898,7 @@ describe('AutoCompoundingRewards', () => {
                             1
                     );
 
-                    for (let i = 0; i < Math.ceil(setups.length / AUTO_PROCESS_REWARDS_COUNT) + 1; i++) {
+                    for (let i = 0; i < Math.ceil(setups.length / autoProcessRewardsCount) + 1; i++) {
                         await autoProcessNoRewards();
                     }
                 });
