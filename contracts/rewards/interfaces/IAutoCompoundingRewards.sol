@@ -99,15 +99,6 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function enableProgram(Token pool, bool status) external;
 
     /**
-     * @dev sets the number of programs to auto-process the rewards for
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function setAutoProcessRewardsCount(uint256 newAutoProcessRewardsCount) external;
-
-    /**
      * @dev processes program rewards based on internal logic, without requiring any input
      */
     function autoProcessRewards() external;

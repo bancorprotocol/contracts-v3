@@ -42,6 +42,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     error InsufficientFunds();
 
+    // the default number of programs to auto-process the rewards for
+    uint8 private constant DEFAULT_AUTO_PROCESS_REWARDS_COUNT = 3;
+
     // the minimum time elapsed before the rewards of a program can be auto-processed
     uint16 private constant AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = 1 hours;
 
@@ -76,7 +79,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     uint256 private _autoProcessRewardsCount;
 
     // the index of the next program to auto-process the rewards for
-    uint256 private _autoProcessRewardsIndex;
+    uint256 internal _autoProcessRewardsIndex;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 5] private __gap;
@@ -104,7 +107,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev triggered when the number of programs to auto-process the rewards for is updated
      */
-    event AutoProcessRewardsCountUpdated(uint256 prevAutoProcessRewardsCount, uint256 newAutoProcessRewardsCount);
+    event AutoProcessRewardsCountUpdated(uint256 prevCount, uint256 newCount);
 
     /**
      * @dev triggered when rewards are distributed
@@ -163,7 +166,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * @dev performs contract-specific initialization
      */
     function __AutoCompoundingRewards_init_unchained() internal onlyInitializing {
-        _autoProcessRewardsCount = 1;
+        _autoProcessRewardsCount = DEFAULT_AUTO_PROCESS_REWARDS_COUNT;
     }
 
     // solhint-enable func-name-mixedcase
@@ -208,6 +211,24 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      */
     function autoProcessRewardsCount() external view returns (uint256) {
         return _autoProcessRewardsCount;
+    }
+
+    /**
+     * @dev sets the number of programs to auto-process the rewards for
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function setAutoProcessRewardsCount(uint256 newCount) external greaterThanZero(newCount) onlyAdmin {
+        uint256 prevCount = _autoProcessRewardsCount;
+        if (prevCount == newCount) {
+            return;
+        }
+
+        _autoProcessRewardsCount = newCount;
+
+        emit AutoProcessRewardsCountUpdated({ prevCount: prevCount, newCount: newCount });
     }
 
     /**
@@ -310,27 +331,6 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function setAutoProcessRewardsCount(uint256 newAutoProcessRewardsCount)
-        external
-        greaterThanZero(newAutoProcessRewardsCount)
-        onlyAdmin
-    {
-        uint256 prevAutoProcessRewardsCount = _autoProcessRewardsCount;
-        if (prevAutoProcessRewardsCount == newAutoProcessRewardsCount) {
-            return;
-        }
-
-        _autoProcessRewardsCount = newAutoProcessRewardsCount;
-
-        emit AutoProcessRewardsCountUpdated({
-            prevAutoProcessRewardsCount: prevAutoProcessRewardsCount,
-            newAutoProcessRewardsCount: newAutoProcessRewardsCount
-        });
-    }
-
-    /**
-     * @inheritdoc IAutoCompoundingRewards
-     */
     function autoProcessRewards() external nonReentrant {
         uint256 numOfPools = _pools.length();
         uint256 index = _autoProcessRewardsIndex;
@@ -339,16 +339,16 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         for (uint256 i = 0; i < maxCount; i++) {
             bool completed = _processRewards(Token(_pools.at(index % numOfPools)), true);
-            index += 1;
+            index++;
             if (completed) {
-                count -= 1;
+                count--;
                 if (count == 0) {
                     break;
                 }
             }
         }
 
-        _autoProcessRewardsIndex = index;
+        _autoProcessRewardsIndex = index % numOfPools;
     }
 
     /**
