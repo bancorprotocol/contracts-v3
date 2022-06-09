@@ -90,12 +90,6 @@
     "tradingFeePercents": 0.2
   },
   {
-    "symbol": "BAND",
-    "address": "0xba11d00c5f74255f56a5e366f4f77f5a186d7f55",
-    "fundingLimit": 20000,
-    "tradingFeePercents": 0.2
-  },
-  {
     "symbol": "BAT",
     "address": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
     "fundingLimit": 2421139,
@@ -154,12 +148,6 @@
     "address": "0xbc19712feb3a26080ebf6f2f7849b417fdd792ca",
     "fundingLimit": 200000,
     "tradingFeePercents": 0.3
-  },
-  {
-    "symbol": "BUSD",
-    "address": "0x4fabb145d64652a948d72533023f6e7a623c7c53",
-    "fundingLimit": 20000,
-    "tradingFeePercents": 0.2
   },
   {
     "symbol": "BZRX",
@@ -408,12 +396,6 @@
     "tradingFeePercents": 0.2
   },
   {
-    "symbol": "JRT",
-    "address": "0x8a9c67fee641579deba04928c4bc45f66e26343a",
-    "fundingLimit": 74566,
-    "tradingFeePercents": 0.2
-  },
-  {
     "symbol": "KNC",
     "address": "0xdd974d5c2e2928dea5f71b9825b8b646686bd200",
     "fundingLimit": 20000,
@@ -526,12 +508,6 @@
     "address": "0xa8c8cfb141a3bb59fea1e2ea6b79b5ecbcd7b6ca",
     "fundingLimit": 159235,
     "tradingFeePercents": 0.2
-  },
-  {
-    "symbol": "OCEAN",
-    "address": "0x967da4048cd07ab37855c090aaf366e4ce1b9f48",
-    "fundingLimit": 2750000,
-    "tradingFeePercents": 0.5
   },
   {
     "symbol": "OMG",
@@ -672,21 +648,9 @@
     "tradingFeePercents": 0.5
   },
   {
-    "symbol": "SAO",
-    "address": "0x3ef389f264e07fff3106a3926f2a166d1393086f",
-    "fundingLimit": 100000,
-    "tradingFeePercents": 0.2
-  },
-  {
     "symbol": "SATA",
     "address": "0x3ebb4a4e91ad83be51f8d596533818b246f4bee1",
     "fundingLimit": 100000,
-    "tradingFeePercents": 0.2
-  },
-  {
-    "symbol": "sBTC",
-    "address": "0xfe18be6b3bd88a2d2a7f928d00292e7a9963cfc6",
-    "fundingLimit": 20000,
     "tradingFeePercents": 0.2
   },
   {
@@ -714,21 +678,9 @@
     "tradingFeePercents": 1.0
   },
   {
-    "symbol": "SRM",
-    "address": "0x476c5e26a75bd202a9683ffd34359c0cc15be0ff",
-    "fundingLimit": 20000,
-    "tradingFeePercents": 0.2
-  },
-  {
     "symbol": "STAKE",
     "address": "0x0ae055097c6d159879521c384f1d2123d1f195e6",
     "fundingLimit": 32753,
-    "tradingFeePercents": 1.0
-  },
-  {
-    "symbol": "sUSD",
-    "address": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
-    "fundingLimit": 20000,
     "tradingFeePercents": 1.0
   },
   {
@@ -789,12 +741,6 @@
     "symbol": "USDC",
     "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
     "fundingLimit": 5674363,
-    "tradingFeePercents": 1.0
-  },
-  {
-    "symbol": "USDT",
-    "address": "0xdac17f958d2ee523a2206206994597c13d831ec7",
-    "fundingLimit": 5276720,
     "tradingFeePercents": 1.0
   },
   {
