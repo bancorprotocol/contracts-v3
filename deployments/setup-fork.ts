@@ -59,35 +59,40 @@ const fundAccounts = async () => {
     Logger.log('Funding test accounts...');
     Logger.log();
 
-    const { dai, link } = await getNamedAccounts();
-    const { ethWhale, bntWhale, daiWhale, linkWhale } = await getNamedSigners();
+    const { dai, link, usdc, wbtc } = await getNamedAccounts();
+    const { ethWhale, bntWhale, daiWhale, linkWhale, usdcWhale, wbtcWhale } = await getNamedSigners();
     const bnt = await DeployedContracts.BNT.deployed();
-
-    const ethAmount = 10_000;
-    const bntAmount = 10_000;
-    const daiAmount = 500_000;
-    const linkAmount = 10_000;
 
     const fundingRequests = [
         {
             token: NATIVE_TOKEN_ADDRESS,
-            amount: toWei(ethAmount),
+            amount: toWei(10_000),
             whale: ethWhale
         },
         {
             token: bnt.address,
-            amount: toWei(bntAmount),
+            amount: toWei(10_000),
             whale: bntWhale
         },
         {
             token: dai,
-            amount: toWei(daiAmount),
+            amount: toWei(500_000),
             whale: daiWhale
         },
         {
             token: link,
-            amount: toWei(linkAmount),
+            amount: toWei(10_000),
             whale: linkWhale
+        },
+        {
+            token: usdc,
+            amount: toWei(500_000, 6),
+            whale: usdcWhale
+        },
+        {
+            token: wbtc,
+            amount: toWei(100, 9),
+            whale: wbtcWhale
         }
     ];
 

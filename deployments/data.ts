@@ -11,33 +11,40 @@ const rinkeby = (address: string) => ({
 
 const TestNamedAccounts = {
     ethWhale: {
-        ...mainnet('0xda9dfa130df4de4673b89022ee50ff26f6ea73cf'),
-        ...rinkeby('0x42EB768f2244C8811C63729A21A3569731535f06')
+        ...mainnet('0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf')
     },
     daiWhale: {
-        ...mainnet('0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503'),
-        ...rinkeby('0x91169dbb45e6804743f94609de50d511c437572e')
+        ...mainnet('0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503')
     },
     linkWhale: {
-        ...mainnet('0xc6bed363b30df7f35b601a5547fe56cd31ec63da'),
-        ...rinkeby('0xfed4ddb595f42a5dbf48b9f318ad9b8e2685c27b')
+        ...mainnet('0xc6bed363b30DF7F35b601a5547fE56cd31Ec63DA')
     },
     bntWhale: {
-        ...mainnet('0xf977814e90da44bfa03b6295a0616a897441acec')
+        ...mainnet('0xF977814e90dA44bFA03b6295A0616a897441aceC')
+    },
+    usdcWhale: {
+        ...mainnet('0x55FE002aefF02F77364de339a1292923A15844B8')
+    },
+    wbtcWhale: {
+        ...mainnet('0x8Fd589AA8bfA402156a6D1ad323FEC0ECee50D9D')
     }
 };
 
 const TokenNamedAccounts = {
     dai: {
-        ...mainnet('0x6b175474e89094c44da98b954eedeac495271d0f'),
-        ...rinkeby('0x6A9865aDE2B6207dAAC49f8bCba9705dEB0B0e6D')
+        ...mainnet('0x6B175474E89094C44Da98b954EedeAC495271d0F')
     },
     link: {
-        ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA'),
-        ...rinkeby('0x01be23585060835e02b77ef475b0cc51aa1e0709')
+        ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA')
     },
     weth: {
         ...mainnet('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
+    },
+    usdc: {
+        ...mainnet('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48')
+    },
+    wbtc: {
+        ...mainnet('0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599')
     }
 };
 

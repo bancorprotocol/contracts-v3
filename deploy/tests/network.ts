@@ -37,6 +37,7 @@ import { expectRoleMembers, Roles } from '../../test/helpers/AccessControl';
 import { getBalance, getTransactionCost } from '../../test/helpers/Utils';
 import { MAX_UINT256, PPM_RESOLUTION, RATE_MAX_DEVIATION_PPM, ZERO_ADDRESS } from '../../utils/Constants';
 import { DeployedContracts, fundAccount, getNamedSigners, isMainnet, runPendingDeployments } from '../../utils/Deploy';
+import Logger from '../../utils/Logger';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { Fraction, toWei } from '../../utils/Types';
 import { IERC20, StandardPoolConverter } from '@bancor/contracts-solidity';
@@ -204,12 +205,15 @@ import { getNamedAccounts } from 'hardhat';
             BNT = 'BNT',
             ETH = 'ETH',
             DAI = 'DAI',
-            LINK = 'LINK'
+            LINK = 'LINK',
+            USDC = 'USDC',
+            WBTC = 'WBTC'
         }
 
         interface Pool {
             token: string;
             whale: SignerWithAddress;
+            decimals?: number;
         }
 
         let pools: Record<string, Pool>;
@@ -353,8 +357,8 @@ import { getNamedAccounts } from 'hardhat';
             liquidityProtectionStore = await DeployedContracts.LiquidityProtectionStore.deployed();
             liquidityProtectionSettings = await DeployedContracts.LiquidityProtectionSettings.deployed();
 
-            const { dai, link } = await getNamedAccounts();
-            const { daiWhale, linkWhale } = await getNamedSigners();
+            const { dai, link, usdc, wbtc } = await getNamedAccounts();
+            const { daiWhale, linkWhale, usdcWhale, wbtcWhale } = await getNamedSigners();
 
             pools = {
                 [TestPools.ETH]: {
@@ -368,6 +372,16 @@ import { getNamedAccounts } from 'hardhat';
                 [TestPools.LINK]: {
                     token: link,
                     whale: linkWhale
+                },
+                [TestPools.USDC]: {
+                    token: usdc,
+                    whale: usdcWhale,
+                    decimals: 6
+                },
+                [TestPools.WBTC]: {
+                    token: wbtc,
+                    whale: wbtcWhale,
+                    decimals: 8
                 }
             };
 
@@ -376,10 +390,9 @@ import { getNamedAccounts } from 'hardhat';
 
         describe('deposits', () => {
             it('should perform deposits', async () => {
-                // perform a few TKN deposit tests
-                const tknDepositAmount = toWei(1000);
+                for (const { token, whale, decimals } of Object.values(pools)) {
+                    const tknDepositAmount = toWei(1000, decimals);
 
-                for (const { token, whale } of Object.values(pools)) {
                     for (let i = 0; i < 5; i++) {
                         const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
 
@@ -432,7 +445,7 @@ import { getNamedAccounts } from 'hardhat';
                             }
                         };
 
-                        for (const [tokenSymbol, { token, whale }] of Object.entries(testPools)) {
+                        for (const [tokenSymbol, { token, whale, decimals }] of Object.entries(testPools)) {
                             const isNativeToken = tokenSymbol === TestPools.ETH;
                             const isBNT = tokenSymbol === TestPools.BNT;
 
@@ -441,7 +454,7 @@ import { getNamedAccounts } from 'hardhat';
                             const initialVBNTAmount = await vbnt.balanceOf(whale.address);
 
                             // ensure that there is a position to withdraw
-                            const depositAmount = isBNT ? 1000 : toWei(1000);
+                            const depositAmount = isBNT ? 1000 : toWei(1000, decimals);
 
                             if (!isNativeToken) {
                                 const tokenContract = await Contracts.ERC20.attach(token);
@@ -543,11 +556,17 @@ import { getNamedAccounts } from 'hardhat';
 
         describe('trades', () => {
             it('should perform trades', async () => {
-                for (const [tokenSymbol, { token, whale }] of Object.entries(pools)) {
+                for (const [tokenSymbol, { token, whale, decimals }] of Object.entries(pools)) {
+                    if (!(await networkInfo.tradingEnabled(token))) {
+                        Logger.log(`Skipping disabled pool ${token}...`);
+
+                        continue;
+                    }
+
                     const isNativeToken = tokenSymbol === TestPools.ETH;
                     const tokenWithAddress = { address: token };
 
-                    const tradeAmount = toWei(2500);
+                    const tradeAmount = toWei(2500, decimals);
 
                     for (let i = 0; i < 5; i++) {
                         if (!isNativeToken) {
