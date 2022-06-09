@@ -1302,6 +1302,26 @@ describe('Profile @profile', () => {
                         );
                     };
 
+                    const testMultipleDistributionsAtOnce = (totalTime: number) => {
+                        context(
+                            `in 1 step of ${humanizeDuration(totalTime * 1000, { units: ['d'] })} long steps`,
+                            () => {
+                                it('should distribute rewards', async () => {
+                                    await autoCompoundingRewards.setTime(startTime + totalTime);
+
+                                    await profiler.profile(
+                                        `${
+                                            distributionType === RewardsDistributionType.Flat
+                                                ? 'flat'
+                                                : 'exponential decay'
+                                        } program / auto-process ${tokenData.symbol()} rewards`,
+                                        autoCompoundingRewards.autoProcessRewards()
+                                    );
+                                });
+                            }
+                        );
+                    };
+
                     switch (distributionType) {
                         case RewardsDistributionType.Flat:
                             for (const percent of [6, 25]) {
@@ -1309,6 +1329,7 @@ describe('Profile @profile', () => {
                                     Math.floor((programDuration * percent) / 100),
                                     Math.floor(100 / percent)
                                 );
+                                testMultipleDistributionsAtOnce(Math.floor((programDuration * percent) / 100));
                             }
 
                             break;
@@ -1317,6 +1338,7 @@ describe('Profile @profile', () => {
                             for (const step of [duration.hours(1), duration.weeks(1)]) {
                                 for (const totalSteps of [5]) {
                                     testMultipleDistributions(step, totalSteps);
+                                    testMultipleDistributionsAtOnce(step * totalSteps);
                                 }
                             }
 
