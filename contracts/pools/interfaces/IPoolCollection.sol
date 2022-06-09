@@ -39,6 +39,7 @@ struct WithdrawalAmounts {
 uint8 constant TRADING_STATUS_UPDATE_DEFAULT = 0;
 uint8 constant TRADING_STATUS_UPDATE_ADMIN = 1;
 uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
+uint8 constant TRADING_STATUS_UPDATE_INVALID_STATE = 3;
 
 struct TradeAmountAndFee {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
@@ -113,7 +114,7 @@ interface IPoolCollection is IVersioned {
     /**
      * @dev converts the specified underlying base token amount to pool token amount
      */
-    function underlyingToPoolToken(Token pool, uint256 tokenAmount) external view returns (uint256);
+    function underlyingToPoolToken(Token pool, uint256 baseTokenAmount) external view returns (uint256);
 
     /**
      * @dev returns the number of pool token to burn in order to increase everyone's underlying value by the specified
@@ -121,7 +122,7 @@ interface IPoolCollection is IVersioned {
      */
     function poolTokenAmountToBurn(
         Token pool,
-        uint256 tokenAmountToDistribute,
+        uint256 baseTokenAmountToDistribute,
         uint256 protocolPoolTokenAmount
     ) external view returns (uint256);
 
@@ -148,7 +149,7 @@ interface IPoolCollection is IVersioned {
         bytes32 contextId,
         address provider,
         Token pool,
-        uint256 tokenAmount
+        uint256 baseTokenAmount
     ) external returns (uint256);
 
     /**

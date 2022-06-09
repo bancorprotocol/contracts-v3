@@ -24,7 +24,8 @@ export const PPM_RESOLUTION = 1_000_000;
 export enum TradingStatusUpdateReason {
     Default = 0,
     Admin = 1,
-    MinLiquidity = 2
+    MinLiquidity = 2,
+    InvalidState = 3
 }
 
 export enum RewardsDistributionType {

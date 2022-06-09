@@ -642,12 +642,6 @@
     "tradingFeePercents": 0.2
   },
   {
-    "symbol": "RUNE",
-    "address": "0x3155ba85d5f96b2d030a4966af206230e46849cb",
-    "fundingLimit": 600000,
-    "tradingFeePercents": 0.5
-  },
-  {
     "symbol": "SATA",
     "address": "0x3ebb4a4e91ad83be51f8d596533818b246f4bee1",
     "fundingLimit": 100000,
@@ -687,12 +681,6 @@
     "symbol": "SUSHI",
     "address": "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
     "fundingLimit": 200000,
-    "tradingFeePercents": 0.2
-  },
-  {
-    "symbol": "SXP",
-    "address": "0x8ce9137d39326ad0cd6491fb5cc0cba0e089b6a9",
-    "fundingLimit": 0,
     "tradingFeePercents": 0.2
   },
   {
