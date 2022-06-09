@@ -220,7 +220,7 @@ export const createPoolCollection = async (
 ) =>
     Contracts.TestPoolCollection.deploy(
         type,
-        version,
+        BigNumber.from(version),
         toAddress(network),
         toAddress(bnt),
         toAddress(networkSettings),
