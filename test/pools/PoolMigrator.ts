@@ -12,7 +12,7 @@ import Contracts, {
     TestPoolCollection,
     TestPoolMigrator
 } from '../../components/Contracts';
-import LegacyContractsV3, { PoolCollectionType1V4 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V5 } from '../../components/LegacyContractsV3';
 import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -49,7 +49,7 @@ describe('PoolMigrator', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await poolMigrator.version()).to.equal(4);
+            expect(await poolMigrator.version()).to.equal(5);
 
             await expectRoles(poolMigrator, Roles.Upgradeable);
 
@@ -71,7 +71,7 @@ describe('PoolMigrator', () => {
         let poolToken: PoolToken;
         let reserveToken: TestERC20Token;
 
-        let prevPoolCollection: PoolCollectionType1V4;
+        let prevPoolCollection: PoolCollectionType1V5;
         let newPoolCollection: TestPoolCollection;
 
         const BNT_VIRTUAL_BALANCE = 1;
@@ -97,7 +97,7 @@ describe('PoolMigrator', () => {
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V4.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V5.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -205,24 +205,9 @@ describe('PoolMigrator', () => {
                 poolTokenFactory,
                 poolMigrator,
                 await prevPoolCollection.poolType(),
-                (await newPoolCollection.version()) + 1000
+                0
             );
             await createPool(reserveToken2, network, networkSettings, poolCollection2);
-
-            const reserveToken3 = await createTestToken();
-            const poolCollection3 = await createPoolCollection(
-                network,
-                bnt,
-                networkSettings,
-                masterVault,
-                bntPool,
-                externalProtectionVault,
-                poolTokenFactory,
-                poolMigrator,
-                await poolCollection2.poolType(),
-                (await poolCollection2.version()) + 1
-            );
-            await createPool(reserveToken3, network, networkSettings, poolCollection3);
 
             await expect(
                 network.migratePoolT(poolMigrator.address, reserveToken2.address, newPoolCollection.address)
