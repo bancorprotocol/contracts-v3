@@ -34,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const V5 = 5;
+const POOL_COLLECTION_CURRENT_VERSION = 6;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -216,7 +216,7 @@ export const createPoolCollection = async (
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
     type: number = PoolType.Standard,
-    version: number = V5
+    version: number = POOL_COLLECTION_CURRENT_VERSION
 ) =>
     Contracts.TestPoolCollection.deploy(
         type,

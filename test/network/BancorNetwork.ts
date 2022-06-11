@@ -27,7 +27,7 @@ import {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
-import LegacyContractsV3, { PoolCollectionType1V4 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V5 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
@@ -735,7 +735,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let prevPoolCollection: PoolCollectionType1V4;
+        let prevPoolCollection: PoolCollectionType1V5;
         let poolMigrator: TestPoolMigrator;
         let newPoolCollection: PoolCollection;
 
@@ -766,7 +766,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V4.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V5.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
