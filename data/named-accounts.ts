@@ -73,24 +73,3 @@ export const NamedAccounts = {
     ...UniswapNamedAccounts,
     ...SushiSwapNamedAccounts
 };
-
-export const ExternalContracts = {
-    contracts: [
-        {
-            artifacts: 'node_modules/@bancor/contracts-solidity/artifacts'
-        },
-        {
-            artifacts: 'node_modules/@bancor/token-governance/artifacts'
-        }
-    ],
-    deployments: {
-        [DeploymentNetwork.Mainnet]: [
-            `deployments/${DeploymentNetwork.Mainnet}`,
-            `deployments/${DeploymentNetwork.Mainnet}/v2`
-        ],
-        [DeploymentNetwork.Tenderly]: [
-            `deployments/${DeploymentNetwork.Tenderly}`,
-            `deployments/${DeploymentNetwork.Tenderly}/v2`
-        ]
-    }
-};

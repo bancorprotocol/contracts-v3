@@ -1,0 +1,866 @@
+{
+  "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE": {
+    "symbol": "bnETH",
+    "address": "0x256Ed1d83E3e4EfDda977389A5389C3433137DDA",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6B175474E89094C44Da98b954EedeAC495271d0F": {
+    "symbol": "bnDAI",
+    "address": "0x06CD589760Da4616a0606da1367855808196C352",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x514910771AF9Ca656af840dff83E8264EcF986CA": {
+    "symbol": "bnLINK",
+    "address": "0x516c164A879892A156920A215855C3416616C46E",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x111111111117dC0aa78b770fA6A738034120C302": {
+    "symbol": "bn1INCH",
+    "address": "0x6E1d23c4a06159986A852B540254E231589FdEB8",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xD5cd84D6f044AbE314Ee7E414d37cae8773ef9D3": {
+    "symbol": "bn1ONE",
+    "address": "0xd53C78Ae13807b7b7D12Ff09DD8419f3d0283582",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9": {
+    "symbol": "bnAAVE",
+    "address": "0xA11f858A06bDCC797c8824a01eF154B311576E03",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xdBdb4d16EdA451D0503b854CF79D55697F90c8DF": {
+    "symbol": "bnALCX",
+    "address": "0xf1Ec79472F74a393F250B9bC5ED65EBDb3Df812a",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x27702a26126e0B3702af63Ee09aC4d1A084EF628": {
+    "symbol": "bnALEPH",
+    "address": "0x47e0876c3Af1540D55381168605aB4a453B24094",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xa1faa113cbE53436Df28FF0aEe54275c13B40975": {
+    "symbol": "bnALPHA",
+    "address": "0x87A5B58d14bD04e7F1443d2819ab7d6A4ACee7D1",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xfF20817765cB7f73d4bde2e66e067E58D11095C2": {
+    "symbol": "bnAMP",
+    "address": "0x9c6a15350FE6AF286302497A4c2026254980511a",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x8290333ceF9e6D528dD5618Fb97a76f268f3EDD4": {
+    "symbol": "bnANKR",
+    "address": "0x260a4D74cd0a207Fc98290bdC7c51700E59de432",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x960b236A07cf122663c4303350609A66A7B288C0": {
+    "symbol": "bnANT",
+    "address": "0x0dDACad0D1f0ad2D2866f9aA73745d0Da203897F",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x4104b135DBC9609Fc1A9490E61369036497660c8": {
+    "symbol": "bnAPW",
+    "address": "0x0A95920Cd600478e2AF01b900e185cAB29c92BC2",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0f71B8De197A1C84d31de0F1fA7926c365F052B3": {
+    "symbol": "bnARCONA",
+    "address": "0xD3584D9FDFf3f6A23e2Bad04d3cb6aD56ed5F2CE",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x1337DEF16F9B486fAEd0293eb623Dc8395dFE46a": {
+    "symbol": "bnARMOR",
+    "address": "0x26d9cc4a2076D426af14faE0012C1C4367D42EEb",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x27054b13b1B798B345b591a4d22e6562d47eA75a": {
+    "symbol": "bnAST",
+    "address": "0xf4BcD8701708C07D63D38137CbDcd50d6f4671FE",
+    "decimals": 4,
+    "verified": true
+  },
+  "0xc12d099be31567add4e4e4d0D45691C3F58f5663": {
+    "symbol": "bnAUC",
+    "address": "0x0A8999e064aE4954DAe9A7758aa4dC9995218576",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xba100000625a3754423978a60c9317c58a424e3D": {
+    "symbol": "bnBAL",
+    "address": "0xB67f01c0488e075423F21B29B4b417Bf3198A100",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0D8775F648430679A709E98d2b0Cb6250d2887EF": {
+    "symbol": "bnBAT",
+    "address": "0xc70d66889C6cD013CC549dAF0BdC96127aB1C9f0",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28": {
+    "symbol": "bnbBADGER",
+    "address": "0x42316766112f4FD08907985d1a4990fEf4d0faD5",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xFe459828c90c0BA4bC8b42F5C5D44F316700B430": {
+    "symbol": "bnBBS",
+    "address": "0xf07708F391ab7Bb44f256d71a3220fC77Cff2CfA",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x7e7E112A68d8D2E221E11047a72fFC1065c38e1a": {
+    "symbol": "bnbDIGG",
+    "address": "0x2d7533f457036e3De1aE5749cCbAc1AcbD73Bd13",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x725C263e32c72dDC3A19bEa12C5a0479a81eE688": {
+    "symbol": "bnBMI",
+    "address": "0xC9F704d7FC239A8Fd795F8A57B66B83498558175",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xB8c77482e45F1F44dE1745F52C74426C631bDD52": {
+    "symbol": "bnBNB",
+    "address": "0x2588bf8C3980D31E310b4541DAC3bd41899890B9",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x42bBFa2e77757C645eeaAd1655E0911a7553Efbc": {
+    "symbol": "bnBOBA",
+    "address": "0x586592D68a0164e9aaDA246076cAb0B20dBA761d",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0391D2021f89DC339F60Fff84546EA23E337750f": {
+    "symbol": "bnBOND",
+    "address": "0x958c2baedcA82fDf9c178492c8B2a4F77ACe4aea",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x3c9d6c1C73b31c837832c72E04D3152f051fc1A9": {
+    "symbol": "bnBOR",
+    "address": "0x9B65Bd05a52d8B61066fb47819Ce651ec5156838",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xBC19712FEB3a26080eBf6f2F7849b417FdD792CA": {
+    "symbol": "bnBORING",
+    "address": "0x9C0517D3426ab7d835223192891B7D6eA7A711d7",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x56d811088235F11C8920698a204A5010a788f4b3": {
+    "symbol": "bnBZRX",
+    "address": "0x718BDBAa2D58BB782204dE639718CCe3e3B005DA",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xaaAEBE6Fe48E54f431b0C390CfaF0b017d09D42d": {
+    "symbol": "bnCEL",
+    "address": "0x9d660785ad7B846354958A72d4de19abC7c35424",
+    "decimals": 4,
+    "verified": true
+  },
+  "0x3506424F91fD33084466F402d5D97f05F8e3b4AF": {
+    "symbol": "bnCHZ",
+    "address": "0x67D4c471b6348B21cF0842991ec4dFAfC2d68E58",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xc00e94Cb662C3520282E6f5717214004A7f26888": {
+    "symbol": "bnCOMP",
+    "address": "0x739682EF459F2288d64d15a16890804B715c058E",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x5c872500c00565505F3624AB435c222E558E9ff8": {
+    "symbol": "bnCOT",
+    "address": "0x4155b61b6008F511871035F8d5a6496885B77F22",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xA0b73E1Ff0B80914AB6fe0444E65848C4C34450b": {
+    "symbol": "bnCRO",
+    "address": "0x0881Cb3128839bD5f366d3DBbF942c2E311eF4FB",
+    "decimals": 8,
+    "verified": true
+  },
+  "0xD533a949740bb3306d119CC777fa900bA034cd52": {
+    "symbol": "bnCRV",
+    "address": "0x9b6092672708eB6322C91e5fF39f6961669f908e",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x491604c0FDF08347Dd1fa4Ee062a822A5DD06B5D": {
+    "symbol": "bnCTSI",
+    "address": "0xfdF6b075735C3799Da21D141B8d2BBFCcEd48202",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0f51bb10119727a7e5eA3538074fb341F56B09Ad": {
+    "symbol": "bnDAO",
+    "address": "0x1E750736aa78fa8992b6d04F6Aae6d002980E72f",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x939B462ee3311f8926c047D2B576C389092b1649": {
+    "symbol": "bnDAPP",
+    "address": "0xE29F00006a4276F698Fa259cBD7EDBe44E4Da33E",
+    "decimals": 4,
+    "verified": true
+  },
+  "0x8f693ca8D21b157107184d29D398A8D082b38b76": {
+    "symbol": "bnDATA",
+    "address": "0x82031B1Fc4469C4895FB4fDCf37a73E122190455",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x3A880652F47bFaa771908C07Dd8673A787dAEd3A": {
+    "symbol": "bnDDX",
+    "address": "0xa76acB9EC942a2a47689DCe280111e9C9A0eA636",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xde4EE8057785A7e8e800Db58F9784845A5C2Cbd6": {
+    "symbol": "bnDEXE",
+    "address": "0x89caA8224b1DF9F8BE2bF43BefC34b91773832d2",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xc719d010B63E5bbF2C0551872CD5316ED26AcD83": {
+    "symbol": "bnDIP",
+    "address": "0xBB309a037c5f2A6a3b84F54AC8754C90e77349D0",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xa150Db9b1Fa65b44799d4dD949D922c0a33Ee606": {
+    "symbol": "bnDRC",
+    "address": "0x7956190E453b955B4410F003c479F8DFeeE944e3",
+    "decimals": 0,
+    "verified": true
+  },
+  "0x940a2dB1B7008B6C776d4faaCa729d6d4A4AA551": {
+    "symbol": "bnDUSK",
+    "address": "0x7537B8914d96F44c58d700e6bE6b97Be05afb3Df",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xa1d65E8fB6e87b60FECCBc582F7f97804B725521": {
+    "symbol": "bnDXD",
+    "address": "0xa0B0f11D342fa5f6C5Ed54A9a14013B498F2dC99",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x92D6C1e31e14520e676a687F0a93788B716BEff5": {
+    "symbol": "bnDYDX",
+    "address": "0xbB200f245d8E8A29Ddf9b3899c29EBeA565852a9",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x1559FA1b8F28238FD5D76D9f434ad86FD20D1559": {
+    "symbol": "bnEDEN",
+    "address": "0x3ED1907d74D083A9213497A14329A82Ff5d2cFEB",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e": {
+    "symbol": "bnELF",
+    "address": "0x46336156b4F150EF21D01a052cf8017b9D6Ed965",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xF629cBd94d3791C9250152BD8dfBDF380E2a3B9c": {
+    "symbol": "bnENJ",
+    "address": "0x9250FD963A7C7D23A1e5CA9aDe6c43cF5E846b20",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72": {
+    "symbol": "bnENS",
+    "address": "0xe875C8B32C0187598a62091f8262a2bF2973c85B",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x5218E472cFCFE0b64A064F055B43b4cdC9EfD3A6": {
+    "symbol": "bneRSDL",
+    "address": "0x4e96C8a57bcdf31d9C89b3DC9AdA6809050863d1",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x178c820f862B14f316509ec36b13123DA19A6054": {
+    "symbol": "bnEWTB",
+    "address": "0xf83d4d92cA8F75a7DEe85e6434a2e231F23261fD",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xa0246c9032bC3A600820415aE600c6388619A14D": {
+    "symbol": "bnFARM",
+    "address": "0x4E9A47aa88Dea5902001748a21869dE19992643e",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x4C2e59D098DF7b6cBaE0848d66DE2f8A4889b9C3": {
+    "symbol": "bnFODL",
+    "address": "0xC2409e2562003254034630F80127703BeC977685",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xc770EEfAd204B5180dF6a14Ee197D99d808ee52d": {
+    "symbol": "bnFOX",
+    "address": "0x8a8CF4809155F260C6AF61aa8Cfe8B55789cF94D",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xE5CAeF4Af8780E59Df925470b050Fb23C43CA68C": {
+    "symbol": "bnFRM",
+    "address": "0x261191f870F8E6b3c433C9705d99F32B1692A063",
+    "decimals": 6,
+    "verified": true
+  },
+  "0x50D1c9771902476076eCFc8B2A83Ad6b9355a4c9": {
+    "symbol": "bnFTT",
+    "address": "0xf0D74Eaa60466112C9E496aD0bA47efBcBC8b568",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0": {
+    "symbol": "bnFXS",
+    "address": "0xaD6DD99514366C1a1388a104861848b2971eEEbE",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6810e776880C02933D47DB1b9fc05908e5386b96": {
+    "symbol": "bnGNO",
+    "address": "0x79A000c4Ad48CbE047efe319a7E2849b66ee1fB3",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xc944E90C64B2c07662A292be6244BDf05Cda44a7": {
+    "symbol": "bnGRT",
+    "address": "0x0C39C7F6b24ed0E30b453B83CF5d4CF2c5BD3A9E",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xDe30da39c46104798bB5aA3fe8B9e0e1F348163F": {
+    "symbol": "bnGTC",
+    "address": "0xe135D86fac3838bb47690cc2d913B1264E9a3A57",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd": {
+    "symbol": "bnGUSD",
+    "address": "0xB01bb3d358E50c8E2016F85e4935BC4D1273C483",
+    "decimals": 2,
+    "verified": true
+  },
+  "0x584bC13c7D411c00c01A62e8019472dE68768430": {
+    "symbol": "bnHEGIC",
+    "address": "0x5f2E01FB817Ba54cb3DF96d8c9Be51071F3F7Dfc",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6c6EE5e31d828De241282B9606C8e98Ea48526E2": {
+    "symbol": "bnHOT",
+    "address": "0x70a7e8C220AAFD32ad280d6F666B9Ffdf10fBb1E",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x9b53E429B0baDd98ef7F01F03702986c516a5715": {
+    "symbol": "bnHY",
+    "address": "0x402985C23aA04db5b5Eda40e53Dc3fB55679E56A",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x903bEF1736CDdf2A537176cf3C64579C3867A881": {
+    "symbol": "bnICHI",
+    "address": "0x36FAbE4cAeF8c190550b6f93c306A5644E7dCef6",
+    "decimals": 9,
+    "verified": true
+  },
+  "0x875773784Af8135eA0ef43b5a374AaD105c5D39e": {
+    "symbol": "bnIDLE",
+    "address": "0x700616e07eD859231562304A5eB58b498e231b43",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0954906da0Bf32d5479e25f46056d22f08464cab": {
+    "symbol": "bnINDEX",
+    "address": "0x1cB8630Bbb5d3d693a208D45c450dd6Ea56c0d42",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6f40d4A6237C257fff2dB00FA0510DeEECd303eb": {
+    "symbol": "bnINST",
+    "address": "0x86284E900e93748A52D86153ce7B25FaBD04308C",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xdd974D5C2e2928deA5F71b9825b8b646686BD200": {
+    "symbol": "bnKNC",
+    "address": "0x71D2Beb87f0b4f67CC5F2014d6Db0D5B160DBff7",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x491E136FF7FF03E6aB097E54734697Bb5802FC1C": {
+    "symbol": "bnKTN",
+    "address": "0xaEFC24b05099170d5981c1ED741D288EB6b2C578",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x99295f1141d58A99e939F7bE6BBe734916a875B8": {
+    "symbol": "bnLPL",
+    "address": "0x5d74b268d60D70cB35487f8c7A2dEf58c13B5A36",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6DEA81C8171D0bA574754EF6F8b412F2Ed88c54D": {
+    "symbol": "bnLQTY",
+    "address": "0xcF7b9deE192F1051c1110C4a97c2899F25E182Dc",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD": {
+    "symbol": "bnLRC",
+    "address": "0xFf76dDaac3801220EeFd4cf222d0bBb718814151",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0F5D2fB29fb7d3CFeE444a200298f468908cC942": {
+    "symbol": "bnMANA",
+    "address": "0xD56410DbB0E148a7D8476A169F9afe715E315BB9",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x69af81e73A73B40adF4f3d4223Cd9b1ECE623074": {
+    "symbol": "bnMASK",
+    "address": "0xe072a0240B3fD65fd710b3476E642369066a19dA",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0": {
+    "symbol": "bnMATIC",
+    "address": "0xAdf829f541a57Ef2af4d8A07a7920F7229684dDA",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6710c63432A2De02954fc0f851db07146a6c0312": {
+    "symbol": "bnMFG",
+    "address": "0xa3d1cf298a0de8784e4ADCFC3D1cD95F28488ac4",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xAa4e3edb11AFa93c41db59842b29de64b72E355B": {
+    "symbol": "bnMFI",
+    "address": "0x547623cE82320E9f5CB6b2E2Ebd191d0AB746332",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2": {
+    "symbol": "bnMKR",
+    "address": "0x40dFB80A253414C07e8189B863424Fb19521749b",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xec67005c4E498Ec7f55E092bd1d35cbC47C91892": {
+    "symbol": "bnMLN",
+    "address": "0x1D8c75890cEd80F10b18234158B0f39cd0dF9C67",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x275f5Ad03be0Fa221B4C6649B8AeE09a42D9412A": {
+    "symbol": "bnMONA",
+    "address": "0x9CeBc8Bcf891243B25eadF25c9f034a9D7DCCd5b",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x8888801aF4d980682e47f1A9036e589479e835C5": {
+    "symbol": "bnMPH",
+    "address": "0x8CDCE5c7e8738da11C66385347DcD928a3530c77",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2": {
+    "symbol": "bnMTA",
+    "address": "0x69BD8A94453Aad1674b79bAEf2bb4c063c08a7a5",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x86772b1409b61c639EaAc9Ba0AcfBb6E238e5F83": {
+    "symbol": "bnNDX",
+    "address": "0xc6Dc200a627D6c8E91179b2619F2Ad17D6656677",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xB62132e35a6c13ee1EE0f84dC5d40bad8d815206": {
+    "symbol": "bnNEXO",
+    "address": "0x579841862145d9B4f21FD75D2D31dCae8f50580A",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x1776e1F26f98b1A5dF9cD347953a26dd3Cb46671": {
+    "symbol": "bnNMR",
+    "address": "0x40153a12B125f37D43d7CCE0c701d7AeDC0B85D4",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xa8c8CfB141A3bB59FEA1E2ea6B79b5ECBCD7b6ca": {
+    "symbol": "bnNOIA",
+    "address": "0x67584702b54eb035C3262F99A5557A66a3f675Fb",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07": {
+    "symbol": "bnOMG",
+    "address": "0xD96D254AF167C1730a563f251a12d6BC232FC388",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x888888888889C00c67689029D7856AAC1065eC11": {
+    "symbol": "bnOPIUM",
+    "address": "0xB334194c16c0A79884a0D5ebD24B4fcaB3dfdabC",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x2a2550e0A75aCec6D811AE3930732F7f3ad67588": {
+    "symbol": "bnPATH",
+    "address": "0x8296961A86c3BD1214A953ea801BC28e45bb3938",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xbC396689893D065F41bc2C6EcbeE5e0085233447": {
+    "symbol": "bnPERP",
+    "address": "0x471F060dc1e87c114aac7f58d36962869F8CEb8f",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xE1Fc4455f62a6E89476f1072530C20CF1A0622dA": {
+    "symbol": "bnPHTR",
+    "address": "0x5BE7b2244Fb0F4aEDDcDfA2dFAEBAD54990adbF3",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xe3818504c1B32bF1557b16C238B2E01Fd3149C17": {
+    "symbol": "bnPLR",
+    "address": "0x3BCC0ceb27B94526C46c126C84992939e32a384c",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x69A95185ee2a045CDC4bCd1b1Df10710395e4e23": {
+    "symbol": "bnPOOLZ",
+    "address": "0x82a726FaC512eBF60c9fa49E8790a46d00643855",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x595832F8FC6BF59c85C527fEC3740A1b7a361269": {
+    "symbol": "bnPOWR",
+    "address": "0x3289AEdC9320A5D5a730503a71FFb0Cd62872680",
+    "decimals": 6,
+    "verified": true
+  },
+  "0xcAfE001067cDEF266AfB7Eb5A286dCFD277f3dE5": {
+    "symbol": "bnPSP",
+    "address": "0xB3093387E3d7dA06D17bA1E4538219a06BeD31B3",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x4a220E6096B25EADb88358cb44068A3248254675": {
+    "symbol": "bnQNT",
+    "address": "0x8B2368Faf88A4Dd5B61C52B5862952331293b349",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6c28AeF8977c9B773996d0e8376d2EE379446F2f": {
+    "symbol": "bnQUICK",
+    "address": "0xF28B45eE5Cc3279976820327238764D56961956d",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xe76C6c83af64e4C60245D8C7dE953DF673a7A33D": {
+    "symbol": "bnRAIL",
+    "address": "0x680D95629FDA70cdF8B5F72e96ca8891e730D6d8",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xFca59Cd816aB1eaD66534D82bc21E7515cE441CF": {
+    "symbol": "bnRARI",
+    "address": "0x6d223E23c9F945bCf87c6c151A4DDa69589d33cA",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x408e41876cCCDC0F92210600ef50372656052a38": {
+    "symbol": "bnREN",
+    "address": "0x49BDFdf9d103610413BE6ecB25c194Ce1d803BD3",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D": {
+    "symbol": "bnrenBTC",
+    "address": "0x651e0a4bc7F13889A0d38dd72F399b4b8d2927b5",
+    "decimals": 8,
+    "verified": true
+  },
+  "0x1C5db575E2Ff833E46a2E9864C22F4B22E0B37C2": {
+    "symbol": "bnrenZEC",
+    "address": "0x20cc6aFdac62f6f618688E14456de01c5a8ac729",
+    "decimals": 8,
+    "verified": true
+  },
+  "0x8f8221aFbB33998d8584A2B05749bA73c37a938a": {
+    "symbol": "bnREQ",
+    "address": "0x465Ed8e9f989d509efa38437f7bf610873D91309",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xae78736Cd615f374D3085123A210448E74Fc6393": {
+    "symbol": "bnrETH",
+    "address": "0xCDD8d805553899d9C89fFabB03B42a1f6ad983fc",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x607F4C5BB672230e8672085532f7e901544a7375": {
+    "symbol": "bnRLC",
+    "address": "0x2d9D99D4Aac96987637F0Be8D1fa9930e0C4447d",
+    "decimals": 9,
+    "verified": true
+  },
+  "0x2A039B1D9bBDccBb91be28691b730ca893e5e743": {
+    "symbol": "bnRNB",
+    "address": "0x9A870B9263554D3d4725A5f7F0dF7eA6A860bC82",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xfA5047c9c78B8877af97BDcb85Db743fD7313d4a": {
+    "symbol": "bnROOK",
+    "address": "0xE4BeCD393eD7cfDEEf9F513A3fE6BbAAc923caA9",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xD33526068D116cE69F19A9ee46F0bd304F21A51f": {
+    "symbol": "bnRPL",
+    "address": "0x7bb2464326E623A353E00a37FA557628E865f014",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x3155BA85D5F96b2d030a4966AF206230e46849cb": {
+    "symbol": "bnRUNE",
+    "address": "0xE366509d226BaDCD6E4C20d669d736A40200FFD5",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x3ebb4A4e91Ad83BE51F8d596533818b246F4bEe1": {
+    "symbol": "bnSATA",
+    "address": "0xCaf22463E210bD5e177d1a07A5b9afC8Eec54bA8",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xb753428af26E81097e7fD17f40c88aaA3E04902c": {
+    "symbol": "bnSFI",
+    "address": "0xb70fa6A2ddb5185756BC016F96D96c2201015972",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x232FB065D9d24c34708eeDbF03724f2e95ABE768": {
+    "symbol": "bnSHEESHA",
+    "address": "0x71a2940C098C3A0222C796Fc36BA7917AD4C2529",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x72e9D9038cE484EE986FEa183f8d8Df93f9aDA13": {
+    "symbol": "bnSMARTCREDIT",
+    "address": "0x197e6794963D5F9FEbd9C456cf3e9C7A63214e43",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F": {
+    "symbol": "bnSNX",
+    "address": "0xd01BA6A1662437Ff2A0C008498f9Edb98C49D68C",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0Ae055097C6d159879521C384F1D2123D1f195e6": {
+    "symbol": "bnSTAKE",
+    "address": "0xEC21f2ba8B3B6B7eA2782F0Fc1e649a8c40558b3",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2": {
+    "symbol": "bnSUSHI",
+    "address": "0x4C2d348FAf409dF7Ea99f3F32aadD2A9D4318d51",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xA36FDBBAE3c9d55a1d67EE5821d53B50B63A1aB9": {
+    "symbol": "bnTEMP",
+    "address": "0x90872554Ca8bEAa24FA1E29111428F8581A5Dc3F",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x05D3606d5c81EB9b7B18530995eC9B29da05FaBa": {
+    "symbol": "bnTOMOE",
+    "address": "0x5a0a4442c00566100aF66Ba0f0c56A408A3400Cf",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xaA7a9CA87d3694B5755f213B5D04094b8d0F0A6F": {
+    "symbol": "bnTRAC",
+    "address": "0x23dBfe6E3104D059fd6F1ad3Eafe06BE448e4CA8",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x4C19596f5aAfF459fA38B0f7eD92F11AE6543784": {
+    "symbol": "bnTRU",
+    "address": "0xdd43EF15Fe2A10fAA27954A92e8BF2b16B63ADdD",
+    "decimals": 8,
+    "verified": true
+  },
+  "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828": {
+    "symbol": "bnUMA",
+    "address": "0xB381673456120e95f8FF54ba987ecF4388EC3Dcc",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984": {
+    "symbol": "bnUNI",
+    "address": "0x05bf6ca5F348d9575f360d6e29775F2477047a8D",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xD13c7342e1ef687C5ad21b27c2b65D772cAb5C8c": {
+    "symbol": "bnUOS",
+    "address": "0x8EFAe5A67f3d1805Ac592b95aFb21cb3a7f54Cb5",
+    "decimals": 4,
+    "verified": true
+  },
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+    "symbol": "bnUSDC",
+    "address": "0xAd7bEc56506D181F994ec380b1BA34fb3FbfBaD3",
+    "decimals": 6,
+    "verified": true
+  },
+  "0x48Fb253446873234F2fEBbF9BdeAA72d9d387f94": {
+    "symbol": "bnvBNT",
+    "address": "0x056B4873DCFe68041448bFd40262AEC8C3a09BB8",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xF406F7A9046793267bc276908778B29563323996": {
+    "symbol": "bnVISION",
+    "address": "0x67a5ab7c64334b8969DbB7668881EBd0a586ef21",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x81f8f0bb1cB2A06649E51913A151F0E7Ef6FA321": {
+    "symbol": "bnVITA",
+    "address": "0xdf0ee5ACBa19C92769Eb2f51fFa4866DaA8E3f1F",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x8C543AED163909142695f2d2aCd0D55791a9Edb9": {
+    "symbol": "bnVLX",
+    "address": "0x7a471625b42E63496Fd82077573594EcD0Ba88d5",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599": {
+    "symbol": "bnWBTC",
+    "address": "0x2CE37087559CBe8022FA5D70A0c502B7AE03F290",
+    "decimals": 8,
+    "verified": true
+  },
+  "0x0d438F3b5175Bebc262bF23753C1E53d03432bDE": {
+    "symbol": "bnwNXM",
+    "address": "0xa72279697Db11F6f1ca9C3e666707EDFC477C6D1",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x4691937a7508860F876c9c0a2a617E7d9E945D4B": {
+    "symbol": "bnWOO",
+    "address": "0x2FC8bC3eE171eD5610ba3093909421E90b47Fc07",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0": {
+    "symbol": "bnwstETH",
+    "address": "0x5cc2C42BB9Ff433eEe306FfCe898C2de7866A0cd",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xa02120696c7B8fE16C09C749E4598819b2B0E915": {
+    "symbol": "bnWXT",
+    "address": "0xFE5fF0fda76EaE4Fc1fd361aA2aE69a05AB7C503",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x8798249c2E607446EfB7Ad49eC89dD1865Ff4272": {
+    "symbol": "bnxSUSHI",
+    "address": "0xb89BC052D590A56B5062D6f0022fAA8C005566e6",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e": {
+    "symbol": "bnYFI",
+    "address": "0x71240f297d4e1Dcd8e78BFD0C082b5A8C3E398fF",
+    "decimals": 18,
+    "verified": true
+  },
+  "0xb9EF770B6A5e12E45983C5D80545258aA38F3B78": {
+    "symbol": "bnZCN",
+    "address": "0xb6279f7Ca49876f9529fDc7983d65A03A819e2d0",
+    "decimals": 10,
+    "verified": true
+  },
+  "0xE41d2489571d322189246DaFA5ebDe1F4699F498": {
+    "symbol": "bnZRX",
+    "address": "0x56CD6b34008213b1e27345c60473c8a559B4fB46",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x01BA67AAC7f75f647D94220Cc98FB30FCc5105Bf": {
+    "symbol": "bnLYRA",
+    "address": "0x3b99d8037c32B908504552aF3BADeA2918c3C8ff",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x0cEC1A9154Ff802e7934Fc916Ed7Ca50bDE6844e": {
+    "symbol": "bnPOOL",
+    "address": "0x50Fd9EfD669982D02D54d41C78EBBf9dA2CDc9a6",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x632806BF5c8f062932Dd121244c9fbe7becb8B48": {
+    "symbol": "bnPDI",
+    "address": "0x61932d71EB18ff8E918CE0B620D703f56d089064",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x8947da500Eb47F82df21143D0C01A29862a8C3c5": {
+    "symbol": "bnTHALES",
+    "address": "0xE783e6a78431E07379a5a1Ad77Da04Dddd1785a8",
+    "decimals": 18,
+    "verified": true
+  },
+  "0x505a84a03e382331A1Be487b632Cf357748b65d6": {
+    "symbol": "bnSHIBGF",
+    "address": "0xb0bf2dA95a49D247331b713b0A2f3161f0E35De1",
+    "decimals": 18,
+    "verified": true
+  }
+}

@@ -38,7 +38,6 @@ import {
     VBNT
 } from '../components/LegacyContracts';
 import { PoolCollectionType1V5 } from '../components/LegacyContractsV3';
-import { ExternalContracts } from '../deployments/data';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
@@ -653,7 +652,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
 };
 
 export const deploymentTagExists = (tag: string) => {
-    const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
+    const externalDeployments = config.external?.deployments![getNetworkName()];
     const migrationsPath = path.resolve(
         __dirname,
         '../',
