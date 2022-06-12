@@ -811,7 +811,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         uint32 currTime = _time();
 
         return
-            _doesProgramExist(p) &&
+            _programExists(p) &&
             p.startTime <= currTime &&
             currTime <= p.endTime &&
             _latestProgramIdByPool[p.pool] == p.id;
@@ -827,7 +827,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev returns whether or not a given program exists
      */
-    function _doesProgramExist(ProgramData memory p) private pure returns (bool) {
+    function _programExists(ProgramData memory p) private pure returns (bool) {
         return address(p.pool) != address(0);
     }
 
@@ -835,7 +835,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @dev verifies that a program exists
      */
     function _verifyProgramExists(ProgramData memory p) private pure {
-        if (!_doesProgramExist(p)) {
+        if (!_programExists(p)) {
             revert DoesNotExist();
         }
     }
