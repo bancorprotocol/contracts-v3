@@ -26,13 +26,16 @@ library TokenLibrary {
     error PermitUnsupported();
 
     // the address that represents the native token reserve
-    address public constant NATIVE_TOKEN_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address private constant NATIVE_TOKEN_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     // the symbol that represents the native token
     string private constant NATIVE_TOKEN_SYMBOL = "ETH";
 
     // the decimals for the native token
     uint8 private constant NATIVE_TOKEN_DECIMALS = 18;
+
+    // the token representing the native token
+    Token public constant NATIVE_TOKEN = Token(NATIVE_TOKEN_ADDRESS);
 
     /**
      * @dev returns whether the provided token represents an ERC20 or the native token reserve

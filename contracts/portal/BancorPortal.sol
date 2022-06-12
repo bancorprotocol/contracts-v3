@@ -261,8 +261,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     ) private returns (MigrationResult memory) {
         // arrange tokens in an array, replace WETH with the native token
         Token[2] memory tokens = [
-            _isWETH(token0) ? Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS)) : token0,
-            _isWETH(token1) ? Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS)) : token1
+            _isWETH(token0) ? TokenLibrary.NATIVE_TOKEN : token0,
+            _isWETH(token1) ? TokenLibrary.NATIVE_TOKEN : token1
         ];
 
         // get Uniswap's pair
