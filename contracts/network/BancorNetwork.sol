@@ -902,6 +902,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isMigrating,
         uint256 originalAmount
     ) private returns (uint256) {
+        if (msg.value > 0) {
+            revert NativeTokenAmountMismatch();
+        }
+
         IBNTPool cachedBNTPool = _bntPool;
 
         // transfer the tokens from the caller to the BNT pool
