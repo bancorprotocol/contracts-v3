@@ -244,8 +244,9 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     }
 
     /**
-     * @dev migrates funds from a Uniswap V2 pair into a Bancor V3 pool
-     * - unsupported tokens will be transferred to the caller
+     * @dev migrates funds from a Uniswap/SushiSwap v2 pair into a bancor v3 pool and returns the deposited amount for
+     * each token in the same order as stored in Uniswap's pair, or 0 for unsupported tokens (unsupported tokens will be
+     * transferred to the caller)
      *
      * requirements:
      *
