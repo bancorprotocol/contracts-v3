@@ -4,7 +4,7 @@ pragma solidity 0.8.13;
 import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { Token } from "../../token/Token.sol";
 
-struct UniswapV2PositionMigration {
+struct PositionMigration {
     uint256 amountA;
     uint256 amountB;
 }
@@ -25,7 +25,7 @@ interface IBancorPortal is IUpgradeable {
         Token token0,
         Token token1,
         uint256 amount
-    ) external returns (UniswapV2PositionMigration memory);
+    ) external returns (PositionMigration memory);
 
     /**
      * @dev migrates funds from a SushiSwap v1 pair into a bancor v3 pool
@@ -42,5 +42,5 @@ interface IBancorPortal is IUpgradeable {
         Token token0,
         Token token1,
         uint256 amount
-    ) external returns (UniswapV2PositionMigration memory);
+    ) external returns (PositionMigration memory);
 }

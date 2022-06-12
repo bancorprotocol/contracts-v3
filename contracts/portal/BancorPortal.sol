@@ -20,7 +20,7 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { IBancorPortal, UniswapV2PositionMigration } from "./interfaces/IBancorPortal.sol";
+import { IBancorPortal, PositionMigration } from "./interfaces/IBancorPortal.sol";
 
 struct MigrationResult {
     IUniswapV2Pair pair;
@@ -180,7 +180,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(token0))
         validAddress(address(token1))
         greaterThanZero(poolTokenAmount)
-        returns (UniswapV2PositionMigration memory)
+        returns (PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
             _uniswapV2Router,
@@ -202,7 +202,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             depositedB: res.depositedB
         });
 
-        return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
+        return PositionMigration({ amountA: res.amountA, amountB: res.amountB });
     }
 
     /**
@@ -218,7 +218,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(token0))
         validAddress(address(token1))
         greaterThanZero(poolTokenAmount)
-        returns (UniswapV2PositionMigration memory)
+        returns (PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
             _sushiSwapV2Router,
@@ -240,7 +240,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             depositedB: res.depositedB
         });
 
-        return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
+        return PositionMigration({ amountA: res.amountA, amountB: res.amountB });
     }
 
     /**
