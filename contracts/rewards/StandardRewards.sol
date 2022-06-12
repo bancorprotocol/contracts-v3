@@ -51,7 +51,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     error InsufficientFunds();
     error RewardsTooHigh();
     error NativeTokenAmountMismatch();
-    error PoolMismatch();
     error ProgramDisabled();
     error ProgramInactive();
     error RewardsTokenMismatch();

@@ -5,8 +5,6 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { Token } from "../token/Token.sol";
-
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { InvalidParam, InvalidStakedBalance } from "../utility/Utils.sol";

@@ -36,8 +36,6 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     error InvalidPoolType();
     error UnsupportedVersion();
 
-    IPoolCollection private constant INVALID_POOL_COLLECTION = IPoolCollection(address(0));
-
     // the network contract
     IBancorNetwork private immutable _network;
 
