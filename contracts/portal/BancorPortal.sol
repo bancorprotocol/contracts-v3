@@ -26,10 +26,10 @@ struct MigrationResult {
     IUniswapV2Pair pair;
     Token tokenA;
     Token tokenB;
-    uint256 amountA;
-    uint256 amountB;
     bool depositedA;
     bool depositedB;
+    uint256 amountA;
+    uint256 amountB;
 }
 
 /**
@@ -309,10 +309,10 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
                 pair: pair,
                 tokenA: tokens[0],
                 tokenB: tokens[1],
-                amountA: deposited[0],
-                amountB: deposited[1],
                 depositedA: whitelist[0],
-                depositedB: whitelist[1]
+                depositedB: whitelist[1],
+                amountA: deposited[0],
+                amountB: deposited[1]
             });
     }
 
