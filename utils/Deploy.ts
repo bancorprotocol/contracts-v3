@@ -45,8 +45,14 @@ import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, Contract, ContractInterface, utils } from 'ethers';
 import fs from 'fs';
+import glob from 'glob';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
-import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
+import {
+    Address,
+    DeployFunction,
+    Deployment as DeploymentData,
+    ProxyOptions as DeployProxyOptions
+} from 'hardhat-deploy/types';
 import path from 'path';
 
 const {
@@ -719,4 +725,24 @@ export const runPendingDeployments = async () => {
         deletePreviousDeployments: false,
         writeDeploymentsToFiles: true
     });
+};
+
+export const getInstanceNameByAddress = (address: string): InstanceName => {
+    const externalDeployments = config.external?.deployments![getNetworkName()];
+    const deploymentsPath = externalDeployments ? externalDeployments[0] : path.join('deployments', getNetworkName());
+
+    const deploymentPaths = glob.sync(`${deploymentsPath}/**/*.json`);
+    for (const deploymentPath of deploymentPaths) {
+        const name = path.basename(deploymentPath).split('.')[0];
+        if (name.endsWith('_Implementation') || name.endsWith('_Proxy')) {
+            continue;
+        }
+
+        const deployment: DeploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf-8'));
+        if (deployment.address.toLowerCase() === address.toLowerCase()) {
+            return name as InstanceName;
+        }
+    }
+
+    throw new Error(`Unable to find deployment for ${address}`);
 };

@@ -1,5 +1,5 @@
 import Contracts from '../components/Contracts';
-import { DeployedContracts, getNamedSigners } from '../utils/Deploy';
+import { DeployedContracts, execute, getInstanceNameByAddress, getNamedSigners } from '../utils/Deploy';
 import Logger from '../utils/Logger';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
 import '@nomiclabs/hardhat-ethers';
@@ -8,6 +8,12 @@ import { CoinGeckoClient } from 'coingecko-api-v3';
 import Decimal from 'decimal.js';
 import fs from 'fs';
 import path from 'path';
+
+interface EnvOptions {
+    ENABLE_POOLS?: boolean;
+}
+
+const { ENABLE_POOLS: enablePools }: EnvOptions = process.env as any as EnvOptions;
 
 interface TokenOverride {
     address: string;
@@ -153,6 +159,18 @@ const main = async () => {
 
         Logger.log(`  Suggested ${TokenSymbol.BNT} virtual balance: ${bntVirtualBalance.toFixed()}`);
         Logger.log(`  Suggested ${symbol} virtual balance: ${tokenVirtualBalance.toFixed()}`);
+
+        if (enablePools) {
+            const network = await DeployedContracts.BancorNetwork.deployed();
+            const poolCollectionAddress = await network.collectionByPool(pool);
+
+            await execute({
+                name: getInstanceNameByAddress(poolCollectionAddress),
+                methodName: 'enableTrading',
+                args: [pool, bntVirtualBalance.toString(), tokenVirtualBalance.toString()],
+                from: deployer.address
+            });
+        }
 
         pools[symbol] = {
             address: pool,
