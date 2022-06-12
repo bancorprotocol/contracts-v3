@@ -12,7 +12,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
+import { Utils, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";

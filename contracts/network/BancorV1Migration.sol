@@ -7,7 +7,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Utils } from "../utility/Utils.sol";
-import { Upgradeable } from "../utility/Upgradeable.sol";
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
