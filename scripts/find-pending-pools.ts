@@ -35,6 +35,14 @@ interface PoolData {
 
 const MAX_PRECISION = 16;
 
+// provide a price override for an unknown token. For example:
+//
+// {
+//    '0x1111111111111111111111111111111111111111': { usd: 12.34 }
+// }
+//
+const UNKNOWN_TOKEN_PRICE_OVERRIDES: Record<string, Record<string, number>> = {};
+
 const main = async () => {
     const { deployer } = await getNamedSigners();
     const bnt = await DeployedContracts.BNT.deployed();
@@ -50,11 +58,14 @@ const main = async () => {
     });
 
     /* eslint-disable camelcase */
-    const tokenPrices = await client.simpleTokenPrice({
-        id: 'ethereum',
-        contract_addresses: [bnt.address, ...allPools].join(','),
-        vs_currencies: 'USD'
-    });
+    const tokenPrices = {
+        ...UNKNOWN_TOKEN_PRICE_OVERRIDES,
+        ...(await client.simpleTokenPrice({
+            id: 'ethereum',
+            contract_addresses: [bnt.address, ...allPools].join(','),
+            vs_currencies: 'USD'
+        }))
+    };
     /* eslint-enable camelcase */
 
     const bntPrice = new Decimal(tokenPrices[bnt.address.toLowerCase()].usd);
