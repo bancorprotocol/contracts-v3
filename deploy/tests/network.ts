@@ -773,7 +773,7 @@ import { getNamedAccounts } from 'hardhat';
 
                 enum PoolType {
                     UniswapV2 = 'UniswapV2',
-                    SushiSwapV1 = 'SushiSwapV1'
+                    SushiSwap = 'SushiSwap'
                 }
 
                 const testUniswapV2Migration = (type: PoolType) => {
@@ -813,7 +813,7 @@ import { getNamedAccounts } from 'hardhat';
                                     break;
                                 }
 
-                                case PoolType.SushiSwapV1: {
+                                case PoolType.SushiSwap: {
                                     router = await IUniswapV2Router02__factory.connect(
                                         sushiSwapRouter,
                                         linkWhale
@@ -888,10 +888,10 @@ import { getNamedAccounts } from 'hardhat';
                                     break;
                                 }
 
-                                case PoolType.SushiSwapV1: {
+                                case PoolType.SushiSwap: {
                                     await bancorPortal
                                         .connect(linkWhale)
-                                        .migrateSushiSwapV1Position(weth, link, poolTokenAmount);
+                                        .migrateSushiSwapPosition(weth, link, poolTokenAmount);
                                     break;
                                 }
 
@@ -922,7 +922,7 @@ import { getNamedAccounts } from 'hardhat';
                     });
                 };
 
-                for (const type of [PoolType.UniswapV2, PoolType.SushiSwapV1]) {
+                for (const type of [PoolType.UniswapV2, PoolType.SushiSwap]) {
                     testUniswapV2Migration(type);
                 }
             });
