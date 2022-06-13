@@ -48,7 +48,7 @@ import {
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
-import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 
 /**

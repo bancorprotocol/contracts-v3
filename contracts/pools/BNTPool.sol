@@ -5,13 +5,10 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGovernance.sol";
 
-import { Token } from "../token/Token.sol";
-
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, InvalidParam, InvalidStakedBalance } from "../utility/Utils.sol";
+import { InvalidParam, InvalidStakedBalance } from "../utility/Utils.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
-import { Fraction } from "../utility/FractionLibrary.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
 import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
@@ -29,15 +26,12 @@ import {
 } from "./interfaces/IBNTPool.sol";
 
 import { IPoolToken } from "./interfaces/IPoolToken.sol";
-import { IPoolCollection, Pool } from "./interfaces/IPoolCollection.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { Vault } from "../vaults/Vault.sol";
 import { IVault } from "../vaults/interfaces/IVault.sol";
-
-import { PoolToken } from "./PoolToken.sol";
 
 /**
  * @dev BNT Pool contract
