@@ -228,6 +228,11 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
+     * @dev authorize the contract to receive the native token
+     */
+    receive() external payable {}
+
+    /**
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
