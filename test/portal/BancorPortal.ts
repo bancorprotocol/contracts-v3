@@ -189,7 +189,7 @@ describe('BancorPortal', () => {
         });
 
         it('should be initialized', async () => {
-            expect(await bancorPortal.version()).to.equal(2);
+            expect(await bancorPortal.version()).to.equal(3);
         });
 
         it('should revert when attempting to reinitialize', async () => {
