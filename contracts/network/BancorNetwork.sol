@@ -1340,8 +1340,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         // transfer the pool tokens from the provider. Note, that the provider should have either previously approved
-        // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
-        poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
+        // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request (we aren't using
+        // safeTransferFrom, since the PoolToken is a fully compliant ERC20 token contract)
+        poolToken.transferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
 
         return _pendingWithdrawals.initWithdrawal(provider, poolToken, poolTokenAmount);
     }
