@@ -808,6 +808,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
+        nonReentrant
         returns (uint256)
     {
         uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;

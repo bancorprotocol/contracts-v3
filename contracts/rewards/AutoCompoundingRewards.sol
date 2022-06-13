@@ -237,7 +237,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     function isProgramActive(Token pool) external view returns (bool) {
         ProgramData memory p = _programs[pool];
 
-        if (!_doesProgramExist(p)) {
+        if (!_programExists(p)) {
             return false;
         }
 
@@ -258,7 +258,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
-    ) external {
+    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (startTime >= endTime) {
             revert InvalidParam();
         }
@@ -276,7 +276,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 totalRewards,
         uint32 startTime,
         uint32 halfLife
-    ) external {
+    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
         if (halfLife == 0) {
             revert InvalidParam();
         }
@@ -294,10 +294,10 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function terminateProgram(Token pool) external onlyAdmin {
+    function terminateProgram(Token pool) external onlyAdmin nonReentrant {
         ProgramData memory p = _programs[pool];
 
-        if (!_doesProgramExist(p)) {
+        if (!_programExists(p)) {
             revert DoesNotExist();
         }
 
@@ -311,10 +311,10 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function enableProgram(Token pool, bool status) external onlyAdmin {
+    function enableProgram(Token pool, bool status) external onlyAdmin nonReentrant {
         ProgramData memory p = _programs[pool];
 
-        if (!_doesProgramExist(p)) {
+        if (!_programExists(p)) {
             revert DoesNotExist();
         }
 
@@ -414,8 +414,8 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint32 startTime,
         uint32 endTime,
         uint32 halfLife
-    ) private validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant {
-        if (_doesProgramExist(_programs[pool])) {
+    ) private {
+        if (_programExists(_programs[pool])) {
             revert AlreadyExists();
         }
 
@@ -496,7 +496,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev returns whether or not a given program exists
      */
-    function _doesProgramExist(ProgramData memory p) private pure returns (bool) {
+    function _programExists(ProgramData memory p) private pure returns (bool) {
         return address(p.poolToken) != address(0);
     }
 
