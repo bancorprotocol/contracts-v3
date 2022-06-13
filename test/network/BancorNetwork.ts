@@ -279,7 +279,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(6);
+            expect(await network.version()).to.equal(7);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -1267,6 +1267,13 @@ describe('BancorNetwork', () => {
 
                                                 it('should complete multiple deposits', async () => {
                                                     await testMultipleDeposits();
+                                                });
+
+                                                // eslint-disable-next-line max-len
+                                                it('should revert when attempting to deposit the native token into a non native token pool', async () => {
+                                                    await expect(
+                                                        deposit(amount, { value: BigNumber.from(1) })
+                                                    ).to.be.revertedWithError('NativeTokenAmountMismatch');
                                                 });
                                             });
                                         } else {

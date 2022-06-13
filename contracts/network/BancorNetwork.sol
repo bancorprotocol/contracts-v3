@@ -298,7 +298,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 6;
+        return 7;
     }
 
     /**
@@ -902,6 +902,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isMigrating,
         uint256 originalAmount
     ) private returns (uint256) {
+        if (msg.value > 0) {
+            revert NativeTokenAmountMismatch();
+        }
+
         IBNTPool cachedBNTPool = _bntPool;
 
         // transfer the tokens from the caller to the BNT pool
