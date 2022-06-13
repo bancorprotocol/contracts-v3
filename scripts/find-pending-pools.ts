@@ -59,7 +59,7 @@ const main = async () => {
 
     /* eslint-disable camelcase */
     const tokenPrices = {
-        ...UNKNOWN_TOKEN_PRICE_OVERRIDES,
+        ...Object.fromEntries(Object.entries(UNKNOWN_TOKEN_PRICE_OVERRIDES).map(([k, v]) => [k.toLowerCase(), v])),
         ...(await client.simpleTokenPrice({
             id: 'ethereum',
             contract_addresses: [bnt.address, ...allPools].join(','),
