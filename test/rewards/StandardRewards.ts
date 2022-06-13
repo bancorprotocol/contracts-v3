@@ -246,7 +246,7 @@ describe('StandardRewards', () => {
                 externalRewardsVault
             );
 
-            expect(await standardRewards.version()).to.equal(3);
+            expect(await standardRewards.version()).to.equal(4);
 
             await expectRoles(standardRewards, Roles.Upgradeable);
 
