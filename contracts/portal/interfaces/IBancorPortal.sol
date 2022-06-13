@@ -34,7 +34,7 @@ interface IBancorPortal is IUpgradeable {
      *
      * - the caller must have approved the pair to transfer the liquidity on its behalf
      */
-    function migrateSushiSwapV1Position(
+    function migrateSushiSwapPosition(
         Token token0,
         Token token1,
         uint256 amount
