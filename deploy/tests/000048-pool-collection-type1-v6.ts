@@ -32,7 +32,7 @@ describeDeployment(
 
         beforeEach(async () => {
             network = await DeployedContracts.BancorNetwork.deployed();
-            newPoolCollection = await DeployedContracts.PoolCollectionType1V5.deployed();
+            newPoolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
         });
 
         it('should deploy and migrate the new pool migration and pool collection contracts', async () => {
