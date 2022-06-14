@@ -11,6 +11,9 @@ import { AccessDenied, Utils } from "./Utils.sol";
  *
  * - the address of the admin is stored as an immutable state variables and as the result:
  * - the address of the admin can't be change, so the changeAdmin() function was subsequently removed
+ *
+ * note that we're using the Transparent Upgradeable Proxy pattern and *not* the Universal Upgradeable Proxy Standard
+ * (UUPS) pattern, therefore initializing the implementation contracts is not necessary or required
  */
 contract TransparentUpgradeableProxyImmutable is ERC1967Proxy, Utils {
     address internal immutable _admin;
