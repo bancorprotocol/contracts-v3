@@ -170,7 +170,8 @@ interface IBancorNetwork is IUpgradeable {
     function withdraw(uint256 id) external returns (uint256);
 
     /**
-     * @dev performs a trade by providing the input source amount, and returns the trade target amount
+     * @dev performs a trade by providing the input source amount, sends the proceeds to the optional beneficiary (or
+     * to the address of the caller, in case it's not supplied), and returns the trade target amount
      *
      * requirements:
      *
@@ -188,7 +189,8 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev performs a trade by providing the input source amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request, and returns the trade target amount
+     * EIP2612 permit request, sends the proceeds to the optional beneficiary (or to the address of the caller, in case
+     * it's not supplied), and returns the trade target amount
      *
      * requirements:
      *
@@ -207,7 +209,8 @@ interface IBancorNetwork is IUpgradeable {
     ) external returns (uint256);
 
     /**
-     * @dev performs a trade by providing the output target amount, and returns the trade source amount
+     * @dev performs a trade by providing the output target amount, sends the proceeds to the optional beneficiary (or
+     * to the address of the caller, in case it's not supplied), and returns the trade source amount
      *
      * requirements:
      *
@@ -225,7 +228,8 @@ interface IBancorNetwork is IUpgradeable {
 
     /**
      * @dev performs a trade by providing the output target amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request and returns the target amount and fee, and returns the trade source amount
+     * EIP2612 permit request and returns the target amount and fee, sends the proceeds to the optional beneficiary (or
+     * to the address of the caller, in case it's not supplied), and returns the trade source amount
      *
      * requirements:
      *
