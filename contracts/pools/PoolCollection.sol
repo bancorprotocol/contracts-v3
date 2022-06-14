@@ -163,6 +163,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the pool migrator contract
     IPoolMigrator private immutable _poolMigrator;
 
+    // the global network fee (in units of PPM)
+    uint32 private immutable _networkFeePPM;
+
     // a mapping between tokens and their pools
     mapping(Token => Pool) internal _poolData;
 
@@ -250,17 +253,19 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolMigrator initPoolMigrator
-    )
-        validAddress(address(initNetwork))
-        validAddress(address(initBNT))
-        validAddress(address(initNetworkSettings))
-        validAddress(address(initMasterVault))
-        validAddress(address(initBNTPool))
-        validAddress(address(initExternalProtectionVault))
-        validAddress(address(initPoolTokenFactory))
-        validAddress(address(initPoolMigrator))
-    {
+        IPoolMigrator initPoolMigrator,
+        uint32 initNetworkFeePPM
+    ) {
+        _validAddress(address(initNetwork));
+        _validAddress(address(initBNT));
+        _validAddress(address(initNetworkSettings));
+        _validAddress(address(initMasterVault));
+        _validAddress(address(initBNTPool));
+        _validAddress(address(initExternalProtectionVault));
+        _validAddress(address(initPoolTokenFactory));
+        _validAddress(address(initPoolMigrator));
+        _validFee(initNetworkFeePPM);
+
         _network = initNetwork;
         _bnt = initBNT;
         _networkSettings = initNetworkSettings;
@@ -269,6 +274,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolMigrator = initPoolMigrator;
+        _networkFeePPM = initNetworkFeePPM;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -292,6 +298,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function defaultTradingFeePPM() external view returns (uint32) {
         return _defaultTradingFeePPM;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function networkFeePPM() external view returns (uint32) {
+        return _networkFeePPM;
     }
 
     /**
@@ -1507,13 +1520,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @dev processes the network fee and updates the in-memory intermediate result
      */
     function _processNetworkFee(TradeIntermediateResult memory result) private view {
-        uint32 networkFeePPM = _networkSettings.networkFeePPM();
-        if (networkFeePPM == 0) {
+        if (_networkFeePPM == 0) {
             return;
         }
 
         // calculate the target network fee amount
-        uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, networkFeePPM, PPM_RESOLUTION);
+        uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, _networkFeePPM, PPM_RESOLUTION);
 
         // update the target balance (but don't deduct it from the full trading fee amount)
         result.targetBalance -= targetNetworkFeeAmount;
