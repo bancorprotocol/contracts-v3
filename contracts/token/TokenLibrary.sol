@@ -10,12 +10,6 @@ import { SafeERC20Ex } from "./SafeERC20Ex.sol";
 
 import { Token } from "./Token.sol";
 
-struct Signature {
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-}
-
 /**
  * @dev This library implements ERC20 and SafeERC20 utilities for both the native token and for ERC20 tokens
  */
@@ -146,34 +140,6 @@ library TokenLibrary {
         }
 
         toIERC20(token).ensureApprove(spender, amount);
-    }
-
-    /**
-     * @dev performs an EIP2612 permit
-     */
-    function permit(
-        Token token,
-        address owner,
-        address spender,
-        uint256 tokenAmount,
-        uint256 deadline,
-        Signature memory signature
-    ) internal {
-        if (isNative(token)) {
-            revert PermitUnsupported();
-        }
-
-        // permit the amount the owner is trying to deposit. Please note, that if the base token doesn't support
-        // EIP2612 permit - either this call or the inner safeTransferFrom will revert
-        IERC20Permit(address(token)).permit(
-            owner,
-            spender,
-            tokenAmount,
-            deadline,
-            signature.v,
-            signature.r,
-            signature.s
-        );
     }
 
     /**

@@ -25,7 +25,6 @@ import {
     RewardsDistributionType,
     ZERO_ADDRESS
 } from '../../utils/Constants';
-import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { max, toPPM, toWei } from '../../utils/Types';
 import {
@@ -43,9 +42,9 @@ import {
     TokenWithAddress
 } from '../helpers/Factory';
 import { duration, latest } from '../helpers/Time';
-import { createWallet, transfer } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish, ContractTransaction, utils, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, utils } from 'ethers';
 import { ethers } from 'hardhat';
 import humanizeDuration from 'humanize-duration';
 import { camelCase } from 'lodash';
@@ -90,11 +89,16 @@ describe('Profile @profile', () => {
         });
 
         const testDeposits = (tokenData: TokenData) => {
-            let token: TokenWithAddress;
-
             const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
                 .div(BNT_VIRTUAL_BALANCE)
                 .mul(2);
+
+            let token: TokenWithAddress;
+            let provider: SignerWithAddress;
+
+            before(async () => {
+                [, provider] = await ethers.getSigners();
+            });
 
             beforeEach(async () => {
                 if (tokenData.isBNT()) {
@@ -127,266 +131,111 @@ describe('Profile @profile', () => {
                 await pendingWithdrawals.setTime(time);
             };
 
-            const testDeposit = () => {
-                context('regular deposit', () => {
-                    enum Method {
-                        Deposit,
-                        DepositFor
-                    }
+            enum Method {
+                Deposit,
+                DepositFor
+            }
 
-                    let provider: SignerWithAddress;
+            for (const method of [Method.Deposit, Method.DepositFor]) {
+                context(`using ${camelCase(Method[method])} method`, () => {
+                    let sender: SignerWithAddress;
 
                     before(async () => {
-                        [, provider] = await ethers.getSigners();
+                        switch (method) {
+                            case Method.Deposit:
+                                sender = provider;
+
+                                break;
+
+                            case Method.DepositFor:
+                                sender = deployer;
+
+                                break;
+                        }
                     });
 
-                    for (const method of [Method.Deposit, Method.DepositFor]) {
-                        context(`using ${camelCase(Method[method])} method`, () => {
-                            let sender: SignerWithAddress;
+                    interface Overrides {
+                        value?: BigNumber;
+                        poolAddress?: string;
+                    }
 
-                            before(async () => {
-                                switch (method) {
-                                    case Method.Deposit:
-                                        sender = provider;
+                    const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
+                        let { value, poolAddress = token.address } = overrides;
 
-                                        break;
+                        value ||= tokenData.isNative() ? amount : BigNumber.from(0);
 
-                                    case Method.DepositFor:
-                                        sender = deployer;
+                        switch (method) {
+                            case Method.Deposit:
+                                return network.connect(sender).deposit(poolAddress, amount, { value });
 
-                                        break;
-                                }
-                            });
+                            case Method.DepositFor:
+                                return network
+                                    .connect(sender)
+                                    .depositFor(provider.address, poolAddress, amount, { value });
+                        }
+                    };
 
-                            interface Overrides {
-                                value?: BigNumber;
-                                poolAddress?: string;
+                    const testDepositAmount = (amount: BigNumber) => {
+                        const COUNT = 3;
+
+                        const testMultipleDeposits = async () => {
+                            for (let i = 0; i < COUNT; i++) {
+                                await test(amount);
                             }
+                        };
 
-                            const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
-                                let { value, poolAddress = token.address } = overrides;
+                        const test = async (amount: BigNumber) =>
+                            await profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
 
-                                value ||= tokenData.isNative() ? amount : BigNumber.from(0);
-
-                                switch (method) {
-                                    case Method.Deposit:
-                                        return network.connect(sender).deposit(poolAddress, amount, { value });
-
-                                    case Method.DepositFor:
-                                        return network
-                                            .connect(sender)
-                                            .depositFor(provider.address, poolAddress, amount, { value });
-                                }
-                            };
-
-                            const testDepositAmount = (amount: BigNumber) => {
-                                const COUNT = 3;
-
-                                const testMultipleDeposits = async () => {
-                                    for (let i = 0; i < COUNT; i++) {
-                                        await test(amount);
-                                    }
-                                };
-
-                                const test = async (amount: BigNumber) =>
-                                    await profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
-
-                                context(`${amount} tokens`, () => {
-                                    if (!tokenData.isNative()) {
-                                        beforeEach(async () => {
-                                            const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                                            await reserveToken.transfer(sender.address, amount.mul(COUNT));
-                                        });
-                                    }
-
-                                    context('with an approval', () => {
-                                        if (!tokenData.isNative()) {
-                                            beforeEach(async () => {
-                                                const reserveToken = await Contracts.TestERC20Token.attach(
-                                                    token.address
-                                                );
-                                                await reserveToken
-                                                    .connect(sender)
-                                                    .approve(network.address, amount.mul(COUNT));
-                                            });
-                                        }
-
-                                        if (tokenData.isBNT()) {
-                                            context('with requested funding', () => {
-                                                beforeEach(async () => {
-                                                    const reserveToken = await createTestToken();
-
-                                                    await createPool(
-                                                        reserveToken,
-                                                        network,
-                                                        networkSettings,
-                                                        poolCollection
-                                                    );
-                                                    await networkSettings.setFundingLimit(
-                                                        reserveToken.address,
-                                                        FUNDING_LIMIT
-                                                    );
-
-                                                    await poolCollection.requestFundingT(
-                                                        CONTEXT_ID,
-                                                        reserveToken.address,
-                                                        amount.mul(COUNT)
-                                                    );
-                                                });
-
-                                                it('should complete multiple deposits', async () => {
-                                                    await testMultipleDeposits();
-                                                });
-                                            });
-                                        } else {
-                                            it('should complete multiple deposits', async () => {
-                                                await testMultipleDeposits();
-                                            });
-                                        }
-                                    });
+                        context(`${amount} tokens`, () => {
+                            if (!tokenData.isNative()) {
+                                beforeEach(async () => {
+                                    const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+                                    await reserveToken.transfer(sender.address, amount.mul(COUNT));
                                 });
-                            };
-
-                            for (const amount of [10, 10_000, toWei(1_000_000)]) {
-                                testDepositAmount(BigNumber.from(amount));
-                            }
-                        });
-                    }
-                });
-            };
-
-            const testDepositPermitted = () => {
-                context('permitted deposit', () => {
-                    enum Method {
-                        DepositPermitted,
-                        DepositForPermitted
-                    }
-
-                    const DEADLINE = MAX_UINT256;
-
-                    let provider: Wallet;
-                    let providerAddress: string;
-
-                    beforeEach(async () => {
-                        provider = await createWallet();
-                        providerAddress = await provider.getAddress();
-                    });
-
-                    for (const method of [Method.DepositPermitted, Method.DepositForPermitted]) {
-                        context(`using ${camelCase(Method[method])} method`, () => {
-                            let sender: Wallet;
-                            let senderAddress: string;
-
-                            beforeEach(async () => {
-                                switch (method) {
-                                    case Method.DepositPermitted:
-                                        sender = provider;
-
-                                        break;
-
-                                    case Method.DepositForPermitted:
-                                        sender = await createWallet();
-
-                                        break;
-                                }
-
-                                senderAddress = await sender.getAddress();
-                            });
-
-                            interface Overrides {
-                                poolAddress?: string;
                             }
 
-                            const deposit = async (amount: BigNumber, overrides: Overrides = {}) => {
-                                const { poolAddress = token.address } = overrides;
-
-                                const signature = await permitSignature(
-                                    sender,
-                                    poolAddress,
-                                    network,
-                                    bnt,
-                                    amount,
-                                    DEADLINE
-                                );
-
-                                switch (method) {
-                                    case Method.DepositPermitted:
-                                        return network
-                                            .connect(sender)
-                                            .depositPermitted(
-                                                poolAddress,
-                                                amount,
-                                                DEADLINE,
-                                                signature.v,
-                                                signature.r,
-                                                signature.s
-                                            );
-
-                                    case Method.DepositForPermitted:
-                                        return network
-                                            .connect(sender)
-                                            .depositForPermitted(
-                                                providerAddress,
-                                                poolAddress,
-                                                amount,
-                                                DEADLINE,
-                                                signature.v,
-                                                signature.r,
-                                                signature.s
-                                            );
-                                }
-                            };
-
-                            const testDepositAmount = (amount: BigNumber) => {
-                                const test = async () =>
-                                    profiler.profile(`deposit ${tokenData.symbol()}`, deposit(amount));
-
-                                context(`${amount} tokens`, () => {
-                                    if (tokenData.isBNT() || tokenData.isNative()) {
-                                        return;
-                                    }
-
+                            context('with an approval', () => {
+                                if (!tokenData.isNative()) {
                                     beforeEach(async () => {
                                         const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                                        await reserveToken.transfer(senderAddress, amount);
+                                        await reserveToken.connect(sender).approve(network.address, amount.mul(COUNT));
                                     });
+                                }
 
-                                    context('when there is no available BNT funding', () => {
+                                if (tokenData.isBNT()) {
+                                    context('with requested funding', () => {
                                         beforeEach(async () => {
-                                            await networkSettings.setFundingLimit(token.address, 0);
+                                            const reserveToken = await createTestToken();
+
+                                            await createPool(reserveToken, network, networkSettings, poolCollection);
+                                            await networkSettings.setFundingLimit(reserveToken.address, FUNDING_LIMIT);
+
+                                            await poolCollection.requestFundingT(
+                                                CONTEXT_ID,
+                                                reserveToken.address,
+                                                amount.mul(COUNT)
+                                            );
                                         });
 
-                                        context('with a whitelisted token', async () => {
-                                            it('should complete a deposit', async () => {
-                                                await test();
-                                            });
-                                        });
-                                    });
-
-                                    context('when there is enough available BNT funding', () => {
-                                        beforeEach(async () => {
-                                            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                                        });
-
-                                        context('when spot rate is stable', () => {
-                                            it('should complete a deposit', async () => {
-                                                await test();
-                                            });
+                                        it('should complete multiple deposits', async () => {
+                                            await testMultipleDeposits();
                                         });
                                     });
-                                });
-                            };
-
-                            for (const amount of [10, 10_000, toWei(1_000_000)]) {
-                                testDepositAmount(BigNumber.from(amount));
-                            }
+                                } else {
+                                    it('should complete multiple deposits', async () => {
+                                        await testMultipleDeposits();
+                                    });
+                                }
+                            });
                         });
+                    };
+
+                    for (const amount of [10, 10_000, toWei(1_000_000)]) {
+                        testDepositAmount(BigNumber.from(amount));
                     }
                 });
-            };
-
-            testDeposit();
-            testDepositPermitted();
+            }
         };
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
@@ -576,7 +425,11 @@ describe('Profile @profile', () => {
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
 
-        let trader: Wallet;
+        let trader: SignerWithAddress;
+
+        before(async () => {
+            [, trader] = await ethers.getSigners();
+        });
 
         beforeEach(async () => {
             ({ network, networkInfo, networkSettings, bnt, poolCollection } = await createSystem());
@@ -585,8 +438,6 @@ describe('Profile @profile', () => {
         });
 
         const setupPools = async (source: PoolSpec, target: PoolSpec) => {
-            trader = await createWallet();
-
             ({ token: sourceToken } = await setupFundedPool(
                 source,
                 deployer,
@@ -700,68 +551,6 @@ describe('Profile @profile', () => {
             approvedAmount?: BigNumberish;
         }
 
-        const tradeBySourceAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
-            const {
-                limit: minReturnAmount = MIN_RETURN_AMOUNT,
-                deadline = MAX_UINT256,
-                beneficiary = ZERO_ADDRESS,
-                sourceTokenAddress = sourceToken.address,
-                targetTokenAddress = targetToken.address,
-                approvedAmount = amount
-            } = overrides;
-
-            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
-
-            return network
-                .connect(trader)
-                .tradeBySourceAmountPermitted(
-                    sourceTokenAddress,
-                    targetTokenAddress,
-                    amount,
-                    minReturnAmount,
-                    deadline,
-                    beneficiary,
-                    signature.v,
-                    signature.r,
-                    signature.s
-                );
-        };
-
-        const tradeByTargetAmountPermitted = async (amount: BigNumberish, overrides: TradePermittedOverrides = {}) => {
-            let {
-                limit: maxSourceAmount,
-                deadline = MAX_UINT256,
-                beneficiary = ZERO_ADDRESS,
-                sourceTokenAddress = sourceToken.address,
-                targetTokenAddress = targetToken.address,
-                approvedAmount
-            } = overrides;
-
-            // fetch the required source amount if it wasn't provided
-            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
-                sourceTokenAddress,
-                targetTokenAddress,
-                amount
-            );
-            approvedAmount ||= maxSourceAmount;
-
-            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
-
-            return network
-                .connect(trader)
-                .tradeByTargetAmountPermitted(
-                    sourceTokenAddress,
-                    targetTokenAddress,
-                    amount,
-                    maxSourceAmount,
-                    deadline,
-                    beneficiary,
-                    signature.v,
-                    signature.r,
-                    signature.s
-                );
-        };
-
         const performTrade = async (
             beneficiaryAddress: string,
             amount: BigNumber,
@@ -775,8 +564,7 @@ describe('Profile @profile', () => {
             const isSourceBNT = sourceToken.address === bnt.address;
             const isTargetBNT = targetToken.address === bnt.address;
 
-            const bySourceAmount = [tradeBySourceAmount, tradeBySourceAmountPermitted].includes(tradeFunc as any);
-            const permitted = [tradeBySourceAmountPermitted, tradeByTargetAmountPermitted].includes(tradeFunc as any);
+            const bySourceAmount = tradeBySourceAmount === tradeFunc;
 
             const deadline = MAX_UINT256;
             let limit: BigNumber;
@@ -823,7 +611,7 @@ describe('Profile @profile', () => {
             const targetSymbol = isTargetNativeToken ? TokenSymbol.ETH : await (targetToken as TestERC20Token).symbol();
 
             await profiler.profile(
-                `${permitted ? 'permitted ' : ''}trade by providing the ${
+                `trade by providing the ${
                     bySourceAmount ? 'source' : 'target'
                 } amount ${sourceSymbol} -> ${targetSymbol}`,
                 tradeFunc(amount, { limit, beneficiary: beneficiaryAddress, deadline })
@@ -880,35 +668,6 @@ describe('Profile @profile', () => {
             });
         };
 
-        const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceNativeToken = source.tokenData.isNative();
-            const isSourceBNT = source.tokenData.isBNT();
-
-            if (isSourceNativeToken || isSourceBNT) {
-                return;
-            }
-
-            context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                beforeEach(async () => {
-                    await setupPools(source, target);
-                });
-
-                for (const bySourceAmount of [true, false]) {
-                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                        const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
-
-                        beforeEach(async () => {
-                            await approve(amount, bySourceAmount);
-                        });
-
-                        it('should complete a permitted trade', async () => {
-                            await performTrade(ZERO_ADDRESS, amount, tradeFunc);
-                        });
-                    });
-                }
-            });
-        };
-
         for (const [sourceSymbol, targetSymbol] of [
             [TokenSymbol.TKN, TokenSymbol.BNT],
             [TokenSymbol.TKN, TokenSymbol.ETH],
@@ -920,24 +679,6 @@ describe('Profile @profile', () => {
         ]) {
             const sourceTokenData = new TokenData(sourceSymbol);
             const targetTokenData = new TokenData(targetSymbol);
-
-            testPermittedTrades(
-                {
-                    tokenData: sourceTokenData,
-                    balance: toWei(1_000_000),
-                    requestedFunding: toWei(1_000_000).mul(1000),
-                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
-                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
-                },
-                {
-                    tokenData: targetTokenData,
-                    balance: toWei(5_000_000),
-                    requestedFunding: toWei(5_000_000).mul(1000),
-                    bntVirtualBalance: BNT_VIRTUAL_BALANCE,
-                    baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
-                },
-                toWei(1000)
-            );
 
             for (const sourceBalance of [toWei(1_000_000), toWei(100_000_000)]) {
                 for (const targetBalance of [toWei(1_000_000), toWei(100_000_000)]) {
@@ -1072,19 +813,20 @@ describe('Profile @profile', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let bnt: IERC20;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
 
-        let provider: Wallet;
+        let provider: SignerWithAddress;
         let poolTokenAmount: BigNumber;
 
         const BALANCE = toWei(1_000_000);
 
-        beforeEach(async () => {
-            ({ network, bnt, networkInfo, networkSettings, poolCollection, pendingWithdrawals } = await createSystem());
+        before(async () => {
+            [, provider] = await ethers.getSigners();
+        });
 
-            provider = await createWallet();
+        beforeEach(async () => {
+            ({ network, networkInfo, networkSettings, poolCollection, pendingWithdrawals } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -1114,31 +856,6 @@ describe('Profile @profile', () => {
             await profiler.profile(
                 'init withdrawal',
                 network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount)
-            );
-        });
-
-        it('should initiate a permitted withdrawal request', async () => {
-            const signature = await permitSignature(
-                provider as Wallet,
-                poolToken.address,
-                network,
-                bnt,
-                poolTokenAmount,
-                MAX_UINT256
-            );
-
-            await profiler.profile(
-                'init withdrawal permitted',
-                network
-                    .connect(provider)
-                    .initWithdrawalPermitted(
-                        poolToken.address,
-                        poolTokenAmount,
-                        MAX_UINT256,
-                        signature.v,
-                        signature.r,
-                        signature.s
-                    )
             );
         });
 

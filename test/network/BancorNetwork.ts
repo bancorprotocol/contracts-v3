@@ -31,7 +31,6 @@ import LegacyContractsV3, { PoolCollectionType1V5 } from '../../components/Legac
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, NETWORK_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
-import { permitSignature, Signature } from '../../utils/Permit';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { percentsToPPM, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -52,12 +51,12 @@ import {
 import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
-import { createWallet, getBalance, getTransactionCost, transfer } from '../helpers/Utils';
+import { getBalance, getTransactionCost, transfer } from '../helpers/Utils';
 import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
-import { BigNumber, BigNumberish, ContractTransaction, Signer, utils, Wallet } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, utils } from 'ethers';
 import fs from 'fs';
 import { ethers } from 'hardhat';
 import { camelCase } from 'lodash';
@@ -987,12 +986,18 @@ describe('BancorNetwork', () => {
         });
 
         const testDeposits = (tokenData: TokenData) => {
-            let poolToken: PoolToken;
-            let token: TokenWithAddress;
-
             const INITIAL_LIQUIDITY = MIN_LIQUIDITY_FOR_TRADING.mul(BASE_TOKEN_VIRTUAL_BALANCE)
                 .div(BNT_VIRTUAL_BALANCE)
                 .mul(2);
+
+            let poolToken: PoolToken;
+            let token: TokenWithAddress;
+
+            let provider: SignerWithAddress;
+
+            before(async () => {
+                [, provider] = await ethers.getSigners();
+            });
 
             beforeEach(async () => {
                 if (tokenData.isBNT()) {
@@ -1028,8 +1033,8 @@ describe('BancorNetwork', () => {
             };
 
             const verifyDeposit = async (
-                provider: Signer | Wallet,
-                sender: Signer | Wallet,
+                provider: SignerWithAddress,
+                sender: SignerWithAddress,
                 amount: BigNumber,
                 deposit: (amount: BigNumber) => Promise<ContractTransaction>
             ) => {
@@ -1111,413 +1116,205 @@ describe('BancorNetwork', () => {
                 );
             };
 
-            const testDeposit = () => {
-                context('regular deposit', () => {
-                    enum Method {
-                        Deposit,
-                        DepositFor
-                    }
+            it('should revert when attempting to deposit for an invalid provider', async () => {
+                await expect(network.depositFor(ZERO_ADDRESS, token.address, 1)).to.be.revertedWithError(
+                    'InvalidAddress'
+                );
+            });
 
-                    let provider: SignerWithAddress;
+            enum Method {
+                Deposit,
+                DepositFor
+            }
+
+            for (const method of [Method.Deposit, Method.DepositFor]) {
+                context(`using ${camelCase(Method[method])} method`, () => {
+                    let sender: SignerWithAddress;
 
                     before(async () => {
-                        [, provider] = await ethers.getSigners();
+                        switch (method) {
+                            case Method.Deposit:
+                                sender = provider;
+
+                                break;
+
+                            case Method.DepositFor:
+                                sender = deployer;
+
+                                break;
+                        }
                     });
 
-                    it('should revert when attempting to deposit for an invalid provider', async () => {
-                        await expect(network.depositFor(ZERO_ADDRESS, token.address, 1)).to.be.revertedWithError(
+                    interface Overrides {
+                        value?: BigNumber;
+                        poolAddress?: string;
+                    }
+
+                    const deposit = async (amount: BigNumberish, overrides: Overrides = {}) => {
+                        let { value, poolAddress = token.address } = overrides;
+
+                        if (!value) {
+                            value = BigNumber.from(0);
+
+                            // if we aren't overriding which token we want to deposit and it's the native token -
+                            // ensure to add to the transaction
+                            if (poolAddress === token.address && tokenData.isNative()) {
+                                value = BigNumber.from(amount);
+                            }
+                        }
+
+                        switch (method) {
+                            case Method.Deposit:
+                                return network.connect(sender).deposit(poolAddress, amount, { value });
+
+                            case Method.DepositFor:
+                                return network
+                                    .connect(sender)
+                                    .depositFor(provider.address, poolAddress, amount, { value });
+                        }
+                    };
+
+                    it('should revert when attempting to deposit an invalid amount', async () => {
+                        await expect(deposit(0)).to.be.revertedWithError('ZeroValue');
+                    });
+
+                    it('should revert when attempting to deposit to an invalid pool', async () => {
+                        await expect(deposit(1, { poolAddress: ZERO_ADDRESS })).to.be.revertedWithError(
                             'InvalidAddress'
                         );
                     });
 
-                    for (const method of [Method.Deposit, Method.DepositFor]) {
-                        context(`using ${camelCase(Method[method])} method`, () => {
-                            let sender: SignerWithAddress;
+                    it('should revert when attempting to deposit into a non-existing pool', async () => {
+                        const token2 = await createTestToken();
 
-                            before(async () => {
-                                switch (method) {
-                                    case Method.Deposit:
-                                        sender = provider;
+                        const amount = 1;
+                        await token2.transfer(sender.address, amount);
+                        await token2.connect(sender).approve(network.address, amount);
 
-                                        break;
-
-                                    case Method.DepositFor:
-                                        sender = deployer;
-
-                                        break;
-                                }
-                            });
-
-                            interface Overrides {
-                                value?: BigNumber;
-                                poolAddress?: string;
-                            }
-
-                            const deposit = async (amount: BigNumberish, overrides: Overrides = {}) => {
-                                let { value, poolAddress = token.address } = overrides;
-
-                                if (!value) {
-                                    value = BigNumber.from(0);
-
-                                    // if we aren't overriding which token we want to deposit and it's the native token -
-                                    // ensure to add to the transaction
-                                    if (poolAddress === token.address && tokenData.isNative()) {
-                                        value = BigNumber.from(amount);
-                                    }
-                                }
-
-                                switch (method) {
-                                    case Method.Deposit:
-                                        return network.connect(sender).deposit(poolAddress, amount, { value });
-
-                                    case Method.DepositFor:
-                                        return network
-                                            .connect(sender)
-                                            .depositFor(provider.address, poolAddress, amount, { value });
-                                }
-                            };
-
-                            it('should revert when attempting to deposit an invalid amount', async () => {
-                                await expect(deposit(0)).to.be.revertedWithError('ZeroValue');
-                            });
-
-                            it('should revert when attempting to deposit to an invalid pool', async () => {
-                                await expect(deposit(1, { poolAddress: ZERO_ADDRESS })).to.be.revertedWithError(
-                                    'InvalidAddress'
-                                );
-                            });
-
-                            it('should revert when attempting to deposit into a non-existing pool', async () => {
-                                const token2 = await createTestToken();
-
-                                const amount = 1;
-                                await token2.transfer(sender.address, amount);
-                                await token2.connect(sender).approve(network.address, amount);
-
-                                await expect(deposit(amount, { poolAddress: token2.address })).to.be.revertedWithError(
-                                    'InvalidToken'
-                                );
-                            });
-
-                            context('when paused', () => {
-                                beforeEach(async () => {
-                                    await network.connect(emergencyStopper).pause();
-                                });
-
-                                it('should revert when attempting to deposit', async () => {
-                                    await expect(deposit(1)).to.be.revertedWithError('Pausable: paused');
-                                });
-                            });
-
-                            const testDepositAmount = (amount: BigNumber) => {
-                                const COUNT = 3;
-
-                                const testMultipleDeposits = async () => {
-                                    for (let i = 0; i < COUNT; i++) {
-                                        await verifyDeposit(provider, sender, amount, deposit);
-                                    }
-                                };
-
-                                context(`${amount} tokens`, () => {
-                                    if (!tokenData.isNative()) {
-                                        beforeEach(async () => {
-                                            const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                                            await reserveToken.transfer(sender.address, amount.mul(COUNT));
-                                        });
-
-                                        it('should revert when attempting to deposit without approving the network', async () => {
-                                            await expect(deposit(amount)).to.be.revertedWithError(
-                                                tokenData.isBNT()
-                                                    ? 'Transaction reverted without a reason string'
-                                                    : tokenData.errors().exceedsAllowance
-                                            );
-                                        });
-                                    }
-
-                                    context('with an approval', () => {
-                                        if (!tokenData.isNative()) {
-                                            beforeEach(async () => {
-                                                const reserveToken = await Contracts.TestERC20Token.attach(
-                                                    token.address
-                                                );
-                                                await reserveToken
-                                                    .connect(sender)
-                                                    .approve(network.address, amount.mul(COUNT));
-                                            });
-                                        }
-
-                                        if (tokenData.isBNT()) {
-                                            context('with requested funding', () => {
-                                                beforeEach(async () => {
-                                                    const reserveToken = await createTestToken();
-
-                                                    await createPool(
-                                                        reserveToken,
-                                                        network,
-                                                        networkSettings,
-                                                        poolCollection
-                                                    );
-                                                    await networkSettings.setFundingLimit(
-                                                        reserveToken.address,
-                                                        FUNDING_LIMIT
-                                                    );
-
-                                                    await poolCollection.requestFundingT(
-                                                        CONTEXT_ID,
-                                                        reserveToken.address,
-                                                        amount.mul(COUNT)
-                                                    );
-                                                });
-
-                                                it('should complete multiple deposits', async () => {
-                                                    await testMultipleDeposits();
-                                                });
-
-                                                // eslint-disable-next-line max-len
-                                                it('should revert when attempting to deposit the native token into a non native token pool', async () => {
-                                                    await expect(
-                                                        deposit(amount, { value: BigNumber.from(1) })
-                                                    ).to.be.revertedWithError('NativeTokenAmountMismatch');
-                                                });
-                                            });
-                                        } else {
-                                            it('should complete multiple deposits', async () => {
-                                                await testMultipleDeposits();
-                                            });
-
-                                            if (tokenData.isNative()) {
-                                                it('should revert when attempting to deposit more than what was actually sent', async () => {
-                                                    const missingAmount = 1;
-
-                                                    await expect(
-                                                        deposit(amount, {
-                                                            value: amount.sub(missingAmount)
-                                                        })
-                                                    ).to.be.revertedWithError('NativeTokenAmountMismatch');
-
-                                                    await expect(
-                                                        deposit(amount, { value: BigNumber.from(0) })
-                                                    ).to.be.revertedWithError('NativeTokenAmountMismatch');
-                                                });
-
-                                                it('should refund when attempting to deposit less than what was actually sent', async () => {
-                                                    const extraAmount = 100_000;
-                                                    const prevSenderBalance = await getBalance(token, sender);
-
-                                                    const res = await deposit(amount, {
-                                                        value: amount.add(extraAmount)
-                                                    });
-
-                                                    const transactionCost = await getTransactionCost(res);
-
-                                                    expect(await getBalance(token, sender)).equal(
-                                                        prevSenderBalance.sub(amount).sub(transactionCost)
-                                                    );
-                                                });
-                                            } else {
-                                                // eslint-disable-next-line max-len
-                                                it('should revert when attempting to deposit the native token into a non native token pool', async () => {
-                                                    await expect(
-                                                        deposit(amount, { value: BigNumber.from(1) })
-                                                    ).to.be.revertedWithError('NativeTokenAmountMismatch');
-                                                });
-                                            }
-                                        }
-                                    });
-                                });
-                            };
-
-                            for (const amount of [toWei(1_000_000)]) {
-                                testDepositAmount(BigNumber.from(amount));
-                            }
-                        });
-                    }
-                });
-            };
-
-            const testDepositPermitted = () => {
-                context('permitted deposit', () => {
-                    enum Method {
-                        DepositPermitted,
-                        DepositForPermitted
-                    }
-
-                    const DEADLINE = MAX_UINT256;
-
-                    let provider: Wallet;
-                    let providerAddress: string;
-
-                    beforeEach(async () => {
-                        provider = await createWallet();
-                        providerAddress = await provider.getAddress();
-                    });
-
-                    it('should revert when attempting to deposit for an invalid provider', async () => {
-                        const amount = BigNumber.from(1);
-                        const signature = await permitSignature(
-                            provider,
-                            token.address,
-                            network,
-                            bnt,
-                            amount,
-                            DEADLINE
+                        await expect(deposit(amount, { poolAddress: token2.address })).to.be.revertedWithError(
+                            'InvalidToken'
                         );
-
-                        await expect(
-                            network.depositForPermitted(
-                                ZERO_ADDRESS,
-                                token.address,
-                                amount,
-                                DEADLINE,
-                                signature.v,
-                                signature.r,
-                                signature.s
-                            )
-                        ).to.be.revertedWithError('InvalidAddress');
                     });
 
-                    for (const method of [Method.DepositPermitted, Method.DepositForPermitted]) {
-                        context(`using ${camelCase(Method[method])} method`, () => {
-                            let sender: Wallet;
-                            let senderAddress: string;
+                    context('when paused', () => {
+                        beforeEach(async () => {
+                            await network.connect(emergencyStopper).pause();
+                        });
 
-                            beforeEach(async () => {
-                                switch (method) {
-                                    case Method.DepositPermitted:
-                                        sender = provider;
+                        it('should revert when attempting to deposit', async () => {
+                            await expect(deposit(1)).to.be.revertedWithError('Pausable: paused');
+                        });
+                    });
 
-                                        break;
+                    const testDepositAmount = (amount: BigNumber) => {
+                        const COUNT = 3;
 
-                                    case Method.DepositForPermitted:
-                                        sender = await createWallet();
+                        const testMultipleDeposits = async () => {
+                            for (let i = 0; i < COUNT; i++) {
+                                await verifyDeposit(provider, sender, amount, deposit);
+                            }
+                        };
 
-                                        break;
-                                }
+                        context(`${amount} tokens`, () => {
+                            if (!tokenData.isNative()) {
+                                beforeEach(async () => {
+                                    const reserveToken = await Contracts.TestERC20Token.attach(token.address);
+                                    await reserveToken.transfer(sender.address, amount.mul(COUNT));
+                                });
 
-                                senderAddress = await sender.getAddress();
-                            });
-
-                            interface Overrides {
-                                poolAddress?: string;
+                                it('should revert when attempting to deposit without approving the network', async () => {
+                                    await expect(deposit(amount)).to.be.revertedWithError(
+                                        tokenData.isBNT()
+                                            ? 'Transaction reverted without a reason string'
+                                            : tokenData.errors().exceedsAllowance
+                                    );
+                                });
                             }
 
-                            const deposit = async (amount: BigNumberish, overrides: Overrides = {}) => {
-                                const { poolAddress = token.address } = overrides;
-
-                                const signature = await permitSignature(
-                                    sender,
-                                    poolAddress,
-                                    network,
-                                    bnt,
-                                    amount,
-                                    DEADLINE
-                                );
-
-                                switch (method) {
-                                    case Method.DepositPermitted:
-                                        return network
-                                            .connect(sender)
-                                            .depositPermitted(
-                                                poolAddress,
-                                                amount,
-                                                DEADLINE,
-                                                signature.v,
-                                                signature.r,
-                                                signature.s
-                                            );
-
-                                    case Method.DepositForPermitted:
-                                        return network
-                                            .connect(sender)
-                                            .depositForPermitted(
-                                                providerAddress,
-                                                poolAddress,
-                                                amount,
-                                                DEADLINE,
-                                                signature.v,
-                                                signature.r,
-                                                signature.s
-                                            );
-                                }
-                            };
-
-                            it('should revert when attempting to deposit an invalid amount', async () => {
-                                await expect(deposit(0)).to.be.revertedWithError('ZeroValue');
-                            });
-
-                            it('should revert when attempting to deposit to an invalid pool', async () => {
-                                await expect(deposit(1, { poolAddress: ZERO_ADDRESS })).to.be.revertedWithError(
-                                    'InvalidAddress'
-                                );
-                            });
-
-                            it('should revert when attempting to deposit into a non-existing pool', async () => {
-                                const token2 = await createTestToken();
-
-                                const amount = 1;
-                                await token2.transfer(senderAddress, amount);
-                                await token2.connect(sender).approve(network.address, amount);
-
-                                await expect(
-                                    deposit(amount, {
-                                        poolAddress: token2.address
-                                    })
-                                ).to.be.revertedWithError('InvalidToken');
-                            });
-
-                            context('when paused', () => {
-                                beforeEach(async () => {
-                                    await network.connect(emergencyStopper).pause();
-                                });
-
-                                it('should revert when attempting to deposit', async () => {
-                                    await expect(deposit(1)).to.be.revertedWithError('Pausable: paused');
-                                });
-                            });
-
-                            const testDepositAmount = (amount: BigNumber) => {
-                                const COUNT = 3;
-
-                                const testMultipleDeposits = async () => {
-                                    for (let i = 0; i < 3; i++) {
-                                        await verifyDeposit(provider, sender, amount, deposit);
-                                    }
-                                };
-
-                                context(`${amount} tokens`, () => {
-                                    if (tokenData.isBNT() || tokenData.isNative()) {
-                                        it('should revert when attempting to deposit', async () => {
-                                            await expect(deposit(amount)).to.be.revertedWithError(
-                                                tokenData.isNative()
-                                                    ? 'PermitUnsupported'
-                                                    : 'Transaction reverted without a reason string'
-                                            );
-                                        });
-
-                                        return;
-                                    }
-
+                            context('with an approval', () => {
+                                if (!tokenData.isNative()) {
                                     beforeEach(async () => {
                                         const reserveToken = await Contracts.TestERC20Token.attach(token.address);
-                                        await reserveToken.transfer(senderAddress, amount.mul(COUNT));
+                                        await reserveToken.connect(sender).approve(network.address, amount.mul(COUNT));
                                     });
+                                }
 
+                                if (tokenData.isBNT()) {
+                                    context('with requested funding', () => {
+                                        beforeEach(async () => {
+                                            const reserveToken = await createTestToken();
+
+                                            await createPool(reserveToken, network, networkSettings, poolCollection);
+                                            await networkSettings.setFundingLimit(reserveToken.address, FUNDING_LIMIT);
+
+                                            await poolCollection.requestFundingT(
+                                                CONTEXT_ID,
+                                                reserveToken.address,
+                                                amount.mul(COUNT)
+                                            );
+                                        });
+
+                                        it('should complete multiple deposits', async () => {
+                                            await testMultipleDeposits();
+                                        });
+
+                                        it('should revert when attempting to deposit the native token into a non native token pool', async () => {
+                                            await expect(
+                                                deposit(amount, { value: BigNumber.from(1) })
+                                            ).to.be.revertedWithError('NativeTokenAmountMismatch');
+                                        });
+                                    });
+                                } else {
                                     it('should complete multiple deposits', async () => {
                                         await testMultipleDeposits();
                                     });
-                                });
-                            };
 
-                            for (const amount of [toWei(1_000_000)]) {
-                                testDepositAmount(BigNumber.from(amount));
-                            }
+                                    if (tokenData.isNative()) {
+                                        it('should revert when attempting to deposit more than what was actually sent', async () => {
+                                            const missingAmount = 1;
+
+                                            await expect(
+                                                deposit(amount, {
+                                                    value: amount.sub(missingAmount)
+                                                })
+                                            ).to.be.revertedWithError('NativeTokenAmountMismatch');
+
+                                            await expect(
+                                                deposit(amount, { value: BigNumber.from(0) })
+                                            ).to.be.revertedWithError('NativeTokenAmountMismatch');
+                                        });
+
+                                        it('should refund when attempting to deposit less than what was actually sent', async () => {
+                                            const extraAmount = 100_000;
+                                            const prevSenderBalance = await getBalance(token, sender);
+
+                                            const res = await deposit(amount, {
+                                                value: amount.add(extraAmount)
+                                            });
+
+                                            const transactionCost = await getTransactionCost(res);
+
+                                            expect(await getBalance(token, sender)).equal(
+                                                prevSenderBalance.sub(amount).sub(transactionCost)
+                                            );
+                                        });
+                                    } else {
+                                        it('should revert when attempting to deposit the native token into a non native token pool', async () => {
+                                            await expect(
+                                                deposit(amount, { value: BigNumber.from(1) })
+                                            ).to.be.revertedWithError('NativeTokenAmountMismatch');
+                                        });
+                                    }
+                                }
+                            });
                         });
+                    };
+
+                    for (const amount of [toWei(1_000_000)]) {
+                        testDepositAmount(BigNumber.from(amount));
                     }
                 });
-            };
-
-            testDeposit();
-            testDepositPermitted();
+            }
         };
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
@@ -1822,11 +1619,11 @@ describe('BancorNetwork', () => {
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
 
-        let trader: Wallet;
+        let trader: SignerWithAddress;
         let emergencyStopper: SignerWithAddress;
 
         before(async () => {
-            [, emergencyStopper] = await ethers.getSigners();
+            [, trader, emergencyStopper] = await ethers.getSigners();
         });
 
         beforeEach(async () => {
@@ -1841,8 +1638,6 @@ describe('BancorNetwork', () => {
         });
 
         const setupPools = async (source: PoolSpec, target: PoolSpec) => {
-            trader = await createWallet();
-
             ({ token: sourceToken } = await setupFundedPool(
                 source,
                 deployer,
@@ -1947,92 +1742,13 @@ describe('BancorNetwork', () => {
             );
         };
 
-        interface TradePermittedOverrides {
-            limit?: BigNumberish;
-            deadline?: BigNumberish;
-            beneficiary?: string;
-            sourceTokenAddress?: string;
-            targetTokenAddress?: string;
-            approvedAmount?: BigNumberish;
-        }
-
-        const tradeBySourceAmountPermitted = async (
-            amount: BigNumberish,
-            overrides: TradePermittedOverrides = {},
-            simulate = false
-        ) => {
-            const {
-                limit: minReturnAmount = MIN_RETURN_AMOUNT,
-                deadline = MAX_UINT256,
-                beneficiary = ZERO_ADDRESS,
-                sourceTokenAddress = sourceToken.address,
-                targetTokenAddress = targetToken.address,
-                approvedAmount = amount
-            } = overrides;
-
-            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
-
-            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
-
-            return method.tradeBySourceAmountPermitted(
-                sourceTokenAddress,
-                targetTokenAddress,
-                amount,
-                minReturnAmount,
-                deadline,
-                beneficiary,
-                signature.v,
-                signature.r,
-                signature.s
-            );
-        };
-
-        const tradeByTargetAmountPermitted = async (
-            amount: BigNumberish,
-            overrides: TradePermittedOverrides = {},
-            simulate = false
-        ) => {
-            let {
-                limit: maxSourceAmount,
-                deadline = MAX_UINT256,
-                beneficiary = ZERO_ADDRESS,
-                sourceTokenAddress = sourceToken.address,
-                targetTokenAddress = targetToken.address,
-                approvedAmount
-            } = overrides;
-
-            // fetch the required source amount if it wasn't provided
-            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
-                sourceTokenAddress,
-                targetTokenAddress,
-                amount
-            );
-            approvedAmount ||= maxSourceAmount;
-
-            const signature = await permitSignature(trader, sourceTokenAddress, network, bnt, approvedAmount, deadline);
-
-            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
-
-            return method.tradeByTargetAmountPermitted(
-                sourceTokenAddress,
-                targetTokenAddress,
-                amount,
-                maxSourceAmount,
-                deadline,
-                beneficiary,
-                signature.v,
-                signature.r,
-                signature.s
-            );
-        };
-
         const verifyTrade = async (
-            trader: Signer | Wallet,
+            trader: SignerWithAddress,
             beneficiaryAddress: string,
             amount: BigNumberish,
             tradeFunc: (
                 amount: BigNumberish,
-                options: TradeOverrides | TradePermittedOverrides,
+                options: TradeOverrides,
                 simulate: boolean
             ) => Promise<ContractTransaction | BigNumber | void>
         ) => {
@@ -2041,7 +1757,7 @@ describe('BancorNetwork', () => {
             const isSourceBNT = sourceToken.address === bnt.address;
             const isTargetBNT = targetToken.address === bnt.address;
 
-            const bySourceAmount = [tradeBySourceAmount, tradeBySourceAmountPermitted].includes(tradeFunc as any);
+            const bySourceAmount = tradeBySourceAmount === tradeFunc;
 
             const traderAddress = await trader.getAddress();
             const deadline = MAX_UINT256;
@@ -2312,7 +2028,6 @@ describe('BancorNetwork', () => {
 
         const testTradesBasic = (source: PoolSpec, target: PoolSpec) => {
             const isSourceNativeToken = source.tokenData.isNative();
-            const isSourceBNT = source.tokenData.isBNT();
 
             context(`basic trades from ${source.tokenData.symbol()} to ${target.tokenData.symbol()}`, () => {
                 const testAmount = BigNumber.from(10_000);
@@ -2323,7 +2038,7 @@ describe('BancorNetwork', () => {
 
                 for (const bySourceAmount of [true, false]) {
                     context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                        const tradeDirectFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
+                        const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
                         beforeEach(async () => {
                             if (isSourceNativeToken) {
@@ -2338,13 +2053,13 @@ describe('BancorNetwork', () => {
                                 const missingAmount = 1;
 
                                 await expect(
-                                    tradeDirectFunc(testAmount, {
+                                    tradeFunc(testAmount, {
                                         value: testAmount.sub(missingAmount)
                                     })
                                 ).to.be.revertedWithError('NativeTokenAmountMismatch');
 
                                 await expect(
-                                    tradeDirectFunc(testAmount, { value: BigNumber.from(0) })
+                                    tradeFunc(testAmount, { value: BigNumber.from(0) })
                                 ).to.be.revertedWithError('NativeTokenAmountMismatch');
                             });
 
@@ -2363,7 +2078,7 @@ describe('BancorNetwork', () => {
                                 const extraAmount = 100_000;
                                 const prevTraderBalance = await getBalance(sourceToken, trader);
 
-                                const res = await tradeDirectFunc(testAmount, {
+                                const res = await tradeFunc(testAmount, {
                                     value: sourceAmount.add(extraAmount)
                                 });
 
@@ -2375,142 +2090,113 @@ describe('BancorNetwork', () => {
                             });
                         } else {
                             it('should revert when passing the native token with a non native token trade', async () => {
-                                await expect(tradeDirectFunc(testAmount, { value: 100 })).to.be.revertedWithError(
+                                await expect(tradeFunc(testAmount, { value: 100 })).to.be.revertedWithError(
                                     'NativeTokenAmountMismatch'
                                 );
                             });
                         }
 
-                        const options = isSourceBNT || isSourceNativeToken ? [false] : [false, true];
-                        for (const permitted of options) {
-                            context(`${permitted ? 'permitted' : 'direct'} trade`, () => {
-                                const tradeBySourceAmountPermittedFunc = bySourceAmount
-                                    ? tradeBySourceAmountPermitted
-                                    : tradeByTargetAmountPermitted;
-                                const tradeFunc = permitted ? tradeBySourceAmountPermittedFunc : tradeDirectFunc;
+                        it('should revert when attempting to trade using an invalid source token', async () => {
+                            await expect(
+                                tradeFunc(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
+                            ).to.be.revertedWithError('InvalidAddress');
+                        });
 
-                                it('should revert when attempting to trade using an invalid source token', async () => {
-                                    await expect(
-                                        tradeFunc(testAmount, { sourceTokenAddress: ZERO_ADDRESS })
-                                    ).to.be.revertedWithError('InvalidAddress');
-                                });
+                        it('should revert when attempting to trade using an invalid target token', async () => {
+                            await expect(
+                                tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
+                            ).to.be.revertedWithError('InvalidAddress');
+                        });
 
-                                it('should revert when attempting to trade using an invalid target token', async () => {
-                                    await expect(
-                                        tradeFunc(testAmount, { targetTokenAddress: ZERO_ADDRESS })
-                                    ).to.be.revertedWithError('InvalidAddress');
-                                });
+                        it('should revert when attempting to trade using an invalid amount', async () => {
+                            await expect(tradeFunc(BigNumber.from(0))).to.be.revertedWithError('ZeroValue');
+                        });
 
-                                it('should revert when attempting to trade using an invalid amount', async () => {
-                                    await expect(tradeFunc(BigNumber.from(0))).to.be.revertedWithError('ZeroValue');
-                                });
+                        it('should revert when attempting to trade using an invalid limit', async () => {
+                            await expect(tradeFunc(testAmount, { limit: BigNumber.from(0) })).to.be.revertedWithError(
+                                'ZeroValue'
+                            );
+                        });
 
-                                it('should revert when attempting to trade using an invalid limit', async () => {
-                                    await expect(
-                                        tradeFunc(testAmount, { limit: BigNumber.from(0) })
-                                    ).to.be.revertedWithError('ZeroValue');
-                                });
+                        it('should revert when attempting to trade using an expired deadline', async () => {
+                            const deadline = (await latest()) - 1000;
 
-                                it('should revert when attempting to trade using an expired deadline', async () => {
-                                    const deadline = (await latest()) - 1000;
+                            await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWithError(
+                                'DeadlineExpired'
+                            );
+                        });
 
-                                    await expect(tradeFunc(testAmount, { deadline })).to.be.revertedWithError(
-                                        'DeadlineExpired'
-                                    );
-                                });
+                        it('should revert when attempting to trade unsupported tokens', async () => {
+                            const reserveToken2 = await createTestToken();
+                            await reserveToken2.transfer(await trader.getAddress(), testAmount);
+                            await reserveToken2.connect(trader).approve(network.address, testAmount);
 
-                                it('should revert when attempting to trade unsupported tokens', async () => {
-                                    const reserveToken2 = await createTestToken();
+                            // unknown source token
+                            await expect(
+                                tradeFunc(testAmount, { sourceTokenAddress: reserveToken2.address })
+                            ).to.be.revertedWithError('InvalidToken');
 
-                                    if (!permitted) {
-                                        await reserveToken2.transfer(await trader.getAddress(), testAmount);
-                                        await reserveToken2.connect(trader).approve(network.address, testAmount);
+                            // unknown target token
+                            await expect(
+                                tradeFunc(testAmount, { targetTokenAddress: reserveToken2.address })
+                            ).to.be.revertedWithError('InvalidToken');
+                        });
+
+                        it('should revert when attempting to trade using same source and target tokens', async () => {
+                            await expect(
+                                tradeFunc(testAmount, { targetTokenAddress: sourceToken.address })
+                            ).to.be.revertedWithError('InvalidToken');
+                        });
+
+                        it('should support a custom beneficiary', async () => {
+                            const trader2 = (await ethers.getSigners())[9];
+
+                            await verifyTrade(trader, trader2.address, testAmount, tradeFunc);
+                        });
+
+                        if (!isSourceNativeToken) {
+                            context('with an insufficient approval', () => {
+                                it('should revert when attempting to trade', async () => {
+                                    const missingAmount = 10;
+
+                                    let sourceAmount;
+
+                                    if (bySourceAmount) {
+                                        sourceAmount = testAmount;
+                                    } else {
+                                        sourceAmount = await networkInfo.tradeInputByTargetAmount(
+                                            sourceToken.address,
+                                            targetToken.address,
+                                            testAmount
+                                        );
                                     }
 
-                                    // unknown source token
-                                    await expect(
-                                        tradeFunc(testAmount, { sourceTokenAddress: reserveToken2.address })
-                                    ).to.be.revertedWithError('InvalidToken');
+                                    // reduce the approved amount and perform a trade by providing the source amount
+                                    const reserveToken = await Contracts.TestERC20Token.attach(sourceToken.address);
+                                    await reserveToken.connect(trader).approve(network.address, 0);
+                                    await reserveToken
+                                        .connect(trader)
+                                        .approve(network.address, sourceAmount.sub(missingAmount));
 
-                                    // unknown target token
-                                    await expect(
-                                        tradeFunc(testAmount, { targetTokenAddress: reserveToken2.address })
-                                    ).to.be.revertedWithError('InvalidToken');
-                                });
-
-                                it('should revert when attempting to trade using same source and target tokens', async () => {
-                                    await expect(
-                                        tradeFunc(testAmount, { targetTokenAddress: sourceToken.address })
-                                    ).to.be.revertedWithError('InvalidToken');
-                                });
-
-                                it('should support a custom beneficiary', async () => {
-                                    const trader2 = (await ethers.getSigners())[9];
-
-                                    await verifyTrade(trader, trader2.address, testAmount, tradeFunc);
-                                });
-
-                                if (!isSourceNativeToken) {
-                                    context('with an insufficient approval', () => {
-                                        it('should revert when attempting to trade', async () => {
-                                            const missingAmount = 10;
-
-                                            let sourceAmount;
-
-                                            if (bySourceAmount) {
-                                                sourceAmount = testAmount;
-                                            } else {
-                                                sourceAmount = await networkInfo.tradeInputByTargetAmount(
-                                                    sourceToken.address,
-                                                    targetToken.address,
-                                                    testAmount
-                                                );
-                                            }
-
-                                            if (permitted) {
-                                                // perform a permitted trade while signing a permit over an amount lower
-                                                // than the required amount
-                                                await expect(
-                                                    tradeBySourceAmountPermittedFunc(testAmount, {
-                                                        approvedAmount: sourceAmount.sub(missingAmount)
-                                                    })
-                                                ).to.be.revertedWithError('ERC20Permit: invalid signature');
-                                            } else {
-                                                // reduce the approved amount and perform a trade by providing the source
-                                                // amount
-                                                const reserveToken = await Contracts.TestERC20Token.attach(
-                                                    sourceToken.address
-                                                );
-                                                await reserveToken.connect(trader).approve(network.address, 0);
-                                                await reserveToken
-                                                    .connect(trader)
-                                                    .approve(network.address, sourceAmount.sub(missingAmount));
-
-                                                await expect(tradeFunc(testAmount)).to.be.revertedWithError(
-                                                    source.tokenData.errors().exceedsAllowance
-                                                );
-                                            }
-                                        });
-                                    });
-                                }
-
-                                context('when paused', () => {
-                                    beforeEach(async () => {
-                                        await network.connect(emergencyStopper).pause();
-                                    });
-
-                                    it('should revert when attempting to trade', async () => {
-                                        await expect(tradeFunc(testAmount)).to.be.revertedWithError('Pausable: paused');
-                                    });
+                                    await expect(tradeFunc(testAmount)).to.be.revertedWithError(
+                                        source.tokenData.errors().exceedsAllowance
+                                    );
                                 });
                             });
                         }
+
+                        context('when paused', () => {
+                            beforeEach(async () => {
+                                await network.connect(emergencyStopper).pause();
+                            });
+
+                            it('should revert when attempting to trade', async () => {
+                                await expect(tradeFunc(testAmount)).to.be.revertedWithError('Pausable: paused');
+                            });
+                        });
                     });
                 }
             });
-
-            // perform permitted trades suite over a fixed input
-            testPermittedTrades(source, target, toWei(1000));
         };
 
         const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
@@ -2539,43 +2225,6 @@ describe('BancorNetwork', () => {
                                 await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
                             }
                         });
-                    });
-                }
-            });
-        };
-
-        const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
-            const isSourceNativeToken = source.tokenData.isNative();
-            const isSourceBNT = source.tokenData.isBNT();
-
-            context(`permitted trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
-                beforeEach(async () => {
-                    await setupPools(source, target);
-                });
-
-                for (const bySourceAmount of [true, false]) {
-                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                        const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
-
-                        beforeEach(async () => {
-                            if (!isSourceNativeToken) {
-                                await approve(amount, bySourceAmount);
-                            }
-                        });
-
-                        if (isSourceNativeToken || isSourceBNT) {
-                            it('should revert when attempting a permitted trade', async () => {
-                                await expect(tradeFunc(amount)).to.be.revertedWithError(
-                                    isSourceNativeToken
-                                        ? 'PermitUnsupported'
-                                        : 'Transaction reverted without a reason string'
-                                );
-                            });
-                        } else {
-                            it('should complete a permitted trade', async () => {
-                                await verifyTrade(trader, ZERO_ADDRESS, amount, tradeFunc);
-                            });
-                        }
                     });
                 }
             });
@@ -3467,25 +3116,23 @@ describe('BancorNetwork', () => {
         let networkInfo: BancorNetworkInfo;
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let bnt: IERC20;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolCollection: TestPoolCollection;
         let token: TokenWithAddress;
 
-        let provider: Wallet;
-        let poolTokenAmount: BigNumber;
+        let provider: SignerWithAddress;
         let emergencyStopper: SignerWithAddress;
+
+        let poolTokenAmount: BigNumber;
 
         const BALANCE = toWei(1_000_000);
 
         before(async () => {
-            [, emergencyStopper] = await ethers.getSigners();
+            [, emergencyStopper, provider] = await ethers.getSigners();
         });
 
         beforeEach(async () => {
-            ({ network, bnt, networkInfo, networkSettings, poolCollection, pendingWithdrawals } = await createSystem());
-
-            provider = await createWallet();
+            ({ network, networkInfo, networkSettings, poolCollection, pendingWithdrawals } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
@@ -3567,127 +3214,6 @@ describe('BancorNetwork', () => {
             });
         });
 
-        describe('permitted', () => {
-            let signature: Signature;
-
-            beforeEach(async () => {
-                signature = await permitSignature(
-                    provider as Wallet,
-                    poolToken.address,
-                    network,
-                    bnt,
-                    poolTokenAmount,
-                    MAX_UINT256
-                );
-            });
-
-            it('should revert when attempting to initiate a withdrawal request with an invalid pool token', async () => {
-                await expect(
-                    network
-                        .connect(provider)
-                        .initWithdrawalPermitted(
-                            ZERO_ADDRESS,
-                            poolTokenAmount,
-                            MAX_UINT256,
-                            signature.v,
-                            signature.r,
-                            signature.s
-                        )
-                ).to.be.revertedWithError('InvalidAddress');
-
-                const reserveToken = await createTestToken();
-                const poolToken2 = await Contracts.PoolToken.deploy(
-                    await reserveToken.name(),
-                    await reserveToken.symbol(),
-                    DEFAULT_DECIMALS,
-                    reserveToken.address
-                );
-
-                const signature2 = await permitSignature(
-                    provider as Wallet,
-                    poolToken2.address,
-                    network,
-                    bnt,
-                    poolTokenAmount,
-                    MAX_UINT256
-                );
-
-                await expect(
-                    network
-                        .connect(provider)
-                        .initWithdrawalPermitted(
-                            poolToken2.address,
-                            poolTokenAmount,
-                            MAX_UINT256,
-                            signature2.v,
-                            signature2.r,
-                            signature2.s
-                        )
-                ).to.be.revertedWithError('InvalidToken');
-
-                const contract = await Contracts.TestERC20Token.attach(token.address);
-                const poolToken3 = await Contracts.PoolToken.deploy(
-                    await contract.name(),
-                    await contract.symbol(),
-                    DEFAULT_DECIMALS,
-                    contract.address
-                );
-
-                const signature3 = await permitSignature(
-                    provider as Wallet,
-                    poolToken3.address,
-                    network,
-                    bnt,
-                    poolTokenAmount,
-                    MAX_UINT256
-                );
-
-                await expect(
-                    network
-                        .connect(provider)
-                        .initWithdrawalPermitted(
-                            poolToken3.address,
-                            poolTokenAmount,
-                            MAX_UINT256,
-                            signature3.v,
-                            signature3.r,
-                            signature3.s
-                        )
-                ).to.be.revertedWithError('InvalidPool');
-            });
-
-            it('should initiate a withdrawal request', async () => {
-                const retId = await network
-                    .connect(provider)
-                    .callStatic.initWithdrawalPermitted(
-                        poolToken.address,
-                        poolTokenAmount,
-                        MAX_UINT256,
-                        signature.v,
-                        signature.r,
-                        signature.s
-                    );
-                await network
-                    .connect(provider)
-                    .initWithdrawalPermitted(
-                        poolToken.address,
-                        poolTokenAmount,
-                        MAX_UINT256,
-                        signature.v,
-                        signature.r,
-                        signature.s
-                    );
-
-                const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
-                const id = withdrawalRequestIds[withdrawalRequestIds.length - 1];
-                expect(id).to.equal(retId);
-
-                const withdrawalRequest = await pendingWithdrawals.withdrawalRequest(id);
-                expect(withdrawalRequest.provider).to.equal(provider.address);
-                expect(withdrawalRequest.createdAt).to.equal(await pendingWithdrawals.currentTime());
-            });
-        });
-
         context('when paused', () => {
             beforeEach(async () => {
                 await network.connect(emergencyStopper).pause();
@@ -3696,30 +3222,6 @@ describe('BancorNetwork', () => {
             it('should revert when attempting to initiate a withdrawal request', async () => {
                 await expect(
                     network.connect(provider).initWithdrawal(poolToken.address, poolTokenAmount)
-                ).to.be.revertedWithError('Pausable: paused');
-            });
-
-            it('should revert when attempting to initiate a permitted withdrawal request', async () => {
-                const signature = await permitSignature(
-                    provider as Wallet,
-                    poolToken.address,
-                    network,
-                    bnt,
-                    poolTokenAmount,
-                    MAX_UINT256
-                );
-
-                await expect(
-                    network
-                        .connect(provider)
-                        .initWithdrawalPermitted(
-                            poolToken.address,
-                            poolTokenAmount,
-                            MAX_UINT256,
-                            signature.v,
-                            signature.r,
-                            signature.s
-                        )
                 ).to.be.revertedWithError('Pausable: paused');
             });
         });

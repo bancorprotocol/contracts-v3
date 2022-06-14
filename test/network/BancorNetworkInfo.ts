@@ -30,10 +30,9 @@ import {
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { latest } from '../helpers/Time';
-import { createWallet } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, utils, Wallet } from 'ethers';
+import { BigNumber, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
@@ -295,7 +294,11 @@ describe('BancorNetworkInfo', () => {
         let sourceToken: TokenWithAddress;
         let targetToken: TokenWithAddress;
 
-        let trader: Wallet;
+        let trader: SignerWithAddress;
+
+        before(async () => {
+            [, trader] = await ethers.getSigners();
+        });
 
         beforeEach(async () => {
             ({ network, bnt, networkInfo, networkSettings, poolCollection } = await createSystem());
@@ -304,8 +307,6 @@ describe('BancorNetworkInfo', () => {
         });
 
         const setupPools = async (source: PoolSpec, target: PoolSpec) => {
-            trader = await createWallet();
-
             ({ token: sourceToken } = await setupFundedPool(
                 source,
                 deployer,

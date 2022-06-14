@@ -22,7 +22,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
-import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
@@ -454,28 +454,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @inheritdoc IStandardRewards
      */
-    function joinPermitted(
-        uint256 id,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external greaterThanZero(poolTokenAmount) nonReentrant {
-        ProgramData memory p = _programs[id];
-
-        _verifyProgramActiveAndEnabled(p);
-
-        // permit the amount the caller is trying to stake. Please note, that if the base token doesn't support
-        // EIP2612 permit - either this call or the inner transferFrom will revert
-        p.poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
-
-        _join(msg.sender, p, poolTokenAmount, msg.sender);
-    }
-
-    /**
-     * @inheritdoc IStandardRewards
-     */
     function leave(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
@@ -496,26 +474,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         ProgramData memory p = _programs[id];
 
         _verifyProgramActiveAndEnabled(p);
-
-        _depositAndJoin(msg.sender, p, tokenAmount);
-    }
-
-    /**
-     * @inheritdoc IStandardRewards
-     */
-    function depositAndJoinPermitted(
-        uint256 id,
-        uint256 tokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external greaterThanZero(tokenAmount) nonReentrant {
-        ProgramData memory p = _programs[id];
-
-        _verifyProgramActiveAndEnabled(p);
-
-        p.pool.permit(msg.sender, address(this), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _depositAndJoin(msg.sender, p, tokenAmount);
     }
