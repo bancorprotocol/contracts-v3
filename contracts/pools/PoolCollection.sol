@@ -95,6 +95,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     using FractionLibrary for Fraction;
     using FractionLibrary for Fraction112;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using SafeCast for uint256;
 
     error AlreadyEnabled();
     error DepositingDisabled();
@@ -998,8 +999,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         );
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
-        liquidity.baseTokenTradingLiquidity = SafeCast.toUint128(amounts.newBaseTokenTradingLiquidity);
-        liquidity.bntTradingLiquidity = SafeCast.toUint128(amounts.newBNTTradingLiquidity);
+        liquidity.baseTokenTradingLiquidity = amounts.newBaseTokenTradingLiquidity.toUint128();
+        liquidity.bntTradingLiquidity = amounts.newBNTTradingLiquidity.toUint128();
 
         if (amounts.bntProtocolHoldingsDelta.value > 0) {
             assert(amounts.bntProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
@@ -1255,8 +1256,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: SafeCast.toUint128(action.newBNTTradingLiquidity),
-            baseTokenTradingLiquidity: SafeCast.toUint128(action.newBaseTokenTradingLiquidity),
+            bntTradingLiquidity: action.newBNTTradingLiquidity.toUint128(),
+            baseTokenTradingLiquidity: action.newBaseTokenTradingLiquidity.toUint128(),
             stakedBalance: liquidity.stakedBalance
         });
 
@@ -1555,10 +1556,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: SafeCast.toUint128(result.isSourceBNT ? result.sourceBalance : result.targetBalance),
-            baseTokenTradingLiquidity: SafeCast.toUint128(
-                result.isSourceBNT ? result.targetBalance : result.sourceBalance
-            ),
+            bntTradingLiquidity: (result.isSourceBNT ? result.sourceBalance : result.targetBalance).toUint128(),
+            baseTokenTradingLiquidity: (result.isSourceBNT ? result.targetBalance : result.sourceBalance).toUint128(),
             stakedBalance: result.stakedBalance
         });
 
