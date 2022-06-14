@@ -445,6 +445,7 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
+                        NETWORK_FEE_PPM,
                         await poolCollection.poolType(),
                         await poolCollection.version()
                     );
@@ -466,6 +467,7 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
+                        NETWORK_FEE_PPM,
                         await poolCollection.poolType(),
                         (await poolCollection.version()) + 1
                     );
@@ -524,6 +526,7 @@ describe('BancorNetwork', () => {
                     externalProtectionVault,
                     poolTokenFactory,
                     poolMigrator,
+                    NETWORK_FEE_PPM,
                     await poolCollection.poolType(),
                     (await poolCollection.version()) + 1
                 );

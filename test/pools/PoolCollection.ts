@@ -3983,6 +3983,7 @@ describe('PoolCollection', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
+                NETWORK_FEE_PPM,
                 await poolCollection.poolType(),
                 (await poolCollection.version()) + 1
             );
