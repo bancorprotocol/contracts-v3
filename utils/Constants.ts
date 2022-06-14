@@ -45,7 +45,7 @@ export const RATE_MAX_DEVIATION_PPM = toPPM(1);
 export const EMA_AVERAGE_RATE_WEIGHT = 4;
 export const EMA_SPOT_RATE_WEIGHT = 1;
 
-export const NETWORK_FEE_PPM = 150_000;
+export const NETWORK_FEE_PPM = toPPM(15);
 
 export const DEFAULT_AUTO_PROCESS_REWARDS_COUNT = 3;
 export const AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = duration.hours(1);

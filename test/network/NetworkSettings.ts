@@ -41,7 +41,7 @@ describe('NetworkSettings', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await networkSettings.version()).to.equal(2);
+            expect(await networkSettings.version()).to.equal(3);
 
             await expectRoles(networkSettings, Roles.Upgradeable);
 
@@ -51,7 +51,6 @@ describe('NetworkSettings', () => {
 
             expect(await networkSettings.protectedTokenWhitelist()).to.be.empty;
 
-            expect(await networkSettings.networkFeePPM()).to.equal(0);
             expect(await networkSettings.withdrawalFeePPM()).to.equal(0);
             expect(await networkSettings.defaultFlashLoanFeePPM()).to.equal(DEFAULT_FLASH_LOAN_FEE_PPM);
 

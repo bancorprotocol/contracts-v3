@@ -3924,6 +3924,7 @@ describe('BancorNetwork Financial Verification', () => {
 
     let network: TestBancorNetwork;
     let bnt: IERC20;
+    let vbnt: IERC20;
     let networkSettings: NetworkSettings;
     let bntPool: TestBNTPool;
     let bntGovernance: TokenGovernance;
@@ -3931,10 +3932,12 @@ describe('BancorNetwork Financial Verification', () => {
     let poolCollection: TestPoolCollection;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
+    let poolTokenFactory: PoolTokenFactory;
+    let poolMigrator: TestPoolMigrator;
+
     let baseToken: TestERC20Burnable;
     let basePoolToken: PoolToken;
     let bntPoolToken: PoolToken;
-    let vbnt: IERC20;
     let tknDecimals: number;
     let bntDecimals: number;
     let bntknDecimals: number;
@@ -4097,12 +4100,27 @@ describe('BancorNetwork Financial Verification', () => {
             bntGovernance,
             vbnt,
             pendingWithdrawals,
-            poolCollection,
             masterVault,
-            externalProtectionVault
+            externalProtectionVault,
+            poolTokenFactory,
+            poolMigrator
         } = await createSystem());
 
         baseToken = await createBurnableToken(new TokenData(TokenSymbol.TKN), tknAmount);
+
+        poolCollection = await createPoolCollection(
+            network,
+            bnt,
+            networkSettings,
+            masterVault,
+            bntPool,
+            externalProtectionVault,
+            poolTokenFactory,
+            poolMigrator,
+            percentsToPPM(flow.networkFee)
+        );
+        await network.registerPoolCollection(poolCollection.address);
+
         basePoolToken = await createPool(baseToken, network, networkSettings, poolCollection);
 
         await baseToken.updateDecimals(tknDecimals);
@@ -4110,7 +4128,6 @@ describe('BancorNetwork Financial Verification', () => {
         await bntGovernance.burn(await bnt.balanceOf(signers[0].address));
         await bntGovernance.mint(signers[0].address, bntAmount);
 
-        await networkSettings.setNetworkFeePPM(percentsToPPM(flow.networkFee));
         await networkSettings.setWithdrawalFeePPM(percentsToPPM(flow.withdrawalFee));
         await networkSettings.setMinLiquidityForTrading(decimalToInteger(flow.bntMinLiquidity, bntDecimals));
         await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(flow.bntFundingLimit, bntDecimals));
