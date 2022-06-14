@@ -500,7 +500,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * trading liquidity
      *
      * please note that the virtual balances should be derived from token prices, normalized to the smallest unit of
-     * tokens. For example:
+     * tokens. In other words, the ratio between BNT and TKN virtual balances should be the ratio between the $ value
+     * of 1 wei of TKN and 1 wei of BNT, taking both of their decimals into account. For example:
      *
      * - if the price of one (10**18 wei) BNT is $X and the price of one (10**18 wei) TKN is $Y, then the virtual balances
      *   should represent a ratio of X to Y
