@@ -1,10 +1,10 @@
 import Contracts from '../../components/Contracts';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
-import { Addressable, toWei } from '../../utils/Types';
+import { Addressable } from '../../utils/Types';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish, ContractTransaction, Wallet } from 'ethers';
-import { ethers, waffle } from 'hardhat';
+import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
+import { ethers } from 'hardhat';
 
 export const toAddress = (account: string | Addressable) => (typeof account === 'string' ? account : account.address);
 
@@ -50,16 +50,4 @@ export const transfer = async (
         return await sourceAccount.sendTransaction({ to: targetAddress, value: amount });
     }
     return await (await Contracts.ERC20.attach(tokenAddress)).connect(sourceAccount).transfer(targetAddress, amount);
-};
-
-export const createWallet = async () => {
-    // create a random wallet, connect it to a test provider, and fund it
-    const wallet = Wallet.createRandom().connect(waffle.provider);
-    const deployer = (await ethers.getSigners())[0];
-    await deployer.sendTransaction({
-        value: toWei(10_000_000),
-        to: await wallet.getAddress()
-    });
-
-    return wallet;
 };
