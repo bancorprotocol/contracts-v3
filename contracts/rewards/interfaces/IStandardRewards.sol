@@ -94,11 +94,9 @@ interface IStandardRewards is IUpgradeable {
      *
      * - the caller must be the admin of the contract
      * - the pool must not have an active program
-     * - if the rewards token isn't the BNT token, then the rewards must have been deposited to the rewards vault
      */
     function createProgram(
         Token pool,
-        Token rewardsToken,
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime

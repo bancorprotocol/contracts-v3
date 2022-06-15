@@ -17,8 +17,6 @@ import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
 
-import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
-
 import { TestTime } from "./TestTime.sol";
 
 contract TestStandardRewards is StandardRewards, TestTime {
@@ -27,25 +25,11 @@ contract TestStandardRewards is StandardRewards, TestTime {
         INetworkSettings initNetworkSettings,
         ITokenGovernance initBNTGovernance,
         IERC20 initVBNT,
-        IBNTPool initBNTPool,
-        IExternalRewardsVault initExternalRewardsVault
-    )
-        StandardRewards(
-            initNetwork,
-            initNetworkSettings,
-            initBNTGovernance,
-            initVBNT,
-            initBNTPool,
-            initExternalRewardsVault
-        )
-    {}
+        IBNTPool initBNTPool
+    ) StandardRewards(initNetwork, initNetworkSettings, initBNTGovernance, initVBNT, initBNTPool) {}
 
     function nextProgramId() external view returns (uint256) {
         return _nextProgramId;
-    }
-
-    function unclaimedRewards(Token rewardsToken) external view returns (uint256) {
-        return _unclaimedRewards[rewardsToken];
     }
 
     function claimRewardsWithAmounts(uint256[] calldata ids) external returns (uint256[] memory) {

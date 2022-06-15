@@ -89,7 +89,7 @@ import { getNamedAccounts } from 'hardhat';
 
     describe('roles', () => {
         let externalProtectionVault: ExternalProtectionVault;
-        let externalStandardRewardsVault: ExternalRewardsVault;
+        let externalAutoCompoundingRewardsVault: ExternalRewardsVault;
         let poolTokenFactory: PoolTokenFactory;
         let poolMigrator: PoolMigrator;
         let standardRewards: StandardRewards;
@@ -99,7 +99,8 @@ import { getNamedAccounts } from 'hardhat';
 
         beforeEach(async () => {
             externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-            externalStandardRewardsVault = await DeployedContracts.ExternalStandardRewardsVault.deployed();
+            externalAutoCompoundingRewardsVault =
+                await DeployedContracts.ExternalAutoCompoundingRewardsVault.deployed();
             poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
             poolMigrator = await DeployedContracts.PoolMigrator.deployed();
             standardRewards = await DeployedContracts.StandardRewards.deployed();
@@ -165,8 +166,10 @@ import { getNamedAccounts } from 'hardhat';
                 poolCollection.address
             ]);
 
-            await expectRoleMembers(externalStandardRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
-            await expectRoleMembers(externalStandardRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
+            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [
+                daoMultisig.address
+            ]);
+            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
                 standardRewards.address
             ]);
 

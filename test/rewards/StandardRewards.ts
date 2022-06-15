@@ -2016,24 +2016,6 @@ describe('StandardRewards', () => {
                                 await programData2.poolToken.connect(provider).approve(standardRewards.address, amount);
                                 return standardRewards.connect(provider).join(programData2.id, amount);
                             });
-
-                            it('should revert if attempting to get pending rewards for programs with different reward tokens', async () => {
-                                await expect(
-                                    standardRewards.pendingRewards(provider.address, [programData.id, programData2.id])
-                                ).to.be.revertedWithError('RewardsTokenMismatch');
-                            });
-
-                            it('should revert if attempting to claim rewards for programs with different reward tokens', async () => {
-                                await expect(
-                                    standardRewards.connect(provider).claimRewards([programData.id, programData2.id])
-                                ).to.be.revertedWithError('RewardsTokenMismatch');
-                            });
-
-                            it('should revert if attempting to stake rewards for programs with different reward tokens', async () => {
-                                await expect(
-                                    standardRewards.connect(provider).stakeRewards([programData.id, programData2.id])
-                                ).to.be.revertedWithError('RewardsTokenMismatch');
-                            });
                         });
                     });
                 });

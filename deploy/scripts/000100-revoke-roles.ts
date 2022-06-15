@@ -49,7 +49,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         InstanceName.BancorPortal,
         InstanceName.BNTPool,
         InstanceName.ExternalProtectionVault,
-        InstanceName.ExternalStandardRewardsVault,
+        InstanceName.ExternalAutoCompoundingRewardsVault,
         InstanceName.MasterVault,
         InstanceName.NetworkSettings,
         InstanceName.PendingWithdrawals,

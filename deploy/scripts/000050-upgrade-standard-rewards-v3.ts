@@ -10,18 +10,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const vbnt = await DeployedContracts.VBNT.deployed();
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const bntPool = await DeployedContracts.BNTPool.deployed();
-    const externalStandardRewardsVault = await DeployedContracts.ExternalStandardRewardsVault.deployed();
 
     await upgradeProxy({
         name: InstanceName.StandardRewards,
-        args: [
-            network.address,
-            networkSettings.address,
-            bntGovernance.address,
-            vbnt.address,
-            bntPool.address,
-            externalStandardRewardsVault.address
-        ],
+        args: [network.address, networkSettings.address, bntGovernance.address, vbnt.address, bntPool.address],
         from: deployer
     });
 
