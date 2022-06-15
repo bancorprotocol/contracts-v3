@@ -41,9 +41,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     error ArrayNotUnique();
-    error InsufficientFunds();
     error RewardsTooHigh();
-    error NativeTokenAmountMismatch();
     error ProgramInactive();
     error ProgramSuspended();
 
@@ -114,7 +112,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev triggered when a program is terminated prematurely
      */
-    event ProgramTerminated(Token indexed pool, uint256 indexed programId, uint32 endTime, uint256 Rewards);
+    event ProgramTerminated(Token indexed pool, uint256 indexed programId, uint32 endTime);
 
     /**
      * @dev triggered when a program is paused
@@ -366,20 +364,18 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc IStandardRewards
      */
     function terminateProgram(uint256 id) external onlyAdmin {
-        ProgramData memory p = _programs[id];
+        ProgramData storage p = _programs[id];
 
         _verifyProgramActive(p);
 
         // unset the program from being the latest program of the pool
         delete _latestProgramIdByPool[p.pool];
 
-        // reduce the unclaimed rewards for the token by the remaining rewards
-        uint256 remainingRewards = _remainingRewards(p);
+        // reduce the remaining rewards for the token by the remaining rewards and stop rewards accumulation
+        p.remainingRewards -= _remainingRewards(p);
+        p.endTime = _time();
 
-        // stop rewards accumulation
-        _programs[id].endTime = _time();
-
-        emit ProgramTerminated(p.pool, id, p.endTime, remainingRewards);
+        emit ProgramTerminated(p.pool, id, p.endTime);
     }
 
     /**
