@@ -27,7 +27,7 @@ import {
 } from '../../utils/Constants';
 import { permitSignature } from '../../utils/Permit';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, max, toPPM, toWei } from '../../utils/Types';
+import { max, toPPM, toWei } from '../../utils/Types';
 import {
     createAutoCompoundingRewards,
     createPool,
@@ -584,7 +584,7 @@ describe('Profile @profile', () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
 
-        const setupPools = async (source: PoolSpec, target: PoolSpec, networkFeePPM: number) => {
+        const setupPools = async (source: PoolSpec, target: PoolSpec) => {
             trader = await createWallet();
 
             ({ token: sourceToken } = await setupFundedPool(
@@ -604,10 +604,6 @@ describe('Profile @profile', () => {
                 networkSettings,
                 poolCollection
             ));
-
-            if (networkFeePPM) {
-                await networkSettings.setNetworkFeePPM(networkFeePPM);
-            }
 
             // increase BNT liquidity by the growth factor a few times
             for (let i = 0; i < 5; i++) {
@@ -852,44 +848,39 @@ describe('Profile @profile', () => {
             await reserveToken.connect(trader).approve(network.address, sourceAmount);
         };
 
-        const testTrades = (source: PoolSpec, target: PoolSpec, networkFeePPM: number, amount: BigNumber) => {
+        const testTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
             const isSourceNativeToken = source.tokenData.isNative();
 
-            context(
-                `trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}, network fee=${fromPPM(
-                    networkFeePPM
-                )}%`,
-                () => {
-                    beforeEach(async () => {
-                        await setupPools(source, target, networkFeePPM);
-                    });
+            context(`trade ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
+                beforeEach(async () => {
+                    await setupPools(source, target);
+                });
 
-                    for (const bySourceAmount of [true, false]) {
-                        context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                            const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
+                for (const bySourceAmount of [true, false]) {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                        const tradeFunc = bySourceAmount ? tradeBySourceAmount : tradeByTargetAmount;
 
-                            const TRADES_COUNT = 2;
+                        const TRADES_COUNT = 2;
 
-                            it('should complete multiple trades', async () => {
-                                const currentBlockNumber = await poolCollection.currentBlockNumber();
+                        it('should complete multiple trades', async () => {
+                            const currentBlockNumber = await poolCollection.currentBlockNumber();
 
-                                for (let i = 0; i < TRADES_COUNT; i++) {
-                                    if (!isSourceNativeToken) {
-                                        await approve(amount, bySourceAmount);
-                                    }
-
-                                    await performTrade(ZERO_ADDRESS, amount, tradeFunc);
-
-                                    await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
+                            for (let i = 0; i < TRADES_COUNT; i++) {
+                                if (!isSourceNativeToken) {
+                                    await approve(amount, bySourceAmount);
                                 }
-                            });
+
+                                await performTrade(ZERO_ADDRESS, amount, tradeFunc);
+
+                                await poolCollection.setBlockNumber(currentBlockNumber + i + 1);
+                            }
                         });
-                    }
+                    });
                 }
-            );
+            });
         };
 
-        const testPermittedTrades = (source: PoolSpec, target: PoolSpec, networkFeePPM: number, amount: BigNumber) => {
+        const testPermittedTrades = (source: PoolSpec, target: PoolSpec, amount: BigNumber) => {
             const isSourceNativeToken = source.tokenData.isNative();
             const isSourceBNT = source.tokenData.isBNT();
 
@@ -897,32 +888,25 @@ describe('Profile @profile', () => {
                 return;
             }
 
-            context(
-                `trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(
-                    target
-                )}, network fee=${fromPPM(networkFeePPM)}%`,
-                () => {
-                    beforeEach(async () => {
-                        await setupPools(source, target, networkFeePPM);
-                    });
+            context(`trade permitted ${amount} tokens from ${specToString(source)} to ${specToString(target)}`, () => {
+                beforeEach(async () => {
+                    await setupPools(source, target);
+                });
 
-                    for (const bySourceAmount of [true, false]) {
-                        context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
-                            const tradeFunc = bySourceAmount
-                                ? tradeBySourceAmountPermitted
-                                : tradeByTargetAmountPermitted;
+                for (const bySourceAmount of [true, false]) {
+                    context(`by providing the ${bySourceAmount ? 'source' : 'target'} amount`, () => {
+                        const tradeFunc = bySourceAmount ? tradeBySourceAmountPermitted : tradeByTargetAmountPermitted;
 
-                            beforeEach(async () => {
-                                await approve(amount, bySourceAmount);
-                            });
-
-                            it('should complete a permitted trade', async () => {
-                                await performTrade(ZERO_ADDRESS, amount, tradeFunc);
-                            });
+                        beforeEach(async () => {
+                            await approve(amount, bySourceAmount);
                         });
-                    }
+
+                        it('should complete a permitted trade', async () => {
+                            await performTrade(ZERO_ADDRESS, amount, tradeFunc);
+                        });
+                    });
                 }
-            );
+            });
         };
 
         for (const [sourceSymbol, targetSymbol] of [
@@ -952,7 +936,6 @@ describe('Profile @profile', () => {
                     bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                     baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                 },
-                toPPM(20),
                 toWei(1000)
             );
 
@@ -960,18 +943,36 @@ describe('Profile @profile', () => {
                 for (const targetBalance of [toWei(1_000_000), toWei(100_000_000)]) {
                     for (const amount of [toWei(100)]) {
                         for (const tradingFeePercent of [0, 5]) {
-                            for (const networkFeePercent of [0, 20]) {
-                                // if either the source or the target token is BNT - only test fee in one of the
-                                // directions
-                                if (sourceTokenData.isBNT() || targetTokenData.isBNT()) {
+                            // if either the source or the target token is BNT - only test fee in one of the
+                            // directions
+                            if (sourceTokenData.isBNT() || targetTokenData.isBNT()) {
+                                testTrades(
+                                    {
+                                        tokenData: new TokenData(sourceSymbol),
+                                        balance: sourceBalance,
+                                        requestedFunding: sourceBalance.mul(1000),
+                                        tradingFeePPM: sourceTokenData.isBNT() ? undefined : toPPM(tradingFeePercent),
+                                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
+                                    },
+                                    {
+                                        tokenData: new TokenData(targetSymbol),
+                                        balance: targetBalance,
+                                        requestedFunding: targetBalance.mul(1000),
+                                        tradingFeePPM: targetTokenData.isBNT() ? undefined : toPPM(tradingFeePercent),
+                                        bntVirtualBalance: BNT_VIRTUAL_BALANCE,
+                                        baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
+                                    },
+                                    BigNumber.from(amount)
+                                );
+                            } else {
+                                for (const tradingFeePercent2 of [0, 5]) {
                                     testTrades(
                                         {
                                             tokenData: new TokenData(sourceSymbol),
                                             balance: sourceBalance,
                                             requestedFunding: sourceBalance.mul(1000),
-                                            tradingFeePPM: sourceTokenData.isBNT()
-                                                ? undefined
-                                                : toPPM(tradingFeePercent),
+                                            tradingFeePPM: toPPM(tradingFeePercent),
                                             bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                                             baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                         },
@@ -979,38 +980,12 @@ describe('Profile @profile', () => {
                                             tokenData: new TokenData(targetSymbol),
                                             balance: targetBalance,
                                             requestedFunding: targetBalance.mul(1000),
-                                            tradingFeePPM: targetTokenData.isBNT()
-                                                ? undefined
-                                                : toPPM(tradingFeePercent),
+                                            tradingFeePPM: toPPM(tradingFeePercent2),
                                             bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                                             baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                                         },
-                                        toPPM(networkFeePercent),
                                         BigNumber.from(amount)
                                     );
-                                } else {
-                                    for (const tradingFeePercent2 of [0, 5]) {
-                                        testTrades(
-                                            {
-                                                tokenData: new TokenData(sourceSymbol),
-                                                balance: sourceBalance,
-                                                requestedFunding: sourceBalance.mul(1000),
-                                                tradingFeePPM: toPPM(tradingFeePercent),
-                                                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
-                                                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
-                                            },
-                                            {
-                                                tokenData: new TokenData(targetSymbol),
-                                                balance: targetBalance,
-                                                requestedFunding: targetBalance.mul(1000),
-                                                tradingFeePPM: toPPM(tradingFeePercent2),
-                                                bntVirtualBalance: BNT_VIRTUAL_BALANCE,
-                                                baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
-                                            },
-                                            toPPM(networkFeePercent),
-                                            BigNumber.from(amount)
-                                        );
-                                    }
                                 }
                             }
                         }

@@ -80,7 +80,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V5.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -89,7 +89,7 @@ import { getNamedAccounts } from 'hardhat';
 
     describe('roles', () => {
         let externalProtectionVault: ExternalProtectionVault;
-        let externalRewardsVault: ExternalRewardsVault;
+        let externalStandardRewardsVault: ExternalRewardsVault;
         let poolTokenFactory: PoolTokenFactory;
         let poolMigrator: PoolMigrator;
         let standardRewards: StandardRewards;
@@ -99,7 +99,7 @@ import { getNamedAccounts } from 'hardhat';
 
         beforeEach(async () => {
             externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-            externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+            externalStandardRewardsVault = await DeployedContracts.ExternalStandardRewardsVault.deployed();
             poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
             poolMigrator = await DeployedContracts.PoolMigrator.deployed();
             standardRewards = await DeployedContracts.StandardRewards.deployed();
@@ -165,8 +165,10 @@ import { getNamedAccounts } from 'hardhat';
                 poolCollection.address
             ]);
 
-            await expectRoleMembers(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
-            await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [standardRewards.address]);
+            await expectRoleMembers(externalStandardRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
+            await expectRoleMembers(externalStandardRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
+                standardRewards.address
+            ]);
 
             await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 

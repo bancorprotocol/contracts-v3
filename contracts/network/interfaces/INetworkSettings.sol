@@ -39,15 +39,6 @@ interface INetworkSettings is IUpgradeable {
     function minLiquidityForTrading() external view returns (uint256);
 
     /**
-     * @dev returns the global network fee (in units of PPM)
-     *
-     * notes:
-     *
-     * - the network fee is a portion of the total fees from each pool
-     */
-    function networkFeePPM() external view returns (uint32);
-
-    /**
      * @dev returns the withdrawal fee (in units of PPM)
      */
     function withdrawalFeePPM() external view returns (uint32);

@@ -138,6 +138,7 @@ export interface PoolCollectionInterface extends utils.Interface {
     "isPoolValid(address)": FunctionFragment;
     "migratePoolIn(address,(address,uint32,bool,bool,(uint32,(uint112,uint112),(uint112,uint112)),(uint128,uint128,uint256)))": FunctionFragment;
     "migratePoolOut(address,address)": FunctionFragment;
+    "networkFeePPM()": FunctionFragment;
     "newOwner()": FunctionFragment;
     "onFeesCollected(address,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
@@ -178,6 +179,7 @@ export interface PoolCollectionInterface extends utils.Interface {
       | "isPoolValid"
       | "migratePoolIn"
       | "migratePoolOut"
+      | "networkFeePPM"
       | "newOwner"
       | "onFeesCollected"
       | "owner"
@@ -260,6 +262,10 @@ export interface PoolCollectionInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "migratePoolOut",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "networkFeePPM",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "newOwner", values?: undefined): string;
   encodeFunctionData(
@@ -410,6 +416,10 @@ export interface PoolCollectionInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "migratePoolOut",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "networkFeePPM",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "newOwner", data: BytesLike): Result;
@@ -728,6 +738,8 @@ export interface PoolCollection extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    networkFeePPM(overrides?: CallOverrides): Promise<[number]>;
+
     newOwner(overrides?: CallOverrides): Promise<[string]>;
 
     onFeesCollected(
@@ -918,6 +930,8 @@ export interface PoolCollection extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  networkFeePPM(overrides?: CallOverrides): Promise<number>;
+
   newOwner(overrides?: CallOverrides): Promise<string>;
 
   onFeesCollected(
@@ -1105,6 +1119,8 @@ export interface PoolCollection extends BaseContract {
       targetPoolCollection: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    networkFeePPM(overrides?: CallOverrides): Promise<number>;
 
     newOwner(overrides?: CallOverrides): Promise<string>;
 
@@ -1414,6 +1430,8 @@ export interface PoolCollection extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    networkFeePPM(overrides?: CallOverrides): Promise<BigNumber>;
+
     newOwner(overrides?: CallOverrides): Promise<BigNumber>;
 
     onFeesCollected(
@@ -1606,6 +1624,8 @@ export interface PoolCollection extends BaseContract {
       targetPoolCollection: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    networkFeePPM(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     newOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

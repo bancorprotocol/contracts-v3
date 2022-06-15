@@ -9,6 +9,9 @@ import { AccessDenied } from "./Utils.sol";
 
 /**
  * @dev this contract provides common utilities for upgradeable contracts
+ *
+ * note that we're using the Transparent Upgradeable Proxy pattern and *not* the Universal Upgradeable Proxy Standard
+ * (UUPS) pattern, therefore initializing the implementation contracts is not necessary or required
  */
 abstract contract Upgradeable is IUpgradeable, AccessControlEnumerableUpgradeable {
     error AlreadyInitialized();

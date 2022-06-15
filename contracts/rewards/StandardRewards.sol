@@ -236,7 +236,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**

@@ -22,7 +22,7 @@ import Contracts, {
 } from '../../components/Contracts';
 import LegacyContracts, { BNT__factory, TokenGovernance, VBNT__factory } from '../../components/LegacyContracts';
 import { isProfiling } from '../../components/Profiler';
-import { MAX_UINT256, PoolType } from '../../utils/Constants';
+import { MAX_UINT256, NETWORK_FEE_PPM, PoolType } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { Addressable, fromPPM, toWei } from '../../utils/Types';
@@ -215,6 +215,7 @@ export const createPoolCollection = async (
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
+    networkFeePPM: number = NETWORK_FEE_PPM,
     type: number = PoolType.Standard,
     version: number = POOL_COLLECTION_CURRENT_VERSION
 ) =>
@@ -228,7 +229,8 @@ export const createPoolCollection = async (
         toAddress(bntPool),
         toAddress(externalProtectionVault),
         toAddress(poolTokenFactory),
-        toAddress(poolMigrator)
+        toAddress(poolMigrator),
+        networkFeePPM
     );
 
 const createBNTPool = async (
