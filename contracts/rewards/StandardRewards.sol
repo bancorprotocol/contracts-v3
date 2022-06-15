@@ -44,8 +44,8 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     error InsufficientFunds();
     error RewardsTooHigh();
     error NativeTokenAmountMismatch();
-    error ProgramDisabled();
     error ProgramInactive();
+    error ProgramSuspended();
 
     // since we will be dividing by the total amount of protected tokens in units of wei, we can encounter cases
     // where the total amount in the denominator is higher than the product of the rewards rate and staking duration. In
@@ -114,12 +114,12 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev triggered when a program is terminated prematurely
      */
-    event ProgramTerminated(Token indexed pool, uint256 indexed programId, uint32 endTime, uint256 remainingRewards);
+    event ProgramTerminated(Token indexed pool, uint256 indexed programId, uint32 endTime, uint256 Rewards);
 
     /**
-     * @dev triggered when a program is enabled/disabled
+     * @dev triggered when a program is paused
      */
-    event ProgramEnabled(Token indexed pool, uint256 indexed programId, bool status, uint256 remainingRewards);
+    event ProgramPaused(Token indexed pool, uint256 indexed programId, bool paused);
 
     /**
      * @dev triggered when a provider joins a program
@@ -292,8 +292,8 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @inheritdoc IStandardRewards
      */
-    function isProgramEnabled(uint256 id) external view returns (bool) {
-        return _isProgramEnabled(_programs[id]);
+    function isProgramPaused(uint256 id) external view returns (bool) {
+        return _isProgramPaused(_programs[id]);
     }
 
     /**
@@ -340,7 +340,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             pool: pool,
             poolToken: poolToken,
             rewardsToken: Token(address(_bnt)),
-            isEnabled: true,
+            isPaused: false,
             startTime: startTime,
             endTime: endTime,
             rewardRate: rewardRate,
@@ -385,19 +385,19 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @inheritdoc IStandardRewards
      */
-    function enableProgram(uint256 id, bool status) external onlyAdmin {
+    function pauseProgram(uint256 id, bool pause) external onlyAdmin {
         ProgramData storage p = _programs[id];
 
         _verifyProgramExists(p);
 
-        bool prevStatus = p.isEnabled;
-        if (prevStatus == status) {
+        bool prevStatus = p.isPaused;
+        if (prevStatus == pause) {
             return;
         }
 
-        p.isEnabled = status;
+        p.isPaused = pause;
 
-        emit ProgramEnabled({ pool: p.pool, programId: id, status: status, remainingRewards: _remainingRewards(p) });
+        emit ProgramPaused({ pool: p.pool, programId: id, paused: pause });
     }
 
     /**
@@ -406,7 +406,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     function join(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActiveAndEnabled(p);
+        _verifyProgramActiveAndNotPaused(p);
 
         _join(msg.sender, p, poolTokenAmount, msg.sender);
     }
@@ -433,7 +433,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActiveAndEnabled(p);
+        _verifyProgramActiveAndNotPaused(p);
 
         _depositAndJoin(msg.sender, p, tokenAmount);
     }
@@ -648,7 +648,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         for (uint256 i = 0; i < ids.length; i++) {
             ProgramData memory p = _programs[ids[i]];
 
-            _verifyProgramEnabled(p);
+            _verifyProgramNotPaused(p);
 
             ClaimData memory claimData = _claimRewards(provider, p);
 
@@ -710,10 +710,10 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev returns whether the specified program is active
+     * @dev returns whether the specified program is paused
      */
-    function _isProgramEnabled(ProgramData memory p) private pure returns (bool) {
-        return p.isEnabled;
+    function _isProgramPaused(ProgramData memory p) private pure returns (bool) {
+        return p.isPaused;
     }
 
     /**
@@ -744,22 +744,22 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev verifies that a program is enabled
+     * @dev verifies that a program is running
      */
-    function _verifyProgramEnabled(ProgramData memory p) private pure {
+    function _verifyProgramNotPaused(ProgramData memory p) private pure {
         _verifyProgramExists(p);
 
-        if (!p.isEnabled) {
-            revert ProgramDisabled();
+        if (p.isPaused) {
+            revert ProgramSuspended();
         }
     }
 
     /**
-     * @dev verifies that a program exists, active, and enabled
+     * @dev verifies that a program exists, active, and not paused
      */
-    function _verifyProgramActiveAndEnabled(ProgramData memory p) private view {
+    function _verifyProgramActiveAndNotPaused(ProgramData memory p) private view {
         _verifyProgramActive(p);
-        _verifyProgramEnabled(p);
+        _verifyProgramNotPaused(p);
     }
 
     /**
@@ -848,5 +848,21 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         }
 
         return true;
+    }
+
+    /**
+     * @dev post upgrade callback
+     */
+    function _postUpgrade(
+        bytes calldata /* data */
+    ) internal override {
+        // since we have renamed the "isEnabled" field to "isPaused", we need to manually inverse all exiting programs
+        // values (which is still manageable, as at the time of this upgrade - there were only 8 programs)
+        uint256 length = _nextProgramId - INITIAL_PROGRAM_ID;
+        for (uint256 i = 0; i < length; i++) {
+            uint256 id = i + INITIAL_PROGRAM_ID;
+
+            _programs[id].isPaused = false;
+        }
     }
 }

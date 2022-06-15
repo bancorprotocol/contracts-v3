@@ -17,7 +17,7 @@ struct ProgramData {
     uint32 halfLife;
     uint32 prevDistributionTimestamp;
     IPoolToken poolToken;
-    bool isEnabled;
+    bool isPaused;
     uint8 distributionType;
     uint256 totalRewards;
     uint256 remainingRewards;
@@ -48,6 +48,11 @@ interface IAutoCompoundingRewards is IUpgradeable {
      * @dev returns whether a program is currently active
      */
     function isProgramActive(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns whether the specified program is paused
+     */
+    function isProgramPaused(Token pool) external view returns (bool);
 
     /**
      * @dev creates a rewards program with flat distribution for a given pool
@@ -90,13 +95,13 @@ interface IAutoCompoundingRewards is IUpgradeable {
     function terminateProgram(Token pool) external;
 
     /**
-     * @dev enables or disables a program
+     * @dev pauses or resumes a program
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
-    function enableProgram(Token pool, bool status) external;
+    function pauseProgram(Token pool, bool pause) external;
 
     /**
      * @dev processes program rewards based on internal logic, without requiring any input

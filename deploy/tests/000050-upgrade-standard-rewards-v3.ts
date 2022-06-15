@@ -12,5 +12,10 @@ describeDeployment(__filename, () => {
 
     it('should upgrade the standard rewards contract', async () => {
         expect(await standardRewards.version()).to.equal(4);
+
+        const programIds = await standardRewards.programIds();
+        for (const id of programIds) {
+            expect(await standardRewards.isProgramPaused(id)).to.be.false;
+        }
     });
 });
