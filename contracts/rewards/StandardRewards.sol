@@ -315,7 +315,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             revert InvalidParam();
         }
 
-        // ensure that no program exists for the specific pool
+        // ensure that no program exists for the specific  pool
         if (_isProgramActive(_programs[_latestProgramIdByPool[pool]])) {
             revert AlreadyExists();
         }
@@ -372,11 +372,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         // unset the program from being the latest program of the pool
         delete _latestProgramIdByPool[p.pool];
 
+        uint32 endTime = p.endTime;
+
         // reduce the remaining rewards for the token by the remaining rewards and stop rewards accumulation
         p.remainingRewards -= _remainingRewards(p);
         p.endTime = _time();
 
-        emit ProgramTerminated(p.pool, id, p.endTime);
+        emit ProgramTerminated(p.pool, id, endTime);
     }
 
     /**

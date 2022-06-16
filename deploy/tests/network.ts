@@ -169,9 +169,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [
                 daoMultisig.address
             ]);
-            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
-                standardRewards.address
-            ]);
+            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER);
 
             await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 
