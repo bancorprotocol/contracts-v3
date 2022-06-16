@@ -2570,7 +2570,7 @@ describe('PoolCollection', () => {
 
                         await createPool(reserveToken, network, networkSettings, poolCollection);
 
-                        if (tradingFeePPM) {
+                        if (tradingFeePPM !== undefined) {
                             await poolCollection.setTradingFeePPM(reserveToken.address, tradingFeePPM);
                         }
 
