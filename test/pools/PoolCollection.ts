@@ -385,6 +385,7 @@ describe('PoolCollection', () => {
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
             expect(await poolCollection.networkFeePPM()).to.equal(NETWORK_FEE_PPM);
+            expect(await poolCollection.protectionEnabled()).to.equal(true);
 
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
@@ -639,6 +640,26 @@ describe('PoolCollection', () => {
                 await expect(res2).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, true);
 
                 expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
+            });
+        });
+
+        describe('enabling/disabling protection', () => {
+            it('should revert when a non-owner attempts to enable protection', async () => {
+                await expect(poolCollection.connect(nonOwner).enableProtection(false)).to.be.revertedWithError(
+                    'AccessDenied'
+                );
+            });
+
+            it('should allow enabling and disabling protection', async () => {
+                expect(await poolCollection.protectionEnabled()).to.be.true;
+
+                await poolCollection.enableProtection(false);
+
+                expect(await poolCollection.protectionEnabled()).to.be.false;
+
+                await poolCollection.enableProtection(true);
+
+                expect(await poolCollection.protectionEnabled()).to.be.true;
             });
         });
     });
@@ -1710,7 +1731,8 @@ describe('PoolCollection', () => {
 
             const prevPoolTokenTotalSupply = await poolToken.totalSupply();
             const prevNetworkPoolTokenBalance = await poolToken.balanceOf(network.address);
-            const prevProviderBalance = await getBalance(token, provider);
+            const prevProviderTokenBalance = await getBalance(token, provider);
+            const prevProviderBNTBalance = await getBalance(bnt, provider);
             const prevMasterVaultBNTBalance = await getBalance(bnt, masterVault.address);
 
             const expectedStakedBalance = prevLiquidity.stakedBalance
@@ -1725,6 +1747,8 @@ describe('PoolCollection', () => {
                 poolTokenAmount,
                 underlyingAmount
             );
+
+            const protectionEnabled = await poolCollection.protectionEnabled();
 
             const bntAmountRenouncedOnResetLiquidity = poolWithdrawalAmounts.newBNTTradingLiquidity.lt(
                 await networkSettings.minLiquidityForTrading()
@@ -1749,7 +1773,7 @@ describe('PoolCollection', () => {
                     poolWithdrawalAmounts.baseTokensToTransferFromEPV
                 )
             );
-            expect(bntAmount).to.equal(poolWithdrawalAmounts.bntToMintForProvider);
+            expect(bntAmount).to.equal(protectionEnabled ? poolWithdrawalAmounts.bntToMintForProvider : 0);
 
             const res = await network.withdrawFromPoolCollectionT(
                 poolCollection.address,
@@ -1769,7 +1793,7 @@ describe('PoolCollection', () => {
                     baseTokenAmount,
                     poolTokenAmount,
                     poolWithdrawalAmounts.baseTokensToTransferFromEPV,
-                    poolWithdrawalAmounts.bntToMintForProvider,
+                    bntAmount,
                     poolWithdrawalAmounts.baseTokensWithdrawalFee
                 );
 
@@ -1814,7 +1838,8 @@ describe('PoolCollection', () => {
 
             expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(poolTokenAmount));
             expect(await poolToken.balanceOf(network.address)).to.equal(prevNetworkPoolTokenBalance);
-            expect(await getBalance(token, provider)).to.equal(prevProviderBalance.add(baseTokenAmount));
+            expect(await getBalance(token, provider)).to.equal(prevProviderTokenBalance.add(baseTokenAmount));
+            expect(await getBalance(bnt, provider)).to.equal(prevProviderBNTBalance.add(bntAmount));
 
             expect(liquidity.stakedBalance).to.equal(expectedStakedBalance);
 
@@ -2182,6 +2207,16 @@ describe('PoolCollection', () => {
                                 });
                             }
                         );
+                    });
+
+                    context('when protection is disabled', () => {
+                        beforeEach(async () => {
+                            await poolCollection.enableProtection(false);
+                        });
+
+                        it('should withdraw', async () => {
+                            await testMultipleWithdrawals(TradingLiquidityState.Update);
+                        });
                     });
                 });
             });
@@ -4095,6 +4130,30 @@ describe('PoolCollection', () => {
                 expect(poolData.poolToken).to.equal(ZERO_ADDRESS);
 
                 expect(await poolToken.newOwner()).to.equal(targetPoolCollection.address);
+            });
+
+            context('when deposits are globally disabled', () => {
+                beforeEach(async () => {
+                    await network.enableDepositing(false);
+                });
+
+                it('should allow to migrate a pool out of a pool collection', async () => {
+                    let poolData = await poolCollection.poolData(reserveToken.address);
+                    expect(poolData.poolToken).not.to.equal(ZERO_ADDRESS);
+
+                    expect(await poolToken.owner()).to.equal(poolCollection.address);
+
+                    await poolMigrator.migratePoolOutT(
+                        poolCollection.address,
+                        reserveToken.address,
+                        targetPoolCollection.address
+                    );
+
+                    poolData = await poolCollection.poolData(reserveToken.address);
+                    expect(poolData.poolToken).to.equal(ZERO_ADDRESS);
+
+                    expect(await poolToken.newOwner()).to.equal(targetPoolCollection.address);
+                });
             });
         });
     });

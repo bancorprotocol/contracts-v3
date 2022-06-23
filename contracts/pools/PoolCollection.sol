@@ -175,6 +175,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
 
+    bool private _protectionEnabled = true;
+
     /**
      * @dev triggered when the default trading fee is updated
      */
@@ -339,6 +341,28 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         validFee(newDefaultTradingFeePPM)
     {
         _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
+    }
+
+    /**
+     * @dev enables/disables protection
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function enableProtection(bool status) external onlyOwner {
+        if (_protectionEnabled == status) {
+            return;
+        }
+
+        _protectionEnabled = status;
+    }
+
+    /**
+     * @dev returns the status of the protection
+     */
+    function protectionEnabled() external view returns (bool) {
+        return _protectionEnabled;
     }
 
     /**
@@ -744,7 +768,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             WithdrawalAmounts({
                 totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
                 baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
-                bntAmount: amounts.bntToMintForProvider
+                bntAmount: _protectionEnabled ? amounts.bntToMintForProvider : 0
             });
     }
 
@@ -1029,7 +1053,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         }
 
         // if the provider should receive some BNT - ask the BNT pool to mint BNT to the provider
-        if (amounts.bntToMintForProvider > 0) {
+        bool isProtectionEnabled = _protectionEnabled;
+        if (amounts.bntToMintForProvider > 0 && isProtectionEnabled) {
             _bntPool.mint(address(provider), amounts.bntToMintForProvider);
         }
 
@@ -1074,7 +1099,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             baseTokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: amounts.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
-            bntAmount: amounts.bntToMintForProvider,
+            bntAmount: isProtectionEnabled ? amounts.bntToMintForProvider : 0,
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });
 

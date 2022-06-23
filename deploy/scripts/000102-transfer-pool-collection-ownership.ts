@@ -3,13 +3,13 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, daoMultisig } = await getNamedAccounts();
+    const { daoMultisig, foundationMultisig2 } = await getNamedAccounts();
 
     await execute({
         name: InstanceName.PoolCollectionType1V6,
         methodName: 'transferOwnership',
         args: [daoMultisig],
-        from: deployer
+        from: foundationMultisig2
     });
 
     await execute({

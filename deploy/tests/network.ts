@@ -62,11 +62,12 @@ import { getNamedAccounts } from 'hardhat';
 
     let deployer: SignerWithAddress;
     let daoMultisig: SignerWithAddress;
+    let foundationMultisig: SignerWithAddress;
     let bntWhale: SignerWithAddress;
     let ethWhale: SignerWithAddress;
 
     before(async () => {
-        ({ deployer, daoMultisig, ethWhale, bntWhale } = await getNamedSigners());
+        ({ deployer, daoMultisig, foundationMultisig, ethWhale, bntWhale } = await getNamedSigners());
 
         await fundAccount(bntWhale);
     });
@@ -109,7 +110,7 @@ import { getNamedAccounts } from 'hardhat';
         });
 
         it('should have the correct set of roles', async () => {
-            const { deployer, deployerV2, foundationMultisig } = await getNamedAccounts();
+            const { deployer, deployerV2 } = await getNamedAccounts();
 
             // ensure that ownership transfer to the DAO was initiated
             expect(await liquidityProtection.newOwner()).to.equal(daoMultisig.address);
@@ -117,7 +118,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [foundationMultisig]
+                [foundationMultisig.address]
             );
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
@@ -137,7 +138,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [foundationMultisig]
+                [foundationMultisig.address]
             );
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
@@ -388,6 +389,8 @@ import { getNamedAccounts } from 'hardhat';
             };
 
             bnBNT = await DeployedContracts.bnBNT.deployed();
+
+            await network.connect(daoMultisig).enableDepositing(true);
         });
 
         describe('deposits', () => {
@@ -661,7 +664,7 @@ import { getNamedAccounts } from 'hardhat';
                     bnTKN = await Contracts.PoolToken.attach(await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS));
                 });
 
-                it('should migrate positions from V2', async () => {
+                it.skip('should migrate positions from V2', async () => {
                     // ensure that there is enough space to perform the test
                     await liquidityProtectionSettings
                         .connect(deployer)

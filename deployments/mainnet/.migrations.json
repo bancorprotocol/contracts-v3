@@ -42,5 +42,10 @@
   "000041-upgrade-bancor-portal-v2": 1654104354,
   "000042-pool-collection-type1-v4": 1654104737,
   "000043-pool-collection-type1-v5": 1654806857,
-  "000044-create-all-v2-pools": 1654810424
+  "000044-create-all-v2-pools": 1654810424,
+  "000045-upgrade-pool-migrator-v5": 1655669587,
+  "000046-upgrade-network-v7": 1655669794,
+  "000047-upgrade-portal-v3": 1655669890,
+  "000048-pool-collection-type1-v6": 1655670965,
+  "000049-network-settings-v3": 1655671058
 }
