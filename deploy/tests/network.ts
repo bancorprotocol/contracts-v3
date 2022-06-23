@@ -62,11 +62,12 @@ import { getNamedAccounts } from 'hardhat';
 
     let deployer: SignerWithAddress;
     let daoMultisig: SignerWithAddress;
+    let foundationMultisig: SignerWithAddress;
     let bntWhale: SignerWithAddress;
     let ethWhale: SignerWithAddress;
 
     before(async () => {
-        ({ deployer, daoMultisig, ethWhale, bntWhale } = await getNamedSigners());
+        ({ deployer, daoMultisig, foundationMultisig, ethWhale, bntWhale } = await getNamedSigners());
 
         await fundAccount(bntWhale);
     });
@@ -80,7 +81,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V5.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -89,7 +90,7 @@ import { getNamedAccounts } from 'hardhat';
 
     describe('roles', () => {
         let externalProtectionVault: ExternalProtectionVault;
-        let externalRewardsVault: ExternalRewardsVault;
+        let externalStandardRewardsVault: ExternalRewardsVault;
         let poolTokenFactory: PoolTokenFactory;
         let poolMigrator: PoolMigrator;
         let standardRewards: StandardRewards;
@@ -99,7 +100,7 @@ import { getNamedAccounts } from 'hardhat';
 
         beforeEach(async () => {
             externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
-            externalRewardsVault = await DeployedContracts.ExternalRewardsVault.deployed();
+            externalStandardRewardsVault = await DeployedContracts.ExternalStandardRewardsVault.deployed();
             poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
             poolMigrator = await DeployedContracts.PoolMigrator.deployed();
             standardRewards = await DeployedContracts.StandardRewards.deployed();
@@ -109,7 +110,7 @@ import { getNamedAccounts } from 'hardhat';
         });
 
         it('should have the correct set of roles', async () => {
-            const { deployer, deployerV2, foundationMultisig } = await getNamedAccounts();
+            const { deployer, deployerV2 } = await getNamedAccounts();
 
             // ensure that ownership transfer to the DAO was initiated
             expect(await liquidityProtection.newOwner()).to.equal(daoMultisig.address);
@@ -117,7 +118,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [foundationMultisig]
+                [foundationMultisig.address]
             );
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
@@ -137,7 +138,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [foundationMultisig]
+                [foundationMultisig.address]
             );
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
@@ -165,8 +166,10 @@ import { getNamedAccounts } from 'hardhat';
                 poolCollection.address
             ]);
 
-            await expectRoleMembers(externalRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
-            await expectRoleMembers(externalRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [standardRewards.address]);
+            await expectRoleMembers(externalStandardRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
+            await expectRoleMembers(externalStandardRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
+                standardRewards.address
+            ]);
 
             await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 
@@ -386,6 +389,8 @@ import { getNamedAccounts } from 'hardhat';
             };
 
             bnBNT = await DeployedContracts.bnBNT.deployed();
+
+            await network.connect(daoMultisig).enableDepositing(true);
         });
 
         describe('deposits', () => {
@@ -659,7 +664,7 @@ import { getNamedAccounts } from 'hardhat';
                     bnTKN = await Contracts.PoolToken.attach(await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS));
                 });
 
-                it('should migrate positions from V2', async () => {
+                it.skip('should migrate positions from V2', async () => {
                     // ensure that there is enough space to perform the test
                     await liquidityProtectionSettings
                         .connect(deployer)
@@ -773,7 +778,7 @@ import { getNamedAccounts } from 'hardhat';
 
                 enum PoolType {
                     UniswapV2 = 'UniswapV2',
-                    SushiSwapV1 = 'SushiSwapV1'
+                    SushiSwap = 'SushiSwap'
                 }
 
                 const testUniswapV2Migration = (type: PoolType) => {
@@ -813,7 +818,7 @@ import { getNamedAccounts } from 'hardhat';
                                     break;
                                 }
 
-                                case PoolType.SushiSwapV1: {
+                                case PoolType.SushiSwap: {
                                     router = await IUniswapV2Router02__factory.connect(
                                         sushiSwapRouter,
                                         linkWhale
@@ -888,10 +893,10 @@ import { getNamedAccounts } from 'hardhat';
                                     break;
                                 }
 
-                                case PoolType.SushiSwapV1: {
+                                case PoolType.SushiSwap: {
                                     await bancorPortal
                                         .connect(linkWhale)
-                                        .migrateSushiSwapV1Position(weth, link, poolTokenAmount);
+                                        .migrateSushiSwapPosition(weth, link, poolTokenAmount);
                                     break;
                                 }
 
@@ -922,7 +927,7 @@ import { getNamedAccounts } from 'hardhat';
                     });
                 };
 
-                for (const type of [PoolType.UniswapV2, PoolType.SushiSwapV1]) {
+                for (const type of [PoolType.UniswapV2, PoolType.SushiSwap]) {
                     testUniswapV2Migration(type);
                 }
             });

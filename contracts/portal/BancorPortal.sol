@@ -20,16 +20,16 @@ import { IBancorNetwork } from "../network/interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "../network/interfaces/INetworkSettings.sol";
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { IBancorPortal, UniswapV2PositionMigration } from "./interfaces/IBancorPortal.sol";
+import { IBancorPortal, PositionMigration } from "./interfaces/IBancorPortal.sol";
 
 struct MigrationResult {
     IUniswapV2Pair pair;
     Token tokenA;
     Token tokenB;
-    uint256 amountA;
-    uint256 amountB;
     bool depositedA;
     bool depositedB;
+    uint256 amountA;
+    uint256 amountB;
 }
 
 /**
@@ -58,11 +58,11 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     // Uniswap v2 factory contract
     IUniswapV2Factory private immutable _uniswapV2Factory;
 
-    // SushiSwap v2 router contract
-    IUniswapV2Router02 private immutable _sushiSwapV2Router;
+    // SushiSwap router contract
+    IUniswapV2Router02 private immutable _sushiSwapRouter;
 
-    // SushiSwap v2 factory contract
-    IUniswapV2Factory private immutable _sushiSwapV2Factory;
+    // SushiSwap factory contract
+    IUniswapV2Factory private immutable _sushiSwapFactory;
 
     // WETH9 contract
     IERC20 private immutable _weth;
@@ -87,7 +87,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev triggered after a successful SushiSwap V1 migration
      */
-    event SushiSwapV1PositionMigrated(
+    event SushiSwapPositionMigrated(
         address indexed provider,
         IUniswapV2Pair poolToken,
         Token indexed tokenA,
@@ -110,24 +110,24 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         IERC20 initBnt,
         IUniswapV2Router02 initUniswapV2Router,
         IUniswapV2Factory initUniswapV2Factory,
-        IUniswapV2Router02 initSushiSwapV2Router,
-        IUniswapV2Factory initSushiSwapV2Factory
+        IUniswapV2Router02 initSushiSwapRouter,
+        IUniswapV2Factory initSushiSwapFactory
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initBnt))
         validAddress(address(initUniswapV2Router))
         validAddress(address(initUniswapV2Factory))
-        validAddress(address(initSushiSwapV2Router))
-        validAddress(address(initSushiSwapV2Factory))
+        validAddress(address(initSushiSwapRouter))
+        validAddress(address(initSushiSwapFactory))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
         _bnt = initBnt;
         _uniswapV2Router = initUniswapV2Router;
         _uniswapV2Factory = initUniswapV2Factory;
-        _sushiSwapV2Router = initSushiSwapV2Router;
-        _sushiSwapV2Factory = initSushiSwapV2Factory;
+        _sushiSwapRouter = initSushiSwapRouter;
+        _sushiSwapFactory = initSushiSwapFactory;
         _weth = IERC20(initUniswapV2Router.WETH());
     }
 
@@ -135,7 +135,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**
@@ -180,7 +180,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(token0))
         validAddress(address(token1))
         greaterThanZero(poolTokenAmount)
-        returns (UniswapV2PositionMigration memory)
+        returns (PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
             _uniswapV2Router,
@@ -202,13 +202,13 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             depositedB: res.depositedB
         });
 
-        return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
+        return PositionMigration({ amountA: res.amountA, amountB: res.amountB });
     }
 
     /**
      * @inheritdoc IBancorPortal
      */
-    function migrateSushiSwapV1Position(
+    function migrateSushiSwapPosition(
         Token token0,
         Token token1,
         uint256 poolTokenAmount
@@ -218,18 +218,18 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
         validAddress(address(token0))
         validAddress(address(token1))
         greaterThanZero(poolTokenAmount)
-        returns (UniswapV2PositionMigration memory)
+        returns (PositionMigration memory)
     {
         MigrationResult memory res = _migrateUniswapV2Position(
-            _sushiSwapV2Router,
-            _sushiSwapV2Factory,
+            _sushiSwapRouter,
+            _sushiSwapFactory,
             token0,
             token1,
             poolTokenAmount,
             msg.sender
         );
 
-        emit SushiSwapV1PositionMigrated({
+        emit SushiSwapPositionMigrated({
             provider: msg.sender,
             poolToken: res.pair,
             tokenA: res.tokenA,
@@ -240,12 +240,13 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
             depositedB: res.depositedB
         });
 
-        return UniswapV2PositionMigration({ amountA: res.amountA, amountB: res.amountB });
+        return PositionMigration({ amountA: res.amountA, amountB: res.amountB });
     }
 
     /**
-     * @dev migrates funds from a Uniswap V2 pair into a Bancor V3 pool
-     * - unsupported tokens will be transferred to the caller
+     * @dev migrates funds from a Uniswap v2/SushiSwap  pair into a bancor v3 pool and returns the deposited amount for
+     * each token in the same order as stored in Uniswap's pair, or 0 for unsupported tokens (unsupported tokens will be
+     * transferred to the caller)
      *
      * requirements:
      *
@@ -261,8 +262,8 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     ) private returns (MigrationResult memory) {
         // arrange tokens in an array, replace WETH with the native token
         Token[2] memory tokens = [
-            _isWETH(token0) ? Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS)) : token0,
-            _isWETH(token1) ? Token(address(TokenLibrary.NATIVE_TOKEN_ADDRESS)) : token1
+            _isWETH(token0) ? TokenLibrary.NATIVE_TOKEN : token0,
+            _isWETH(token1) ? TokenLibrary.NATIVE_TOKEN : token1
         ];
 
         // get Uniswap's pair
@@ -309,10 +310,10 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
                 pair: pair,
                 tokenA: tokens[0],
                 tokenB: tokens[1],
-                amountA: deposited[0],
-                amountB: deposited[1],
                 depositedA: whitelist[0],
-                depositedB: whitelist[1]
+                depositedB: whitelist[1],
+                amountA: deposited[0],
+                amountB: deposited[1]
             });
     }
 

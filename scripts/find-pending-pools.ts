@@ -1,5 +1,5 @@
 import Contracts from '../components/Contracts';
-import { DeployedContracts, getNamedSigners } from '../utils/Deploy';
+import { DeployedContracts, execute, getInstanceNameByAddress, getNamedSigners } from '../utils/Deploy';
 import Logger from '../utils/Logger';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenSymbol } from '../utils/TokenData';
 import '@nomiclabs/hardhat-ethers';
@@ -8,6 +8,12 @@ import { CoinGeckoClient } from 'coingecko-api-v3';
 import Decimal from 'decimal.js';
 import fs from 'fs';
 import path from 'path';
+
+interface EnvOptions {
+    ENABLE_POOLS?: boolean;
+}
+
+const { ENABLE_POOLS: enablePools }: EnvOptions = process.env as any as EnvOptions;
 
 interface TokenOverride {
     address: string;
@@ -29,6 +35,14 @@ interface PoolData {
 
 const MAX_PRECISION = 16;
 
+// provide a price override for an unknown token. For example:
+//
+// {
+//    '0x1111111111111111111111111111111111111111': { usd: 12.34 }
+// }
+//
+const UNKNOWN_TOKEN_PRICE_OVERRIDES: Record<string, Record<string, number>> = {};
+
 const main = async () => {
     const { deployer } = await getNamedSigners();
     const bnt = await DeployedContracts.BNT.deployed();
@@ -44,11 +58,14 @@ const main = async () => {
     });
 
     /* eslint-disable camelcase */
-    const tokenPrices = await client.simpleTokenPrice({
-        id: 'ethereum',
-        contract_addresses: [bnt.address, ...allPools].join(','),
-        vs_currencies: 'USD'
-    });
+    const tokenPrices = {
+        ...Object.fromEntries(Object.entries(UNKNOWN_TOKEN_PRICE_OVERRIDES).map(([k, v]) => [k.toLowerCase(), v])),
+        ...(await client.simpleTokenPrice({
+            id: 'ethereum',
+            contract_addresses: [bnt.address, ...allPools].join(','),
+            vs_currencies: 'USD'
+        }))
+    };
     /* eslint-enable camelcase */
 
     const bntPrice = new Decimal(tokenPrices[bnt.address.toLowerCase()].usd);
@@ -153,6 +170,18 @@ const main = async () => {
 
         Logger.log(`  Suggested ${TokenSymbol.BNT} virtual balance: ${bntVirtualBalance.toFixed()}`);
         Logger.log(`  Suggested ${symbol} virtual balance: ${tokenVirtualBalance.toFixed()}`);
+
+        if (enablePools) {
+            const network = await DeployedContracts.BancorNetwork.deployed();
+            const poolCollectionAddress = await network.collectionByPool(pool);
+
+            await execute({
+                name: getInstanceNameByAddress(poolCollectionAddress),
+                methodName: 'enableTrading',
+                args: [pool, bntVirtualBalance.toString(), tokenVirtualBalance.toString()],
+                from: deployer.address
+            });
+        }
 
         pools[symbol] = {
             address: pool,

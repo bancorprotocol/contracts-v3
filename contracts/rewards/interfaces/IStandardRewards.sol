@@ -133,22 +133,6 @@ interface IStandardRewards is IUpgradeable {
     function join(uint256 id, uint256 poolTokenAmount) external;
 
     /**
-     * @dev adds provider's stake to the program by providing an EIP712 typed signature for an EIP2612 permit request
-     *
-     * requirements:
-     *
-     * - the caller must have specified a valid and unused EIP712 typed signature
-     */
-    function joinPermitted(
-        uint256 id,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
-
-    /**
      * @dev removes (some of) provider's stake from the program
      *
      * requirements:
@@ -166,23 +150,6 @@ interface IStandardRewards is IUpgradeable {
      *   native token case)
      */
     function depositAndJoin(uint256 id, uint256 tokenAmount) external payable;
-
-    /**
-     * @dev deposits and adds provider's stake to the program by providing an EIP712 typed signature for an EIP2612
-     * permit request
-     *
-     * requirements:
-     *
-     * - the caller must have specified a valid and unused EIP712 typed signature
-     */
-    function depositAndJoinPermitted(
-        uint256 id,
-        uint256 tokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external;
 
     /**
      * @dev returns provider's pending rewards

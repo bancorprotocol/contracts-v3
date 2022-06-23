@@ -8,7 +8,6 @@ import { IPoolToken } from "./interfaces/IPoolToken.sol";
 import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
-import { FractionLibrary, Fraction, Fraction112 } from "../utility/FractionLibrary.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
 import { Utils, AlreadyExists, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
@@ -17,8 +16,8 @@ interface IPoolCollectionBase {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
 }
 
-interface IPoolCollectionV4 is IPoolCollectionBase {
-    struct PoolV4 {
+interface IPoolCollectionV5 is IPoolCollectionBase {
+    struct PoolV5 {
         IPoolToken poolToken;
         uint32 tradingFeePPM;
         bool tradingEnabled;
@@ -27,20 +26,15 @@ interface IPoolCollectionV4 is IPoolCollectionBase {
         PoolLiquidity liquidity;
     }
 
-    function poolData(Token token) external view returns (PoolV4 memory);
+    function poolData(Token token) external view returns (PoolV5 memory);
 }
 
 /**
  * @dev Pool Migrator contract
  */
 contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
-    using FractionLibrary for Fraction;
-    using FractionLibrary for Fraction112;
-
     error InvalidPoolType();
     error UnsupportedVersion();
-
-    IPoolCollection private constant INVALID_POOL_COLLECTION = IPoolCollection(address(0));
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -84,7 +78,7 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 4;
+        return 5;
     }
 
     /**
@@ -114,8 +108,10 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
         }
 
         // migrate all relevant values based on a historical collection version into the new pool collection
-        if (prevPoolCollection.version() == 4) {
-            _migrateFromV4(pool, IPoolCollectionV4(address(prevPoolCollection)), newPoolCollection);
+        //
+        // note that pool collections v5 and later are currently backward compatible
+        if (prevPoolCollection.version() >= 5) {
+            _migrateFromV5(pool, IPoolCollectionV5(address(prevPoolCollection)), newPoolCollection);
 
             return;
         }
@@ -126,12 +122,12 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     /**
      * @dev migrates a pool to the given pool collection
      */
-    function _migrateFromV4(
+    function _migrateFromV5(
         Token pool,
-        IPoolCollectionV4 sourcePoolCollection,
+        IPoolCollectionV5 sourcePoolCollection,
         IPoolCollection targetPoolCollection
     ) private {
-        IPoolCollectionV4.PoolV4 memory data = sourcePoolCollection.poolData(pool);
+        IPoolCollectionV5.PoolV5 memory data = sourcePoolCollection.poolData(pool);
         AverageRates memory averageRates = data.averageRates;
         PoolLiquidity memory liquidity = data.liquidity;
 

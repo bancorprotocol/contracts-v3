@@ -37,8 +37,7 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import { PoolCollectionType1V4 } from '../components/LegacyContractsV3';
-import { ExternalContracts } from '../deployments/data';
+import { PoolCollectionType1V5 } from '../components/LegacyContractsV3';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
@@ -46,8 +45,14 @@ import { toWei } from './Types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, Contract, ContractInterface, utils } from 'ethers';
 import fs from 'fs';
+import glob from 'glob';
 import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
-import { Address, DeployFunction, ProxyOptions as DeployProxyOptions } from 'hardhat-deploy/types';
+import {
+    Address,
+    DeployFunction,
+    Deployment as DeploymentData,
+    ProxyOptions as DeployProxyOptions
+} from 'hardhat-deploy/types';
 import path from 'path';
 
 const {
@@ -79,6 +84,7 @@ enum LegacyInstanceNameV2 {
     LegacyBancorNetwork = 'LegacyBancorNetwork',
     LegacyLiquidityProtection = 'LegacyLiquidityProtection',
     LegacyLiquidityProtection2 = 'LegacyLiquidityProtection2',
+    LegacyLiquidityProtection3 = 'LegacyLiquidityProtection3',
     LiquidityProtection = 'LiquidityProtection',
     LiquidityProtectionSettings = 'LiquidityProtectionSettings',
     LiquidityProtectionStats = 'LiquidityProtectionStats',
@@ -92,7 +98,7 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V4 = 'PoolCollectionType1V4'
+    PoolCollectionType1V5 = 'PoolCollectionType1V5'
 }
 
 enum NewInstanceName {
@@ -106,11 +112,11 @@ enum NewInstanceName {
     BNTPoolProxy = 'BNTPoolProxy',
     BNTPool = 'BNTPool',
     ExternalProtectionVault = 'ExternalProtectionVault',
-    ExternalRewardsVault = 'ExternalRewardsVault',
+    ExternalStandardRewardsVault = 'ExternalStandardRewardsVault',
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V5 = 'PoolCollectionType1V5',
+    PoolCollectionType1V6 = 'PoolCollectionType1V6',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -142,6 +148,7 @@ const DeployedLegacyContractsV2 = {
     LegacyBancorNetwork: deployed<LegacyBancorNetwork>(InstanceName.LegacyBancorNetwork),
     LegacyLiquidityProtection: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection),
     LegacyLiquidityProtection2: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection2),
+    LegacyLiquidityProtection3: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection3),
     LiquidityProtection: deployed<LiquidityProtection>(InstanceName.LiquidityProtection),
     LiquidityProtectionSettings: deployed<LiquidityProtectionSettings>(InstanceName.LiquidityProtectionSettings),
     LiquidityProtectionStats: deployed<LiquidityProtectionStats>(InstanceName.LiquidityProtectionStats),
@@ -157,7 +164,7 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
-    PoolCollectionType1V4: deployed<PoolCollectionType1V4>(InstanceName.PoolCollectionType1V4)
+    PoolCollectionType1V5: deployed<PoolCollectionType1V5>(InstanceName.PoolCollectionType1V5)
 };
 
 const DeployedNewContracts = {
@@ -171,11 +178,11 @@ const DeployedNewContracts = {
     BNTPoolProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BNTPoolProxy),
     BNTPool: deployed<BNTPool>(InstanceName.BNTPool),
     ExternalProtectionVault: deployed<ExternalProtectionVault>(InstanceName.ExternalProtectionVault),
-    ExternalRewardsVault: deployed<ExternalRewardsVault>(InstanceName.ExternalRewardsVault),
+    ExternalStandardRewardsVault: deployed<ExternalRewardsVault>(InstanceName.ExternalStandardRewardsVault),
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V5: deployed<PoolCollection>(InstanceName.PoolCollectionType1V5),
+    PoolCollectionType1V6: deployed<PoolCollection>(InstanceName.PoolCollectionType1V6),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
@@ -653,7 +660,7 @@ const verifyTenderlyFork = async (deployment: Deployment) => {
 };
 
 export const deploymentTagExists = (tag: string) => {
-    const externalDeployments = (ExternalContracts.deployments as Record<string, string[]>)[getNetworkName()];
+    const externalDeployments = config.external?.deployments![getNetworkName()];
     const migrationsPath = path.resolve(
         __dirname,
         '../',
@@ -720,4 +727,24 @@ export const runPendingDeployments = async () => {
         deletePreviousDeployments: false,
         writeDeploymentsToFiles: true
     });
+};
+
+export const getInstanceNameByAddress = (address: string): InstanceName => {
+    const externalDeployments = config.external?.deployments![getNetworkName()];
+    const deploymentsPath = externalDeployments ? externalDeployments[0] : path.join('deployments', getNetworkName());
+
+    const deploymentPaths = glob.sync(`${deploymentsPath}/**/*.json`);
+    for (const deploymentPath of deploymentPaths) {
+        const name = path.basename(deploymentPath).split('.')[0];
+        if (name.endsWith('_Implementation') || name.endsWith('_Proxy')) {
+            continue;
+        }
+
+        const deployment: DeploymentData = JSON.parse(fs.readFileSync(deploymentPath, 'utf-8'));
+        if (deployment.address.toLowerCase() === address.toLowerCase()) {
+            return name as InstanceName;
+        }
+    }
+
+    throw new Error(`Unable to find deployment for ${address}`);
 };

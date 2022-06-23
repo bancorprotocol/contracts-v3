@@ -12,7 +12,7 @@ import { ITokenGovernance } from "@bancor/token-governance/contracts/ITokenGover
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
-import { Utils, AccessDenied, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
+import { Utils, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
 
 import { INetworkSettings, NotWhitelisted } from "../network/interfaces/INetworkSettings.sol";
@@ -22,7 +22,7 @@ import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 
 import { Token } from "../token/Token.sol";
-import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
 
@@ -51,7 +51,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     error InsufficientFunds();
     error RewardsTooHigh();
     error NativeTokenAmountMismatch();
-    error PoolMismatch();
     error ProgramDisabled();
     error ProgramInactive();
     error RewardsTokenMismatch();
@@ -237,7 +236,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
@@ -455,28 +454,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @inheritdoc IStandardRewards
      */
-    function joinPermitted(
-        uint256 id,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external greaterThanZero(poolTokenAmount) nonReentrant {
-        ProgramData memory p = _programs[id];
-
-        _verifyProgramActiveAndEnabled(p);
-
-        // permit the amount the caller is trying to stake. Please note, that if the base token doesn't support
-        // EIP2612 permit - either this call or the inner transferFrom will revert
-        p.poolToken.permit(msg.sender, address(this), poolTokenAmount, deadline, v, r, s);
-
-        _join(msg.sender, p, poolTokenAmount, msg.sender);
-    }
-
-    /**
-     * @inheritdoc IStandardRewards
-     */
     function leave(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
@@ -497,26 +474,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         ProgramData memory p = _programs[id];
 
         _verifyProgramActiveAndEnabled(p);
-
-        _depositAndJoin(msg.sender, p, tokenAmount);
-    }
-
-    /**
-     * @inheritdoc IStandardRewards
-     */
-    function depositAndJoinPermitted(
-        uint256 id,
-        uint256 tokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external greaterThanZero(tokenAmount) nonReentrant {
-        ProgramData memory p = _programs[id];
-
-        _verifyProgramActiveAndEnabled(p);
-
-        p.pool.permit(msg.sender, address(this), tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         _depositAndJoin(msg.sender, p, tokenAmount);
     }
@@ -812,7 +769,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         uint32 currTime = _time();
 
         return
-            _doesProgramExist(p) &&
+            _programExists(p) &&
             p.startTime <= currTime &&
             currTime <= p.endTime &&
             _latestProgramIdByPool[p.pool] == p.id;
@@ -828,7 +785,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev returns whether or not a given program exists
      */
-    function _doesProgramExist(ProgramData memory p) private pure returns (bool) {
+    function _programExists(ProgramData memory p) private pure returns (bool) {
         return address(p.pool) != address(0);
     }
 
@@ -836,7 +793,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @dev verifies that a program exists
      */
     function _verifyProgramExists(ProgramData memory p) private pure {
-        if (!_doesProgramExist(p)) {
+        if (!_programExists(p)) {
             revert DoesNotExist();
         }
     }

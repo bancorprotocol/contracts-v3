@@ -12,14 +12,14 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer, daoMultisig } = await getNamedAccounts();
+    const { deployer, daoMultisig, foundationMultisig2 } = await getNamedAccounts();
 
     // initiate ownership transfer of the LiquidityProtection contract to the DAO
     await execute({
         name: InstanceName.LiquidityProtection,
         methodName: 'transferOwnership',
         args: [daoMultisig],
-        from: deployer
+        from: foundationMultisig2
     });
 
     // renounce the BNT ROLE_GOVERNOR role from the deployer
@@ -43,13 +43,26 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
+    // renounce the ROLE_ADMIN role from the foundation multisig 2
+    await renounceRole({
+        name: InstanceName.NetworkSettings,
+        id: Roles.Upgradeable.ROLE_ADMIN,
+        from: foundationMultisig2
+    });
+
+    // renounce the ROLE_ADMIN role from the foundation multisig 2
+    await renounceRole({
+        name: InstanceName.PendingWithdrawals,
+        id: Roles.Upgradeable.ROLE_ADMIN,
+        from: foundationMultisig2
+    });
+
     for (const name of [
         InstanceName.BancorNetworkInfo,
-        InstanceName.BancorNetwork,
         InstanceName.BancorPortal,
         InstanceName.BNTPool,
         InstanceName.ExternalProtectionVault,
-        InstanceName.ExternalRewardsVault,
+        InstanceName.ExternalStandardRewardsVault,
         InstanceName.MasterVault,
         InstanceName.NetworkSettings,
         InstanceName.PendingWithdrawals,
@@ -61,6 +74,29 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             name,
             id: Roles.Upgradeable.ROLE_ADMIN,
             member: daoMultisig,
+            from: deployer
+        });
+
+        await revokeRole({
+            name,
+            id: Roles.Upgradeable.ROLE_ADMIN,
+            member: deployer,
+            from: deployer
+        });
+    }
+
+    for (const name of [InstanceName.BancorNetwork]) {
+        await grantRole({
+            name,
+            id: Roles.Upgradeable.ROLE_ADMIN,
+            member: daoMultisig,
+            from: foundationMultisig2
+        });
+
+        await revokeRole({
+            name,
+            id: Roles.Upgradeable.ROLE_ADMIN,
+            member: foundationMultisig2,
             from: deployer
         });
 

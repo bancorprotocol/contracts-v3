@@ -133,11 +133,13 @@ export interface PoolCollectionInterface extends utils.Interface {
     "depositingEnabled(address)": FunctionFragment;
     "disableTrading(address)": FunctionFragment;
     "enableDepositing(address,bool)": FunctionFragment;
+    "enableProtection(bool)": FunctionFragment;
     "enableTrading(address,uint256,uint256)": FunctionFragment;
     "isPoolStable(address)": FunctionFragment;
     "isPoolValid(address)": FunctionFragment;
     "migratePoolIn(address,(address,uint32,bool,bool,(uint32,(uint112,uint112),(uint112,uint112)),(uint128,uint128,uint256)))": FunctionFragment;
     "migratePoolOut(address,address)": FunctionFragment;
+    "networkFeePPM()": FunctionFragment;
     "newOwner()": FunctionFragment;
     "onFeesCollected(address,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
@@ -149,6 +151,7 @@ export interface PoolCollectionInterface extends utils.Interface {
     "poolTokenToUnderlying(address,uint256)": FunctionFragment;
     "poolType()": FunctionFragment;
     "pools()": FunctionFragment;
+    "protectionEnabled()": FunctionFragment;
     "setDefaultTradingFeePPM(uint32)": FunctionFragment;
     "setTradingFeePPM(address,uint32)": FunctionFragment;
     "tradeBySourceAmount(bytes32,address,address,uint256,uint256)": FunctionFragment;
@@ -173,11 +176,13 @@ export interface PoolCollectionInterface extends utils.Interface {
       | "depositingEnabled"
       | "disableTrading"
       | "enableDepositing"
+      | "enableProtection"
       | "enableTrading"
       | "isPoolStable"
       | "isPoolValid"
       | "migratePoolIn"
       | "migratePoolOut"
+      | "networkFeePPM"
       | "newOwner"
       | "onFeesCollected"
       | "owner"
@@ -189,6 +194,7 @@ export interface PoolCollectionInterface extends utils.Interface {
       | "poolTokenToUnderlying"
       | "poolType"
       | "pools"
+      | "protectionEnabled"
       | "setDefaultTradingFeePPM"
       | "setTradingFeePPM"
       | "tradeBySourceAmount"
@@ -238,6 +244,10 @@ export interface PoolCollectionInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
+    functionFragment: "enableProtection",
+    values: [PromiseOrValue<boolean>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "enableTrading",
     values: [
       PromiseOrValue<string>,
@@ -260,6 +270,10 @@ export interface PoolCollectionInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "migratePoolOut",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "networkFeePPM",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "newOwner", values?: undefined): string;
   encodeFunctionData(
@@ -294,6 +308,10 @@ export interface PoolCollectionInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "poolType", values?: undefined): string;
   encodeFunctionData(functionFragment: "pools", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "protectionEnabled",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "setDefaultTradingFeePPM",
     values: [PromiseOrValue<BigNumberish>]
@@ -393,6 +411,10 @@ export interface PoolCollectionInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "enableProtection",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "enableTrading",
     data: BytesLike
   ): Result;
@@ -410,6 +432,10 @@ export interface PoolCollectionInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "migratePoolOut",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "networkFeePPM",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "newOwner", data: BytesLike): Result;
@@ -435,6 +461,10 @@ export interface PoolCollectionInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "poolType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pools", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "protectionEnabled",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setDefaultTradingFeePPM",
     data: BytesLike
@@ -546,7 +576,7 @@ export interface TokensDepositedEventObject {
   contextId: string;
   provider: string;
   token: string;
-  tokenAmount: BigNumber;
+  baseTokenAmount: BigNumber;
   poolTokenAmount: BigNumber;
 }
 export type TokensDepositedEvent = TypedEvent<
@@ -560,7 +590,7 @@ export interface TokensWithdrawnEventObject {
   contextId: string;
   provider: string;
   token: string;
-  tokenAmount: BigNumber;
+  baseTokenAmount: BigNumber;
   poolTokenAmount: BigNumber;
   externalProtectionBaseTokenAmount: BigNumber;
   bntAmount: BigNumber;
@@ -679,7 +709,7 @@ export interface PoolCollection extends BaseContract {
       contextId: PromiseOrValue<BytesLike>,
       provider: PromiseOrValue<string>,
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -695,6 +725,11 @@ export interface PoolCollection extends BaseContract {
 
     enableDepositing(
       pool: PromiseOrValue<string>,
+      status: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    enableProtection(
       status: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -728,6 +763,8 @@ export interface PoolCollection extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    networkFeePPM(overrides?: CallOverrides): Promise<[number]>;
+
     newOwner(overrides?: CallOverrides): Promise<[string]>;
 
     onFeesCollected(
@@ -757,7 +794,7 @@ export interface PoolCollection extends BaseContract {
 
     poolTokenAmountToBurn(
       pool: PromiseOrValue<string>,
-      tokenAmountToDistribute: PromiseOrValue<BigNumberish>,
+      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
       protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -771,6 +808,8 @@ export interface PoolCollection extends BaseContract {
     poolType(overrides?: CallOverrides): Promise<[number]>;
 
     pools(overrides?: CallOverrides): Promise<[string[]]>;
+
+    protectionEnabled(overrides?: CallOverrides): Promise<[boolean]>;
 
     setDefaultTradingFeePPM(
       newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
@@ -832,7 +871,7 @@ export interface PoolCollection extends BaseContract {
 
     underlyingToPoolToken(
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -869,7 +908,7 @@ export interface PoolCollection extends BaseContract {
     contextId: PromiseOrValue<BytesLike>,
     provider: PromiseOrValue<string>,
     pool: PromiseOrValue<string>,
-    tokenAmount: PromiseOrValue<BigNumberish>,
+    baseTokenAmount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -885,6 +924,11 @@ export interface PoolCollection extends BaseContract {
 
   enableDepositing(
     pool: PromiseOrValue<string>,
+    status: PromiseOrValue<boolean>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  enableProtection(
     status: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -918,6 +962,8 @@ export interface PoolCollection extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  networkFeePPM(overrides?: CallOverrides): Promise<number>;
+
   newOwner(overrides?: CallOverrides): Promise<string>;
 
   onFeesCollected(
@@ -947,7 +993,7 @@ export interface PoolCollection extends BaseContract {
 
   poolTokenAmountToBurn(
     pool: PromiseOrValue<string>,
-    tokenAmountToDistribute: PromiseOrValue<BigNumberish>,
+    baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
     protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -961,6 +1007,8 @@ export interface PoolCollection extends BaseContract {
   poolType(overrides?: CallOverrides): Promise<number>;
 
   pools(overrides?: CallOverrides): Promise<string[]>;
+
+  protectionEnabled(overrides?: CallOverrides): Promise<boolean>;
 
   setDefaultTradingFeePPM(
     newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
@@ -1022,7 +1070,7 @@ export interface PoolCollection extends BaseContract {
 
   underlyingToPoolToken(
     pool: PromiseOrValue<string>,
-    tokenAmount: PromiseOrValue<BigNumberish>,
+    baseTokenAmount: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -1057,7 +1105,7 @@ export interface PoolCollection extends BaseContract {
       contextId: PromiseOrValue<BytesLike>,
       provider: PromiseOrValue<string>,
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1073,6 +1121,11 @@ export interface PoolCollection extends BaseContract {
 
     enableDepositing(
       pool: PromiseOrValue<string>,
+      status: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    enableProtection(
       status: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -1106,6 +1159,8 @@ export interface PoolCollection extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    networkFeePPM(overrides?: CallOverrides): Promise<number>;
+
     newOwner(overrides?: CallOverrides): Promise<string>;
 
     onFeesCollected(
@@ -1135,7 +1190,7 @@ export interface PoolCollection extends BaseContract {
 
     poolTokenAmountToBurn(
       pool: PromiseOrValue<string>,
-      tokenAmountToDistribute: PromiseOrValue<BigNumberish>,
+      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
       protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1149,6 +1204,8 @@ export interface PoolCollection extends BaseContract {
     poolType(overrides?: CallOverrides): Promise<number>;
 
     pools(overrides?: CallOverrides): Promise<string[]>;
+
+    protectionEnabled(overrides?: CallOverrides): Promise<boolean>;
 
     setDefaultTradingFeePPM(
       newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
@@ -1210,7 +1267,7 @@ export interface PoolCollection extends BaseContract {
 
     underlyingToPoolToken(
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1264,14 +1321,14 @@ export interface PoolCollection extends BaseContract {
       contextId?: PromiseOrValue<BytesLike> | null,
       provider?: PromiseOrValue<string> | null,
       token?: PromiseOrValue<string> | null,
-      tokenAmount?: null,
+      baseTokenAmount?: null,
       poolTokenAmount?: null
     ): TokensDepositedEventFilter;
     TokensDeposited(
       contextId?: PromiseOrValue<BytesLike> | null,
       provider?: PromiseOrValue<string> | null,
       token?: PromiseOrValue<string> | null,
-      tokenAmount?: null,
+      baseTokenAmount?: null,
       poolTokenAmount?: null
     ): TokensDepositedEventFilter;
 
@@ -1279,7 +1336,7 @@ export interface PoolCollection extends BaseContract {
       contextId?: PromiseOrValue<BytesLike> | null,
       provider?: PromiseOrValue<string> | null,
       token?: PromiseOrValue<string> | null,
-      tokenAmount?: null,
+      baseTokenAmount?: null,
       poolTokenAmount?: null,
       externalProtectionBaseTokenAmount?: null,
       bntAmount?: null,
@@ -1289,7 +1346,7 @@ export interface PoolCollection extends BaseContract {
       contextId?: PromiseOrValue<BytesLike> | null,
       provider?: PromiseOrValue<string> | null,
       token?: PromiseOrValue<string> | null,
-      tokenAmount?: null,
+      baseTokenAmount?: null,
       poolTokenAmount?: null,
       externalProtectionBaseTokenAmount?: null,
       bntAmount?: null,
@@ -1365,7 +1422,7 @@ export interface PoolCollection extends BaseContract {
       contextId: PromiseOrValue<BytesLike>,
       provider: PromiseOrValue<string>,
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1381,6 +1438,11 @@ export interface PoolCollection extends BaseContract {
 
     enableDepositing(
       pool: PromiseOrValue<string>,
+      status: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    enableProtection(
       status: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1414,6 +1476,8 @@ export interface PoolCollection extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    networkFeePPM(overrides?: CallOverrides): Promise<BigNumber>;
+
     newOwner(overrides?: CallOverrides): Promise<BigNumber>;
 
     onFeesCollected(
@@ -1443,7 +1507,7 @@ export interface PoolCollection extends BaseContract {
 
     poolTokenAmountToBurn(
       pool: PromiseOrValue<string>,
-      tokenAmountToDistribute: PromiseOrValue<BigNumberish>,
+      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
       protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1457,6 +1521,8 @@ export interface PoolCollection extends BaseContract {
     poolType(overrides?: CallOverrides): Promise<BigNumber>;
 
     pools(overrides?: CallOverrides): Promise<BigNumber>;
+
+    protectionEnabled(overrides?: CallOverrides): Promise<BigNumber>;
 
     setDefaultTradingFeePPM(
       newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
@@ -1518,7 +1584,7 @@ export interface PoolCollection extends BaseContract {
 
     underlyingToPoolToken(
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1558,7 +1624,7 @@ export interface PoolCollection extends BaseContract {
       contextId: PromiseOrValue<BytesLike>,
       provider: PromiseOrValue<string>,
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1574,6 +1640,11 @@ export interface PoolCollection extends BaseContract {
 
     enableDepositing(
       pool: PromiseOrValue<string>,
+      status: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    enableProtection(
       status: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -1607,6 +1678,8 @@ export interface PoolCollection extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    networkFeePPM(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     newOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     onFeesCollected(
@@ -1636,7 +1709,7 @@ export interface PoolCollection extends BaseContract {
 
     poolTokenAmountToBurn(
       pool: PromiseOrValue<string>,
-      tokenAmountToDistribute: PromiseOrValue<BigNumberish>,
+      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
       protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1650,6 +1723,8 @@ export interface PoolCollection extends BaseContract {
     poolType(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     pools(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    protectionEnabled(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     setDefaultTradingFeePPM(
       newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
@@ -1711,7 +1786,7 @@ export interface PoolCollection extends BaseContract {
 
     underlyingToPoolToken(
       pool: PromiseOrValue<string>,
-      tokenAmount: PromiseOrValue<BigNumberish>,
+      baseTokenAmount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

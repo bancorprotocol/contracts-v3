@@ -88,41 +88,6 @@ interface IBancorNetwork is IUpgradeable {
     function deposit(Token pool, uint256 tokenAmount) external payable returns (uint256);
 
     /**
-     * @dev deposits liquidity for the specified provider by providing an EIP712 typed signature for an EIP2612 permit
-     * request and returns the respective pool token amount
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function depositForPermitted(
-        address provider,
-        Token pool,
-        uint256 tokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
-
-    /**
-     * @dev deposits liquidity by providing an EIP712 typed signature for an EIP2612 permit request and returns the
-     * respective pool token amount
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function depositPermitted(
-        Token pool,
-        uint256 tokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
-
-    /**
      * @dev initiates liquidity withdrawal
      *
      * requirements:
@@ -130,22 +95,6 @@ interface IBancorNetwork is IUpgradeable {
      * - the caller must have approved the contract to transfer the pool token amount on its behalf
      */
     function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount) external returns (uint256);
-
-    /**
-     * @dev initiates liquidity withdrawal by providing an EIP712 typed signature for an EIP2612 permit request
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function initWithdrawalPermitted(
-        IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
 
     /**
      * @dev cancels a withdrawal request, and returns the number of pool token amount associated with the withdrawal
@@ -170,7 +119,8 @@ interface IBancorNetwork is IUpgradeable {
     function withdraw(uint256 id) external returns (uint256);
 
     /**
-     * @dev performs a trade by providing the input source amount, and returns the trade target amount
+     * @dev performs a trade by providing the input source amount, sends the proceeds to the optional beneficiary (or
+     * to the address of the caller, in case it's not supplied), and returns the trade target amount
      *
      * requirements:
      *
@@ -187,27 +137,8 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable returns (uint256);
 
     /**
-     * @dev performs a trade by providing the input source amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request, and returns the trade target amount
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function tradeBySourceAmountPermitted(
-        Token sourceToken,
-        Token targetToken,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
-        uint256 deadline,
-        address beneficiary,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
-
-    /**
-     * @dev performs a trade by providing the output target amount, and returns the trade source amount
+     * @dev performs a trade by providing the output target amount, sends the proceeds to the optional beneficiary (or
+     * to the address of the caller, in case it's not supplied), and returns the trade source amount
      *
      * requirements:
      *
@@ -222,26 +153,6 @@ interface IBancorNetwork is IUpgradeable {
         uint256 deadline,
         address beneficiary
     ) external payable returns (uint256);
-
-    /**
-     * @dev performs a trade by providing the output target amount and providing an EIP712 typed signature for an
-     * EIP2612 permit request and returns the target amount and fee, and returns the trade source amount
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function tradeByTargetAmountPermitted(
-        Token sourceToken,
-        Token targetToken,
-        uint256 targetAmount,
-        uint256 maxSourceAmount,
-        uint256 deadline,
-        address beneficiary,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
 
     /**
      * @dev provides a flash-loan

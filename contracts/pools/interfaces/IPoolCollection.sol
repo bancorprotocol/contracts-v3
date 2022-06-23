@@ -62,6 +62,11 @@ interface IPoolCollection is IVersioned {
     function defaultTradingFeePPM() external view returns (uint32);
 
     /**
+     * @dev returns the network fee (in units of PPM)
+     */
+    function networkFeePPM() external view returns (uint32);
+
+    /**
      * @dev returns all the pools which are managed by this pool collection
      */
     function pools() external view returns (Token[] memory);

@@ -189,7 +189,7 @@ describe('BancorPortal', () => {
         });
 
         it('should be initialized', async () => {
-            expect(await bancorPortal.version()).to.equal(2);
+            expect(await bancorPortal.version()).to.equal(3);
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -677,7 +677,7 @@ describe('BancorPortal', () => {
                 true
             );
             await expect(res)
-                .to.emit(bancorPortal, 'SushiSwapV1PositionMigrated')
+                .to.emit(bancorPortal, 'SushiSwapPositionMigrated')
                 .withArgs(
                     user.address,
                     uniswapV2Pair.address,
@@ -740,7 +740,7 @@ describe('BancorPortal', () => {
 
         // execute
         const migrationFunction = sushiSwap
-            ? bancorPortal.connect(user).migrateSushiSwapV1Position
+            ? bancorPortal.connect(user).migrateSushiSwapPosition
             : bancorPortal.connect(user).migrateUniswapV2Position;
         const res = await migrationFunction(bundles[0].reserveToken.address, bundles[1].reserveToken.address, AMOUNT);
         const newStakedBalances = await getStakedBalances(bundles[0].reserveToken, bundles[1].reserveToken);

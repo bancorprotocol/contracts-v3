@@ -32,7 +32,7 @@ import { IMasterVault } from "../vaults/interfaces/IMasterVault.sol";
 import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtectionVault.sol";
 
 import { Token } from "../token/Token.sol";
-import { TokenLibrary, Signature } from "../token/TokenLibrary.sol";
+import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
@@ -48,7 +48,7 @@ import {
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
-import { IPendingWithdrawals, WithdrawalRequest, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
+import { IPendingWithdrawals, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 
 /**
@@ -61,6 +61,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using SafeERC20 for IPoolToken;
 
     error DeadlineExpired();
+    error DepositingDisabled();
     error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
 
@@ -144,8 +145,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the pending network fee amount to be burned by the vortex
     uint256 internal _pendingNetworkFeeAmount;
 
+    bool private _depositingEnabled = true;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 10] private __gap;
+    uint256[MAX_GAP - 11] private __gap;
 
     /**
      * @dev triggered when a new pool collection is added
@@ -288,9 +291,23 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_EMERGENCY_STOPPER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_NETWORK_FEE_MANAGER, ROLE_ADMIN);
+
+        _depositingEnabled = true;
     }
 
     // solhint-enable func-name-mixedcase
+
+    modifier depositsEnabled() {
+        _depositsEnabled();
+
+        _;
+    }
+
+    function _depositsEnabled() internal view {
+        if (!_depositingEnabled) {
+            revert DepositingDisabled();
+        }
+    }
 
     receive() external payable {}
 
@@ -298,7 +315,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 6;
+        return 7;
     }
 
     /**
@@ -492,6 +509,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     )
         external
         payable
+        depositsEnabled
         validAddress(provider)
         validAddress(address(pool))
         greaterThanZero(tokenAmount)
@@ -508,6 +526,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function deposit(Token pool, uint256 tokenAmount)
         external
         payable
+        depositsEnabled
         validAddress(address(pool))
         greaterThanZero(tokenAmount)
         whenNotPaused
@@ -515,43 +534,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         returns (uint256)
     {
         return _depositFor(msg.sender, pool, tokenAmount, msg.sender);
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function depositForPermitted(
-        address provider,
-        Token pool,
-        uint256 tokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
-        external
-        validAddress(provider)
-        validAddress(address(pool))
-        greaterThanZero(tokenAmount)
-        whenNotPaused
-        nonReentrant
-        returns (uint256)
-    {
-        return _depositBaseTokenForPermitted(provider, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function depositPermitted(
-        Token pool,
-        uint256 tokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external validAddress(address(pool)) greaterThanZero(tokenAmount) whenNotPaused nonReentrant returns (uint256) {
-        return _depositBaseTokenForPermitted(msg.sender, pool, tokenAmount, deadline, Signature({ v: v, r: r, s: s }));
     }
 
     /**
@@ -565,35 +547,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         nonReentrant
         returns (uint256)
     {
-        return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function initWithdrawalPermitted(
-        IPoolToken poolToken,
-        uint256 poolTokenAmount,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    )
-        external
-        validAddress(address(poolToken))
-        greaterThanZero(poolTokenAmount)
-        whenNotPaused
-        nonReentrant
-        returns (uint256)
-    {
-        Token(address(poolToken)).permit(
-            msg.sender,
-            address(this),
-            poolTokenAmount,
-            deadline,
-            Signature({ v: v, r: r, s: s })
-        );
-
         return _initWithdrawal(msg.sender, poolToken, poolTokenAmount);
     }
 
@@ -646,33 +599,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function tradeBySourceAmountPermitted(
-        Token sourceToken,
-        Token targetToken,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
-        uint256 deadline,
-        address beneficiary,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external whenNotPaused nonReentrant returns (uint256) {
-        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
-
-        sourceToken.permit(msg.sender, address(this), sourceAmount, deadline, Signature({ v: v, r: r, s: s }));
-
-        return
-            _trade(
-                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-                deadline
-            );
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
     function tradeByTargetAmount(
         Token sourceToken,
         Token targetToken,
@@ -682,33 +608,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         address beneficiary
     ) external payable whenNotPaused nonReentrant returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
-
-        return
-            _trade(
-                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-                deadline
-            );
-    }
-
-    /**
-     * @inheritdoc IBancorNetwork
-     */
-    function tradeByTargetAmountPermitted(
-        Token sourceToken,
-        Token targetToken,
-        uint256 targetAmount,
-        uint256 maxSourceAmount,
-        uint256 deadline,
-        address beneficiary,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external whenNotPaused nonReentrant returns (uint256) {
-        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
-
-        sourceToken.permit(msg.sender, address(this), maxSourceAmount, deadline, Signature({ v: v, r: r, s: s }));
 
         return
             _trade(
@@ -808,6 +707,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         whenNotPaused
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
         validAddress(recipient)
+        nonReentrant
         returns (uint256)
     {
         uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
@@ -844,6 +744,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function resume() external onlyRoleMember(ROLE_EMERGENCY_STOPPER) {
         _unpause();
+    }
+
+    /**
+     * @dev returns whether deposits are enabled
+     */
+    function depositingEnabled() external view returns (bool) {
+        return _depositingEnabled;
+    }
+
+    /**
+     * @dev enables/disables depositing into a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function enableDepositing(bool status) external onlyAdmin {
+        if (_depositingEnabled == status) {
+            return;
+        }
+
+        _depositingEnabled = status;
     }
 
     /**
@@ -902,6 +824,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         bool isMigrating,
         uint256 originalAmount
     ) private returns (uint256) {
+        if (msg.value > 0) {
+            revert NativeTokenAmountMismatch();
+        }
+
         IBNTPool cachedBNTPool = _bntPool;
 
         // transfer the tokens from the caller to the BNT pool
@@ -934,36 +860,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // process deposit to the base token pool (includes the native token pool)
         return poolCollection.depositFor(contextId, provider, pool, tokenAmount);
-    }
-
-    /**
-     * @dev deposits liquidity for the specified provider by providing an EIP712 typed signature for an EIP2612 permit
-     * request
-     *
-     * requirements:
-     *
-     * - the caller must have provided a valid and unused EIP712 typed signature
-     */
-    function _depositBaseTokenForPermitted(
-        address provider,
-        Token pool,
-        uint256 tokenAmount,
-        uint256 deadline,
-        Signature memory signature
-    ) private returns (uint256) {
-        address caller = msg.sender;
-
-        pool.permit(caller, address(this), tokenAmount, deadline, signature);
-
-        return
-            _depositBaseTokenFor(
-                _depositContextId(provider, pool, tokenAmount, caller),
-                provider,
-                pool,
-                tokenAmount,
-                caller,
-                tokenAmount
-            );
     }
 
     /**
@@ -1335,9 +1231,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             }
         }
 
-        // transfer the pool tokens from the provider. Note, that the provider should have either previously approved
-        // the pool token amount or provided a EIP712 typed signature for an EIP2612 permit request
-        poolToken.safeTransferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
+        // transfer the pool tokens from the provider (we aren't using safeTransferFrom, since the PoolToken is a fully
+        // compliant ERC20 token contract)
+        poolToken.transferFrom(provider, address(_pendingWithdrawals), poolTokenAmount);
 
         return _pendingWithdrawals.initWithdrawal(provider, poolToken, poolTokenAmount);
     }

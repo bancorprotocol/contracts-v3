@@ -95,6 +95,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     using FractionLibrary for Fraction;
     using FractionLibrary for Fraction112;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using SafeCast for uint256;
 
     error AlreadyEnabled();
     error DepositingDisabled();
@@ -162,6 +163,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the pool migrator contract
     IPoolMigrator private immutable _poolMigrator;
 
+    // the global network fee (in units of PPM)
+    uint32 private immutable _networkFeePPM;
+
     // a mapping between tokens and their pools
     mapping(Token => Pool) internal _poolData;
 
@@ -170,6 +174,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
+
+    bool private _protectionEnabled = true;
 
     /**
      * @dev triggered when the default trading fee is updated
@@ -249,17 +255,19 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolMigrator initPoolMigrator
-    )
-        validAddress(address(initNetwork))
-        validAddress(address(initBNT))
-        validAddress(address(initNetworkSettings))
-        validAddress(address(initMasterVault))
-        validAddress(address(initBNTPool))
-        validAddress(address(initExternalProtectionVault))
-        validAddress(address(initPoolTokenFactory))
-        validAddress(address(initPoolMigrator))
-    {
+        IPoolMigrator initPoolMigrator,
+        uint32 initNetworkFeePPM
+    ) {
+        _validAddress(address(initNetwork));
+        _validAddress(address(initBNT));
+        _validAddress(address(initNetworkSettings));
+        _validAddress(address(initMasterVault));
+        _validAddress(address(initBNTPool));
+        _validAddress(address(initExternalProtectionVault));
+        _validAddress(address(initPoolTokenFactory));
+        _validAddress(address(initPoolMigrator));
+        _validFee(initNetworkFeePPM);
+
         _network = initNetwork;
         _bnt = initBNT;
         _networkSettings = initNetworkSettings;
@@ -268,6 +276,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolMigrator = initPoolMigrator;
+        _networkFeePPM = initNetworkFeePPM;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
     }
@@ -276,7 +285,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 5;
+        return 6;
     }
 
     /**
@@ -291,6 +300,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function defaultTradingFeePPM() external view returns (uint32) {
         return _defaultTradingFeePPM;
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function networkFeePPM() external view returns (uint32) {
+        return _networkFeePPM;
     }
 
     /**
@@ -325,6 +341,28 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         validFee(newDefaultTradingFeePPM)
     {
         _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
+    }
+
+    /**
+     * @dev enables/disables protection
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function enableProtection(bool status) external onlyOwner {
+        if (_protectionEnabled == status) {
+            return;
+        }
+
+        _protectionEnabled = status;
+    }
+
+    /**
+     * @dev returns the status of the protection
+     */
+    function protectionEnabled() external view returns (bool) {
+        return _protectionEnabled;
     }
 
     /**
@@ -486,7 +524,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * trading liquidity
      *
      * please note that the virtual balances should be derived from token prices, normalized to the smallest unit of
-     * tokens. For example:
+     * tokens. In other words, the ratio between BNT and TKN virtual balances should be the ratio between the $ value
+     * of 1 wei of TKN and 1 wei of BNT, taking both of their decimals into account. For example:
      *
      * - if the price of one (10**18 wei) BNT is $X and the price of one (10**18 wei) TKN is $Y, then the virtual balances
      *   should represent a ratio of X to Y
@@ -729,7 +768,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             WithdrawalAmounts({
                 totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
                 baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
-                bntAmount: amounts.bntToMintForProvider
+                bntAmount: _protectionEnabled ? amounts.bntToMintForProvider : 0
             });
     }
 
@@ -998,8 +1037,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         );
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
-        liquidity.baseTokenTradingLiquidity = SafeCast.toUint128(amounts.newBaseTokenTradingLiquidity);
-        liquidity.bntTradingLiquidity = SafeCast.toUint128(amounts.newBNTTradingLiquidity);
+        liquidity.baseTokenTradingLiquidity = amounts.newBaseTokenTradingLiquidity.toUint128();
+        liquidity.bntTradingLiquidity = amounts.newBNTTradingLiquidity.toUint128();
 
         if (amounts.bntProtocolHoldingsDelta.value > 0) {
             assert(amounts.bntProtocolHoldingsDelta.isNeg); // currently no support for requesting funding here
@@ -1014,7 +1053,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         }
 
         // if the provider should receive some BNT - ask the BNT pool to mint BNT to the provider
-        if (amounts.bntToMintForProvider > 0) {
+        bool isProtectionEnabled = _protectionEnabled;
+        if (amounts.bntToMintForProvider > 0 && isProtectionEnabled) {
             _bntPool.mint(address(provider), amounts.bntToMintForProvider);
         }
 
@@ -1059,7 +1099,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             baseTokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: amounts.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
-            bntAmount: amounts.bntToMintForProvider,
+            bntAmount: isProtectionEnabled ? amounts.bntToMintForProvider : 0,
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });
 
@@ -1255,8 +1295,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: SafeCast.toUint128(action.newBNTTradingLiquidity),
-            baseTokenTradingLiquidity: SafeCast.toUint128(action.newBaseTokenTradingLiquidity),
+            bntTradingLiquidity: action.newBNTTradingLiquidity.toUint128(),
+            baseTokenTradingLiquidity: action.newBaseTokenTradingLiquidity.toUint128(),
             stakedBalance: liquidity.stakedBalance
         });
 
@@ -1506,13 +1546,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @dev processes the network fee and updates the in-memory intermediate result
      */
     function _processNetworkFee(TradeIntermediateResult memory result) private view {
-        uint32 networkFeePPM = _networkSettings.networkFeePPM();
-        if (networkFeePPM == 0) {
+        if (_networkFeePPM == 0) {
             return;
         }
 
         // calculate the target network fee amount
-        uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, networkFeePPM, PPM_RESOLUTION);
+        uint256 targetNetworkFeeAmount = MathEx.mulDivF(result.tradingFeeAmount, _networkFeePPM, PPM_RESOLUTION);
 
         // update the target balance (but don't deduct it from the full trading fee amount)
         result.targetBalance -= targetNetworkFeeAmount;
@@ -1555,10 +1594,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: SafeCast.toUint128(result.isSourceBNT ? result.sourceBalance : result.targetBalance),
-            baseTokenTradingLiquidity: SafeCast.toUint128(
-                result.isSourceBNT ? result.targetBalance : result.sourceBalance
-            ),
+            bntTradingLiquidity: (result.isSourceBNT ? result.sourceBalance : result.targetBalance).toUint128(),
+            baseTokenTradingLiquidity: (result.isSourceBNT ? result.targetBalance : result.sourceBalance).toUint128(),
             stakedBalance: result.stakedBalance
         });
 

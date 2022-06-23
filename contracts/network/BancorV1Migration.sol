@@ -6,16 +6,16 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { IOwned } from "../utility/interfaces/IOwned.sol";
 import { Utils } from "../utility/Utils.sol";
-import { Upgradeable } from "../utility/Upgradeable.sol";
-
-import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
 import { IBancorNetwork } from "./interfaces/IBancorNetwork.sol";
 import { INetworkSettings } from "./interfaces/INetworkSettings.sol";
+
+interface IDSToken is IERC20, IOwned {}
 
 interface IBancorConverterV1 {
     function reserveTokens() external view returns (Token[] memory);
@@ -32,7 +32,7 @@ interface IBancorConverterV1 {
  */
 contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
     using SafeERC20 for IERC20;
-    using SafeERC20 for IPoolToken;
+    using SafeERC20 for IDSToken;
     using TokenLibrary for Token;
 
     // the network contract
@@ -46,7 +46,7 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
 
     event PositionMigrated(
         address indexed provider,
-        IPoolToken poolToken,
+        IDSToken poolToken,
         Token indexed tokenA,
         Token indexed tokenB,
         uint256 amountA,
@@ -87,7 +87,7 @@ contract BancorV1Migration is IVersioned, ReentrancyGuard, Utils {
      *
      * - the caller must have approved this contract to transfer the pool tokens on its behalf
      */
-    function migratePoolTokens(IPoolToken poolToken, uint256 amount) external nonReentrant {
+    function migratePoolTokens(IDSToken poolToken, uint256 amount) external nonReentrant {
         poolToken.safeTransferFrom(msg.sender, address(this), amount);
 
         IBancorConverterV1 converter = IBancorConverterV1(payable(poolToken.owner()));
