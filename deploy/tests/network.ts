@@ -235,7 +235,7 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         // TODO: replace this method with an exact single trade method
-        const stabilizePoolV3 = async (pool: string, tokenWhale: SignerWithAddress) => {
+        const stabilizePoolV3 = async (pool: string, decimals: number | undefined, tokenWhale: SignerWithAddress) => {
             while (true) {
                 const poolData = await poolCollection.poolData(pool);
                 const { averageRates, liquidity } = poolData;
@@ -263,7 +263,7 @@ import { getNamedAccounts } from 'hardhat';
 
                 const isNativeSourceToken = sourceToken === NATIVE_TOKEN_ADDRESS;
 
-                const tradeAmount = toWei(1);
+                const tradeAmount = toWei(1, decimals);
                 if (!isNativeSourceToken) {
                     const tokenContract = await Contracts.ERC20.attach(sourceToken);
                     await tokenContract.connect(trader).approve(network.address, tradeAmount);
@@ -484,7 +484,7 @@ import { getNamedAccounts } from 'hardhat';
                             );
 
                             if (!isBNT) {
-                                await stabilizePoolV3(token, whale);
+                                await stabilizePoolV3(token, decimals, whale);
                             }
                         }
                     });
