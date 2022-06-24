@@ -70,7 +70,7 @@ describe('PendingWithdrawals', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await pendingWithdrawals.version()).to.equal(5);
+            expect(await pendingWithdrawals.version()).to.equal(4);
 
             await expectRoles(pendingWithdrawals, Roles.Upgradeable);
 
