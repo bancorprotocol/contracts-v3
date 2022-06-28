@@ -112,6 +112,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2_000; // 0.2%
     uint32 private constant RATE_MAX_DEVIATION_PPM = 10_000; // %1
+    uint32 private constant RATE_RESET_BLOCK_THRESHOLD = 100;
 
     // the average rate is recalculated based on the ratio between the weights of the rates the smaller the weights are,
     // the larger the supported range of each one of the rates is
@@ -711,6 +712,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             revert InvalidParam();
         }
 
+        {
+            AverageRates memory averageRates = data.averageRates;
+            if (_poolRateState(liquidity, averageRates) == PoolRateState.Unstable) {
+                revert RateUnstable();
+            }
+        }
+
         // obtain the withdrawal amounts
         InternalWithdrawalAmounts memory amounts = _poolWithdrawalAmounts(
             pool,
@@ -1020,11 +1028,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     ) private {
         PoolLiquidity storage liquidity = data.liquidity;
         PoolLiquidity memory prevLiquidity = liquidity;
-        AverageRates memory averageRates = data.averageRates;
-
-        if (_poolRateState(prevLiquidity, averageRates) == PoolRateState.Unstable) {
-            revert RateUnstable();
-        }
 
         data.poolToken.burn(amounts.poolTokenAmount);
 
@@ -1631,7 +1634,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             return PoolRateState.Uninitialized;
         }
 
-        if (averageRates.blockNumber != _blockNumber()) {
+        uint32 blockNumber = _blockNumber();
+        if (blockNumber - averageRates.blockNumber >= RATE_RESET_BLOCK_THRESHOLD) {
+            return PoolRateState.Stable;
+        }
+
+        if (averageRates.blockNumber != blockNumber) {
             rate = _calcAverageRate(rate, spotRate);
             invRate = _calcAverageRate(invRate, invSpotRate);
         }
@@ -1652,13 +1660,28 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function _updateAverageRates(Pool storage data, Fraction memory spotRate) private {
         uint32 blockNumber = _blockNumber();
 
-        if (data.averageRates.blockNumber != blockNumber) {
+        // can only be updated once in a single block
+        uint32 prevUpdateBlock = data.averageRates.blockNumber;
+        if (prevUpdateBlock == blockNumber) {
+            return;
+        }
+
+        // if sufficient blocks have passed, reset the average rates
+        if (blockNumber - prevUpdateBlock >= RATE_RESET_BLOCK_THRESHOLD) {
             data.averageRates = AverageRates({
                 blockNumber: blockNumber,
-                rate: _calcAverageRate(data.averageRates.rate, spotRate),
-                invRate: _calcAverageRate(data.averageRates.invRate, spotRate.inverse())
+                rate: spotRate.toFraction112(),
+                invRate: spotRate.inverse().toFraction112()
             });
+
+            return;
         }
+
+        data.averageRates = AverageRates({
+            blockNumber: blockNumber,
+            rate: _calcAverageRate(data.averageRates.rate, spotRate),
+            invRate: _calcAverageRate(data.averageRates.invRate, spotRate.inverse())
+        });
     }
 
     /**

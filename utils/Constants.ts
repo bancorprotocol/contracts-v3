@@ -42,6 +42,7 @@ export const BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
 export const DEFAULT_TRADING_FEE_PPM = toPPM(0.2);
 export const DEFAULT_FLASH_LOAN_FEE_PPM = toPPM(0);
 export const RATE_MAX_DEVIATION_PPM = toPPM(1);
+export const RATE_RESET_BLOCK_THRESHOLD = 100;
 export const EMA_AVERAGE_RATE_WEIGHT = 4;
 export const EMA_SPOT_RATE_WEIGHT = 1;
 

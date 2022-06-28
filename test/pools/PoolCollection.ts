@@ -26,6 +26,7 @@ import {
     PoolType,
     PPM_RESOLUTION,
     RATE_MAX_DEVIATION_PPM,
+    RATE_RESET_BLOCK_THRESHOLD,
     TradingStatusUpdateReason,
     ZERO_ADDRESS,
     ZERO_FRACTION
@@ -1507,6 +1508,9 @@ describe('PoolCollection', () => {
                                 stakedBalance
                             });
 
+                            await transfer(deployer, bnt, masterVault, spotRate.n);
+                            await transfer(deployer, token, masterVault, spotRate.d);
+
                             await poolCollection.setAverageRatesT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
                                 rate: {
@@ -1525,6 +1529,20 @@ describe('PoolCollection', () => {
                         it('should deposit liquidity and preserve the trading liquidity', async () => {
                             await testMultipleDepositsFor(TradingLiquidityState.Ignore);
                         });
+
+                        context('when sufficient blocks have passed', () => {
+                            beforeEach(async () => {
+                                const currentBlockNumber = await poolCollection.currentBlockNumber();
+                                const newBlockNumber = currentBlockNumber + RATE_RESET_BLOCK_THRESHOLD;
+                                await poolCollection.setBlockNumber(newBlockNumber);
+
+                                expect(await poolCollection.isPoolStable(token.address)).to.be.true;
+                            });
+
+                            it('should deposit and update the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            });
+                        });
                     });
 
                     context('when pool inverse rate is unstable', () => {
@@ -1541,6 +1559,9 @@ describe('PoolCollection', () => {
                                 baseTokenTradingLiquidity: spotRate.d,
                                 stakedBalance
                             });
+
+                            await transfer(deployer, bnt, masterVault, spotRate.n);
+                            await transfer(deployer, token, masterVault, spotRate.d);
 
                             await poolCollection.setAverageRatesT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
@@ -1559,6 +1580,20 @@ describe('PoolCollection', () => {
 
                         it('should deposit liquidity and preserve the trading liquidity', async () => {
                             await testMultipleDepositsFor(TradingLiquidityState.Ignore);
+                        });
+
+                        context('when sufficient blocks have passed', () => {
+                            beforeEach(async () => {
+                                const currentBlockNumber = await poolCollection.currentBlockNumber();
+                                const newBlockNumber = currentBlockNumber + RATE_RESET_BLOCK_THRESHOLD;
+                                await poolCollection.setBlockNumber(newBlockNumber);
+
+                                expect(await poolCollection.isPoolStable(token.address)).to.be.true;
+                            });
+
+                            it('should deposit and update the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            });
                         });
                     });
 
@@ -2102,72 +2137,82 @@ describe('PoolCollection', () => {
                         // since the average rate has 2 components, this method simulates 36 different scenarios:
                         // - in some of them, the spot rate is within the permitted deviation from the average rate
                         // - in some of them, the spot rate is outside the permitted deviation from the average rate
+                        // since the average rates reset after sufficient blocks have passed, different block
+                        // thresholds are tested
+                        const blocksWithinThreshold = Math.floor(RATE_RESET_BLOCK_THRESHOLD / 3);
                         for (const inverseRate of [false, true]) {
                             context(inverseRate ? 'inverse rate' : 'rate', () => {
-                                for (const ns of [-1, +1]) {
-                                    for (const nx of [-1, 0, +1]) {
-                                        for (const ds of [-1, +1]) {
-                                            for (const dx of [-1, 0, +1]) {
-                                                const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
-                                                const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
-                                                const ok =
-                                                    Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
+                                for (const blocks of [0, blocksWithinThreshold, RATE_RESET_BLOCK_THRESHOLD]) {
+                                    for (const ns of [-1, +1]) {
+                                        for (const nx of [-1, 0, +1]) {
+                                            for (const ds of [-1, +1]) {
+                                                for (const dx of [-1, 0, +1]) {
+                                                    const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
+                                                    const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
+                                                    const ok =
+                                                        Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION ||
+                                                        blocks >= RATE_RESET_BLOCK_THRESHOLD;
 
-                                                context(`ns=${ns}, nx=${nx}, dx=${dx}`, () => {
-                                                    beforeEach(async () => {
-                                                        const liquidity = await poolCollection.poolLiquidity(
-                                                            token.address
-                                                        );
+                                                    context(`ns=${ns}, nx=${nx}, dx=${dx}, blocks=${blocks}`, () => {
+                                                        beforeEach(async () => {
+                                                            const liquidity = await poolCollection.poolLiquidity(
+                                                                token.address
+                                                            );
 
-                                                        let rate: Fraction<BigNumber>;
-                                                        let invRate: Fraction<BigNumber>;
+                                                            let rate: Fraction<BigNumber>;
+                                                            let invRate: Fraction<BigNumber>;
 
-                                                        if (inverseRate) {
-                                                            rate = {
-                                                                n: liquidity.bntTradingLiquidity,
-                                                                d: liquidity.baseTokenTradingLiquidity
-                                                            };
+                                                            if (inverseRate) {
+                                                                rate = {
+                                                                    n: liquidity.bntTradingLiquidity,
+                                                                    d: liquidity.baseTokenTradingLiquidity
+                                                                };
 
-                                                            invRate = {
-                                                                n: liquidity.baseTokenTradingLiquidity.mul(nf),
-                                                                d: liquidity.bntTradingLiquidity.mul(df)
-                                                            };
-                                                        } else {
-                                                            rate = {
-                                                                n: liquidity.bntTradingLiquidity.mul(nf),
-                                                                d: liquidity.baseTokenTradingLiquidity.mul(df)
-                                                            };
+                                                                invRate = {
+                                                                    n: liquidity.baseTokenTradingLiquidity.mul(nf),
+                                                                    d: liquidity.bntTradingLiquidity.mul(df)
+                                                                };
+                                                            } else {
+                                                                rate = {
+                                                                    n: liquidity.bntTradingLiquidity.mul(nf),
+                                                                    d: liquidity.baseTokenTradingLiquidity.mul(df)
+                                                                };
 
-                                                            invRate = {
-                                                                n: liquidity.baseTokenTradingLiquidity,
-                                                                d: liquidity.bntTradingLiquidity
-                                                            };
-                                                        }
+                                                                invRate = {
+                                                                    n: liquidity.baseTokenTradingLiquidity,
+                                                                    d: liquidity.bntTradingLiquidity
+                                                                };
+                                                            }
 
-                                                        await poolCollection.setAverageRatesT(token.address, {
-                                                            blockNumber: 1,
-                                                            rate,
-                                                            invRate
+                                                            await poolCollection.setAverageRatesT(token.address, {
+                                                                blockNumber: 1,
+                                                                rate,
+                                                                invRate
+                                                            });
+
+                                                            const currentBlockNumber = await poolCollection.currentBlockNumber();
+                                                            const newBlockNumber = currentBlockNumber + blocks;
+                                                            await poolCollection.setBlockNumber(newBlockNumber);
+                                                        });
+
+                                                        it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
+                                                            if (ok) {
+                                                                await testMultipleWithdrawals(TradingLiquidityState.Update);
+                                                            } else {
+                                                                expect(await poolCollection.isPoolStable(token.address)).to
+                                                                    .be.false;
+
+                                                                await expect(
+                                                                    withdrawAndVerifyState(
+                                                                        totalBasePoolTokenAmount,
+                                                                        withdrawalFeePPM,
+                                                                        TradingLiquidityState.Update
+                                                                    )
+                                                                ).to.be.revertedWithError('RateUnstable');
+                                                            }
                                                         });
                                                     });
-
-                                                    it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
-                                                        if (ok) {
-                                                            await testMultipleWithdrawals(TradingLiquidityState.Update);
-                                                        } else {
-                                                            expect(await poolCollection.isPoolStable(token.address)).to
-                                                                .be.false;
-
-                                                            await expect(
-                                                                withdrawAndVerifyState(
-                                                                    totalBasePoolTokenAmount,
-                                                                    withdrawalFeePPM,
-                                                                    TradingLiquidityState.Update
-                                                                )
-                                                            ).to.be.revertedWithError('RateUnstable');
-                                                        }
-                                                    });
-                                                });
+                                                }
                                             }
                                         }
                                     }
