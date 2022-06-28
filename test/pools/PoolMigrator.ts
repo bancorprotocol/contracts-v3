@@ -12,7 +12,7 @@ import Contracts, {
     TestPoolCollection,
     TestPoolMigrator
 } from '../../components/Contracts';
-import LegacyContractsV3, { PoolCollectionType1V5 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V6 } from '../../components/LegacyContractsV3';
 import { MAX_UINT256, NETWORK_FEE_PPM, ZERO_ADDRESS } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
@@ -71,7 +71,7 @@ describe('PoolMigrator', () => {
         let poolToken: PoolToken;
         let reserveToken: TestERC20Token;
 
-        let prevPoolCollection: PoolCollectionType1V5;
+        let prevPoolCollection: PoolCollectionType1V6;
         let newPoolCollection: TestPoolCollection;
 
         const BNT_VIRTUAL_BALANCE = 1;
@@ -97,7 +97,7 @@ describe('PoolMigrator', () => {
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V5.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V6.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -105,7 +105,8 @@ describe('PoolMigrator', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address
+                poolMigrator.address,
+                NETWORK_FEE_PPM
             );
 
             await network.registerPoolCollection(prevPoolCollection.address);
