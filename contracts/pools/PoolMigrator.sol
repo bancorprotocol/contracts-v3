@@ -16,8 +16,8 @@ interface IPoolCollectionBase {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
 }
 
-interface IPoolCollectionV5 is IPoolCollectionBase {
-    struct PoolV5 {
+interface IPoolCollectionV6 is IPoolCollectionBase {
+    struct PoolV6 {
         IPoolToken poolToken;
         uint32 tradingFeePPM;
         bool tradingEnabled;
@@ -26,7 +26,7 @@ interface IPoolCollectionV5 is IPoolCollectionBase {
         PoolLiquidity liquidity;
     }
 
-    function poolData(Token token) external view returns (PoolV5 memory);
+    function poolData(Token token) external view returns (PoolV6 memory);
 }
 
 /**
@@ -109,9 +109,9 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
 
         // migrate all relevant values based on a historical collection version into the new pool collection
         //
-        // note that pool collections v5 and later are currently backward compatible
-        if (prevPoolCollection.version() >= 5) {
-            _migrateFromV5(pool, IPoolCollectionV5(address(prevPoolCollection)), newPoolCollection);
+        // note that pool collections v6 and later are currently backward compatible
+        if (prevPoolCollection.version() >= 6) {
+            _migrateFromV6(pool, IPoolCollectionV6(address(prevPoolCollection)), newPoolCollection);
 
             return;
         }
@@ -122,12 +122,12 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     /**
      * @dev migrates a pool to the given pool collection
      */
-    function _migrateFromV5(
+    function _migrateFromV6(
         Token pool,
-        IPoolCollectionV5 sourcePoolCollection,
+        IPoolCollectionV6 sourcePoolCollection,
         IPoolCollection targetPoolCollection
     ) private {
-        IPoolCollectionV5.PoolV5 memory data = sourcePoolCollection.poolData(pool);
+        IPoolCollectionV6.PoolV6 memory data = sourcePoolCollection.poolData(pool);
         AverageRates memory averageRates = data.averageRates;
         PoolLiquidity memory liquidity = data.liquidity;
 
@@ -142,5 +142,6 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
 
         sourcePoolCollection.migratePoolOut(pool, targetPoolCollection);
         targetPoolCollection.migratePoolIn(pool, newData);
+        targetPoolCollection.enableProtection(targetPoolCollection.protectionEnabled());
     }
 }

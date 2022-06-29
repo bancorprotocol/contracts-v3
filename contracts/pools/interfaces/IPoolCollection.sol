@@ -107,6 +107,11 @@ interface IPoolCollection is IVersioned {
     function depositingEnabled(Token pool) external view returns (bool);
 
     /**
+     * @dev returns protection is enabled
+     */
+    function protectionEnabled() external view returns (bool);
+
+    /**
      * @dev returns whether the pool is stable
      */
     function isPoolStable(Token pool) external view returns (bool);
@@ -253,4 +258,13 @@ interface IPoolCollection is IVersioned {
      * - the caller must be the pool migrator contract
      */
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
+
+    /**
+     * @dev enables/disables protection
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function enableProtection(bool status) external;
 }
