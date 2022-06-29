@@ -157,11 +157,27 @@ describe('PoolCollection', () => {
             return poolData.averageRates;
         }
 
-        const averageRate = poolData.averageRates.rate;
         const spotRate = {
             n: poolData.liquidity.bntTradingLiquidity,
             d: poolData.liquidity.baseTokenTradingLiquidity
         };
+
+        const invSpotRate = {
+            n: poolData.liquidity.baseTokenTradingLiquidity,
+            d: poolData.liquidity.bntTradingLiquidity
+        };
+
+        if (blockNumber >= RATE_RESET_BLOCK_THRESHOLD) {
+            return {
+                blockNumber,
+                rate: spotRate,
+                invRate: invSpotRate
+            };
+        }
+
+        const averageRate = poolData.averageRates.rate;
+        const invAverageRate = poolData.averageRates.invRate;
+
         const newAverageRate = {
             n: averageRate.n
                 .mul(spotRate.d)
@@ -172,11 +188,6 @@ describe('PoolCollection', () => {
 
         const scale = max(newAverageRate.n, newAverageRate.d).sub(1).div(BigNumber.from(2).pow(112).sub(1)).add(1);
 
-        const invAverageRate = poolData.averageRates.invRate;
-        const invSpotRate = {
-            n: poolData.liquidity.baseTokenTradingLiquidity,
-            d: poolData.liquidity.bntTradingLiquidity
-        };
         const newInvAverageRate = {
             n: invAverageRate.n
                 .mul(invSpotRate.d)
