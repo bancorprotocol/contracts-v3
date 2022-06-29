@@ -490,11 +490,12 @@ contract BNTPool is IBNTPool, Vault {
     ) external onlyRoleMember(ROLE_FUNDING_MANAGER) poolWhitelisted(pool) greaterThanZero(bntAmount) {
         uint256 currentStakedBalance = _stakedBalance;
 
-        // calculate the renounced amount to deduct from both the staked balance and current pool funding
+        // calculate the final amount to deduct from the current pool funding
         uint256 currentFunding = _currentPoolFunding[pool];
         uint256 reduceFundingAmount = Math.min(currentFunding, bntAmount);
 
-        // calculate the pool token amount to burn
+        // calculate the amount of pool tokens to burn
+        // note that the given amount can exceed the total available but the request shouldn't fail
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
         uint256 poolTokenAmount = _underlyingToPoolToken(
             reduceFundingAmount,
@@ -502,12 +503,22 @@ contract BNTPool is IBNTPool, Vault {
             currentStakedBalance
         );
 
-        // update the current pool funding. Note that the given amount can be higher than the funding amount but the
+        // ensure the amount of pool tokens doesn't exceed the total available
+        poolTokenAmount = Math.min(poolTokenAmount, _poolToken.balanceOf(address(this)));
+
+        // calculate the final amount to deduct from the staked balance
+        uint256 reduceStakedBalanceAmount = _poolTokenToUnderlying(
+            poolTokenAmount,
+            currentStakedBalance,
+            poolTokenTotalSupply
+        );
+
+        // update the current pool funding. Note that the given amount can exceed the funding amount but the
         // request shouldn't fail (and the funding amount cannot get negative)
         _currentPoolFunding[pool] = currentFunding - reduceFundingAmount;
 
         // update the staked balance
-        uint256 newStakedBalance = currentStakedBalance - reduceFundingAmount;
+        uint256 newStakedBalance = currentStakedBalance - reduceStakedBalanceAmount;
         _stakedBalance = newStakedBalance;
 
         // burn pool tokens from the protocol
@@ -556,7 +567,18 @@ contract BNTPool is IBNTPool, Vault {
      * @dev converts the specified pool token amount to the underlying BNT amount
      */
     function _poolTokenToUnderlying(uint256 poolTokenAmount) private view returns (uint256) {
-        return MathEx.mulDivF(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+        return _poolTokenToUnderlying(poolTokenAmount, _stakedBalance, _poolToken.totalSupply());
+    }
+
+    /**
+     * @dev converts the specified pool token amount to the underlying BNT amount
+     */
+    function _poolTokenToUnderlying(
+        uint256 poolTokenAmount,
+        uint256 currentStakedBalance,
+        uint256 poolTokenTotalSupply
+    ) private pure returns (uint256) {
+        return MathEx.mulDivF(poolTokenAmount, currentStakedBalance, poolTokenTotalSupply);
     }
 
     /**
