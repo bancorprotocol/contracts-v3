@@ -11,7 +11,7 @@ import Contracts, {
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, min, max, toPPM, toWei } from '../../utils/Types';
+import { fromPPM, max, min, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -459,17 +459,13 @@ describe.only('BNTPool', () => {
             const reduceFundingAmount = min(prevFunding, amount);
             let expectedPoolTokenAmount = BigNumber.from(0);
             if (prevPoolTokenTotalSupply.gt(0)) {
-                expectedPoolTokenAmount = reduceFundingAmount
-                    .mul(prevPoolTokenTotalSupply)
-                    .div(prevStakedBalance);
+                expectedPoolTokenAmount = reduceFundingAmount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
             }
 
             expectedPoolTokenAmount = min(expectedPoolTokenAmount, prevPoolPoolTokenBalance);
             let reduceStakedBalance = BigNumber.from(0);
             if (prevPoolTokenTotalSupply.gt(0)) {
-                reduceStakedBalance = expectedPoolTokenAmount
-                    .mul(prevStakedBalance)
-                    .div(prevPoolTokenTotalSupply)
+                reduceStakedBalance = expectedPoolTokenAmount.mul(prevStakedBalance).div(prevPoolTokenTotalSupply);
             }
 
             if (prevPoolPoolTokenBalance.gt(0)) {
@@ -480,9 +476,7 @@ describe.only('BNTPool', () => {
                 expect(reduceStakedBalance).to.be.gt(0);
             }
 
-            const res = await bntPool
-                .connect(fundingManager)
-                .renounceFunding(CONTEXT_ID, reserveToken.address, amount);
+            const res = await bntPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, amount);
 
             await expect(res)
                 .to.emit(bntPool, 'FundingRenounced')
@@ -508,9 +502,7 @@ describe.only('BNTPool', () => {
                     : FUNDING_LIMIT
             );
 
-            expect(await bntPoolToken.totalSupply()).to.equal(
-                prevPoolTokenTotalSupply.sub(expectedPoolTokenAmount)
-            );
+            expect(await bntPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.sub(expectedPoolTokenAmount));
             expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
                 prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
             );
@@ -583,13 +575,7 @@ describe.only('BNTPool', () => {
                     // to the BNT pool
                     await bnt.connect(deployer).transfer(bntPool.address, depositAmount);
 
-                    await network.depositToBNTPoolForT(
-                        CONTEXT_ID,
-                        provider.address,
-                        depositAmount,
-                        false,
-                        0
-                    );
+                    await network.depositToBNTPoolForT(CONTEXT_ID, provider.address, depositAmount, false, 0);
                 });
 
                 it('should allow renouncing funding', async () => {
@@ -599,9 +585,7 @@ describe.only('BNTPool', () => {
                     const poolTokenTotalSupply = await bntPoolToken.totalSupply();
                     const poolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
 
-                    let expectedPoolTokenAmount = BigNumber.from(amount)
-                        .mul(poolTokenTotalSupply)
-                        .div(stakedBalance);
+                    let expectedPoolTokenAmount = BigNumber.from(amount).mul(poolTokenTotalSupply).div(stakedBalance);
 
                     expect(expectedPoolTokenAmount).to.be.gt(poolPoolTokenBalance);
 
@@ -617,13 +601,7 @@ describe.only('BNTPool', () => {
                     // to the BNT pool
                     await bnt.connect(deployer).transfer(bntPool.address, depositAmount);
 
-                    await network.depositToBNTPoolForT(
-                        CONTEXT_ID,
-                        provider.address,
-                        depositAmount,
-                        false,
-                        0
-                    );
+                    await network.depositToBNTPoolForT(CONTEXT_ID, provider.address, depositAmount, false, 0);
                 });
 
                 it('should allow renouncing funding', async () => {
@@ -718,8 +696,7 @@ describe.only('BNTPool', () => {
                 let expectedPoolTokenAmount;
                 if (prevPoolTokenTotalSupply.eq(0)) {
                     expectedPoolTokenAmount = amount;
-                }
-                else {
+                } else {
                     expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
                 }
 
@@ -759,8 +736,7 @@ describe.only('BNTPool', () => {
 
                     if (prevPoolTokenTotalSupply.eq(0)) {
                         expectedStakedBalanceIncrease = expectedPoolTokenSupplyIncrease;
-                    }
-                    else {
+                    } else {
                         expectedStakedBalanceIncrease = expectedPoolTokenSupplyIncrease
                             .mul(prevStakedBalance)
                             .div(prevPoolTokenTotalSupply);
@@ -773,7 +749,9 @@ describe.only('BNTPool', () => {
                 }
 
                 expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedStakedBalanceIncrease));
-                expect(await bntPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.add(expectedPoolTokenSupplyIncrease));
+                expect(await bntPoolToken.totalSupply()).to.equal(
+                    prevPoolTokenTotalSupply.add(expectedPoolTokenSupplyIncrease)
+                );
                 expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
                     max(0, prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount))
                 );

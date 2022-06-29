@@ -2150,7 +2150,8 @@ describe('PoolCollection', () => {
                                                     const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
                                                     const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
                                                     const ok =
-                                                        Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION ||
+                                                        Math.abs(nf / df - 1) <=
+                                                            RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION ||
                                                         blocks >= RATE_RESET_BLOCK_THRESHOLD;
 
                                                     context(`ns=${ns}, nx=${nx}, dx=${dx}, blocks=${blocks}`, () => {
@@ -2190,17 +2191,22 @@ describe('PoolCollection', () => {
                                                                 invRate
                                                             });
 
-                                                            const currentBlockNumber = await poolCollection.currentBlockNumber();
+                                                            const currentBlockNumber =
+                                                                await poolCollection.currentBlockNumber();
                                                             const newBlockNumber = currentBlockNumber + blocks;
                                                             await poolCollection.setBlockNumber(newBlockNumber);
                                                         });
 
-                                                        it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
+                                                        it(`withdrawal should ${
+                                                            ok ? 'complete' : 'revert'
+                                                        }`, async () => {
                                                             if (ok) {
-                                                                await testMultipleWithdrawals(TradingLiquidityState.Update);
+                                                                await testMultipleWithdrawals(
+                                                                    TradingLiquidityState.Update
+                                                                );
                                                             } else {
-                                                                expect(await poolCollection.isPoolStable(token.address)).to
-                                                                    .be.false;
+                                                                expect(await poolCollection.isPoolStable(token.address))
+                                                                    .to.be.false;
 
                                                                 await expect(
                                                                     withdrawAndVerifyState(
