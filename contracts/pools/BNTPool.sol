@@ -523,7 +523,7 @@ contract BNTPool is IBNTPool, Vault {
         // ensure the amount of pool tokens doesn't exceed the total available
         poolTokenAmount = Math.min(poolTokenAmount, _poolToken.balanceOf(address(this)));
 
-        // calculate the final amount to deduct from the staked balance by
+        // calculate the final amount to deduct from the staked balance
         uint256 reduceStakedBalanceAmount = _poolTokenToUnderlying(
             poolTokenAmount,
             currentStakedBalance,
