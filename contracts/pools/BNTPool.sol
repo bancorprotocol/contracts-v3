@@ -330,11 +330,33 @@ contract BNTPool is IBNTPool, Vault {
         bool isMigrating,
         uint256 originalVBNTAmount
     ) external only(address(_network)) validAddress(provider) greaterThanZero(bntAmount) returns (uint256) {
-        // calculate the pool token amount to transfer
-        uint256 poolTokenAmount = _underlyingToPoolToken(bntAmount);
+        // calculate the required pool token amount
+        uint256 currentStakedBalance = _stakedBalance;
+        uint256 poolTokenTotalSupply = _poolToken.totalSupply();
+        if (poolTokenTotalSupply == 0 && currentStakedBalance > 0) {
+            revert InvalidStakedBalance();
+        }
 
-        // transfer pool tokens from the protocol to the provider. Please note that it's not possible to deposit
-        // liquidity requiring the protocol to transfer the provider more protocol tokens than it holds
+        uint256 poolTokenAmount = _underlyingToPoolToken(bntAmount, poolTokenTotalSupply, currentStakedBalance);
+
+        // if the protocol doesn't have enough pool tokens, mint new ones
+        uint256 poolTokenBalance = _poolToken.balanceOf(address(this));
+        if (poolTokenAmount > poolTokenBalance) {
+            uint256 newPoolTokenAmount = poolTokenAmount - poolTokenBalance;
+            uint256 increaseStakedBalanceAmount = _poolTokenToUnderlying(
+                newPoolTokenAmount,
+                currentStakedBalance,
+                poolTokenTotalSupply
+            );
+
+            // update the staked balance
+            _stakedBalance = currentStakedBalance + increaseStakedBalanceAmount;
+
+            // mint pool tokens to the protocol
+            _poolToken.mint(address(this), newPoolTokenAmount);
+        }
+
+        // transfer pool tokens from the protocol to the provider
         _poolToken.transfer(provider, poolTokenAmount);
 
         // burn the previously received BNT
@@ -381,8 +403,8 @@ contract BNTPool is IBNTPool, Vault {
         greaterThanZero(bntAmount)
         returns (uint256)
     {
-        // ensure that the provided amounts correspond to the state of the pool (please note the pool tokens should
-        // have been already deposited back from the network)
+        // ensure that the provided amounts correspond to the state of the pool. Note the pool tokens should
+        // have been already deposited back from the network
         uint256 underlyingAmount = _poolTokenToUnderlying(poolTokenAmount);
         if (bntAmount > underlyingAmount) {
             revert InvalidParam();
@@ -441,16 +463,11 @@ contract BNTPool is IBNTPool, Vault {
         uint256 currentStakedBalance = _stakedBalance;
         uint256 poolTokenAmount;
         uint256 poolTokenTotalSupply = _poolToken.totalSupply();
-        if (poolTokenTotalSupply == 0) {
-            // if this is the initial liquidity provision - use a one-to-one pool token to BNT rate
-            if (currentStakedBalance > 0) {
-                revert InvalidStakedBalance();
-            }
-
-            poolTokenAmount = bntAmount;
-        } else {
-            poolTokenAmount = _underlyingToPoolToken(bntAmount, poolTokenTotalSupply, currentStakedBalance);
+        if (poolTokenTotalSupply == 0 && currentStakedBalance > 0) {
+            revert InvalidStakedBalance();
         }
+
+        poolTokenAmount = _underlyingToPoolToken(bntAmount, poolTokenTotalSupply, currentStakedBalance);
 
         // update the staked balance
         uint256 newStakedBalance = currentStakedBalance + bntAmount;
@@ -506,7 +523,7 @@ contract BNTPool is IBNTPool, Vault {
         // ensure the amount of pool tokens doesn't exceed the total available
         poolTokenAmount = Math.min(poolTokenAmount, _poolToken.balanceOf(address(this)));
 
-        // calculate the final amount to deduct from the staked balance
+        // calculate the final amount to deduct from the staked balance by
         uint256 reduceStakedBalanceAmount = _poolTokenToUnderlying(
             poolTokenAmount,
             currentStakedBalance,
@@ -578,6 +595,11 @@ contract BNTPool is IBNTPool, Vault {
         uint256 currentStakedBalance,
         uint256 poolTokenTotalSupply
     ) private pure returns (uint256) {
+        // if no pool token supply exists yet, use a one-to-one pool token to BNT rate
+        if (poolTokenTotalSupply == 0) {
+            return poolTokenAmount;
+        }
+
         return MathEx.mulDivF(poolTokenAmount, currentStakedBalance, poolTokenTotalSupply);
     }
 
@@ -596,6 +618,11 @@ contract BNTPool is IBNTPool, Vault {
         uint256 poolTokenTotalSupply,
         uint256 currentStakedBalance
     ) private pure returns (uint256) {
+        // if no pool token supply exists yet, use a one-to-one pool token to BNT rate
+        if (poolTokenTotalSupply == 0) {
+            return bntAmount;
+        }
+
         return MathEx.mulDivC(bntAmount, poolTokenTotalSupply, currentStakedBalance);
     }
 

@@ -11,7 +11,7 @@ import Contracts, {
 import { TokenGovernance } from '../../components/LegacyContracts';
 import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
-import { fromPPM, min, toPPM, toWei } from '../../utils/Types';
+import { fromPPM, min, max, toPPM, toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createSystem, createTestToken, createToken, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
@@ -23,7 +23,7 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 
-describe('BNTPool', () => {
+describe.only('BNTPool', () => {
     let deployer: SignerWithAddress;
     let bntManager: SignerWithAddress;
     let fundingManager: SignerWithAddress;
@@ -441,6 +441,86 @@ describe('BNTPool', () => {
             await networkSettings.setFundingLimit(reserveToken.address, FUNDING_LIMIT);
         });
 
+        const testRenounce = async (amount: BigNumber) => {
+            const prevStakedBalance = await bntPool.stakedBalance();
+            const prevFunding = await bntPool.currentPoolFunding(reserveToken.address);
+            const prevAvailableFunding = await bntPool.availableFunding(reserveToken.address);
+
+            const prevPoolTokenTotalSupply = await bntPoolToken.totalSupply();
+            const prevPoolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
+            const prevVaultPoolTokenBalance = await bntPoolToken.balanceOf(masterVault.address);
+
+            expect(prevVaultPoolTokenBalance).to.equal(0);
+
+            const prevTokenTotalSupply = await bnt.totalSupply();
+            const prevPoolTokenBalance = await bnt.balanceOf(bntPool.address);
+            const prevVaultTokenBalance = await bnt.balanceOf(masterVault.address);
+
+            const reduceFundingAmount = min(prevFunding, amount);
+            let expectedPoolTokenAmount = BigNumber.from(0);
+            if (prevPoolTokenTotalSupply.gt(0)) {
+                expectedPoolTokenAmount = reduceFundingAmount
+                    .mul(prevPoolTokenTotalSupply)
+                    .div(prevStakedBalance);
+            }
+
+            expectedPoolTokenAmount = min(expectedPoolTokenAmount, prevPoolPoolTokenBalance);
+            let reduceStakedBalance = BigNumber.from(0);
+            if (prevPoolTokenTotalSupply.gt(0)) {
+                reduceStakedBalance = expectedPoolTokenAmount
+                    .mul(prevStakedBalance)
+                    .div(prevPoolTokenTotalSupply)
+            }
+
+            if (prevPoolPoolTokenBalance.gt(0)) {
+                expect(expectedPoolTokenAmount).to.be.gt(0);
+            }
+
+            if (expectedPoolTokenAmount.gt(0)) {
+                expect(reduceStakedBalance).to.be.gt(0);
+            }
+
+            const res = await bntPool
+                .connect(fundingManager)
+                .renounceFunding(CONTEXT_ID, reserveToken.address, amount);
+
+            await expect(res)
+                .to.emit(bntPool, 'FundingRenounced')
+                .withArgs(CONTEXT_ID, reserveToken.address, amount, expectedPoolTokenAmount);
+
+            await expect(res)
+                .to.emit(bntPool, 'TotalLiquidityUpdated')
+                .withArgs(
+                    CONTEXT_ID,
+                    await bnt.balanceOf(masterVault.address),
+                    await bntPool.stakedBalance(),
+                    await bntPoolToken.totalSupply()
+                );
+
+            expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.sub(reduceStakedBalance));
+            expect(await bntPool.currentPoolFunding(reserveToken.address)).to.equal(
+                prevFunding.sub(reduceFundingAmount)
+            );
+
+            expect(await bntPool.availableFunding(reserveToken.address)).to.equal(
+                prevAvailableFunding.gt(reduceFundingAmount)
+                    ? prevAvailableFunding.add(reduceFundingAmount)
+                    : FUNDING_LIMIT
+            );
+
+            expect(await bntPoolToken.totalSupply()).to.equal(
+                prevPoolTokenTotalSupply.sub(expectedPoolTokenAmount)
+            );
+            expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
+                prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
+            );
+            expect(await bntPoolToken.balanceOf(masterVault.address)).to.equal(prevVaultPoolTokenBalance);
+
+            expect(await bnt.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
+            expect(await bnt.balanceOf(bntPool.address)).to.equal(prevPoolTokenBalance);
+            expect(await bnt.balanceOf(masterVault.address)).to.equal(prevVaultTokenBalance.sub(amount));
+        };
+
         it('should revert when attempting to renounce funding from a non-funding manager', async () => {
             const nonFundingManager = deployer;
 
@@ -466,10 +546,12 @@ describe('BNTPool', () => {
             ).to.be.revertedWithError('ZeroValue');
         });
 
-        it('should revert when attempting to renounce funding when no funding was ever requested', async () => {
-            await expect(
-                bntPool.connect(fundingManager).renounceFunding(CONTEXT_ID, reserveToken.address, 1)
-            ).to.be.revertedWithError('panic code 0x12');
+        it('should allow to renounce funding when no funding was ever requested', async () => {
+            // ensure that there is enough tokens in the master vault
+            const extra = toWei(10_000);
+            await bnt.transfer(masterVault.address, extra);
+
+            await testRenounce(BigNumber.from(10_000));
         });
 
         context('with requested funding', () => {
@@ -478,80 +560,6 @@ describe('BNTPool', () => {
             beforeEach(async () => {
                 await bntPool.connect(fundingManager).requestFunding(CONTEXT_ID, reserveToken.address, requestedAmount);
             });
-
-            const testRenounce = async (amount: BigNumber) => {
-                const prevStakedBalance = await bntPool.stakedBalance();
-                const prevFunding = await bntPool.currentPoolFunding(reserveToken.address);
-                const prevAvailableFunding = await bntPool.availableFunding(reserveToken.address);
-
-                const prevPoolTokenTotalSupply = await bntPoolToken.totalSupply();
-                const prevPoolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
-                const prevVaultPoolTokenBalance = await bntPoolToken.balanceOf(masterVault.address);
-
-                expect(prevVaultPoolTokenBalance).to.equal(0);
-
-                const prevTokenTotalSupply = await bnt.totalSupply();
-                const prevPoolTokenBalance = await bnt.balanceOf(bntPool.address);
-                const prevVaultTokenBalance = await bnt.balanceOf(masterVault.address);
-
-                const reduceFundingAmount = min(prevFunding, amount);
-                let expectedPoolTokenAmount = reduceFundingAmount
-                    .mul(prevPoolTokenTotalSupply)
-                    .div(prevStakedBalance);
-
-                expectedPoolTokenAmount = min(expectedPoolTokenAmount, prevPoolPoolTokenBalance);
-                const reduceStakedBalance = expectedPoolTokenAmount
-                    .mul(prevStakedBalance)
-                    .div(prevPoolTokenTotalSupply)
-
-                if (prevPoolPoolTokenBalance.gt(0)) {
-                    expect(expectedPoolTokenAmount).to.be.gt(0);
-                }
-
-                if (expectedPoolTokenAmount.gt(0)) {
-                    expect(reduceStakedBalance).to.be.gt(0);
-                }
-
-                const res = await bntPool
-                    .connect(fundingManager)
-                    .renounceFunding(CONTEXT_ID, reserveToken.address, amount);
-
-                await expect(res)
-                    .to.emit(bntPool, 'FundingRenounced')
-                    .withArgs(CONTEXT_ID, reserveToken.address, amount, expectedPoolTokenAmount);
-
-                await expect(res)
-                    .to.emit(bntPool, 'TotalLiquidityUpdated')
-                    .withArgs(
-                        CONTEXT_ID,
-                        await bnt.balanceOf(masterVault.address),
-                        await bntPool.stakedBalance(),
-                        await bntPoolToken.totalSupply()
-                    );
-
-                expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.sub(reduceStakedBalance));
-                expect(await bntPool.currentPoolFunding(reserveToken.address)).to.equal(
-                    prevFunding.sub(reduceFundingAmount)
-                );
-
-                expect(await bntPool.availableFunding(reserveToken.address)).to.equal(
-                    prevAvailableFunding.gt(reduceFundingAmount)
-                        ? prevAvailableFunding.add(reduceFundingAmount)
-                        : FUNDING_LIMIT
-                );
-
-                expect(await bntPoolToken.totalSupply()).to.equal(
-                    prevPoolTokenTotalSupply.sub(expectedPoolTokenAmount)
-                );
-                expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
-                    prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
-                );
-                expect(await bntPoolToken.balanceOf(masterVault.address)).to.equal(prevVaultPoolTokenBalance);
-
-                expect(await bnt.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
-                expect(await bnt.balanceOf(bntPool.address)).to.equal(prevPoolTokenBalance);
-                expect(await bnt.balanceOf(masterVault.address)).to.equal(prevVaultTokenBalance.sub(amount));
-            };
 
             it('should allow renouncing funding', async () => {
                 for (const amount of [1, 10_000, toWei(200_000), toWei(300_000)]) {
@@ -676,19 +684,117 @@ describe('BNTPool', () => {
             ).to.be.revertedWithError('InvalidAddress');
         });
 
-        it('should revert when attempting to deposit when no funding was requested', async () => {
-            const amount = 1;
-
-            await expect(
-                network.depositToBNTPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
-            ).to.be.revertedWithError('panic code 0x12');
-        });
-
         context('with a whitelisted and registered pool', () => {
             beforeEach(async () => {
                 await createPool(reserveToken, network, networkSettings, poolCollection);
 
                 await networkSettings.setFundingLimit(reserveToken.address, FUNDING_LIMIT);
+            });
+
+            const testDeposit = async (
+                provider: SignerWithAddress,
+                amount: BigNumber,
+                isMigrating: boolean,
+                originalVBNTAmount: BigNumber
+            ) => {
+                // since this is only a unit test, we will simulate a proper transfer of BNT amount from the network
+                // to the BNT pool
+                await bnt.connect(deployer).transfer(bntPool.address, amount);
+
+                const prevStakedBalance = await bntPool.stakedBalance();
+
+                const prevPoolTokenTotalSupply = await bntPoolToken.totalSupply();
+                const prevPoolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
+                const prevProviderPoolTokenBalance = await bntPoolToken.balanceOf(provider.address);
+
+                const prevTokenTotalSupply = await bnt.totalSupply();
+                const prevPoolTokenBalance = await bnt.balanceOf(bntPool.address);
+                const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
+
+                const prevVBNTTotalSupply = await vbnt.totalSupply();
+                const prevPoolVBNTBalance = await vbnt.balanceOf(bntPool.address);
+                const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
+
+                let expectedPoolTokenAmount;
+                if (prevPoolTokenTotalSupply.eq(0)) {
+                    expectedPoolTokenAmount = amount;
+                }
+                else {
+                    expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
+                }
+
+                let expectedVBNTAmount = expectedPoolTokenAmount;
+                if (isMigrating) {
+                    expectedVBNTAmount = expectedVBNTAmount.gt(originalVBNTAmount)
+                        ? expectedVBNTAmount.sub(originalVBNTAmount)
+                        : BigNumber.from(0);
+                }
+
+                const poolTokenAmount = await network.callStatic.depositToBNTPoolForT(
+                    CONTEXT_ID,
+                    provider.address,
+                    amount,
+                    isMigrating,
+                    originalVBNTAmount
+                );
+
+                expect(poolTokenAmount).to.equal(expectedPoolTokenAmount);
+
+                const res = await network.depositToBNTPoolForT(
+                    CONTEXT_ID,
+                    provider.address,
+                    amount,
+                    isMigrating,
+                    originalVBNTAmount
+                );
+
+                await expect(res)
+                    .to.emit(bntPool, 'TokensDeposited')
+                    .withArgs(CONTEXT_ID, provider.address, amount, expectedPoolTokenAmount, expectedVBNTAmount);
+
+                let expectedPoolTokenSupplyIncrease = BigNumber.from(0);
+                let expectedStakedBalanceIncrease = BigNumber.from(0);
+                if (expectedPoolTokenAmount.gt(prevPoolPoolTokenBalance)) {
+                    expectedPoolTokenSupplyIncrease = expectedPoolTokenAmount.sub(prevPoolPoolTokenBalance);
+
+                    if (prevPoolTokenTotalSupply.eq(0)) {
+                        expectedStakedBalanceIncrease = expectedPoolTokenSupplyIncrease;
+                    }
+                    else {
+                        expectedStakedBalanceIncrease = expectedPoolTokenSupplyIncrease
+                            .mul(prevStakedBalance)
+                            .div(prevPoolTokenTotalSupply);
+                    }
+                }
+
+                if (prevPoolTokenTotalSupply.eq(0)) {
+                    expect(expectedPoolTokenSupplyIncrease).to.be.gt(0);
+                    expect(expectedStakedBalanceIncrease).to.be.gt(0);
+                }
+
+                expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance.add(expectedStakedBalanceIncrease));
+                expect(await bntPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply.add(expectedPoolTokenSupplyIncrease));
+                expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
+                    max(0, prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount))
+                );
+                expect(await bntPoolToken.balanceOf(provider.address)).to.equal(
+                    prevProviderPoolTokenBalance.add(expectedPoolTokenAmount)
+                );
+
+                expect(await bnt.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
+                expect(await bnt.balanceOf(bntPool.address)).to.equal(prevPoolTokenBalance.sub(amount));
+                expect(await bnt.balanceOf(provider.address)).to.equal(prevProviderTokenBalance);
+
+                expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.add(expectedVBNTAmount));
+                expect(await vbnt.balanceOf(bntPool.address)).to.equal(prevPoolVBNTBalance);
+                expect(await vbnt.balanceOf(provider.address)).to.equal(
+                    prevProviderVBNTBalance.add(expectedVBNTAmount)
+                );
+            };
+
+            it('should allow to deposit when no funding was requested', async () => {
+                const amount = toWei(1_000);
+                await testDeposit(provider, BigNumber.from(amount), false, BigNumber.from(0));
             });
 
             context('with requested funding', () => {
@@ -700,82 +806,6 @@ describe('BNTPool', () => {
                         .requestFunding(CONTEXT_ID, reserveToken.address, requestedAmount);
                 });
 
-                const testDeposit = async (
-                    provider: SignerWithAddress,
-                    amount: BigNumber,
-                    isMigrating: boolean,
-                    originalVBNTAmount: BigNumber
-                ) => {
-                    // since this is only a unit test, we will simulate a proper transfer of BNT amount from the network
-                    // to the BNT pool
-                    await bnt.connect(deployer).transfer(bntPool.address, amount);
-
-                    const prevStakedBalance = await bntPool.stakedBalance();
-
-                    const prevPoolTokenTotalSupply = await bntPoolToken.totalSupply();
-                    const prevPoolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
-                    const prevProviderPoolTokenBalance = await bntPoolToken.balanceOf(provider.address);
-
-                    const prevTokenTotalSupply = await bnt.totalSupply();
-                    const prevPoolTokenBalance = await bnt.balanceOf(bntPool.address);
-                    const prevProviderTokenBalance = await bnt.balanceOf(provider.address);
-
-                    const prevVBNTTotalSupply = await vbnt.totalSupply();
-                    const prevPoolVBNTBalance = await vbnt.balanceOf(bntPool.address);
-                    const prevProviderVBNTBalance = await vbnt.balanceOf(provider.address);
-
-                    const expectedPoolTokenAmount = amount.mul(prevPoolTokenTotalSupply).div(prevStakedBalance);
-
-                    let expectedVBNTAmount = expectedPoolTokenAmount;
-                    if (isMigrating) {
-                        expectedVBNTAmount = expectedVBNTAmount.gt(originalVBNTAmount)
-                            ? expectedVBNTAmount.sub(originalVBNTAmount)
-                            : BigNumber.from(0);
-                    }
-
-                    const poolTokenAmount = await network.callStatic.depositToBNTPoolForT(
-                        CONTEXT_ID,
-                        provider.address,
-                        amount,
-                        isMigrating,
-                        originalVBNTAmount
-                    );
-
-                    expect(poolTokenAmount).to.equal(expectedPoolTokenAmount);
-
-                    const res = await network.depositToBNTPoolForT(
-                        CONTEXT_ID,
-                        provider.address,
-                        amount,
-                        isMigrating,
-                        originalVBNTAmount
-                    );
-
-                    await expect(res)
-                        .to.emit(bntPool, 'TokensDeposited')
-                        .withArgs(CONTEXT_ID, provider.address, amount, expectedPoolTokenAmount, expectedVBNTAmount);
-
-                    expect(await bntPool.stakedBalance()).to.equal(prevStakedBalance);
-
-                    expect(await bntPoolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
-                    expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(
-                        prevPoolPoolTokenBalance.sub(expectedPoolTokenAmount)
-                    );
-                    expect(await bntPoolToken.balanceOf(provider.address)).to.equal(
-                        prevProviderPoolTokenBalance.add(expectedPoolTokenAmount)
-                    );
-
-                    expect(await bnt.totalSupply()).to.equal(prevTokenTotalSupply.sub(amount));
-                    expect(await bnt.balanceOf(bntPool.address)).to.equal(prevPoolTokenBalance.sub(amount));
-                    expect(await bnt.balanceOf(provider.address)).to.equal(prevProviderTokenBalance);
-
-                    expect(await vbnt.totalSupply()).to.equal(prevVBNTTotalSupply.add(expectedVBNTAmount));
-                    expect(await vbnt.balanceOf(bntPool.address)).to.equal(prevPoolVBNTBalance);
-                    expect(await vbnt.balanceOf(provider.address)).to.equal(
-                        prevProviderVBNTBalance.add(expectedVBNTAmount)
-                    );
-                };
-
                 it('should revert when attempting to deposit without sending BNT', async () => {
                     const amount = 1;
 
@@ -784,20 +814,31 @@ describe('BNTPool', () => {
                     ).to.be.revertedWithError('Transaction reverted without a reason string');
                 });
 
-                it('should revert when attempting to deposit too much liquidity', async () => {
-                    const maxAmount = (await bntPoolToken.balanceOf(bntPool.address))
-                        .mul(await bntPool.stakedBalance())
-                        .div(await bntPoolToken.totalSupply());
-
-                    await expect(
-                        network.depositToBNTPoolForT(CONTEXT_ID, provider.address, maxAmount.add(1), false, 0)
-                    ).to.be.revertedWithError(new TokenData(TokenSymbol.TKN).errors().exceedsBalance);
-                });
-
                 it('should allow depositing liquidity', async () => {
                     for (const amount of [1, 10_000, toWei(20_000), toWei(30_000)]) {
                         await testDeposit(provider, BigNumber.from(amount), false, BigNumber.from(0));
                         await testDeposit(provider2, BigNumber.from(amount), false, BigNumber.from(0));
+                    }
+                });
+
+                it('should allow depositing liquidity when the protocol has insufficient bnBNT', async () => {
+                    const maxAmount = (await bntPoolToken.balanceOf(bntPool.address))
+                        .mul(await bntPool.stakedBalance())
+                        .div(await bntPoolToken.totalSupply());
+
+                    await testDeposit(provider, BigNumber.from(maxAmount.add(10_000)), false, BigNumber.from(0));
+                });
+
+                it('should allow depositing liquidity when the protocol has no bnBNT', async () => {
+                    const maxAmount = (await bntPoolToken.balanceOf(bntPool.address))
+                        .mul(await bntPool.stakedBalance())
+                        .div(await bntPoolToken.totalSupply());
+
+                    await testDeposit(provider, BigNumber.from(maxAmount), false, BigNumber.from(0));
+                    expect(await bntPoolToken.balanceOf(bntPool.address)).to.equal(0);
+
+                    for (const amount of [1, 10_000, toWei(20_000), toWei(30_000)]) {
+                        await testDeposit(provider, BigNumber.from(amount), false, BigNumber.from(0));
                     }
                 });
 
@@ -863,7 +904,7 @@ describe('BNTPool', () => {
 
         it('should revert when attempting to withdraw before any deposits were made', async () => {
             await expect(network.withdrawFromBNTPoolT(CONTEXT_ID, provider.address, 1, 1)).to.be.revertedWithError(
-                'panic code 0x12'
+                'ERR_UNDERFLOW'
             );
         });
 
