@@ -1241,8 +1241,23 @@ describe('PoolCollection', () => {
                                 const totalTokenDeltaAmount = totalBaseTokenReserveAmount.sub(
                                     prevLiquidity.baseTokenTradingLiquidity
                                 );
+
+                                const blockNumber = await poolCollection.currentBlockNumber();
+                                let effectiveAverateRate;
+                                if (blockNumber - prevAverageRates.blockNumber >= RATE_RESET_BLOCK_THRESHOLD) {
+                                    effectiveAverateRate = {
+                                        n: prevLiquidity.bntTradingLiquidity,
+                                        d: prevLiquidity.baseTokenTradingLiquidity
+                                    };
+                                } else {
+                                    effectiveAverateRate = {
+                                        n: prevAverageRates.rate.n,
+                                        d: prevAverageRates.rate.d
+                                    };
+                                }
+
                                 const targetBNTTradingLiquidityDelta = min(
-                                    totalTokenDeltaAmount.mul(prevAverageRates.rate.n).div(prevAverageRates.rate.d),
+                                    totalTokenDeltaAmount.mul(effectiveAverateRate.n).div(effectiveAverateRate.d),
                                     prevAvailableFunding
                                 );
 
@@ -1266,8 +1281,8 @@ describe('PoolCollection', () => {
                                     prevLiquidity.bntTradingLiquidity
                                 );
                                 const baseTokenTradingLiquidityDelta = bntTradingLiquidityDelta
-                                    .mul(prevAverageRates.rate.d)
-                                    .div(prevAverageRates.rate.n);
+                                    .mul(effectiveAverateRate.d)
+                                    .div(effectiveAverateRate.n);
                                 const targetBaseTokenLiquidity =
                                     prevLiquidity.baseTokenTradingLiquidity.add(baseTokenTradingLiquidityDelta);
 
