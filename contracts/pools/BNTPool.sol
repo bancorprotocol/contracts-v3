@@ -185,7 +185,7 @@ contract BNTPool is IBNTPool, Vault {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 2;
+        return 3;
     }
 
     /**

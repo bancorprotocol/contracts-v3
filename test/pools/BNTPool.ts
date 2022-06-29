@@ -139,7 +139,7 @@ describe('BNTPool', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await bntPool.version()).to.equal(2);
+            expect(await bntPool.version()).to.equal(3);
 
             expect(await bntPool.isPayable()).to.be.false;
 
