@@ -54,6 +54,15 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
+    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
+
+    await execute({
+        name: InstanceName.PoolCollectionType1V7,
+        methodName: 'enableProtection',
+        args: [await prevPoolCollection.protectionEnabled()],
+        from: deployer
+    });
+
     const pools = await network.liquidityPools();
 
     for (const poolBatch of chunk(pools, 50)) {
@@ -64,8 +73,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             from: deployer
         });
     }
-
-    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
 
     await execute({
         name: InstanceName.BancorNetwork,

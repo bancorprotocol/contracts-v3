@@ -344,7 +344,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @inheritdoc IPoolCollection
+     * @dev enables/disables protection
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
      */
     function enableProtection(bool status) external onlyOwner {
         if (_protectionEnabled == status) {
@@ -355,7 +359,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
-     * @inheritdoc IPoolCollection
+     * @dev returns the status of the protection
      */
     function protectionEnabled() external view returns (bool) {
         return _protectionEnabled;

@@ -28,10 +28,12 @@ describeDeployment(
     __filename,
     () => {
         let network: BancorNetwork;
+        let prevPoolCollection: PoolCollectionType1V6;
         let newPoolCollection: PoolCollection;
 
         beforeEach(async () => {
             network = await DeployedContracts.BancorNetwork.deployed();
+            prevPoolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
             newPoolCollection = await DeployedContracts.PoolCollectionType1V7.deployed();
         });
 
@@ -40,6 +42,7 @@ describeDeployment(
 
             expect(await newPoolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await newPoolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
+            expect(await newPoolCollection.protectionEnabled()).to.equal(await prevPoolCollection.protectionEnabled());
 
             expect(await network.poolCollections()).to.deep.equal([newPoolCollection.address]);
 
