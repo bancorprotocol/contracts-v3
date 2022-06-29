@@ -23,7 +23,7 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String } = utils;
 
-describe.only('BNTPool', () => {
+describe('BNTPool', () => {
     let deployer: SignerWithAddress;
     let bntManager: SignerWithAddress;
     let fundingManager: SignerWithAddress;
