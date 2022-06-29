@@ -585,8 +585,7 @@ describe('BNTPool', () => {
                     const poolTokenTotalSupply = await bntPoolToken.totalSupply();
                     const poolPoolTokenBalance = await bntPoolToken.balanceOf(bntPool.address);
 
-                    let expectedPoolTokenAmount = BigNumber.from(amount).mul(poolTokenTotalSupply).div(stakedBalance);
-
+                    const expectedPoolTokenAmount = BigNumber.from(amount).mul(poolTokenTotalSupply).div(stakedBalance);
                     expect(expectedPoolTokenAmount).to.be.gt(poolPoolTokenBalance);
 
                     await testRenounce(BigNumber.from(amount));
