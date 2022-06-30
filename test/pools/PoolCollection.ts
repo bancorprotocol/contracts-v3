@@ -26,6 +26,7 @@ import {
     PoolType,
     PPM_RESOLUTION,
     RATE_MAX_DEVIATION_PPM,
+    RATE_RESET_BLOCK_THRESHOLD,
     TradingStatusUpdateReason,
     ZERO_ADDRESS,
     ZERO_FRACTION
@@ -156,11 +157,27 @@ describe('PoolCollection', () => {
             return poolData.averageRates;
         }
 
-        const averageRate = poolData.averageRates.rate;
         const spotRate = {
             n: poolData.liquidity.bntTradingLiquidity,
             d: poolData.liquidity.baseTokenTradingLiquidity
         };
+
+        const invSpotRate = {
+            n: poolData.liquidity.baseTokenTradingLiquidity,
+            d: poolData.liquidity.bntTradingLiquidity
+        };
+
+        if (blockNumber >= RATE_RESET_BLOCK_THRESHOLD) {
+            return {
+                blockNumber,
+                rate: spotRate,
+                invRate: invSpotRate
+            };
+        }
+
+        const averageRate = poolData.averageRates.rate;
+        const invAverageRate = poolData.averageRates.invRate;
+
         const newAverageRate = {
             n: averageRate.n
                 .mul(spotRate.d)
@@ -171,11 +188,6 @@ describe('PoolCollection', () => {
 
         const scale = max(newAverageRate.n, newAverageRate.d).sub(1).div(BigNumber.from(2).pow(112).sub(1)).add(1);
 
-        const invAverageRate = poolData.averageRates.invRate;
-        const invSpotRate = {
-            n: poolData.liquidity.baseTokenTradingLiquidity,
-            d: poolData.liquidity.bntTradingLiquidity
-        };
         const newInvAverageRate = {
             n: invAverageRate.n
                 .mul(invSpotRate.d)
@@ -380,7 +392,7 @@ describe('PoolCollection', () => {
                 poolMigrator.address,
                 NETWORK_FEE_PPM
             );
-            expect(await poolCollection.version()).to.equal(6);
+            expect(await poolCollection.version()).to.equal(7);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -1229,8 +1241,23 @@ describe('PoolCollection', () => {
                                 const totalTokenDeltaAmount = totalBaseTokenReserveAmount.sub(
                                     prevLiquidity.baseTokenTradingLiquidity
                                 );
+
+                                const blockNumber = await poolCollection.currentBlockNumber();
+                                let effectiveAverateRate;
+                                if (blockNumber - prevAverageRates.blockNumber >= RATE_RESET_BLOCK_THRESHOLD) {
+                                    effectiveAverateRate = {
+                                        n: prevLiquidity.bntTradingLiquidity,
+                                        d: prevLiquidity.baseTokenTradingLiquidity
+                                    };
+                                } else {
+                                    effectiveAverateRate = {
+                                        n: prevAverageRates.rate.n,
+                                        d: prevAverageRates.rate.d
+                                    };
+                                }
+
                                 const targetBNTTradingLiquidityDelta = min(
-                                    totalTokenDeltaAmount.mul(prevAverageRates.rate.n).div(prevAverageRates.rate.d),
+                                    totalTokenDeltaAmount.mul(effectiveAverateRate.n).div(effectiveAverateRate.d),
                                     prevAvailableFunding
                                 );
 
@@ -1254,8 +1281,8 @@ describe('PoolCollection', () => {
                                     prevLiquidity.bntTradingLiquidity
                                 );
                                 const baseTokenTradingLiquidityDelta = bntTradingLiquidityDelta
-                                    .mul(prevAverageRates.rate.d)
-                                    .div(prevAverageRates.rate.n);
+                                    .mul(effectiveAverateRate.d)
+                                    .div(effectiveAverateRate.n);
                                 const targetBaseTokenLiquidity =
                                     prevLiquidity.baseTokenTradingLiquidity.add(baseTokenTradingLiquidityDelta);
 
@@ -1507,6 +1534,9 @@ describe('PoolCollection', () => {
                                 stakedBalance
                             });
 
+                            await transfer(deployer, bnt, masterVault, spotRate.n);
+                            await transfer(deployer, token, masterVault, spotRate.d);
+
                             await poolCollection.setAverageRatesT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
                                 rate: {
@@ -1525,6 +1555,20 @@ describe('PoolCollection', () => {
                         it('should deposit liquidity and preserve the trading liquidity', async () => {
                             await testMultipleDepositsFor(TradingLiquidityState.Ignore);
                         });
+
+                        context('when sufficient blocks have passed', () => {
+                            beforeEach(async () => {
+                                const currentBlockNumber = await poolCollection.currentBlockNumber();
+                                const newBlockNumber = currentBlockNumber + RATE_RESET_BLOCK_THRESHOLD;
+                                await poolCollection.setBlockNumber(newBlockNumber);
+
+                                expect(await poolCollection.isPoolStable(token.address)).to.be.true;
+                            });
+
+                            it('should deposit and update the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            });
+                        });
                     });
 
                     context('when pool inverse rate is unstable', () => {
@@ -1541,6 +1585,9 @@ describe('PoolCollection', () => {
                                 baseTokenTradingLiquidity: spotRate.d,
                                 stakedBalance
                             });
+
+                            await transfer(deployer, bnt, masterVault, spotRate.n);
+                            await transfer(deployer, token, masterVault, spotRate.d);
 
                             await poolCollection.setAverageRatesT(token.address, {
                                 blockNumber: await poolCollection.currentBlockNumber(),
@@ -1559,6 +1606,20 @@ describe('PoolCollection', () => {
 
                         it('should deposit liquidity and preserve the trading liquidity', async () => {
                             await testMultipleDepositsFor(TradingLiquidityState.Ignore);
+                        });
+
+                        context('when sufficient blocks have passed', () => {
+                            beforeEach(async () => {
+                                const currentBlockNumber = await poolCollection.currentBlockNumber();
+                                const newBlockNumber = currentBlockNumber + RATE_RESET_BLOCK_THRESHOLD;
+                                await poolCollection.setBlockNumber(newBlockNumber);
+
+                                expect(await poolCollection.isPoolStable(token.address)).to.be.true;
+                            });
+
+                            it('should deposit and update the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            });
                         });
                     });
 
@@ -2102,72 +2163,88 @@ describe('PoolCollection', () => {
                         // since the average rate has 2 components, this method simulates 36 different scenarios:
                         // - in some of them, the spot rate is within the permitted deviation from the average rate
                         // - in some of them, the spot rate is outside the permitted deviation from the average rate
+                        // since the average rates reset after sufficient blocks have passed, different block
+                        // thresholds are tested
+                        const blocksWithinThreshold = Math.floor(RATE_RESET_BLOCK_THRESHOLD / 3);
                         for (const inverseRate of [false, true]) {
                             context(inverseRate ? 'inverse rate' : 'rate', () => {
-                                for (const ns of [-1, +1]) {
-                                    for (const nx of [-1, 0, +1]) {
-                                        for (const ds of [-1, +1]) {
-                                            for (const dx of [-1, 0, +1]) {
-                                                const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
-                                                const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
-                                                const ok =
-                                                    Math.abs(nf / df - 1) <= RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION;
+                                for (const blocks of [0, blocksWithinThreshold, RATE_RESET_BLOCK_THRESHOLD]) {
+                                    for (const ns of [-1, +1]) {
+                                        for (const nx of [-1, 0, +1]) {
+                                            for (const ds of [-1, +1]) {
+                                                for (const dx of [-1, 0, +1]) {
+                                                    const nf = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ns + nx;
+                                                    const df = PPM_RESOLUTION + RATE_MAX_DEVIATION_PPM * ds + dx;
+                                                    const ok =
+                                                        Math.abs(nf / df - 1) <=
+                                                            RATE_MAX_DEVIATION_PPM / PPM_RESOLUTION ||
+                                                        blocks >= RATE_RESET_BLOCK_THRESHOLD;
 
-                                                context(`ns=${ns}, nx=${nx}, dx=${dx}`, () => {
-                                                    beforeEach(async () => {
-                                                        const liquidity = await poolCollection.poolLiquidity(
-                                                            token.address
-                                                        );
+                                                    context(`ns=${ns}, nx=${nx}, dx=${dx}, blocks=${blocks}`, () => {
+                                                        beforeEach(async () => {
+                                                            const liquidity = await poolCollection.poolLiquidity(
+                                                                token.address
+                                                            );
 
-                                                        let rate: Fraction<BigNumber>;
-                                                        let invRate: Fraction<BigNumber>;
+                                                            let rate: Fraction<BigNumber>;
+                                                            let invRate: Fraction<BigNumber>;
 
-                                                        if (inverseRate) {
-                                                            rate = {
-                                                                n: liquidity.bntTradingLiquidity,
-                                                                d: liquidity.baseTokenTradingLiquidity
-                                                            };
+                                                            if (inverseRate) {
+                                                                rate = {
+                                                                    n: liquidity.bntTradingLiquidity,
+                                                                    d: liquidity.baseTokenTradingLiquidity
+                                                                };
 
-                                                            invRate = {
-                                                                n: liquidity.baseTokenTradingLiquidity.mul(nf),
-                                                                d: liquidity.bntTradingLiquidity.mul(df)
-                                                            };
-                                                        } else {
-                                                            rate = {
-                                                                n: liquidity.bntTradingLiquidity.mul(nf),
-                                                                d: liquidity.baseTokenTradingLiquidity.mul(df)
-                                                            };
+                                                                invRate = {
+                                                                    n: liquidity.baseTokenTradingLiquidity.mul(nf),
+                                                                    d: liquidity.bntTradingLiquidity.mul(df)
+                                                                };
+                                                            } else {
+                                                                rate = {
+                                                                    n: liquidity.bntTradingLiquidity.mul(nf),
+                                                                    d: liquidity.baseTokenTradingLiquidity.mul(df)
+                                                                };
 
-                                                            invRate = {
-                                                                n: liquidity.baseTokenTradingLiquidity,
-                                                                d: liquidity.bntTradingLiquidity
-                                                            };
-                                                        }
+                                                                invRate = {
+                                                                    n: liquidity.baseTokenTradingLiquidity,
+                                                                    d: liquidity.bntTradingLiquidity
+                                                                };
+                                                            }
 
-                                                        await poolCollection.setAverageRatesT(token.address, {
-                                                            blockNumber: 1,
-                                                            rate,
-                                                            invRate
+                                                            await poolCollection.setAverageRatesT(token.address, {
+                                                                blockNumber: 1,
+                                                                rate,
+                                                                invRate
+                                                            });
+
+                                                            const currentBlockNumber =
+                                                                await poolCollection.currentBlockNumber();
+                                                            const newBlockNumber = currentBlockNumber + blocks;
+                                                            await poolCollection.setBlockNumber(newBlockNumber);
+                                                        });
+
+                                                        it(`withdrawal should ${
+                                                            ok ? 'complete' : 'revert'
+                                                        }`, async () => {
+                                                            if (ok) {
+                                                                await testMultipleWithdrawals(
+                                                                    TradingLiquidityState.Update
+                                                                );
+                                                            } else {
+                                                                expect(await poolCollection.isPoolStable(token.address))
+                                                                    .to.be.false;
+
+                                                                await expect(
+                                                                    withdrawAndVerifyState(
+                                                                        totalBasePoolTokenAmount,
+                                                                        withdrawalFeePPM,
+                                                                        TradingLiquidityState.Update
+                                                                    )
+                                                                ).to.be.revertedWithError('RateUnstable');
+                                                            }
                                                         });
                                                     });
-
-                                                    it(`withdrawal should ${ok ? 'complete' : 'revert'}`, async () => {
-                                                        if (ok) {
-                                                            await testMultipleWithdrawals(TradingLiquidityState.Update);
-                                                        } else {
-                                                            expect(await poolCollection.isPoolStable(token.address)).to
-                                                                .be.false;
-
-                                                            await expect(
-                                                                withdrawAndVerifyState(
-                                                                    totalBasePoolTokenAmount,
-                                                                    withdrawalFeePPM,
-                                                                    TradingLiquidityState.Update
-                                                                )
-                                                            ).to.be.revertedWithError('RateUnstable');
-                                                        }
-                                                    });
-                                                });
+                                                }
                                             }
                                         }
                                     }

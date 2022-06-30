@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity 0.8.13;
-
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -112,6 +111,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2_000; // 0.2%
     uint32 private constant RATE_MAX_DEVIATION_PPM = 10_000; // %1
+    uint32 private constant RATE_RESET_BLOCK_THRESHOLD = 100;
 
     // the average rate is recalculated based on the ratio between the weights of the rates the smaller the weights are,
     // the larger the supported range of each one of the rates is
@@ -285,7 +285,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 6;
+        return 7;
     }
 
     /**
@@ -496,7 +496,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function isPoolStable(Token pool) external view returns (bool) {
         Pool storage data = _poolData[pool];
 
-        return _poolRateState(data.liquidity, data.averageRates) == PoolRateState.Stable;
+        return _poolRateState(data) == PoolRateState.Stable;
     }
 
     /**
@@ -622,13 +622,25 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         PoolLiquidity memory prevLiquidity = data.liquidity;
         uint256 currentStakedBalance = prevLiquidity.stakedBalance;
 
-        // if there are no pool tokens available to support the staked balance - reset the trading liquidity and the
-        // staked balance
+        // if there are no pool tokens available to support the staked balance - reset the
+        // trading liquidity and the staked balance
+        // in addition, get the effective average rates
         uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
+        AverageRates memory effectiveAverageRates;
         if (prevPoolTokenTotalSupply == 0 && currentStakedBalance != 0) {
             currentStakedBalance = 0;
 
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_INVALID_STATE);
+            effectiveAverageRates = AverageRates({
+                blockNumber: 0,
+                rate: zeroFraction112(),
+                invRate: zeroFraction112()
+            });
+        } else {
+            effectiveAverageRates = _effectiveAverageRates(
+                data.averageRates,
+                Fraction({ n: prevLiquidity.bntTradingLiquidity, d: prevLiquidity.baseTokenTradingLiquidity })
+            );
         }
 
         // calculate the pool token amount to mint
@@ -649,7 +661,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             contextId,
             pool,
             data,
-            data.averageRates.rate.fromFraction112(),
+            effectiveAverageRates.rate.fromFraction112(),
             _networkSettings.minLiquidityForTrading()
         );
 
@@ -709,6 +721,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         if (baseTokenAmount > underlyingAmount) {
             revert InvalidParam();
+        }
+
+        if (_poolRateState(data) == PoolRateState.Unstable) {
+            revert RateUnstable();
         }
 
         // obtain the withdrawal amounts
@@ -1020,11 +1036,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     ) private {
         PoolLiquidity storage liquidity = data.liquidity;
         PoolLiquidity memory prevLiquidity = liquidity;
-        AverageRates memory averageRates = data.averageRates;
-
-        if (_poolRateState(prevLiquidity, averageRates) == PoolRateState.Unstable) {
-            revert RateUnstable();
-        }
 
         data.poolToken.burn(amounts.poolTokenAmount);
 
@@ -1258,7 +1269,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         PoolLiquidity memory liquidity = data.liquidity;
 
-        if (_poolRateState(liquidity, data.averageRates) == PoolRateState.Unstable) {
+        if (_poolRateState(data) == PoolRateState.Unstable) {
             return;
         }
 
@@ -1608,37 +1619,29 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev returns the state of a pool's rate
      */
-    function _poolRateState(PoolLiquidity memory liquidity, AverageRates memory averageRates)
-        internal
-        view
-        returns (PoolRateState)
-    {
+    function _poolRateState(Pool storage data) internal view returns (PoolRateState) {
         Fraction memory spotRate = Fraction({
-            n: liquidity.bntTradingLiquidity,
-            d: liquidity.baseTokenTradingLiquidity
+            n: data.liquidity.bntTradingLiquidity,
+            d: data.liquidity.baseTokenTradingLiquidity
         });
 
+        AverageRates memory averageRates = data.averageRates;
         Fraction112 memory rate = averageRates.rate;
-
         if (!spotRate.isPositive() || !rate.isPositive()) {
             return PoolRateState.Uninitialized;
         }
 
         Fraction memory invSpotRate = spotRate.inverse();
         Fraction112 memory invRate = averageRates.invRate;
-
         if (!invSpotRate.isPositive() || !invRate.isPositive()) {
             return PoolRateState.Uninitialized;
         }
 
-        if (averageRates.blockNumber != _blockNumber()) {
-            rate = _calcAverageRate(rate, spotRate);
-            invRate = _calcAverageRate(invRate, invSpotRate);
-        }
+        AverageRates memory effectiveAverageRates = _effectiveAverageRates(averageRates, spotRate);
 
         if (
-            MathEx.isInRange(rate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM) &&
-            MathEx.isInRange(invRate.fromFraction112(), invSpotRate, RATE_MAX_DEVIATION_PPM)
+            MathEx.isInRange(effectiveAverageRates.rate.fromFraction112(), spotRate, RATE_MAX_DEVIATION_PPM) &&
+            MathEx.isInRange(effectiveAverageRates.invRate.fromFraction112(), invSpotRate, RATE_MAX_DEVIATION_PPM)
         ) {
             return PoolRateState.Stable;
         }
@@ -1650,15 +1653,50 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @dev updates the average rates
      */
     function _updateAverageRates(Pool storage data, Fraction memory spotRate) private {
+        data.averageRates = _effectiveAverageRates(data.averageRates, spotRate);
+    }
+
+    /**
+     * @dev returns the effective average rates
+     */
+    function _effectiveAverageRates(AverageRates memory averageRates, Fraction memory spotRate)
+        private
+        view
+        returns (AverageRates memory)
+    {
         uint32 blockNumber = _blockNumber();
 
-        if (data.averageRates.blockNumber != blockNumber) {
-            data.averageRates = AverageRates({
-                blockNumber: blockNumber,
-                rate: _calcAverageRate(data.averageRates.rate, spotRate),
-                invRate: _calcAverageRate(data.averageRates.invRate, spotRate.inverse())
-            });
+        // can only be updated once in a single block
+        uint32 prevUpdateBlock = averageRates.blockNumber;
+        if (prevUpdateBlock == blockNumber) {
+            return averageRates;
         }
+
+        // if sufficient blocks have passed, or if one of the rates isn't positive,
+        // reset the average rates
+        if (
+            blockNumber - prevUpdateBlock >= RATE_RESET_BLOCK_THRESHOLD ||
+            !averageRates.rate.isPositive() ||
+            !averageRates.invRate.isPositive()
+        ) {
+            if (spotRate.isPositive()) {
+                return
+                    AverageRates({
+                        blockNumber: blockNumber,
+                        rate: spotRate.toFraction112(),
+                        invRate: spotRate.inverse().toFraction112()
+                    });
+            }
+
+            return AverageRates({ blockNumber: 0, rate: zeroFraction112(), invRate: zeroFraction112() });
+        }
+
+        return
+            AverageRates({
+                blockNumber: blockNumber,
+                rate: _calcAverageRate(averageRates.rate, spotRate),
+                invRate: _calcAverageRate(averageRates.invRate, spotRate.inverse())
+            });
     }
 
     /**
