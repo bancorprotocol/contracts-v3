@@ -5,7 +5,7 @@ import Decimal from 'decimal.js';
 import fs from 'fs';
 import path from 'path';
 
-describe('PoolCollectionWithdrawal', () => {
+describe.skip('PoolCollectionWithdrawal', () => {
     let poolCollectionWithdrawal: TestPoolCollectionWithdrawal;
 
     before(async () => {

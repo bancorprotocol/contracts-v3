@@ -81,7 +81,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V7.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -235,7 +235,7 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         // TODO: replace this method with an exact single trade method
-        const stabilizePoolV3 = async (pool: string, tokenWhale: SignerWithAddress) => {
+        const stabilizePoolV3 = async (pool: string, decimals: number | undefined, tokenWhale: SignerWithAddress) => {
             while (true) {
                 const poolData = await poolCollection.poolData(pool);
                 const { averageRates, liquidity } = poolData;
@@ -249,21 +249,23 @@ import { getNamedAccounts } from 'hardhat';
                 let sourceToken: string;
                 let targetToken: string;
                 let trader: SignerWithAddress;
+                let tradeAmount;
                 if (emaRate.n.mul(spotRate.d).gt(spotRate.n.mul(emaRate.d))) {
                     // EMA > SPOT: stabilizing by trading TKN to BNT
                     sourceToken = pool;
                     targetToken = bnt.address;
+                    tradeAmount = toWei(1, decimals);
                     trader = tokenWhale;
                 } else {
                     // SPOT > EMA: Stabilizing by trading BNT to TKN
                     sourceToken = bnt.address;
                     targetToken = pool;
+                    tradeAmount = toWei(1);
                     trader = bntWhale;
                 }
 
                 const isNativeSourceToken = sourceToken === NATIVE_TOKEN_ADDRESS;
 
-                const tradeAmount = toWei(1);
                 if (!isNativeSourceToken) {
                     const tokenContract = await Contracts.ERC20.attach(sourceToken);
                     await tokenContract.connect(trader).approve(network.address, tradeAmount);
@@ -484,7 +486,7 @@ import { getNamedAccounts } from 'hardhat';
                             );
 
                             if (!isBNT) {
-                                await stabilizePoolV3(token, whale);
+                                await stabilizePoolV3(token, decimals, whale);
                             }
                         }
                     });
