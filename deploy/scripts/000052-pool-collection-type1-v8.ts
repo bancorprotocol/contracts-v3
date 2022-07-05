@@ -4,8 +4,7 @@ import {
     DeployedContracts,
     execute,
     InstanceName,
-    setDeploymentMetadata,
-    upgradeProxy
+    setDeploymentMetadata
 } from '../../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
@@ -19,19 +18,12 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntPool = await DeployedContracts.BNTPool.deployed();
     const networkSettings = await DeployedContracts.NetworkSettings.deployed();
     const masterVault = await DeployedContracts.MasterVault.deployed();
-
-    await upgradeProxy({
-        name: InstanceName.PoolMigrator,
-        args: [network.address],
-        from: deployer
-    });
-
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
     const poolTokenFactory = await DeployedContracts.PoolTokenFactory.deployed();
     const poolMigrator = await DeployedContracts.PoolMigrator.deployed();
 
     const newPoolCollectionAddress = await deploy({
-        name: InstanceName.PoolCollectionType1V7,
+        name: InstanceName.PoolCollectionType1V8,
         contract: 'PoolCollection',
         from: deployer,
         args: [
@@ -54,10 +46,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
+    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V7.deployed();
 
     await execute({
-        name: InstanceName.PoolCollectionType1V7,
+        name: InstanceName.PoolCollectionType1V8,
         methodName: 'enableProtection',
         args: [await prevPoolCollection.protectionEnabled()],
         from: deployer
