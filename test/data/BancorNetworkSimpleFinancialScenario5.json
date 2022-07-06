@@ -6,6 +6,10 @@
   "tknDecimals": 18,
   "bntMinLiquidity": "10000",
   "bntFundingLimit": "10000000",
+  "tknRewardsAmount": "500000",
+  "tknRewardsDuration": 31536000,
+  "bntRewardsAmount": "500000",
+  "bntRewardsDuration": 31536000,
   "users": [
     {
       "id": "tknProvider",
@@ -17,17 +21,19 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
           "tknProvider": "80",
           "masterVault": "20",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "0"
+          "masterVault": "0",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "20"
@@ -50,7 +56,7 @@
     {
       "type": "enableTrading",
       "userId": "",
-      "mined": true,
+      "elapsed": 1,
       "amount": {
         "bntVirtualBalance": 1000,
         "baseTokenVirtualBalance": 1
@@ -59,11 +65,13 @@
         "tknBalances": {
           "tknProvider": "80",
           "masterVault": "20",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "20000"
+          "masterVault": "20000",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "20"
@@ -86,17 +94,19 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
           "tknProvider": "89.975",
           "masterVault": "10.025",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "10025"
+          "masterVault": "10025",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "10"
@@ -119,17 +129,19 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
           "tknProvider": "69.975",
           "masterVault": "30.025",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "20050"
+          "masterVault": "20050",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "30"
@@ -152,17 +164,19 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
           "tknProvider": "79.95",
           "masterVault": "20.05",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "20050"
+          "masterVault": "20050",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "20"
@@ -185,17 +199,19 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
           "tknProvider": "59.95",
           "masterVault": "40.05",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "40050"
+          "masterVault": "40050",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "40"
@@ -218,17 +234,19 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
           "tknProvider": "69.925",
           "masterVault": "30.075",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "30075"
+          "masterVault": "30075",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "30"
@@ -251,17 +269,19 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
           "tknProvider": "49.925",
           "masterVault": "50.075",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "50075"
+          "masterVault": "50075",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "50"
@@ -284,17 +304,19 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
           "tknProvider": "59.9",
           "masterVault": "40.1",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "40100"
+          "masterVault": "40100",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "40"
@@ -317,17 +339,19 @@
     {
       "type": "depositTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "20",
       "expected": {
         "tknBalances": {
           "tknProvider": "39.9",
           "masterVault": "60.1",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "60100"
+          "masterVault": "60100",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "60"
@@ -350,17 +374,19 @@
     {
       "type": "withdrawTKN",
       "userId": "tknProvider",
-      "mined": true,
+      "elapsed": 1,
       "amount": "10",
       "expected": {
         "tknBalances": {
           "tknProvider": "49.875",
           "masterVault": "50.125",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "tknProvider": "0",
-          "masterVault": "50125"
+          "masterVault": "50125",
+          "erVault": "500000"
         },
         "bntknBalances": {
           "tknProvider": "50"
