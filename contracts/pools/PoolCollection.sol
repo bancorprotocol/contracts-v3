@@ -586,6 +586,38 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     }
 
     /**
+     * @dev adjusts the trading liquidity in the given pool based on the base token
+     * vault balance/funding limit
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function updateTradingLiquidity(Token pool) external onlyOwner {
+        Pool storage data = _poolStorage(pool);
+        PoolLiquidity memory liquidity = data.liquidity;
+
+        bytes32 contextId = keccak256(
+            abi.encodePacked(msg.sender, pool, liquidity.bntTradingLiquidity, liquidity.baseTokenTradingLiquidity)
+        );
+
+        AverageRates memory effectiveAverageRates = _effectiveAverageRates(
+            data.averageRates,
+            Fraction({ n: liquidity.bntTradingLiquidity, d: liquidity.baseTokenTradingLiquidity })
+        );
+        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
+        _updateTradingLiquidity(
+            contextId,
+            pool,
+            data,
+            effectiveAverageRates.rate.fromFraction112(),
+            minLiquidityForTrading
+        );
+
+        _dispatchTradingLiquidityEvents(contextId, pool, data.poolToken.totalSupply(), liquidity, data.liquidity);
+    }
+
+    /**
      * @dev enables/disables depositing into a given pool
      *
      * requirements:
