@@ -1,11 +1,5 @@
 import { NETWORK_FEE_PPM } from '../../utils/Constants';
-import {
-    deploy,
-    DeployedContracts,
-    execute,
-    InstanceName,
-    setDeploymentMetadata
-} from '../../utils/Deploy';
+import { deploy, DeployedContracts, execute, InstanceName, setDeploymentMetadata } from '../../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { chunk } from 'lodash';
