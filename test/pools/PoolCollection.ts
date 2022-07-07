@@ -1029,7 +1029,7 @@ describe('PoolCollection', () => {
     });
 
     describe('update trading liquidity', () => {
-        const testDeposit = (tokenData: TokenData) => {
+        const testUpdateTradingLiquidity = (tokenData: TokenData) => {
             let networkSettings: NetworkSettings;
             let network: TestBancorNetwork;
             let bnt: IERC20;
@@ -1630,7 +1630,7 @@ describe('PoolCollection', () => {
 
         for (const symbol of [TokenSymbol.ETH, TokenSymbol.TKN]) {
             context(symbol, () => {
-                testDeposit(new TokenData(symbol));
+                testUpdateTradingLiquidity(new TokenData(symbol));
             });
         }
     });
