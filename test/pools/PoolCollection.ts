@@ -392,7 +392,7 @@ describe('PoolCollection', () => {
                 poolMigrator.address,
                 NETWORK_FEE_PPM
             );
-            expect(await poolCollection.version()).to.equal(7);
+            expect(await poolCollection.version()).to.equal(8);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
