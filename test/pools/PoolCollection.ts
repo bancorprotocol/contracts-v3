@@ -1061,26 +1061,20 @@ describe('PoolCollection', () => {
 
             it('should revert when a non-owner attempts to update the trading liquidity', async () => {
                 await expect(
-                    poolCollection
-                        .connect(nonOwner)
-                        .updateTradingLiquidity(token.address)
+                    poolCollection.connect(nonOwner).updateTradingLiquidity(token.address)
                 ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when attempting to update the trading liquidity of an invalid pool', async () => {
-                await expect(
-                    poolCollection.updateTradingLiquidity(
-                        poolCollection.address
-                    )
-                ).to.be.revertedWithError('DoesNotExist');
+                await expect(poolCollection.updateTradingLiquidity(poolCollection.address)).to.be.revertedWithError(
+                    'DoesNotExist'
+                );
             });
 
             it('should revert when attempting to update the trading liquidity of a non-existing pool', async () => {
-                await expect(
-                    poolCollection.updateTradingLiquidity(
-                        token.address
-                    )
-                ).to.be.revertedWithError('DoesNotExist');
+                await expect(poolCollection.updateTradingLiquidity(token.address)).to.be.revertedWithError(
+                    'DoesNotExist'
+                );
             });
 
             context('with a registered pool', () => {
@@ -1095,9 +1089,7 @@ describe('PoolCollection', () => {
                     await poolCollection.setBlockNumber(await latestBlockNumber());
                 });
 
-                const testUpdateTradingLiquidity = async (
-                    expectTradingLiquidityState: TradingLiquidityState
-                ) => {
+                const testUpdateTradingLiquidity = async (expectTradingLiquidityState: TradingLiquidityState) => {
                     const {
                         tradingEnabled: prevTradingEnabled,
                         averageRates: prevAverageRates,
@@ -1108,15 +1100,18 @@ describe('PoolCollection', () => {
                     const prevFunding = await bntPool.currentPoolFunding(token.address);
                     const prevAvailableFunding = await bntPool.availableFunding(token.address);
 
-                    const res = await poolCollection.updateTradingLiquidity(
-                        token.address
-                    );
+                    const res = await poolCollection.updateTradingLiquidity(token.address);
 
                     const liquidity = await poolCollection.poolLiquidity(token.address);
 
                     const contextId = solidityKeccak256(
                         ['address', 'address', 'uint128', 'uint128'],
-                        [deployer.address, token.address, prevLiquidity.bntTradingLiquidity, prevLiquidity.baseTokenTradingLiquidity]
+                        [
+                            deployer.address,
+                            token.address,
+                            prevLiquidity.bntTradingLiquidity,
+                            prevLiquidity.baseTokenTradingLiquidity
+                        ]
                     );
 
                     await testTradingLiquidityEvents(
@@ -1130,9 +1125,7 @@ describe('PoolCollection', () => {
                         res
                     );
 
-                    expect(await poolToken.totalSupply()).to.equal(
-                        prevPoolTokenTotalSupply
-                    );
+                    expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
 
                     switch (expectTradingLiquidityState) {
                         case TradingLiquidityState.Reset:
@@ -1218,7 +1211,9 @@ describe('PoolCollection', () => {
                     }
                 };
 
-                const testMultipleUpdateTradingLiquidity = async (expectTradingLiquidityState: TradingLiquidityState) => {
+                const testMultipleUpdateTradingLiquidity = async (
+                    expectTradingLiquidityState: TradingLiquidityState
+                ) => {
                     for (let i = 0; i < COUNT; i++) {
                         await testUpdateTradingLiquidity(expectTradingLiquidityState);
                     }
@@ -1226,11 +1221,9 @@ describe('PoolCollection', () => {
 
                 context('when trading is disabled', () => {
                     it('should revert', async () => {
-                        await expect(
-                            poolCollection.updateTradingLiquidity(
-                                token.address
-                            )
-                        ).to.be.revertedWithError('InsufficientLiquidity');
+                        await expect(poolCollection.updateTradingLiquidity(token.address)).to.be.revertedWithError(
+                            'InsufficientLiquidity'
+                        );
                     });
                 });
 
@@ -1256,7 +1249,7 @@ describe('PoolCollection', () => {
                         beforeEach(async () => {
                             await poolCollection.enableDepositing(token.address, false);
                         });
-    
+
                         it('should update the trading liquidity', async () => {
                             await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
                         });
@@ -1303,9 +1296,7 @@ describe('PoolCollection', () => {
 
                                 const { liquidity: prevLiquidity } = await poolCollection.poolData(token.address);
 
-                                const res = await poolCollection.updateTradingLiquidity(
-                                    token.address
-                                );
+                                const res = await poolCollection.updateTradingLiquidity(token.address);
 
                                 const { liquidity, averageRates } = await poolCollection.poolData(token.address);
 
