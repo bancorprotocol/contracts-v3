@@ -5,7 +5,7 @@ import Decimal from 'decimal.js';
 import fs from 'fs';
 import path from 'path';
 
-describe.skip('PoolCollectionWithdrawal', () => {
+describe('PoolCollectionWithdrawal', () => {
     let poolCollectionWithdrawal: TestPoolCollectionWithdrawal;
 
     before(async () => {
@@ -68,7 +68,7 @@ describe.skip('PoolCollectionWithdrawal', () => {
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000002') },
             r: { maxAbsoluteError: new Decimal(1) },
             s: { maxAbsoluteError: new Decimal(1), relation: Relation.LesserOrEqual },
-            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
+            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000008') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000003') },
             v: { maxAbsoluteError: new Decimal(1), relation: Relation.GreaterOrEqual }
         });
@@ -78,7 +78,7 @@ describe.skip('PoolCollectionWithdrawal', () => {
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000002') },
             r: { maxAbsoluteError: new Decimal(1) },
             s: { maxAbsoluteError: new Decimal(1), relation: Relation.LesserOrEqual },
-            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
+            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000000000008') },
             u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000003') },
             v: { maxAbsoluteError: new Decimal(1), relation: Relation.GreaterOrEqual }
         });
@@ -88,8 +88,8 @@ describe.skip('PoolCollectionWithdrawal', () => {
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.00000000000000000000000006') },
             r: { maxAbsoluteError: new Decimal(1) },
             s: { maxAbsoluteError: new Decimal(1), relation: Relation.LesserOrEqual },
-            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
-            u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000000004') },
+            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000002') },
+            u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000000000000000002') },
             v: { maxAbsoluteError: new Decimal(1), relation: Relation.GreaterOrEqual }
         });
 
@@ -108,8 +108,8 @@ describe.skip('PoolCollectionWithdrawal', () => {
             q: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000000002') },
             r: { maxAbsoluteError: new Decimal(1) },
             s: { maxAbsoluteError: new Decimal(1), relation: Relation.LesserOrEqual },
-            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
-            u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000007') },
+            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000004') },
+            u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.0000004') },
             v: { maxAbsoluteError: new Decimal(1), relation: Relation.GreaterOrEqual }
         });
 
@@ -132,8 +132,8 @@ describe.skip('PoolCollectionWithdrawal', () => {
                 maxRelativeError: new Decimal('0.00000003'),
                 relation: Relation.LesserOrEqual
             },
-            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
-            u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.000000002') },
+            t: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
+            u: { maxAbsoluteError: new Decimal(1), maxRelativeError: new Decimal('0.003') },
             v: { maxAbsoluteError: new Decimal(1), relation: Relation.GreaterOrEqual }
         });
 

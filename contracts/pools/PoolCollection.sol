@@ -285,7 +285,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 7;
+        return 8;
     }
 
     /**
@@ -583,6 +583,38 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         Pool storage data = _poolStorage(pool);
 
         _resetTradingLiquidity(bytes32(0), pool, data, TRADING_STATUS_UPDATE_ADMIN);
+    }
+
+    /**
+     * @dev adjusts the trading liquidity in the given pool based on the base token
+     * vault balance/funding limit
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function updateTradingLiquidity(Token pool) external onlyOwner {
+        Pool storage data = _poolStorage(pool);
+        PoolLiquidity memory liquidity = data.liquidity;
+
+        bytes32 contextId = keccak256(
+            abi.encodePacked(msg.sender, pool, liquidity.bntTradingLiquidity, liquidity.baseTokenTradingLiquidity)
+        );
+
+        AverageRates memory effectiveAverageRates = _effectiveAverageRates(
+            data.averageRates,
+            Fraction({ n: liquidity.bntTradingLiquidity, d: liquidity.baseTokenTradingLiquidity })
+        );
+        uint256 minLiquidityForTrading = _networkSettings.minLiquidityForTrading();
+        _updateTradingLiquidity(
+            contextId,
+            pool,
+            data,
+            effectiveAverageRates.rate.fromFraction112(),
+            minLiquidityForTrading
+        );
+
+        _dispatchTradingLiquidityEvents(contextId, pool, data.poolToken.totalSupply(), liquidity, data.liquidity);
     }
 
     /**

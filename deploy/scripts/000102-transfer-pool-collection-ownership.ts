@@ -6,14 +6,14 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const { deployer, daoMultisig } = await getNamedAccounts();
 
     await execute({
-        name: InstanceName.PoolCollectionType1V7,
+        name: InstanceName.PoolCollectionType1V8,
         methodName: 'transferOwnership',
         args: [daoMultisig],
         from: deployer
     });
 
     await execute({
-        name: InstanceName.PoolCollectionType1V7,
+        name: InstanceName.PoolCollectionType1V8,
         methodName: 'acceptOwnership',
         from: daoMultisig
     });
