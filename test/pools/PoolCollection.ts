@@ -60,6 +60,13 @@ describe('PoolCollection', () => {
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
     const CONTEXT_ID = formatBytes32String('CTX');
 
+    enum TradingLiquidityState {
+        Reset = 0,
+        Ignore = 1,
+        Update = 2,
+        InvalidState = 3
+    }
+
     let deployer: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
@@ -1088,13 +1095,6 @@ describe('PoolCollection', () => {
                     await poolCollection.setBlockNumber(await latestBlockNumber());
                 });
 
-                enum TradingLiquidityState {
-                    Reset = 0,
-                    Ignore = 1,
-                    Update = 2,
-                    InvalidState = 3
-                }
-
                 const testUpdateTradingLiquidity = async (
                     expectTradingLiquidityState: TradingLiquidityState
                 ) => {
@@ -1730,13 +1730,6 @@ describe('PoolCollection', () => {
 
                     await poolCollection.setBlockNumber(await latestBlockNumber());
                 });
-
-                enum TradingLiquidityState {
-                    Reset = 0,
-                    Ignore = 1,
-                    Update = 2,
-                    InvalidState = 3
-                }
 
                 const testDepositFor = async (
                     tokenAmount: BigNumberish,
@@ -2376,11 +2369,6 @@ describe('PoolCollection', () => {
         let token: TokenWithAddress;
 
         let provider: SignerWithAddress;
-
-        enum TradingLiquidityState {
-            Reset = 0,
-            Update = 1
-        }
 
         before(async () => {
             [, provider] = await ethers.getSigners();
