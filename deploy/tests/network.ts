@@ -398,7 +398,7 @@ import { getNamedAccounts } from 'hardhat';
         describe('deposits', () => {
             it('should perform deposits', async () => {
                 for (const { token, whale, decimals } of Object.values(pools)) {
-                    const tknDepositAmount = toWei(1000, decimals);
+                    const tknDepositAmount = toWei(500, decimals);
 
                     for (let i = 0; i < 5; i++) {
                         const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
@@ -461,7 +461,7 @@ import { getNamedAccounts } from 'hardhat';
                             const initialVBNTAmount = await vbnt.balanceOf(whale.address);
 
                             // ensure that there is a position to withdraw
-                            const depositAmount = isBNT ? 1000 : toWei(1000, decimals);
+                            const depositAmount = toWei(500, isBNT ? 18 : decimals);
 
                             if (!isNativeToken) {
                                 const tokenContract = await Contracts.ERC20.attach(token);
@@ -644,7 +644,7 @@ import { getNamedAccounts } from 'hardhat';
                 let bnTKN: PoolToken;
 
                 beforeEach(async () => {
-                    await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(1000));
+                    await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(500));
 
                     const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
                     const converterRegistryAddress = await contractRegistry.getAddress(
