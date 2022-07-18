@@ -112,7 +112,7 @@ enum NewInstanceName {
     BNTPoolProxy = 'BNTPoolProxy',
     BNTPool = 'BNTPool',
     ExternalProtectionVault = 'ExternalProtectionVault',
-    ExternalStandardRewardsVault = 'ExternalStandardRewardsVault',
+    ExternalAutoCompoundingRewardsVault = 'ExternalAutoCompoundingRewardsVault',
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
@@ -178,7 +178,9 @@ const DeployedNewContracts = {
     BNTPoolProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BNTPoolProxy),
     BNTPool: deployed<BNTPool>(InstanceName.BNTPool),
     ExternalProtectionVault: deployed<ExternalProtectionVault>(InstanceName.ExternalProtectionVault),
-    ExternalStandardRewardsVault: deployed<ExternalRewardsVault>(InstanceName.ExternalStandardRewardsVault),
+    ExternalAutoCompoundingRewardsVault: deployed<ExternalRewardsVault>(
+        InstanceName.ExternalAutoCompoundingRewardsVault
+    ),
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),

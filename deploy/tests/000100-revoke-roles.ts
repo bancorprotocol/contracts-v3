@@ -26,7 +26,7 @@ describeDeployment(
                 InstanceName.BancorPortal,
                 InstanceName.BNTPool,
                 InstanceName.ExternalProtectionVault,
-                InstanceName.ExternalStandardRewardsVault,
+                InstanceName.ExternalAutoCompoundingRewardsVault,
                 InstanceName.MasterVault,
                 InstanceName.NetworkSettings,
                 InstanceName.PendingWithdrawals,

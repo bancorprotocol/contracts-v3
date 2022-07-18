@@ -100,9 +100,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     event ProgramTerminated(Token indexed pool, uint32 endTime, uint256 remainingRewards);
 
     /**
-     * @dev triggered when a program is enabled/disabled
+     * @dev triggered when a program is paused/resumed
      */
-    event ProgramEnabled(Token indexed pool, bool status, uint256 remainingRewards);
+    event ProgramPaused(Token indexed pool, bool paused);
 
     /**
      * @dev triggered when the number of programs to auto-process the rewards for is updated
@@ -253,6 +253,13 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
+    function isProgramPaused(Token pool) external view returns (bool) {
+        return _programs[pool].isPaused;
+    }
+
+    /**
+     * @inheritdoc IAutoCompoundingRewards
+     */
     function createFlatProgram(
         Token pool,
         uint256 totalRewards,
@@ -311,21 +318,21 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function enableProgram(Token pool, bool status) external onlyAdmin nonReentrant {
+    function pauseProgram(Token pool, bool pause) external onlyAdmin nonReentrant {
         ProgramData memory p = _programs[pool];
 
         if (!_programExists(p)) {
             revert DoesNotExist();
         }
 
-        bool prevStatus = p.isEnabled;
-        if (prevStatus == status) {
+        bool prevStatus = p.isPaused;
+        if (prevStatus == pause) {
             return;
         }
 
-        _programs[pool].isEnabled = status;
+        _programs[pool].isPaused = pause;
 
-        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
+        emit ProgramPaused({ pool: pool, paused: pause });
     }
 
     /**
@@ -367,7 +374,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         uint32 currTime = _time();
 
-        if (!p.isEnabled || currTime < p.startTime) {
+        if (p.isPaused || currTime < p.startTime) {
             return false;
         }
 
@@ -440,7 +447,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             halfLife: halfLife,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
-            isEnabled: true,
+            isPaused: false,
             distributionType: distributionType,
             totalRewards: totalRewards,
             remainingRewards: totalRewards

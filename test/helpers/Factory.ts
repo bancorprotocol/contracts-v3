@@ -125,23 +125,13 @@ export const createStandardRewards = async (
     networkSettings: NetworkSettings,
     bntGovernance: TokenGovernance,
     vbnt: IERC20,
-    bntPool: TestBNTPool | BNTPool,
-    externalRewardsVault: ExternalRewardsVault
+    bntPool: TestBNTPool | BNTPool
 ) => {
     const rewards = await createProxy(Contracts.TestStandardRewards, {
-        ctorArgs: [
-            network.address,
-            networkSettings.address,
-            bntGovernance.address,
-            vbnt.address,
-            bntPool.address,
-            externalRewardsVault.address
-        ]
+        ctorArgs: [network.address, networkSettings.address, bntGovernance.address, vbnt.address, bntPool.address]
     });
 
     await bntGovernance.grantRole(Roles.TokenGovernance.ROLE_MINTER, rewards.address);
-
-    await externalRewardsVault.grantRole(Roles.Vault.ROLE_ASSET_MANAGER, rewards.address);
 
     return rewards;
 };

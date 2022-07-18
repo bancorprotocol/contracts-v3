@@ -11,6 +11,7 @@ import Contracts, {
     TestPoolCollection,
     TestRewardsMath
 } from '../../components/Contracts';
+import { ProgramDataStructOutput } from '../../typechain-types/contracts/helpers/TestAutoCompoundingRewards';
 import {
     AUTO_PROCESS_MAX_PROGRAMS_FACTOR,
     AUTO_PROCESS_REWARDS_MIN_TIME_DELTA,
@@ -102,7 +103,7 @@ describe('AutoCompoundingRewards', () => {
     };
 
     const getRewards = async (
-        program: any,
+        program: ProgramDataStructOutput,
         token: TokenWithAddress,
         rewardsMath: TestRewardsMath,
         tokenData: TokenData,
@@ -111,7 +112,7 @@ describe('AutoCompoundingRewards', () => {
         const currTime = await autoCompoundingRewards.currentTime();
         const prevTime = Math.max(program.prevDistributionTimestamp, program.startTime);
 
-        if (!program.isEnabled || program.startTime > currTime) {
+        if (program.isPaused || program.startTime > currTime) {
             return {
                 tokenAmountToDistribute: BigNumber.from(0),
                 poolTokenAmountToBurn: BigNumber.from(0)
@@ -452,7 +453,7 @@ describe('AutoCompoundingRewards', () => {
                                                         expect(program.endTime).to.equal(endTime);
                                                         expect(program.halfLife).to.equal(0);
                                                         expect(program.prevDistributionTimestamp).to.equal(0);
-                                                        expect(program.isEnabled).to.be.true;
+                                                        expect(program.isPaused).to.be.false;
                                                     });
                                                 } else {
                                                     it(`should revert`, async () => {
@@ -523,7 +524,7 @@ describe('AutoCompoundingRewards', () => {
                                                         expect(program.endTime).to.equal(0);
                                                         expect(program.halfLife).to.equal(halfLife);
                                                         expect(program.prevDistributionTimestamp).to.equal(0);
-                                                        expect(program.isEnabled).to.be.true;
+                                                        expect(program.isPaused).to.be.false;
                                                     });
                                                 } else {
                                                     it(`should revert`, async () => {
@@ -598,7 +599,7 @@ describe('AutoCompoundingRewards', () => {
                             expect(program.endTime).to.equal(0);
                             expect(program.halfLife).to.equal(0);
                             expect(program.prevDistributionTimestamp).to.equal(0);
-                            expect(program.isEnabled).to.be.false;
+                            expect(program.isPaused).to.be.false;
                         });
 
                         it('should terminate a program which has already started', async () => {
@@ -626,7 +627,7 @@ describe('AutoCompoundingRewards', () => {
                             expect(program.endTime).to.equal(0);
                             expect(program.halfLife).to.equal(0);
                             expect(program.prevDistributionTimestamp).to.equal(0);
-                            expect(program.isEnabled).to.be.false;
+                            expect(program.isPaused).to.be.false;
                         });
                     });
                 });
@@ -642,72 +643,56 @@ describe('AutoCompoundingRewards', () => {
                         );
                     });
 
-                    it('should revert when a non-admin attempts to enable / disable a program', async () => {
+                    it('should revert when a non-admin attempts to pause/unpause a program', async () => {
                         await expect(
-                            autoCompoundingRewards.connect(user).enableProgram(token.address, true)
+                            autoCompoundingRewards.connect(user).pauseProgram(token.address, true)
                         ).to.be.revertedWithError('AccessDenied');
                     });
 
-                    it('should revert when attempting to enable / disable a non-existing program', async () => {
+                    it('should revert when attempting to pause/unpause a non-existing program', async () => {
                         const newToken = await createTestToken();
 
                         await expect(
-                            autoCompoundingRewards.enableProgram(newToken.address, true)
+                            autoCompoundingRewards.pauseProgram(newToken.address, true)
                         ).to.be.revertedWithError('DoesNotExist');
                         await expect(
-                            autoCompoundingRewards.enableProgram(newToken.address, false)
+                            autoCompoundingRewards.pauseProgram(newToken.address, false)
                         ).to.be.revertedWithError('DoesNotExist');
                     });
 
-                    it('should enable a program', async () => {
-                        await autoCompoundingRewards.enableProgram(token.address, false);
+                    it('should pause/resume a program', async () => {
+                        expect(await autoCompoundingRewards.isProgramPaused(token.address)).to.be.false;
 
-                        let program = await autoCompoundingRewards.program(token.address);
+                        const res = await autoCompoundingRewards.pauseProgram(token.address, true);
+                        await expect(res)
+                            .to.emit(autoCompoundingRewards, 'ProgramPaused')
+                            .withArgs(token.address, true);
 
-                        expect(program.isEnabled).to.be.false;
+                        expect(await autoCompoundingRewards.isProgramPaused(token.address)).to.be.true;
 
-                        await expect(autoCompoundingRewards.enableProgram(token.address, true))
-                            .to.emit(autoCompoundingRewards, 'ProgramEnabled')
-                            .withArgs(token.address, true, TOTAL_REWARDS);
+                        const res2 = await autoCompoundingRewards.pauseProgram(token.address, false);
+                        await expect(res2)
+                            .to.emit(autoCompoundingRewards, 'ProgramPaused')
+                            .withArgs(token.address, false);
 
-                        program = await autoCompoundingRewards.program(token.address);
-
-                        expect(program.isEnabled).to.be.true;
-                    });
-
-                    it('should disable a program', async () => {
-                        let program = await autoCompoundingRewards.program(token.address);
-
-                        expect(program.isEnabled).to.be.true;
-
-                        await expect(autoCompoundingRewards.enableProgram(token.address, false))
-                            .to.emit(autoCompoundingRewards, 'ProgramEnabled')
-                            .withArgs(token.address, false, TOTAL_REWARDS);
-
-                        program = await autoCompoundingRewards.program(token.address);
-
-                        expect(program.isEnabled).to.be.false;
+                        expect(await autoCompoundingRewards.isProgramPaused(token.address)).to.be.false;
                     });
 
                     it('should ignore updating to the same status', async () => {
-                        let program = await autoCompoundingRewards.program(token.address);
+                        expect(await autoCompoundingRewards.isProgramPaused(token.address)).to.be.false;
 
-                        expect(program.isEnabled).to.be.true;
-
-                        await expect(autoCompoundingRewards.enableProgram(token.address, true)).not.to.emit(
+                        await expect(autoCompoundingRewards.pauseProgram(token.address, false)).not.to.emit(
                             autoCompoundingRewards,
-                            'ProgramEnabled'
+                            'ProgramPaused'
                         );
 
-                        await autoCompoundingRewards.enableProgram(token.address, false);
+                        await autoCompoundingRewards.pauseProgram(token.address, true);
 
-                        program = await autoCompoundingRewards.program(token.address);
+                        expect(await autoCompoundingRewards.isProgramPaused(token.address)).to.be.true;
 
-                        expect(program.isEnabled).to.be.false;
-
-                        await expect(autoCompoundingRewards.enableProgram(token.address, false)).not.to.emit(
+                        await expect(autoCompoundingRewards.pauseProgram(token.address, true)).not.to.emit(
                             autoCompoundingRewards,
-                            'ProgramEnabled'
+                            'ProgramPaused'
                         );
                     });
                 });
@@ -767,10 +752,10 @@ describe('AutoCompoundingRewards', () => {
 
                     it('should distribute tokens only when the program is enabled', async () => {
                         await autoCompoundingRewards.setTime(START_TIME + programDurations[distributionType]);
-                        await autoCompoundingRewards.enableProgram(token.address, false);
+                        await autoCompoundingRewards.pauseProgram(token.address, true);
                         const res1 = await autoCompoundingRewards.processRewards(token.address);
                         await expect(res1).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
-                        await autoCompoundingRewards.enableProgram(token.address, true);
+                        await autoCompoundingRewards.pauseProgram(token.address, false);
                         const res2 = await autoCompoundingRewards.processRewards(token.address);
                         await expect(res2).to.emit(autoCompoundingRewards, 'RewardsDistributed');
                     });
@@ -1245,7 +1230,7 @@ describe('AutoCompoundingRewards', () => {
                             expect(program.endTime).to.equal(programEndTimes[distributionType]);
                             expect(program.halfLife).to.equal(programHalfLives[distributionType]);
                             expect(program.prevDistributionTimestamp).to.equal(0);
-                            expect(program.isEnabled).to.be.true;
+                            expect(program.isPaused).to.be.false;
                         });
                     });
 
@@ -1546,9 +1531,9 @@ describe('AutoCompoundingRewards', () => {
                                 expect(tokenAmountToDistribute).to.equal(0);
                             });
 
-                            context('disabled', () => {
+                            context('paused', () => {
                                 beforeEach(async () => {
-                                    await autoCompoundingRewards.enableProgram(token.address, false);
+                                    await autoCompoundingRewards.pauseProgram(token.address, true);
                                 });
 
                                 it('should not distribute any rewards', async () => {
@@ -1811,7 +1796,7 @@ describe('AutoCompoundingRewards', () => {
 
                 const currTime = await autoCompoundingRewards.currentTime();
                 if (
-                    programData.isEnabled &&
+                    !programData.isPaused &&
                     currTime >= prevDistributionTimestamps[index] + AUTO_PROCESS_REWARDS_MIN_TIME_DELTA
                 ) {
                     if (tokenAmountsToDistribute[index].gt(0) && poolTokenAmountsToBurn[index].gt(0)) {

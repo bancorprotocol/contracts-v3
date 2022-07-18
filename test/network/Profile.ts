@@ -1100,7 +1100,6 @@ describe('Profile @profile', () => {
         let vbnt: IERC20;
         let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
-        let externalRewardsVault: ExternalRewardsVault;
         let standardRewards: TestStandardRewards;
 
         let now: number;
@@ -1112,25 +1111,10 @@ describe('Profile @profile', () => {
         });
 
         beforeEach(async () => {
-            ({
-                network,
-                networkInfo,
-                networkSettings,
-                bntGovernance,
-                vbnt,
-                bntPool,
-                externalRewardsVault,
-                poolCollection
-            } = await createSystem());
+            ({ network, networkInfo, networkSettings, bntGovernance, vbnt, bntPool, poolCollection } =
+                await createSystem());
 
-            standardRewards = await createStandardRewards(
-                network,
-                networkSettings,
-                bntGovernance,
-                vbnt,
-                bntPool,
-                externalRewardsVault
-            );
+            standardRewards = await createStandardRewards(network, networkSettings, bntGovernance, vbnt, bntPool);
 
             now = await latest();
 
@@ -1160,14 +1144,13 @@ describe('Profile @profile', () => {
         const createProgram = async (
             standardRewards: TestStandardRewards,
             pool: TokenWithAddress,
-            rewardsToken: TokenWithAddress,
             totalRewards: BigNumberish,
             startTime: number,
             endTime: number
         ) => {
             const id = await standardRewards.nextProgramId();
 
-            await standardRewards.createProgram(pool.address, rewardsToken.address, totalRewards, startTime, endTime);
+            await standardRewards.createProgram(pool.address, totalRewards, startTime, endTime);
 
             return id;
         };
@@ -1196,25 +1179,10 @@ describe('Profile @profile', () => {
 
             const { token: pool, poolToken } = await prepareSimplePool(poolData, programSpec.initialBalance);
 
-            const rewardsTokenData = poolData;
-            const rewardsToken = pool;
-
-            // if we're rewarding BNT - no additional funding is needed
-            if (!rewardsTokenData.isBNT()) {
-                await transfer(deployer, rewardsToken, externalRewardsVault, programSpec.totalRewards);
-            }
-
             const startTime = now;
             const endTime = startTime + programSpec.duration;
 
-            const id = await createProgram(
-                standardRewards,
-                pool,
-                rewardsToken,
-                programSpec.totalRewards,
-                startTime,
-                endTime
-            );
+            const id = await createProgram(standardRewards, pool, programSpec.totalRewards, startTime, endTime);
 
             await transfer(deployer, pool, provider, programSpec.providerStake);
             await depositToPool(provider, pool, programSpec.providerStake, network);

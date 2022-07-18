@@ -24,8 +24,6 @@ import { IBNTPool } from "../pools/interfaces/IBNTPool.sol";
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IExternalRewardsVault } from "../vaults/interfaces/IExternalRewardsVault.sol";
-
 import { IStandardRewards, ProgramData, Rewards, ProviderRewards, StakeAmounts } from "./interfaces/IStandardRewards.sol";
 
 /**
@@ -37,23 +35,16 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     using TokenLibrary for Token;
     using SafeERC20 for IERC20;
 
-    struct RewardData {
-        Token rewardsToken;
-        uint256 amount;
-    }
-
     struct ClaimData {
         uint256 reward;
         uint256 stakedAmount;
     }
 
     error ArrayNotUnique();
-    error InsufficientFunds();
-    error RewardsTooHigh();
     error NativeTokenAmountMismatch();
-    error ProgramDisabled();
+    error RewardsTooHigh();
     error ProgramInactive();
-    error RewardsTokenMismatch();
+    error ProgramSuspended();
 
     // since we will be dividing by the total amount of protected tokens in units of wei, we can encounter cases
     // where the total amount in the denominator is higher than the product of the rewards rate and staking duration. In
@@ -80,9 +71,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     // the BNT pool token contract
     IPoolToken private immutable _bntPoolToken;
 
-    // the address of the external rewards vault
-    IExternalRewardsVault private immutable _externalRewardsVault;
-
     // the ID of the next created program
     uint256 internal _nextProgramId;
 
@@ -104,8 +92,8 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     // a mapping between programs and their total stakes
     mapping(uint256 => uint256) private _programStakes;
 
-    // a mapping between reward tokens and total unclaimed rewards
-    mapping(Token => uint256) internal _unclaimedRewards;
+    // DEPRECATED (mapping(Token => uint256) internal _unclaimedRewards)
+    uint256 private _deprecated0;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 8] private __gap;
@@ -125,12 +113,12 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev triggered when a program is terminated prematurely
      */
-    event ProgramTerminated(Token indexed pool, uint256 indexed programId, uint32 endTime, uint256 remainingRewards);
+    event ProgramTerminated(Token indexed pool, uint256 indexed programId, uint32 endTime);
 
     /**
-     * @dev triggered when a program is enabled/disabled
+     * @dev triggered when a program is paused/resumed
      */
-    event ProgramEnabled(Token indexed pool, uint256 indexed programId, bool status, uint256 remainingRewards);
+    event ProgramPaused(Token indexed pool, uint256 indexed programId, bool paused);
 
     /**
      * @dev triggered when a provider joins a program
@@ -172,15 +160,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         INetworkSettings initNetworkSettings,
         ITokenGovernance initBNTGovernance,
         IERC20 initVBNT,
-        IBNTPool initBNTPool,
-        IExternalRewardsVault initExternalRewardsVault
+        IBNTPool initBNTPool
     )
         validAddress(address(initNetwork))
         validAddress(address(initNetworkSettings))
         validAddress(address(initBNTGovernance))
         validAddress(address(initVBNT))
         validAddress(address(initBNTPool))
-        validAddress(address(initExternalRewardsVault))
     {
         _network = initNetwork;
         _networkSettings = initNetworkSettings;
@@ -188,7 +174,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         _bnt = initBNTGovernance.token();
         _vbnt = initVBNT;
         _bntPoolToken = initBNTPool.poolToken();
-        _externalRewardsVault = initExternalRewardsVault;
     }
 
     /**
@@ -226,11 +211,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
         _;
     }
-
-    /**
-     * @dev authorize the contract to receive the native token
-     */
-    receive() external payable {}
 
     /**
      * @inheritdoc Upgradeable
@@ -311,8 +291,8 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @inheritdoc IStandardRewards
      */
-    function isProgramEnabled(uint256 id) external view returns (bool) {
-        return _isProgramEnabled(_programs[id]);
+    function isProgramPaused(uint256 id) external view returns (bool) {
+        return _isProgramPaused(_programs[id]);
     }
 
     /**
@@ -327,19 +307,10 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      */
     function createProgram(
         Token pool,
-        Token rewardsToken,
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
-    )
-        external
-        validAddress(address(pool))
-        validAddress(address(rewardsToken))
-        greaterThanZero(totalRewards)
-        onlyAdmin
-        nonReentrant
-        returns (uint256)
-    {
+    ) external validAddress(address(pool)) greaterThanZero(totalRewards) onlyAdmin nonReentrant returns (uint256) {
         if (!(_time() <= startTime && startTime < endTime)) {
             revert InvalidParam();
         }
@@ -360,14 +331,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             poolToken = _network.collectionByPool(pool).poolToken(pool);
         }
 
-        // ensure that the rewards were already deposited to the rewards vault
-        uint256 unclaimedRewards = _unclaimedRewards[rewardsToken];
-        if (!rewardsToken.isEqual(_bnt)) {
-            if (rewardsToken.balanceOf(address(_externalRewardsVault)) < unclaimedRewards + totalRewards) {
-                revert InsufficientFunds();
-            }
-        }
-
         uint256 id = _nextProgramId++;
         uint256 rewardRate = totalRewards / (endTime - startTime);
 
@@ -375,8 +338,8 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             id: id,
             pool: pool,
             poolToken: poolToken,
-            rewardsToken: rewardsToken,
-            isEnabled: true,
+            rewardsToken: Token(address(_bnt)),
+            isPaused: false,
             startTime: startTime,
             endTime: endTime,
             rewardRate: rewardRate,
@@ -386,13 +349,10 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         // set the program as the latest program of the pool
         _latestProgramIdByPool[pool] = id;
 
-        // increase the unclaimed rewards for the token by the total rewards in the new program
-        _unclaimedRewards[rewardsToken] = unclaimedRewards + totalRewards;
-
         emit ProgramCreated({
             pool: pool,
             programId: id,
-            rewardsToken: rewardsToken,
+            rewardsToken: Token(address(_bnt)),
             totalRewards: totalRewards,
             startTime: startTime,
             endTime: endTime
@@ -405,39 +365,38 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc IStandardRewards
      */
     function terminateProgram(uint256 id) external onlyAdmin {
-        ProgramData memory p = _programs[id];
+        ProgramData storage p = _programs[id];
 
         _verifyProgramActive(p);
 
         // unset the program from being the latest program of the pool
         delete _latestProgramIdByPool[p.pool];
 
-        // reduce the unclaimed rewards for the token by the remaining rewards
-        uint256 remainingRewards = _remainingRewards(p);
-        _unclaimedRewards[p.rewardsToken] -= remainingRewards;
+        uint32 endTime = p.endTime;
 
-        // stop rewards accumulation
-        _programs[id].endTime = _time();
+        // reduce the remaining rewards for the token by the remaining rewards and stop rewards accumulation
+        p.remainingRewards -= _remainingRewards(p);
+        p.endTime = _time();
 
-        emit ProgramTerminated(p.pool, id, p.endTime, remainingRewards);
+        emit ProgramTerminated(p.pool, id, endTime);
     }
 
     /**
      * @inheritdoc IStandardRewards
      */
-    function enableProgram(uint256 id, bool status) external onlyAdmin {
+    function pauseProgram(uint256 id, bool pause) external onlyAdmin {
         ProgramData storage p = _programs[id];
 
         _verifyProgramExists(p);
 
-        bool prevStatus = p.isEnabled;
-        if (prevStatus == status) {
+        bool prevStatus = p.isPaused;
+        if (prevStatus == pause) {
             return;
         }
 
-        p.isEnabled = status;
+        p.isPaused = pause;
 
-        emit ProgramEnabled({ pool: p.pool, programId: id, status: status, remainingRewards: _remainingRewards(p) });
+        emit ProgramPaused({ pool: p.pool, programId: id, paused: pause });
     }
 
     /**
@@ -446,7 +405,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     function join(uint256 id, uint256 poolTokenAmount) external greaterThanZero(poolTokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActiveAndEnabled(p);
+        _verifyProgramActiveAndNotPaused(p);
 
         _join(msg.sender, p, poolTokenAmount, msg.sender);
     }
@@ -473,7 +432,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     {
         ProgramData memory p = _programs[id];
 
-        _verifyProgramActiveAndEnabled(p);
+        _verifyProgramActiveAndNotPaused(p);
 
         _depositAndJoin(msg.sender, p, tokenAmount);
     }
@@ -483,7 +442,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      */
     function pendingRewards(address provider, uint256[] calldata ids) external view uniqueArray(ids) returns (uint256) {
         uint256 reward = 0;
-        Token rewardsToken;
 
         for (uint256 i = 0; i < ids.length; i++) {
             uint256 id = ids[i];
@@ -491,14 +449,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             ProgramData memory p = _programs[id];
 
             _verifyProgramExists(p);
-
-            if (i == 0) {
-                rewardsToken = p.rewardsToken;
-            }
-
-            if (p.rewardsToken != rewardsToken) {
-                revert RewardsTokenMismatch();
-            }
 
             uint256 newRewardPerToken = _rewardPerToken(p, _programRewards[id]);
             ProviderRewards memory providerRewardsData = _providerRewards[provider][id];
@@ -513,40 +463,34 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
      * @inheritdoc IStandardRewards
      */
     function claimRewards(uint256[] calldata ids) external uniqueArray(ids) nonReentrant returns (uint256) {
-        RewardData memory rewardData = _claimRewards(msg.sender, ids, false);
+        uint256 reward = _claimRewards(msg.sender, ids, false);
 
-        if (rewardData.amount == 0) {
+        if (reward == 0) {
             return 0;
         }
 
-        _distributeRewards(msg.sender, rewardData);
+        _bntGovernance.mint(msg.sender, reward);
 
-        return rewardData.amount;
+        return reward;
     }
 
     /**
      * @inheritdoc IStandardRewards
      */
     function stakeRewards(uint256[] calldata ids) external uniqueArray(ids) nonReentrant returns (StakeAmounts memory) {
-        RewardData memory rewardData = _claimRewards(msg.sender, ids, true);
+        uint256 reward = _claimRewards(msg.sender, ids, true);
 
-        if (rewardData.amount == 0) {
+        if (reward == 0) {
             return StakeAmounts({ stakedRewardAmount: 0, poolTokenAmount: 0 });
         }
 
-        _distributeRewards(address(this), rewardData);
+        _bntGovernance.mint(address(this), reward);
 
         // deposit provider's tokens to the network. Please note, that since we're staking rewards, then the deposit
         // should come from the contract itself, but the pool tokens should be sent to the provider directly
-        uint256 poolTokenAmount = _deposit(
-            msg.sender,
-            address(this),
-            false,
-            rewardData.rewardsToken,
-            rewardData.amount
-        );
+        uint256 poolTokenAmount = _deposit(msg.sender, address(this), false, Token(address(_bnt)), reward);
 
-        return StakeAmounts({ stakedRewardAmount: rewardData.amount, poolTokenAmount: poolTokenAmount });
+        return StakeAmounts({ stakedRewardAmount: reward, poolTokenAmount: poolTokenAmount });
     }
 
     /**
@@ -697,21 +641,13 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         address provider,
         uint256[] calldata ids,
         bool stake
-    ) private returns (RewardData memory) {
-        RewardData memory rewardData = RewardData({ rewardsToken: Token(address(0)), amount: 0 });
+    ) private returns (uint256) {
+        uint256 reward = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
             ProgramData memory p = _programs[ids[i]];
 
-            _verifyProgramEnabled(p);
-
-            if (i == 0) {
-                rewardData.rewardsToken = p.rewardsToken;
-            }
-
-            if (p.rewardsToken != rewardData.rewardsToken) {
-                revert RewardsTokenMismatch();
-            }
+            _verifyProgramNotPaused(p);
 
             ClaimData memory claimData = _claimRewards(provider, p);
 
@@ -727,7 +663,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
                 _programs[ids[i]].remainingRewards = remainingRewards - claimData.reward;
 
                 // collect same-reward token rewards
-                rewardData.amount += claimData.reward;
+                reward += claimData.reward;
             }
 
             // if the program is no longer active, has no stake left, and there are no pending rewards - remove the
@@ -743,10 +679,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             }
         }
 
-        // decrease the unclaimed rewards for the token by the total claimed rewards
-        _unclaimedRewards[rewardData.rewardsToken] -= rewardData.amount;
-
-        return rewardData;
+        return reward;
     }
 
     /**
@@ -776,10 +709,10 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev returns whether the specified program is active
+     * @dev returns whether the specified program is paused
      */
-    function _isProgramEnabled(ProgramData memory p) private pure returns (bool) {
-        return p.isEnabled;
+    function _isProgramPaused(ProgramData memory p) private pure returns (bool) {
+        return p.isPaused;
     }
 
     /**
@@ -810,22 +743,22 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev verifies that a program is enabled
+     * @dev verifies that a program is not paused
      */
-    function _verifyProgramEnabled(ProgramData memory p) private pure {
+    function _verifyProgramNotPaused(ProgramData memory p) private pure {
         _verifyProgramExists(p);
 
-        if (!p.isEnabled) {
-            revert ProgramDisabled();
+        if (p.isPaused) {
+            revert ProgramSuspended();
         }
     }
 
     /**
-     * @dev verifies that a program exists, active, and enabled
+     * @dev verifies that a program exists, active, and not paused
      */
-    function _verifyProgramActiveAndEnabled(ProgramData memory p) private view {
+    function _verifyProgramActiveAndNotPaused(ProgramData memory p) private view {
         _verifyProgramActive(p);
-        _verifyProgramEnabled(p);
+        _verifyProgramNotPaused(p);
     }
 
     /**
@@ -902,17 +835,6 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev distributes reward
-     */
-    function _distributeRewards(address recipient, RewardData memory rewardData) private {
-        if (rewardData.rewardsToken.isEqual(_bnt)) {
-            _bntGovernance.mint(recipient, rewardData.amount);
-        } else {
-            _externalRewardsVault.withdrawFunds(rewardData.rewardsToken, payable(recipient), rewardData.amount);
-        }
-    }
-
-    /**
      * @dev returns whether the specified array has duplicates
      */
     function _isArrayUnique(uint256[] calldata ids) private pure returns (bool) {
@@ -925,5 +847,21 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
         }
 
         return true;
+    }
+
+    /**
+     * @dev post upgrade callback
+     */
+    function _postUpgrade(
+        bytes calldata /* data */
+    ) internal override {
+        // since we have renamed the "isEnabled" field to "isPaused", we need to manually inverse all exiting programs
+        // values (which is still manageable, as at the time of this upgrade - there were only 8 programs)
+        uint256 length = _nextProgramId - INITIAL_PROGRAM_ID;
+        for (uint256 i = 0; i < length; i++) {
+            uint256 id = i + INITIAL_PROGRAM_ID;
+
+            _programs[id].isPaused = false;
+        }
     }
 }

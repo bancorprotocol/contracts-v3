@@ -3762,7 +3762,6 @@ describe('BancorNetwork Financial Verification', () => {
         await token.transfer(externalRewardsVault.address, rewardsAmountWei);
         await standardRewards.createProgram(
             token.address,
-            token.address,
             rewardsAmountWei,
             currentTime,
             currentTime + rewardsDuration
@@ -3814,8 +3813,7 @@ describe('BancorNetwork Financial Verification', () => {
             networkSettings,
             bntGovernance,
             vbnt,
-            bntPool,
-            externalRewardsVault
+            bntPool
         );
 
         baseToken = await createBurnableToken(new TokenData(TokenSymbol.TKN), tknAmount);
