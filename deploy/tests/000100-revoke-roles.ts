@@ -10,9 +10,10 @@ describeDeployment(
     () => {
         let deployer: string;
         let daoMultisig: string;
+        let foundationMultisig2: string;
 
         before(async () => {
-            ({ deployer, daoMultisig } = await getNamedAccounts());
+            ({ deployer, daoMultisig, foundationMultisig2 } = await getNamedAccounts());
         });
 
         it('should revoke deployer roles', async () => {
@@ -22,7 +23,6 @@ describeDeployment(
 
             for (const name of [
                 InstanceName.BancorNetworkInfo,
-                InstanceName.BancorNetwork,
                 InstanceName.BancorPortal,
                 InstanceName.BNTPool,
                 InstanceName.ExternalProtectionVault,
@@ -37,6 +37,13 @@ describeDeployment(
                 const contract = (await DeployedContracts[name].deployed()) as AccessControlEnumerableUpgradeable;
                 expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, daoMultisig)).to.be.true;
                 expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, deployer)).to.be.false;
+            }
+
+            for (const name of [InstanceName.BancorNetwork]) {
+                const contract = (await DeployedContracts[name].deployed()) as AccessControlEnumerableUpgradeable;
+                expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, daoMultisig)).to.be.true;
+                expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, deployer)).to.be.false;
+                expect(await contract.hasRole(Roles.Upgradeable.ROLE_ADMIN, foundationMultisig2)).to.be.false;
             }
         });
     },

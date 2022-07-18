@@ -146,17 +146,19 @@ library PoolCollectionWithdrawal {
      * @dev returns `b*e*((e*(1-n)-b-c)*m+e*n) > (e*(1-n)-b-c)*x*(e-b-c)*(1-m)`
      */
     function affordableDeficit(
-        uint256 b, // <= 2**128-1
-        uint256 e, // <= 2**128-1
-        uint256 f, // == e*(1-n)-b-c <= e <= 2**128-1
-        uint256 g, // == e-b-c <= e <= 2**128-1
-        uint256 m, // <= M == 1000000
-        uint256 n, // <= M == 1000000
-        uint256 x /// <  e*c/(b+c) <= e <= 2**128-1
+        uint256, /*b*/ // <= 2**128-1
+        uint256, /*e*/ // <= 2**128-1
+        uint256, /*f*/ // == e*(1-n)-b-c <= e <= 2**128-1
+        uint256, /*g*/ // == e-b-c <= e <= 2**128-1
+        uint256, /*m*/ // <= M == 1000000
+        uint256, /*n*/ // <= M == 1000000
+        uint256 /*x*/ /// <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) {
-        Uint512 memory lhs = MathEx.mul512(b * e, f * m + e * n);
-        Uint512 memory rhs = MathEx.mul512(f * x, g * (M - m));
-        return MathEx.gt512(lhs, rhs);
+        // temporarily disabled
+        //Uint512 memory lhs = MathEx.mul512(b * e, f * m + e * n);
+        //Uint512 memory rhs = MathEx.mul512(f * x, g * (M - m));
+        //return MathEx.gt512(lhs, rhs);
+        return false;
     }
 
     /**

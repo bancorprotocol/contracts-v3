@@ -276,11 +276,11 @@ describe('PendingWithdrawals', () => {
             });
 
             describe('cancellation', () => {
-                let provider1: SignerWithAddress;
+                let provider: SignerWithAddress;
                 let poolTokenAmount: BigNumber;
 
                 before(async () => {
-                    [, provider1] = await ethers.getSigners();
+                    [, provider] = await ethers.getSigners();
                 });
 
                 beforeEach(async () => {
@@ -292,14 +292,14 @@ describe('PendingWithdrawals', () => {
                             bntVirtualBalance: BNT_VIRTUAL_BALANCE,
                             baseTokenVirtualBalance: BASE_TOKEN_VIRTUAL_BALANCE
                         },
-                        provider1,
+                        provider,
                         network,
                         networkInfo,
                         networkSettings,
                         poolCollection
                     ));
 
-                    poolTokenAmount = await poolToken.balanceOf(provider1.address);
+                    poolTokenAmount = await poolToken.balanceOf(provider.address);
                 });
 
                 it('should revert when cancelling a non-existing withdrawal request', async () => {
@@ -350,16 +350,16 @@ describe('PendingWithdrawals', () => {
                     let id2: BigNumber;
 
                     beforeEach(async () => {
-                        await poolToken.connect(provider1).approve(network.address, poolTokenAmount);
+                        await poolToken.connect(provider).approve(network.address, poolTokenAmount);
 
                         const withdrawalAmount1 = BigNumber.from(1111);
-                        await network.connect(provider1).initWithdrawal(poolToken.address, withdrawalAmount1);
-                        const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
+                        await network.connect(provider).initWithdrawal(poolToken.address, withdrawalAmount1);
+                        const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider.address);
                         id1 = withdrawalRequestIds[withdrawalRequestIds.length - 1];
 
                         const withdrawalAmount2 = poolTokenAmount.sub(withdrawalAmount1);
-                        await network.connect(provider1).initWithdrawal(poolToken.address, withdrawalAmount2);
-                        const withdrawalRequestIds2 = await pendingWithdrawals.withdrawalRequestIds(provider1.address);
+                        await network.connect(provider).initWithdrawal(poolToken.address, withdrawalAmount2);
+                        const withdrawalRequestIds2 = await pendingWithdrawals.withdrawalRequestIds(provider.address);
                         id2 = withdrawalRequestIds2[withdrawalRequestIds2.length - 1];
                     });
 
@@ -382,21 +382,21 @@ describe('PendingWithdrawals', () => {
                         const withdrawalRequestIds = await pendingWithdrawals.withdrawalRequestIds(provider2.address);
                         const provider2Id = withdrawalRequestIds[0];
 
-                        await expect(network.connect(provider1).cancelWithdrawal(provider2Id)).to.be.revertedWithError(
+                        await expect(network.connect(provider).cancelWithdrawal(provider2Id)).to.be.revertedWithError(
                             'AccessDenied'
                         );
                     });
 
                     it('should revert when cancelling a withdrawal request twice', async () => {
-                        await network.connect(provider1).cancelWithdrawal(id1);
-                        await expect(network.connect(provider1).cancelWithdrawal(id1)).to.be.revertedWithError(
+                        await network.connect(provider).cancelWithdrawal(id1);
+                        await expect(network.connect(provider).cancelWithdrawal(id1)).to.be.revertedWithError(
                             'AccessDenied'
                         );
                     });
 
                     it('should cancel withdrawal requests', async () => {
-                        await testCancelWithdrawal(provider1, id1);
-                        await testCancelWithdrawal(provider1, id2);
+                        await testCancelWithdrawal(provider, id1);
+                        await testCancelWithdrawal(provider, id2);
                     });
                 });
             });

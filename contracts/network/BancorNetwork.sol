@@ -61,6 +61,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     using SafeERC20 for IPoolToken;
 
     error DeadlineExpired();
+    error DepositingDisabled();
     error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
 
@@ -144,8 +145,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the pending network fee amount to be burned by the vortex
     uint256 internal _pendingNetworkFeeAmount;
 
+    bool private _depositingEnabled = true;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 10] private __gap;
+    uint256[MAX_GAP - 11] private __gap;
 
     /**
      * @dev triggered when a new pool collection is added
@@ -288,9 +291,23 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_EMERGENCY_STOPPER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_NETWORK_FEE_MANAGER, ROLE_ADMIN);
+
+        _depositingEnabled = true;
     }
 
     // solhint-enable func-name-mixedcase
+
+    modifier depositsEnabled() {
+        _depositsEnabled();
+
+        _;
+    }
+
+    function _depositsEnabled() internal view {
+        if (!_depositingEnabled) {
+            revert DepositingDisabled();
+        }
+    }
 
     receive() external payable {}
 
@@ -492,6 +509,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     )
         external
         payable
+        depositsEnabled
         validAddress(provider)
         validAddress(address(pool))
         greaterThanZero(tokenAmount)
@@ -508,6 +526,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function deposit(Token pool, uint256 tokenAmount)
         external
         payable
+        depositsEnabled
         validAddress(address(pool))
         greaterThanZero(tokenAmount)
         whenNotPaused
@@ -725,6 +744,28 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function resume() external onlyRoleMember(ROLE_EMERGENCY_STOPPER) {
         _unpause();
+    }
+
+    /**
+     * @dev returns whether deposits are enabled
+     */
+    function depositingEnabled() external view returns (bool) {
+        return _depositingEnabled;
+    }
+
+    /**
+     * @dev enables/disables depositing into a given pool
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function enableDepositing(bool status) external onlyAdmin {
+        if (_depositingEnabled == status) {
+            return;
+        }
+
+        _depositingEnabled = status;
     }
 
     /**

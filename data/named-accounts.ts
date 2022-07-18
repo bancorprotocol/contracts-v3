@@ -20,13 +20,13 @@ const TestNamedAccounts = {
         ...mainnet('0xc6bed363b30DF7F35b601a5547fE56cd31Ec63DA')
     },
     bntWhale: {
-        ...mainnet('0xF977814e90dA44bFA03b6295A0616a897441aceC')
+        ...mainnet('0xA744a64Dfd51e4feE3360f1EC1509D329047d7db')
     },
     usdcWhale: {
         ...mainnet('0x55FE002aefF02F77364de339a1292923A15844B8')
     },
     wbtcWhale: {
-        ...mainnet('0x8Fd589AA8bfA402156a6D1ad323FEC0ECee50D9D')
+        ...mainnet('0x602d9aBD5671D24026e2ca473903fF2A9A957407')
     }
 };
 
@@ -65,6 +65,7 @@ export const NamedAccounts = {
     },
     deployerV2: { ...mainnet('0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E') },
     foundationMultisig: { ...mainnet('0xeBeD45Ca22fcF70AdCcAb7618C51A3Dbb06C8d83') },
+    foundationMultisig2: { ...mainnet('0x0c333d48Af19c2b42577f3C8f4779F0347F8C819') },
     daoMultisig: { ...mainnet('0x7e3692a6d8c34a762079fa9057aed87be7e67cb8') },
     daoPauserMultisig: { ...mainnet('0xc140c1CD2e587fC04DAa780d49b616F768476660') },
 

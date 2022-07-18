@@ -62,11 +62,12 @@ import { getNamedAccounts } from 'hardhat';
 
     let deployer: SignerWithAddress;
     let daoMultisig: SignerWithAddress;
+    let foundationMultisig: SignerWithAddress;
     let bntWhale: SignerWithAddress;
     let ethWhale: SignerWithAddress;
 
     before(async () => {
-        ({ deployer, daoMultisig, ethWhale, bntWhale } = await getNamedSigners());
+        ({ deployer, daoMultisig, foundationMultisig, ethWhale, bntWhale } = await getNamedSigners());
 
         await fundAccount(bntWhale);
     });
@@ -80,7 +81,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V6.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V8.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -110,7 +111,7 @@ import { getNamedAccounts } from 'hardhat';
         });
 
         it('should have the correct set of roles', async () => {
-            const { deployer, deployerV2, foundationMultisig } = await getNamedAccounts();
+            const { deployer, deployerV2 } = await getNamedAccounts();
 
             // ensure that ownership transfer to the DAO was initiated
             expect(await liquidityProtection.newOwner()).to.equal(daoMultisig.address);
@@ -118,7 +119,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [foundationMultisig]
+                [foundationMultisig.address]
             );
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
@@ -138,7 +139,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_SUPERVISOR,
-                [foundationMultisig]
+                [foundationMultisig.address]
             );
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
@@ -235,7 +236,7 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         // TODO: replace this method with an exact single trade method
-        const stabilizePoolV3 = async (pool: string, tokenWhale: SignerWithAddress) => {
+        const stabilizePoolV3 = async (pool: string, decimals: number | undefined, tokenWhale: SignerWithAddress) => {
             while (true) {
                 const poolData = await poolCollection.poolData(pool);
                 const { averageRates, liquidity } = poolData;
@@ -249,21 +250,23 @@ import { getNamedAccounts } from 'hardhat';
                 let sourceToken: string;
                 let targetToken: string;
                 let trader: SignerWithAddress;
+                let tradeAmount;
                 if (emaRate.n.mul(spotRate.d).gt(spotRate.n.mul(emaRate.d))) {
                     // EMA > SPOT: stabilizing by trading TKN to BNT
                     sourceToken = pool;
                     targetToken = bnt.address;
+                    tradeAmount = toWei(1, decimals);
                     trader = tokenWhale;
                 } else {
                     // SPOT > EMA: Stabilizing by trading BNT to TKN
                     sourceToken = bnt.address;
                     targetToken = pool;
+                    tradeAmount = toWei(1);
                     trader = bntWhale;
                 }
 
                 const isNativeSourceToken = sourceToken === NATIVE_TOKEN_ADDRESS;
 
-                const tradeAmount = toWei(1);
                 if (!isNativeSourceToken) {
                     const tokenContract = await Contracts.ERC20.attach(sourceToken);
                     await tokenContract.connect(trader).approve(network.address, tradeAmount);
@@ -389,12 +392,14 @@ import { getNamedAccounts } from 'hardhat';
             };
 
             bnBNT = await DeployedContracts.bnBNT.deployed();
+
+            await network.connect(daoMultisig).enableDepositing(true);
         });
 
         describe('deposits', () => {
             it('should perform deposits', async () => {
                 for (const { token, whale, decimals } of Object.values(pools)) {
-                    const tknDepositAmount = toWei(1000, decimals);
+                    const tknDepositAmount = toWei(500, decimals);
 
                     for (let i = 0; i < 5; i++) {
                         const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
@@ -457,7 +462,7 @@ import { getNamedAccounts } from 'hardhat';
                             const initialVBNTAmount = await vbnt.balanceOf(whale.address);
 
                             // ensure that there is a position to withdraw
-                            const depositAmount = isBNT ? 1000 : toWei(1000, decimals);
+                            const depositAmount = toWei(500, isBNT ? 18 : decimals);
 
                             if (!isNativeToken) {
                                 const tokenContract = await Contracts.ERC20.attach(token);
@@ -482,7 +487,7 @@ import { getNamedAccounts } from 'hardhat';
                             );
 
                             if (!isBNT) {
-                                await stabilizePoolV3(token, whale);
+                                await stabilizePoolV3(token, decimals, whale);
                             }
                         }
                     });
@@ -640,7 +645,7 @@ import { getNamedAccounts } from 'hardhat';
                 let bnTKN: PoolToken;
 
                 beforeEach(async () => {
-                    await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(1000));
+                    await depositTKN(NATIVE_TOKEN_ADDRESS, ethWhale, toWei(500));
 
                     const contractRegistry = await DeployedContracts.ContractRegistry.deployed();
                     const converterRegistryAddress = await contractRegistry.getAddress(
@@ -662,7 +667,7 @@ import { getNamedAccounts } from 'hardhat';
                     bnTKN = await Contracts.PoolToken.attach(await poolCollection.poolToken(NATIVE_TOKEN_ADDRESS));
                 });
 
-                it('should migrate positions from V2', async () => {
+                it.skip('should migrate positions from V2', async () => {
                     // ensure that there is enough space to perform the test
                     await liquidityProtectionSettings
                         .connect(deployer)

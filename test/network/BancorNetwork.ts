@@ -1,6 +1,7 @@
 import Contracts, {
     BancorNetworkInfo,
     ExternalProtectionVault,
+    ExternalRewardsVault,
     IERC20,
     IPoolCollection,
     MasterVault,
@@ -14,7 +15,8 @@ import Contracts, {
     TestFlashLoanRecipient,
     TestPendingWithdrawals,
     TestPoolCollection,
-    TestPoolMigrator
+    TestPoolMigrator,
+    TestStandardRewards
 } from '../../components/Contracts';
 import {
     DSToken,
@@ -27,7 +29,7 @@ import {
     TokenGovernance,
     TokenHolder
 } from '../../components/LegacyContracts';
-import LegacyContractsV3, { PoolCollectionType1V5 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V7 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import { MAX_UINT256, NETWORK_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
@@ -38,6 +40,7 @@ import {
     createBurnableToken,
     createPool,
     createPoolCollection,
+    createStandardRewards,
     createSystem,
     createTestToken,
     createToken,
@@ -737,7 +740,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let prevPoolCollection: PoolCollectionType1V5;
+        let prevPoolCollection: PoolCollectionType1V7;
         let poolMigrator: TestPoolMigrator;
         let newPoolCollection: PoolCollection;
 
@@ -768,7 +771,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V5.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V7.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -776,7 +779,8 @@ describe('BancorNetwork', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address
+                poolMigrator.address,
+                NETWORK_FEE_PPM
             );
 
             await network.registerPoolCollection(prevPoolCollection.address);
@@ -1203,6 +1207,16 @@ describe('BancorNetwork', () => {
 
                         it('should revert when attempting to deposit', async () => {
                             await expect(deposit(1)).to.be.revertedWithError('Pausable: paused');
+                        });
+                    });
+
+                    context('when deposits are disabled', () => {
+                        beforeEach(async () => {
+                            await network.enableDepositing(false);
+                        });
+
+                        it('should revert when attempting to deposit', async () => {
+                            await expect(deposit(1)).to.be.revertedWithError('DepositingDisabled');
                         });
                     });
 
@@ -2918,6 +2932,114 @@ describe('BancorNetwork', () => {
                             ).to.be.revertedWithError('Pausable: paused');
                         });
                     });
+
+                    context('when deposits are disabled', () => {
+                        beforeEach(async () => {
+                            await network.enableDepositing(false);
+                        });
+
+                        it('should migrate positions', async () => {
+                            it('verifies that the caller can migrate positions', async () => {
+                                const protectionId = (
+                                    await liquidityProtectionStore.protectedLiquidityIds(owner.address)
+                                )[0];
+                                const protection = await getProtection(protectionId);
+
+                                const prevPoolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
+                                const prevProviderStats = await getProviderStats(
+                                    owner,
+                                    poolToken,
+                                    baseToken,
+                                    isNativeToken
+                                );
+
+                                const prevSystemBalance = await liquidityProtectionSystemStore.systemBalance(
+                                    poolToken.address
+                                );
+
+                                const prevVaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                                const prevVaultBNTBalance = await getBalance(bnt, masterVault.address);
+
+                                await liquidityProtection.setTime(now + duration.seconds(1));
+
+                                const prevWalletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
+                                const prevBalance = await getBalance(baseToken, owner.address);
+                                const prevGovBalance = await vbnt.balanceOf(owner.address);
+
+                                const res = await liquidityProtection.migratePositions([
+                                    {
+                                        poolToken: poolToken.address,
+                                        reserveToken: baseToken.address,
+                                        positionIds: [protectionId]
+                                    }
+                                ]);
+                                const transactionCost = isNativeToken
+                                    ? await getTransactionCost(res)
+                                    : BigNumber.from(0);
+
+                                // verify event
+                                await expect(res).to.emit(network, 'FundsMigrated');
+
+                                // verify protected liquidities
+                                expect(await liquidityProtectionStore.protectedLiquidityIds(owner.address)).to.be.empty;
+
+                                // verify stats
+                                const poolStats = await getPoolStats(poolToken, baseToken, isNativeToken);
+                                expect(poolStats.totalPoolAmount).to.equal(
+                                    prevPoolStats.totalPoolAmount.sub(protection.poolAmount)
+                                );
+                                expect(poolStats.totalReserveAmount).to.equal(
+                                    prevPoolStats.totalReserveAmount.sub(protection.reserveAmount)
+                                );
+
+                                const providerStats = await getProviderStats(
+                                    owner,
+                                    poolToken,
+                                    baseToken,
+                                    isNativeToken
+                                );
+                                expect(providerStats.totalProviderAmount).to.equal(
+                                    prevProviderStats.totalProviderAmount.sub(protection.reserveAmount)
+                                );
+                                expect(providerStats.providerPools).to.deep.equal([poolToken.address]);
+
+                                // verify balances
+                                const systemBalance = await liquidityProtectionSystemStore.systemBalance(
+                                    poolToken.address
+                                );
+                                expectInRange(systemBalance, prevSystemBalance.sub(protection.poolAmount));
+
+                                const vaultBaseBalance = await getBalance(baseToken, masterVault.address);
+                                const vaultBNTBalance = await getBalance(bnt, masterVault.address);
+                                expectInRange(vaultBaseBalance, prevVaultBaseBalance.add(protection.reserveAmount));
+                                expectInRange(
+                                    vaultBNTBalance,
+                                    prevVaultBNTBalance.add(protection.reserveAmount.div(2))
+                                );
+
+                                const walletBalance = await poolToken.balanceOf(liquidityProtectionWallet.address);
+
+                                // double since system balance was also liquidated
+                                const delta = protection.poolAmount.mul(2);
+                                expectInRange(walletBalance, prevWalletBalance.sub(delta));
+
+                                const balance = await getBalance(baseToken, owner.address);
+                                expect(balance).to.equal(prevBalance.sub(transactionCost));
+
+                                const vbntBalance = await vbnt.balanceOf(owner.address);
+                                expect(vbntBalance).to.equal(prevGovBalance);
+
+                                const protectionPoolBalance = await poolToken.balanceOf(liquidityProtection.address);
+                                expect(protectionPoolBalance).to.equal(0);
+
+                                const protectionBaseBalance = await getBalance(baseToken, liquidityProtection.address);
+                                expect(protectionBaseBalance).to.equal(0);
+
+                                const protectionBNTBalance = await bnt.balanceOf(liquidityProtection.address);
+                                expect(protectionBNTBalance).to.equal(0);
+                            });
+                        });
+                    });
                 });
             }
 
@@ -3408,7 +3530,7 @@ describe('BancorNetwork Financial Verification', () => {
         type: string;
         userId: string;
         amount: string;
-        mined: boolean;
+        elapsed: number;
         expected: State;
     }
 
@@ -3420,6 +3542,10 @@ describe('BancorNetwork Financial Verification', () => {
         tknDecimals: number;
         bntMinLiquidity: number;
         bntFundingLimit: number;
+        tknRewardsAmount: number;
+        tknRewardsDuration: number;
+        bntRewardsAmount: number;
+        bntRewardsDuration: number;
         users: User[];
         operations: Operation[];
     }
@@ -3435,6 +3561,8 @@ describe('BancorNetwork Financial Verification', () => {
     let bntGovernance: TokenGovernance;
     let pendingWithdrawals: TestPendingWithdrawals;
     let poolCollection: TestPoolCollection;
+    let standardRewards: TestStandardRewards;
+    let externalRewardsVault: ExternalRewardsVault;
     let masterVault: MasterVault;
     let externalProtectionVault: ExternalProtectionVault;
     let poolTokenFactory: PoolTokenFactory;
@@ -3448,6 +3576,9 @@ describe('BancorNetwork Financial Verification', () => {
     let bntknDecimals: number;
     let bnbntDecimals: number;
     let blockNumber: number;
+    let currentTime: number;
+    let tknProgramId: BigNumber;
+    let bntProgramId: BigNumber;
 
     const decimalToInteger = (value: string | number, decimals: number) => {
         return BigNumber.from(new Decimal(`${value}e+${decimals}`).toFixed());
@@ -3501,6 +3632,44 @@ describe('BancorNetwork Financial Verification', () => {
             .tradeBySourceAmount(bnt.address, baseToken.address, wei, 1, MAX_UINT256, users[userId].address);
     };
 
+    const burnPoolTokenTKN = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, tknDecimals, baseToken);
+        await basePoolToken.connect(users[userId]).burn(wei);
+    };
+
+    const burnPoolTokenBNT = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, bntDecimals, bnt);
+        await bntPoolToken.connect(users[userId]).burn(wei);
+    };
+
+    const joinTKN = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, tknDecimals, baseToken);
+        await standardRewards.connect(users[userId]).join(tknProgramId, wei);
+    };
+
+    const joinBNT = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, bntDecimals, bnt);
+        await standardRewards.connect(users[userId]).join(bntProgramId, wei);
+    };
+
+    const leaveTKN = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, tknDecimals, baseToken);
+        await standardRewards.connect(users[userId]).leave(tknProgramId, wei);
+    };
+
+    const leaveBNT = async (userId: string, amount: string) => {
+        const wei = await toWei(userId, amount, bntDecimals, bnt);
+        await standardRewards.connect(users[userId]).leave(bntProgramId, wei);
+    };
+
+    const claimRewardsTKN = async (userId: string) => {
+        await standardRewards.connect(users[userId]).claimRewards([tknProgramId]);
+    };
+
+    const claimRewardsBNT = async (userId: string) => {
+        await standardRewards.connect(users[userId]).claimRewards([bntProgramId]);
+    };
+
     const setFundingLimit = async (amount: string) => {
         await networkSettings.setFundingLimit(baseToken.address, decimalToInteger(amount, bntDecimals));
     };
@@ -3552,11 +3721,16 @@ describe('BancorNetwork Financial Verification', () => {
         }
 
         actual.tknBalances.masterVault = integerToDecimal(await baseToken.balanceOf(masterVault.address), tknDecimals);
+        actual.tknBalances.erVault = integerToDecimal(
+            await baseToken.balanceOf(externalRewardsVault.address),
+            tknDecimals
+        );
         actual.tknBalances.epVault = integerToDecimal(
             await baseToken.balanceOf(externalProtectionVault.address),
             tknDecimals
         );
         actual.bntBalances.masterVault = integerToDecimal(await bnt.balanceOf(masterVault.address), bntDecimals);
+        actual.bntBalances.erVault = integerToDecimal(await bnt.balanceOf(externalRewardsVault.address), bntDecimals);
         actual.bnbntBalances.bntPool = integerToDecimal(await bntPoolToken.balanceOf(bntPool.address), bnbntDecimals);
 
         const poolData = await poolCollection.poolData(baseToken.address);
@@ -3576,6 +3750,26 @@ describe('BancorNetwork Financial Verification', () => {
         expect(actual).to.deep.equal(expected);
     };
 
+    const createProgram = async (
+        token: IERC20,
+        rewardsAmount: number,
+        decimals: number,
+        currentTime: number,
+        rewardsDuration: number
+    ) => {
+        const programId = await standardRewards.nextProgramId();
+        const rewardsAmountWei = decimalToInteger(rewardsAmount, decimals);
+        await token.transfer(externalRewardsVault.address, rewardsAmountWei);
+        await standardRewards.createProgram(
+            token.address,
+            token.address,
+            rewardsAmountWei,
+            currentTime,
+            currentTime + rewardsDuration
+        );
+        return programId;
+    };
+
     const init = async (fileName: string) => {
         const signers = await ethers.getSigners();
 
@@ -3590,10 +3784,13 @@ describe('BancorNetwork Financial Verification', () => {
         bnbntDecimals = DEFAULT_DECIMALS;
 
         const tknAmount = flow.users
-            .reduce((sum, user) => sum.add(user.tknBalance), BigNumber.from(flow.epVaultBalance))
+            .reduce(
+                (sum, user) => sum.add(user.tknBalance),
+                BigNumber.from(flow.tknRewardsAmount).add(flow.epVaultBalance)
+            )
             .mul(BigNumber.from(10).pow(tknDecimals));
         const bntAmount = flow.users
-            .reduce((sum, user) => sum.add(user.bntBalance), BigNumber.from(0))
+            .reduce((sum, user) => sum.add(user.bntBalance), BigNumber.from(flow.bntRewardsAmount))
             .mul(BigNumber.from(10).pow(bntDecimals));
 
         ({
@@ -3606,10 +3803,20 @@ describe('BancorNetwork Financial Verification', () => {
             vbnt,
             pendingWithdrawals,
             masterVault,
+            externalRewardsVault,
             externalProtectionVault,
             poolTokenFactory,
             poolMigrator
         } = await createSystem());
+
+        standardRewards = await createStandardRewards(
+            network,
+            networkSettings,
+            bntGovernance,
+            vbnt,
+            bntPool,
+            externalRewardsVault
+        );
 
         baseToken = await createBurnableToken(new TokenData(TokenSymbol.TKN), tknAmount);
 
@@ -3646,27 +3853,48 @@ describe('BancorNetwork Financial Verification', () => {
         for (const [i, { id, tknBalance, bntBalance }] of flow.users.entries()) {
             expect(id in users).to.equal(false, `user id '${id}' is not unique`);
             users[id] = signers[1 + i];
-            await vbnt.connect(users[id]).approve(network.address, MAX_UINT256);
-            await baseToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await bnt.connect(users[id]).approve(network.address, MAX_UINT256);
-            await basePoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
-            await bntPoolToken.connect(users[id]).approve(network.address, MAX_UINT256);
+            for (const contract of [network, standardRewards]) {
+                await vbnt.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await baseToken.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await bnt.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await basePoolToken.connect(users[id]).approve(contract.address, MAX_UINT256);
+                await bntPoolToken.connect(users[id]).approve(contract.address, MAX_UINT256);
+            }
             await baseToken.transfer(users[id].address, decimalToInteger(tknBalance, tknDecimals));
             await bnt.transfer(users[id].address, decimalToInteger(bntBalance, bntDecimals));
         }
 
+        blockNumber = await poolCollection.currentBlockNumber();
+        currentTime = await standardRewards.currentTime();
+
+        tknProgramId = await createProgram(
+            baseToken,
+            flow.tknRewardsAmount,
+            tknDecimals,
+            currentTime,
+            flow.tknRewardsDuration
+        );
+        bntProgramId = await createProgram(
+            bnt,
+            flow.bntRewardsAmount,
+            bntDecimals,
+            currentTime,
+            flow.bntRewardsDuration
+        );
+
         expect(await baseToken.balanceOf(signers[0].address)).to.equal(0);
         expect(await bnt.balanceOf(signers[0].address)).to.equal(0);
-
-        blockNumber = await poolCollection.currentBlockNumber();
     };
 
     const execute = async () => {
-        for (const [n, { type, userId, amount, mined, expected }] of flow.operations.entries()) {
+        for (const [n, { type, userId, amount, elapsed, expected }] of flow.operations.entries()) {
             Logger.log(`${n + 1} out of ${flow.operations.length}: ${type}(${amount})`);
 
-            if (mined) {
-                await poolCollection.setBlockNumber(++blockNumber);
+            if (elapsed > 0) {
+                blockNumber += 1;
+                currentTime += elapsed;
+                await poolCollection.setBlockNumber(blockNumber);
+                await standardRewards.setTime(currentTime);
             }
 
             switch (type) {
@@ -3694,6 +3922,38 @@ describe('BancorNetwork Financial Verification', () => {
                     await tradeBNT(userId, amount);
                     break;
 
+                case 'burnPoolTokenTKN':
+                    await burnPoolTokenTKN(userId, amount);
+                    break;
+
+                case 'burnPoolTokenBNT':
+                    await burnPoolTokenBNT(userId, amount);
+                    break;
+
+                case 'joinTKN':
+                    await joinTKN(userId, amount);
+                    break;
+
+                case 'joinBNT':
+                    await joinBNT(userId, amount);
+                    break;
+
+                case 'leaveTKN':
+                    await leaveTKN(userId, amount);
+                    break;
+
+                case 'leaveBNT':
+                    await leaveBNT(userId, amount);
+                    break;
+
+                case 'claimRewardsTKN':
+                    await claimRewardsTKN(userId);
+                    break;
+
+                case 'claimRewardsBNT':
+                    await claimRewardsBNT(userId);
+                    break;
+
                 case 'setFundingLimit':
                     await setFundingLimit(amount);
                     break;
@@ -3703,6 +3963,9 @@ describe('BancorNetwork Financial Verification', () => {
                     await enableTrading(bntVirtualBalance, baseTokenVirtualBalance);
                     break;
                 }
+
+                default:
+                    throw new Error(`unsupported operation '${type}' encountered`);
             }
 
             await verifyState(decimalize(expected) as State);
@@ -3729,10 +3992,13 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario3');
         test('BancorNetworkSimpleFinancialScenario4');
         test('BancorNetworkSimpleFinancialScenario5');
+        test('BancorNetworkSimpleFinancialScenario6');
     });
 
     describe('@stress test', () => {
         test('BancorNetworkComplexFinancialScenario1');
         test('BancorNetworkComplexFinancialScenario2');
+        test('BancorNetworkRewardsFinancialScenario1');
+        test('BancorNetworkRewardsFinancialScenario2');
     });
 });
