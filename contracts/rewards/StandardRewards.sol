@@ -315,7 +315,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
             revert InvalidParam();
         }
 
-        // ensure that no program exists for the specific  pool
+        // ensure that no program exists for the specific pool
         if (_isProgramActive(_programs[_latestProgramIdByPool[pool]])) {
             revert AlreadyExists();
         }
