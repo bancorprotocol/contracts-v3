@@ -116,7 +116,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     event ProgramTerminated(Token indexed pool, uint256 indexed programId, uint32 endTime);
 
     /**
-     * @dev triggered when a program is paused
+     * @dev triggered when a program is paused/resumed
      */
     event ProgramPaused(Token indexed pool, uint256 indexed programId, bool paused);
 
