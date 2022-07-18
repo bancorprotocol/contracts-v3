@@ -743,7 +743,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     }
 
     /**
-     * @dev verifies that a program is running
+     * @dev verifies that a program is not paused
      */
     function _verifyProgramNotPaused(ProgramData memory p) private pure {
         _verifyProgramExists(p);
