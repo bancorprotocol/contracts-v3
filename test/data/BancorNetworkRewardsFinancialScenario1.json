@@ -43168,15 +43168,15 @@
       "expected": {
         "tknBalances": {
           "dayTrader": "18029.341476798133874397",
-          "tknProvider": "57108728.239852866560771976",
+          "tknProvider": "57108702",
           "bntProvider": "0",
           "masterVault": "42883268.658523201866125603",
-          "erVault": "499973.760147133439228024",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "7180.162742579641751295",
-          "tknProvider": "0",
+          "tknProvider": "26.239852866560771976",
           "bntProvider": "2675230",
           "masterVault": "10002817.659320617887916332",
           "erVault": "500000"
@@ -43211,15 +43211,15 @@
       "expected": {
         "tknBalances": {
           "dayTrader": "18029.341476798133874397",
-          "tknProvider": "57108728.239852866560771976",
+          "tknProvider": "57108702",
           "bntProvider": "0",
           "masterVault": "42883268.658523201866125603",
-          "erVault": "499973.760147133439228024",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "7180.162742579641751295",
-          "tknProvider": "0",
+          "tknProvider": "26.239852866560771976",
           "bntProvider": "2675230",
           "masterVault": "10002817.659320617887916332",
           "erVault": "500000"
@@ -43254,15 +43254,15 @@
       "expected": {
         "tknBalances": {
           "dayTrader": "18029.341476798133874397",
-          "tknProvider": "57108728.239852866560771976",
+          "tknProvider": "57108702",
           "bntProvider": "0",
           "masterVault": "42883268.658523201866125603",
-          "erVault": "499973.760147133439228024",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "7180.162742579641751295",
-          "tknProvider": "0",
+          "tknProvider": "26.239852866560771976",
           "bntProvider": "2675230",
           "masterVault": "10002817.659320617887916332",
           "erVault": "500000"
@@ -43297,15 +43297,15 @@
       "expected": {
         "tknBalances": {
           "dayTrader": "18029.341476798133874397",
-          "tknProvider": "57108728.239852866560771976",
+          "tknProvider": "57108702",
           "bntProvider": "0",
           "masterVault": "42883268.658523201866125603",
-          "erVault": "499973.760147133439228024",
+          "erVault": "500000",
           "epVault": "0"
         },
         "bntBalances": {
           "dayTrader": "7180.162742579641751295",
-          "tknProvider": "0",
+          "tknProvider": "26.239852866560771976",
           "bntProvider": "2675288.567985794009356039",
           "masterVault": "10002817.659320617887916332",
           "erVault": "500000"
