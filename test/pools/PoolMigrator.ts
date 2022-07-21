@@ -13,7 +13,7 @@ import Contracts, {
     TestPoolMigrator
 } from '../../components/Contracts';
 import LegacyContractsV3, { PoolCollectionType1V7 } from '../../components/LegacyContractsV3';
-import { MAX_UINT256, NETWORK_FEE_PPM, ZERO_ADDRESS } from '../../utils/Constants';
+import { MAX_UINT256, DEFAULT_NETWORK_FEE_PPM, ZERO_ADDRESS } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem, createTestToken, depositToPool } from '../helpers/Factory';
@@ -106,7 +106,7 @@ describe('PoolMigrator', () => {
                 externalProtectionVault.address,
                 poolTokenFactory.address,
                 poolMigrator.address,
-                NETWORK_FEE_PPM
+                DEFAULT_NETWORK_FEE_PPM
             );
 
             await network.registerPoolCollection(prevPoolCollection.address);
@@ -185,7 +185,6 @@ describe('PoolMigrator', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
-                NETWORK_FEE_PPM,
                 (await prevPoolCollection.poolType()) + 10,
                 await newPoolCollection.version()
             );
@@ -206,7 +205,6 @@ describe('PoolMigrator', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
-                NETWORK_FEE_PPM,
                 await prevPoolCollection.poolType(),
                 0
             );

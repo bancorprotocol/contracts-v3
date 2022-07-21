@@ -110,6 +110,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     uint256 private constant LIQUIDITY_GROWTH_FACTOR = 2;
     uint256 private constant BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR = 2;
     uint32 private constant DEFAULT_TRADING_FEE_PPM = 2_000; // 0.2%
+    uint32 private constant DEFAULT_NETWORK_FEE_PPM = 200_000; // 20%
     uint32 private constant RATE_MAX_DEVIATION_PPM = 10_000; // %1
     uint32 private constant RATE_RESET_BLOCK_THRESHOLD = 100;
 
@@ -163,9 +164,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the pool migrator contract
     IPoolMigrator private immutable _poolMigrator;
 
-    // the global network fee (in units of PPM)
-    uint32 private immutable _networkFeePPM;
-
     // a mapping between tokens and their pools
     mapping(Token => Pool) internal _poolData;
 
@@ -175,12 +173,21 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
 
+    // true if protection is enabled, false otherwise
     bool private _protectionEnabled = true;
+
+    // the global network fee (in units of PPM)
+    uint32 private _networkFeePPM;
 
     /**
      * @dev triggered when the default trading fee is updated
      */
     event DefaultTradingFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
+
+    /**
+     * @dev triggered when the network fee is updated
+     */
+    event NetworkFeePPMUpdated(uint32 prevFeePPM, uint32 newFeePPM);
 
     /**
      * @dev triggered when a specific pool's trading fee is updated
@@ -255,8 +262,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolMigrator initPoolMigrator,
-        uint32 initNetworkFeePPM
+        IPoolMigrator initPoolMigrator
     ) {
         _validAddress(address(initNetwork));
         _validAddress(address(initBNT));
@@ -266,7 +272,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _validAddress(address(initExternalProtectionVault));
         _validAddress(address(initPoolTokenFactory));
         _validAddress(address(initPoolMigrator));
-        _validFee(initNetworkFeePPM);
 
         _network = initNetwork;
         _bnt = initBNT;
@@ -276,16 +281,16 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolMigrator = initPoolMigrator;
-        _networkFeePPM = initNetworkFeePPM;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
+        _setNetworkFeePPM(DEFAULT_NETWORK_FEE_PPM);
     }
 
     /**
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 8;
+        return 9;
     }
 
     /**
@@ -341,6 +346,17 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         validFee(newDefaultTradingFeePPM)
     {
         _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
+    }
+
+    /**
+     * @dev sets the network fee (in units of PPM)
+     *
+     * requirements:
+     *
+     * - the caller must be the owner of the contract
+     */
+    function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
+        _setNetworkFeePPM(newNetworkFeePPM);
     }
 
     /**
@@ -1161,6 +1177,20 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _defaultTradingFeePPM = newDefaultTradingFeePPM;
 
         emit DefaultTradingFeePPMUpdated({ prevFeePPM: prevDefaultTradingFeePPM, newFeePPM: newDefaultTradingFeePPM });
+    }
+
+    /**
+     * @dev sets the network fee (in units of PPM)
+     */
+    function _setNetworkFeePPM(uint32 newNetworkFeePPM) private {
+        uint32 prevNetworkFeePPM = _networkFeePPM;
+        if (prevNetworkFeePPM == newNetworkFeePPM) {
+            return;
+        }
+
+        _networkFeePPM = newNetworkFeePPM;
+
+        emit NetworkFeePPMUpdated({ prevFeePPM: prevNetworkFeePPM, newFeePPM: newNetworkFeePPM });
     }
 
     /**

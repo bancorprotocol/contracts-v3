@@ -36,8 +36,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolMigrator initPoolMigrator,
-        uint32 initNetworkFeePPM
+        IPoolMigrator initPoolMigrator
     )
         PoolCollection(
             initNetwork,
@@ -47,8 +46,7 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
             initBNTPool,
             initExternalProtectionVault,
             initPoolTokenFactory,
-            initPoolMigrator,
-            initNetworkFeePPM
+            initPoolMigrator
         )
     {
         _poolType = initPoolType;

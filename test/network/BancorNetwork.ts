@@ -31,7 +31,7 @@ import {
 } from '../../components/LegacyContracts';
 import LegacyContractsV3, { PoolCollectionType1V7 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
-import { MAX_UINT256, NETWORK_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import { MAX_UINT256, DEFAULT_NETWORK_FEE_PPM, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { percentsToPPM, toPPM, toWei } from '../../utils/Types';
@@ -447,7 +447,6 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
-                        NETWORK_FEE_PPM,
                         await poolCollection.poolType(),
                         await poolCollection.version()
                     );
@@ -469,7 +468,6 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
-                        NETWORK_FEE_PPM,
                         await poolCollection.poolType(),
                         (await poolCollection.version()) + 1
                     );
@@ -528,7 +526,6 @@ describe('BancorNetwork', () => {
                     externalProtectionVault,
                     poolTokenFactory,
                     poolMigrator,
-                    NETWORK_FEE_PPM,
                     await poolCollection.poolType(),
                     (await poolCollection.version()) + 1
                 );
@@ -780,7 +777,7 @@ describe('BancorNetwork', () => {
                 externalProtectionVault.address,
                 poolTokenFactory.address,
                 poolMigrator.address,
-                NETWORK_FEE_PPM
+                DEFAULT_NETWORK_FEE_PPM
             );
 
             await network.registerPoolCollection(prevPoolCollection.address);
@@ -806,8 +803,7 @@ describe('BancorNetwork', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address,
-                NETWORK_FEE_PPM
+                poolMigrator.address
             );
 
             await network.registerPoolCollection(newPoolCollection.address);

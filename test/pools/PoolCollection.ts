@@ -18,11 +18,11 @@ import { PoolLiquidityStructOutput } from '../../typechain-types/contracts/pools
 import {
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
     DEFAULT_TRADING_FEE_PPM,
+    DEFAULT_NETWORK_FEE_PPM,
     EMA_AVERAGE_RATE_WEIGHT,
     EMA_SPOT_RATE_WEIGHT,
     LIQUIDITY_GROWTH_FACTOR,
     MAX_UINT256,
-    NETWORK_FEE_PPM,
     PoolType,
     PPM_RESOLUTION,
     RATE_MAX_DEVIATION_PPM,
@@ -253,8 +253,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -269,8 +268,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -285,8 +283,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -301,8 +298,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -317,8 +313,7 @@ describe('PoolCollection', () => {
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -333,8 +328,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     ZERO_ADDRESS,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -349,8 +343,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -365,26 +358,9 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    ZERO_ADDRESS,
-                    NETWORK_FEE_PPM
+                    ZERO_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
-        });
-
-        it('should revert when attempting to create with an invalid network fee', async () => {
-            await expect(
-                Contracts.PoolCollection.deploy(
-                    network.address,
-                    bnt.address,
-                    networkSettings.address,
-                    masterVault.address,
-                    bntPool.address,
-                    externalProtectionVault.address,
-                    poolTokenFactory.address,
-                    poolMigrator.address,
-                    PPM_RESOLUTION + 1
-                )
-            ).to.be.revertedWithError('InvalidFee');
         });
 
         it('should be properly initialized', async () => {
@@ -396,19 +372,22 @@ describe('PoolCollection', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address,
-                NETWORK_FEE_PPM
+                poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(8);
+            expect(await poolCollection.version()).to.equal(9);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
-            expect(await poolCollection.networkFeePPM()).to.equal(NETWORK_FEE_PPM);
+            expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
             expect(await poolCollection.protectionEnabled()).to.equal(true);
 
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(0, DEFAULT_TRADING_FEE_PPM);
+
+            await expect(poolCollection.deployTransaction)
+                .to.emit(poolCollection, 'NetworkFeePPMUpdated')
+                .withArgs(0, DEFAULT_NETWORK_FEE_PPM);
         });
     });
 
@@ -459,6 +438,51 @@ describe('PoolCollection', () => {
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
             expect(await poolCollection.tradingFeePPM(reserveToken.address)).to.equal(newDefaultTradingFee);
+        });
+    });
+
+    describe('network fee', () => {
+        const newNetworkFee = toPPM(30);
+
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+        let poolCollection: TestPoolCollection;
+        let reserveToken: TestERC20Token;
+
+        beforeEach(async () => {
+            ({ network, networkSettings, poolCollection } = await createSystem());
+
+            expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
+
+            reserveToken = await createTestToken();
+        });
+
+        it('should revert when a non-owner attempts to set the network fee', async () => {
+            await expect(
+                poolCollection.connect(nonOwner).setNetworkFeePPM(newNetworkFee)
+            ).to.be.revertedWithError('AccessDenied');
+        });
+
+        it('should revert when setting the network fee to an invalid value', async () => {
+            await expect(poolCollection.setNetworkFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError(
+                'InvalidFee'
+            );
+        });
+
+        it('should ignore updating to the same network fee', async () => {
+            await poolCollection.setNetworkFeePPM(newNetworkFee);
+
+            const res = await poolCollection.setNetworkFeePPM(newNetworkFee);
+            await expect(res).not.to.emit(poolCollection, 'NetworkFeePPMUpdated');
+        });
+
+        it('should be able to set and update the network fee', async () => {
+            const res = await poolCollection.setNetworkFeePPM(newNetworkFee);
+            await expect(res)
+                .to.emit(poolCollection, 'NetworkFeePPMUpdated')
+                .withArgs(DEFAULT_NETWORK_FEE_PPM, newNetworkFee);
+
+            expect(await poolCollection.networkFeePPM()).to.equal(newNetworkFee);
         });
     });
 
@@ -3258,9 +3282,12 @@ describe('PoolCollection', () => {
                             bntPool,
                             externalProtectionVault,
                             poolTokenFactory,
-                            poolMigrator,
-                            networkFeePPM
+                            poolMigrator
                         );
+
+                        if (networkFeePPM !== undefined) {
+                            await poolCollection.setNetworkFeePPM(networkFeePPM);
+                        }
 
                         await network.registerPoolCollection(poolCollection.address);
 
@@ -4681,7 +4708,6 @@ describe('PoolCollection', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
-                NETWORK_FEE_PPM,
                 await poolCollection.poolType(),
                 (await poolCollection.version()) + 1
             );
