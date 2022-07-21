@@ -17,8 +17,8 @@ import Contracts, {
 import { PoolLiquidityStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
-    DEFAULT_TRADING_FEE_PPM,
     DEFAULT_NETWORK_FEE_PPM,
+    DEFAULT_TRADING_FEE_PPM,
     EMA_AVERAGE_RATE_WEIGHT,
     EMA_SPOT_RATE_WEIGHT,
     LIQUIDITY_GROWTH_FACTOR,
@@ -458,15 +458,13 @@ describe('PoolCollection', () => {
         });
 
         it('should revert when a non-owner attempts to set the network fee', async () => {
-            await expect(
-                poolCollection.connect(nonOwner).setNetworkFeePPM(newNetworkFee)
-            ).to.be.revertedWithError('AccessDenied');
+            await expect(poolCollection.connect(nonOwner).setNetworkFeePPM(newNetworkFee)).to.be.revertedWithError(
+                'AccessDenied'
+            );
         });
 
         it('should revert when setting the network fee to an invalid value', async () => {
-            await expect(poolCollection.setNetworkFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError(
-                'InvalidFee'
-            );
+            await expect(poolCollection.setNetworkFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
         });
 
         it('should ignore updating to the same network fee', async () => {

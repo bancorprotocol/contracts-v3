@@ -81,7 +81,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V8.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V9.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -170,7 +170,9 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [
                 daoMultisig.address
             ]);
-            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER);
+            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
+                standardRewards.address
+            ]);
 
             await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 
