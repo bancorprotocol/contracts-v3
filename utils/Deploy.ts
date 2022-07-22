@@ -37,7 +37,7 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import { PoolCollectionType1V7 } from '../components/LegacyContractsV3';
+import { PoolCollectionType1V8 } from '../components/LegacyContractsV3';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
@@ -98,7 +98,7 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V7 = 'PoolCollectionType1V7'
+    PoolCollectionType1V8 = 'PoolCollectionType1V8'
 }
 
 enum NewInstanceName {
@@ -116,7 +116,7 @@ enum NewInstanceName {
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V8 = 'PoolCollectionType1V8',
+    PoolCollectionType1V9 = 'PoolCollectionType1V9',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -164,7 +164,7 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
-    PoolCollectionType1V7: deployed<PoolCollectionType1V7>(InstanceName.PoolCollectionType1V7)
+    PoolCollectionType1V8: deployed<PoolCollectionType1V8>(InstanceName.PoolCollectionType1V8)
 };
 
 const DeployedNewContracts = {
@@ -184,7 +184,7 @@ const DeployedNewContracts = {
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V8: deployed<PoolCollection>(InstanceName.PoolCollectionType1V8),
+    PoolCollectionType1V9: deployed<PoolCollection>(InstanceName.PoolCollectionType1V9),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
