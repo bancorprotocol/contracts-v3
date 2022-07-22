@@ -3974,7 +3974,7 @@ describe('BancorNetwork Financial Verification', () => {
         });
     };
 
-    describe('quick tests', () => {
+    describe.skip('quick tests', () => {
         test('BancorNetworkSimpleFinancialScenario1');
         test('BancorNetworkSimpleFinancialScenario2');
         test('BancorNetworkSimpleFinancialScenario3');
@@ -3983,7 +3983,7 @@ describe('BancorNetwork Financial Verification', () => {
         test('BancorNetworkSimpleFinancialScenario6');
     });
 
-    describe('@stress test', () => {
+    describe.skip('@stress test', () => {
         test('BancorNetworkComplexFinancialScenario1');
         test('BancorNetworkComplexFinancialScenario2');
         test('BancorNetworkRewardsFinancialScenario1');
