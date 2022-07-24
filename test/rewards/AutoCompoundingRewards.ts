@@ -1584,7 +1584,52 @@ describe('AutoCompoundingRewards', () => {
                                 const poolsBefore = await autoCompoundingRewards.pools();
                                 expect(poolsBefore).to.include(token.address);
 
-                                let { tokenAmountToDistribute } = await testDistribution();
+                                const { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.equal(0);
+
+                                const poolsAfter = await autoCompoundingRewards.pools();
+                                expect(poolsAfter).to.not.include(token.address);
+
+                                const program = await autoCompoundingRewards.program(token.address);
+                                expect(program.poolToken).to.equal(ZERO_ADDRESS);
+                                expect(program.totalRewards).to.equal(0);
+                                expect(program.remainingRewards).to.equal(0);
+                                expect(program.distributionType).to.equal(0);
+                                expect(program.startTime).to.equal(0);
+                                expect(program.endTime).to.equal(0);
+                                expect(program.halfLife).to.equal(0);
+                                expect(program.prevDistributionTimestamp).to.equal(0);
+                                expect(program.isPaused).to.be.false;
+                            });
+                        });
+
+                        context('if the burn amount is equal to the total pool token supply', () => {
+                            beforeEach(async () => {
+                                await autoCompoundingRewards.setTime(startTime + Math.floor(programDuration / 1.1));
+
+                                const program = await autoCompoundingRewards.program(token.address);
+                                const poolTokenTotalSupply = await poolToken.totalSupply();
+
+                                // transfer most of the provider's pool tokens to the rewards vault
+                                const userPoolTokenBalance = await poolToken.balanceOf(user.address);
+                                await transfer(user, poolToken, rewardsVault.address, userPoolTokenBalance);
+
+                                const { poolTokenAmountToBurn } = await getRewards(
+                                    program,
+                                    token,
+                                    rewardsMath,
+                                    tokenData,
+                                    rewardsVault
+                                );
+
+                                expect(poolTokenAmountToBurn).to.equal(poolTokenTotalSupply);
+                            });
+
+                            it('should terminate the program', async () => {
+                                const poolsBefore = await autoCompoundingRewards.pools();
+                                expect(poolsBefore).to.include(token.address);
+
+                                const { tokenAmountToDistribute } = await testDistribution();
                                 expect(tokenAmountToDistribute).to.equal(0);
 
                                 const poolsAfter = await autoCompoundingRewards.pools();
