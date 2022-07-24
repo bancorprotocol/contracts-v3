@@ -17,7 +17,9 @@ import {
     AUTO_PROCESS_REWARDS_MIN_TIME_DELTA,
     DEFAULT_AUTO_PROCESS_REWARDS_COUNT,
     EXP2_INPUT_TOO_HIGH,
+    PPM_RESOLUTION,
     RewardsDistributionType,
+    SUPPLY_BURN_TERMINATION_THRESHOLD_PPM,
     ZERO_ADDRESS
 } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -316,7 +318,7 @@ describe('AutoCompoundingRewards', () => {
     describe('management', () => {
         const MIN_LIQUIDITY_FOR_TRADING = toWei(1_000);
         const TOTAL_REWARDS = toWei(10_000);
-        const INITIAL_USER_STAKE = toWei(10_000);
+        const INITIAL_USER_STAKE = toWei(50_000);
 
         beforeEach(async () => {
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
@@ -632,7 +634,7 @@ describe('AutoCompoundingRewards', () => {
                     });
                 });
 
-                describe('enabling / disabling', () => {
+                describe('pausing / unpausing', () => {
                     beforeEach(async () => {
                         await createProgram(
                             distributionType,
@@ -750,7 +752,7 @@ describe('AutoCompoundingRewards', () => {
                         );
                     });
 
-                    it('should distribute tokens only when the program is enabled', async () => {
+                    it('should distribute tokens only when the program is running', async () => {
                         await autoCompoundingRewards.setTime(START_TIME + programDurations[distributionType]);
                         await autoCompoundingRewards.pauseProgram(token.address, true);
                         const res1 = await autoCompoundingRewards.processRewards(token.address);
@@ -1334,6 +1336,7 @@ describe('AutoCompoundingRewards', () => {
                 const prevPoolTokenTotalSupply = await poolToken.totalSupply();
                 const prevUserTokenOwned = await getPoolTokenUnderlying(user);
                 const prevExternalRewardsVaultTokenOwned = await getPoolTokenUnderlying(rewardsVault);
+                const maxBurn = prevPoolTokenTotalSupply.mul(SUPPLY_BURN_TERMINATION_THRESHOLD_PPM).div(PPM_RESOLUTION);
 
                 const { tokenAmountToDistribute, poolTokenAmountToBurn } = await getRewards(
                     prevProgram,
@@ -1350,6 +1353,15 @@ describe('AutoCompoundingRewards', () => {
                     await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
 
                     expect(program.prevDistributionTimestamp).to.equal(prevProgram.prevDistributionTimestamp);
+                } else if (poolTokenAmountToBurn.gte(maxBurn)) {
+                    await expect(res).not.to.emit(autoCompoundingRewards, 'RewardsDistributed');
+
+                    expect(await poolToken.balanceOf(rewardsVault.address)).to.equal(prevPoolTokenBalance);
+                    expect(await poolToken.totalSupply()).to.equal(prevPoolTokenTotalSupply);
+                    expect(await getPoolTokenUnderlying(user)).to.equal(prevUserTokenOwned);
+                    expect(await getPoolTokenUnderlying(rewardsVault)).to.equal(prevExternalRewardsVaultTokenOwned);
+
+                    return { tokenAmountToDistribute: BigNumber.from(0) };
                 } else {
                     await expect(res)
                         .to.emit(autoCompoundingRewards, 'RewardsDistributed')
@@ -1542,6 +1554,54 @@ describe('AutoCompoundingRewards', () => {
                                 });
                             });
                         });
+
+                        context('if the burn amount is equal or higher than the total supply threshold', () => {
+                            beforeEach(async () => {
+                                await autoCompoundingRewards.setTime(startTime + Math.floor(programDuration / 1.1));
+
+                                const program = await autoCompoundingRewards.program(token.address);
+                                const poolTokenTotalSupply = await poolToken.totalSupply();
+                                const maxBurn = poolTokenTotalSupply
+                                    .mul(SUPPLY_BURN_TERMINATION_THRESHOLD_PPM)
+                                    .div(PPM_RESOLUTION);
+
+                                // transfer most of the provider's pool tokens to the rewards vault
+                                const userPoolTokenBalance = await poolToken.balanceOf(user.address);
+                                await transfer(user, poolToken, rewardsVault.address, userPoolTokenBalance.sub(100));
+
+                                const { poolTokenAmountToBurn } = await getRewards(
+                                    program,
+                                    token,
+                                    rewardsMath,
+                                    tokenData,
+                                    rewardsVault
+                                );
+
+                                expect(poolTokenAmountToBurn).to.be.gte(maxBurn);
+                            });
+
+                            it('should terminate the program', async () => {
+                                const poolsBefore = await autoCompoundingRewards.pools();
+                                expect(poolsBefore).to.include(token.address);
+
+                                let { tokenAmountToDistribute } = await testDistribution();
+                                expect(tokenAmountToDistribute).to.equal(0);
+
+                                const poolsAfter = await autoCompoundingRewards.pools();
+                                expect(poolsAfter).to.not.include(token.address);
+
+                                const program = await autoCompoundingRewards.program(token.address);
+                                expect(program.poolToken).to.equal(ZERO_ADDRESS);
+                                expect(program.totalRewards).to.equal(0);
+                                expect(program.remainingRewards).to.equal(0);
+                                expect(program.distributionType).to.equal(0);
+                                expect(program.startTime).to.equal(0);
+                                expect(program.endTime).to.equal(0);
+                                expect(program.halfLife).to.equal(0);
+                                expect(program.prevDistributionTimestamp).to.equal(0);
+                                expect(program.isPaused).to.be.false;
+                            });
+                        });
                     });
 
                     const testMultipleDistributions = (step: number, totalSteps: number) => {
@@ -1672,12 +1732,14 @@ describe('AutoCompoundingRewards', () => {
             }
         };
 
+        // ensuring that the total rewards don't exceed the supply termination threshold
         describe('regular tests', () => {
-            testRewardsMatrix([toWei(10_000)], [toWei(100_000)]);
+            testRewardsMatrix([toWei(50_000)], [toWei(10_000)]);
         });
 
+        // ensuring that the total rewards don't exceed the supply termination threshold
         describe('@stress tests', () => {
-            testRewardsMatrix([toWei(5_000), toWei(100_000)], [100_000, toWei(200_000)]);
+            testRewardsMatrix([toWei(70_000), toWei(250_000)], [toWei(10_000), toWei(30_000)]);
         });
     });
 
@@ -1685,7 +1747,7 @@ describe('AutoCompoundingRewards', () => {
         const setups = [
             {
                 tokenSymbol: TokenSymbol.ETH,
-                initialUserStake: toWei(10_000),
+                initialUserStake: toWei(15_000),
                 totalRewards: toWei(11_000)
             },
             {
