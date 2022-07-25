@@ -37,7 +37,7 @@ const comp512Funcs = {
 
 const toDecimal = (fraction: Fraction<BigNumber>) => new Decimal(fraction.n.toString()).div(fraction.d.toString());
 
-describe('MathEx', () => {
+describe.only('MathEx', () => {
     let mathContract: TestMathEx;
 
     before(async () => {
@@ -63,19 +63,19 @@ describe('MathEx', () => {
         });
     };
 
-    const testReducedFraction = (fraction: Fraction<BigNumber>, max: BigNumber, maxRelativeError: Decimal) => {
-        it(`reducedFraction(${toString(fraction)}, ${max})`, async () => {
+    const testTruncatedFraction = (fraction: Fraction<BigNumber>, max: BigNumber, maxRelativeError: Decimal) => {
+        it(`truncatedFraction(${toString(fraction)}, ${max})`, async () => {
             const expected = toDecimal(fraction);
-            const actual = await mathContract.reducedFraction(fraction, max);
+            const actual = await mathContract.truncatedFraction(fraction, max);
             expect(actual.n).to.lte(max);
             expect(actual.d).to.lte(max);
             expect(actual).to.almostEqual({ n: expected, d: 1 }, { maxRelativeError });
         });
     };
 
-    const testReducedFractionRevert = (fraction: Fraction<BigNumber>, max: BigNumber) => {
-        it(`reducedFraction(${toString(fraction)}), ${max}) should revert`, async () => {
-            await expect(mathContract.reducedFraction(fraction, max)).to.be.revertedWithError('InvalidFraction');
+    const testTruncatedFractionRevert = (fraction: Fraction<BigNumber>, max: BigNumber) => {
+        it(`truncatedFraction(${toString(fraction)}), ${max}) should revert`, async () => {
+            await expect(mathContract.truncatedFraction(fraction, max)).to.be.revertedWithError('InvalidFraction');
         });
     };
 
@@ -209,18 +209,18 @@ describe('MathEx', () => {
         for (const max of [MAX_UINT128]) {
             for (let n = 0; n < 10; n++) {
                 for (let d = 0; d < 10; d++) {
-                    testReducedFraction({ n: max.sub(n), d: max.sub(d) }, max, new Decimal('0'));
-                    testReducedFraction(
+                    testTruncatedFraction({ n: max.sub(n), d: max.sub(d) }, max, new Decimal('0'));
+                    testTruncatedFraction(
                         { n: max.sub(n), d: max.add(d) },
                         max,
                         new Decimal('0.000000000000000000000000000000000000003')
                     );
-                    testReducedFraction(
+                    testTruncatedFraction(
                         { n: max.add(n), d: max.sub(d) },
                         max,
                         new Decimal('0.000000000000000000000000000000000000003')
                     );
-                    testReducedFraction(
+                    testTruncatedFraction(
                         { n: max.add(n), d: max.add(d) },
                         max,
                         new Decimal('0.000000000000000000000000000000000000003')
@@ -232,7 +232,7 @@ describe('MathEx', () => {
         for (const n of [100, 200]) {
             for (const d of [2, 3]) {
                 for (const max of [3, 5]) {
-                    testReducedFractionRevert({ n: BigNumber.from(n), d: BigNumber.from(d) }, BigNumber.from(max));
+                    testTruncatedFractionRevert({ n: BigNumber.from(n), d: BigNumber.from(d) }, BigNumber.from(max));
                 }
             }
         }
@@ -303,18 +303,18 @@ describe('MathEx', () => {
         for (const max of [MAX_UINT96, MAX_UINT112, MAX_UINT128]) {
             for (let n = 0; n < 10; n++) {
                 for (let d = 0; d < 10; d++) {
-                    testReducedFraction({ n: max.sub(n), d: max.sub(d) }, max, new Decimal('0'));
-                    testReducedFraction(
+                    testTruncatedFraction({ n: max.sub(n), d: max.sub(d) }, max, new Decimal('0'));
+                    testTruncatedFraction(
                         { n: max.sub(n), d: max.add(d) },
                         max,
                         new Decimal('0.00000000000000000000000000002')
                     );
-                    testReducedFraction(
+                    testTruncatedFraction(
                         { n: max.add(n), d: max.sub(d) },
                         max,
                         new Decimal('0.00000000000000000000000000002')
                     );
-                    testReducedFraction(
+                    testTruncatedFraction(
                         { n: max.add(n), d: max.add(d) },
                         max,
                         new Decimal('0.00000000000000000000000000002')
@@ -328,7 +328,7 @@ describe('MathEx', () => {
                 for (let j = BigNumber.from(1); j.lte(max); j = j.mul(10)) {
                     const n = MAX_UINT256.div(max).mul(i).add(1);
                     const d = MAX_UINT256.div(max).mul(j).add(1);
-                    testReducedFraction({ n, d }, max, new Decimal('0.04'));
+                    testTruncatedFraction({ n, d }, max, new Decimal('0.04'));
                 }
             }
         }
@@ -353,7 +353,7 @@ describe('MathEx', () => {
                     ]) {
                         for (const d of [jMax.sub(1), jMax, jMax.add(1)]) {
                             if (n.lte(MAX_UINT256) && d.lte(MAX_UINT256)) {
-                                testReducedFraction({ n, d }, max, new Decimal('0.0000000005'));
+                                testTruncatedFraction({ n, d }, max, new Decimal('0.0000000005'));
                             }
                         }
                     }

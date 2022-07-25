@@ -76,9 +76,9 @@ library FractionLibrary {
      * @dev reduces a standard fraction to a 112-bit fraction
      */
     function toFraction112(Fraction memory fraction) internal pure returns (Fraction112 memory) {
-        Fraction memory reducedFraction = MathEx.reducedFraction(fraction, type(uint112).max);
+        Fraction memory truncatedFraction = MathEx.truncatedFraction(fraction, type(uint112).max);
 
-        return Fraction112({ n: uint112(reducedFraction.n), d: uint112(reducedFraction.d) });
+        return Fraction112({ n: uint112(truncatedFraction.n), d: uint112(truncatedFraction.d) });
     }
 
     /**

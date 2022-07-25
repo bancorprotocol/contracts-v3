@@ -105,16 +105,16 @@ library MathEx {
     }
 
     /**
-     * @dev returns a fraction with reduced components
+     * @dev returns a fraction with truncated components
      */
-    function reducedFraction(Fraction memory fraction, uint256 max) internal pure returns (Fraction memory) {
+    function truncatedFraction(Fraction memory fraction, uint256 max) internal pure returns (Fraction memory) {
         uint256 scale = Math.ceilDiv(Math.max(fraction.n, fraction.d), max);
-        Fraction memory reduced = Fraction({ n: fraction.n / scale, d: fraction.d / scale });
-        if (reduced.d == 0) {
+        Fraction memory truncated = Fraction({ n: fraction.n / scale, d: fraction.d / scale });
+        if (truncated.d == 0) {
             revert InvalidFraction();
         }
 
-        return reduced;
+        return truncated;
     }
 
     /**
