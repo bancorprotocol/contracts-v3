@@ -323,7 +323,9 @@ describe('AutoCompoundingRewards', () => {
                 externalRewardsVault.address
             );
             const res = await autoCompoundingRewards.initialize();
-            await expect(res).to.emit(autoCompoundingRewards, 'AutoProcessRewardsCountUpdated').withArgs(0, DEFAULT_AUTO_PROCESS_REWARDS_COUNT);
+            await expect(res)
+                .to.emit(autoCompoundingRewards, 'AutoProcessRewardsCountUpdated')
+                .withArgs(0, DEFAULT_AUTO_PROCESS_REWARDS_COUNT);
         });
     });
 
