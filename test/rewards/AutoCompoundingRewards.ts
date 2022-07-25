@@ -313,6 +313,20 @@ describe('AutoCompoundingRewards', () => {
             expect(await autoCompoundingRewards.autoProcessRewardsCount()).to.equal(DEFAULT_AUTO_PROCESS_REWARDS_COUNT);
             expect(await autoCompoundingRewards.autoProcessRewardsIndex()).to.equal(0);
         });
+
+        it('should emit events on initialization', async () => {
+            const autoCompoundingRewards = await Contracts.AutoCompoundingRewards.deploy(
+                network.address,
+                networkSettings.address,
+                bnt.address,
+                bntPool.address,
+                externalRewardsVault.address
+            );
+            const res = await autoCompoundingRewards.initialize();
+            await expect(res)
+                .to.emit(autoCompoundingRewards, 'AutoProcessRewardsCountUpdated')
+                .withArgs(0, DEFAULT_AUTO_PROCESS_REWARDS_COUNT);
+        });
     });
 
     describe('management', () => {
