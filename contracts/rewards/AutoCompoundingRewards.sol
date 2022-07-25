@@ -171,7 +171,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * @dev performs contract-specific initialization
      */
     function __AutoCompoundingRewards_init_unchained() internal onlyInitializing {
-        _autoProcessRewardsCount = DEFAULT_AUTO_PROCESS_REWARDS_COUNT;
+        _setAutoProcessRewardsCount(DEFAULT_AUTO_PROCESS_REWARDS_COUNT);
     }
 
     // solhint-enable func-name-mixedcase
@@ -226,14 +226,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * - the caller must be the admin of the contract
      */
     function setAutoProcessRewardsCount(uint256 newCount) external greaterThanZero(newCount) onlyAdmin {
-        uint256 prevCount = _autoProcessRewardsCount;
-        if (prevCount == newCount) {
-            return;
-        }
-
-        _autoProcessRewardsCount = newCount;
-
-        emit AutoProcessRewardsCountUpdated({ prevCount: prevCount, newCount: newCount });
+        _setAutoProcessRewardsCount(newCount);
     }
 
     /**
@@ -358,6 +351,20 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      */
     function processRewards(Token pool) external nonReentrant {
         _processRewards(pool, false);
+    }
+
+    /**
+     * @dev sets the number of programs to auto-process the rewards for
+     */
+    function _setAutoProcessRewardsCount(uint256 newCount) private {
+        uint256 prevCount = _autoProcessRewardsCount;
+        if (prevCount == newCount) {
+            return;
+        }
+
+        _autoProcessRewardsCount = newCount;
+
+        emit AutoProcessRewardsCountUpdated({ prevCount: prevCount, newCount: newCount });
     }
 
     /**
