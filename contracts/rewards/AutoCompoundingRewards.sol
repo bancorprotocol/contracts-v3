@@ -390,8 +390,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         // sanity check, if the amount to burn is equal or higher than the termination percentage
         // threshold, terminate the program
         if (
-            poolTokenAmountToBurn >=
-            (p.poolToken.totalSupply() * SUPPLY_BURN_TERMINATION_THRESHOLD_PPM) / PPM_RESOLUTION
+            poolTokenAmountToBurn * PPM_RESOLUTION >= p.poolToken.totalSupply() * SUPPLY_BURN_TERMINATION_THRESHOLD_PPM
         ) {
             _terminateProgram(pool);
             return false;
