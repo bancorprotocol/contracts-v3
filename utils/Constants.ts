@@ -50,6 +50,7 @@ export const EMA_SPOT_RATE_WEIGHT = 1;
 export const DEFAULT_AUTO_PROCESS_REWARDS_COUNT = 3;
 export const AUTO_PROCESS_REWARDS_MIN_TIME_DELTA = duration.hours(1);
 export const AUTO_PROCESS_MAX_PROGRAMS_FACTOR = 2;
+export const SUPPLY_BURN_TERMINATION_THRESHOLD_PPM = toPPM(50);
 
 export enum PoolType {
     Standard = 1
