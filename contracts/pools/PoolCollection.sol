@@ -598,8 +598,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function disableTrading(Token pool) external onlyOwner {
         Pool storage data = _poolStorage(pool);
-
-        _resetTradingLiquidity(bytes32(0), pool, data, TRADING_STATUS_UPDATE_ADMIN);
+        _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_ADMIN);
     }
 
     /**
@@ -675,7 +674,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         if (prevPoolTokenTotalSupply == 0 && currentStakedBalance != 0) {
             currentStakedBalance = 0;
 
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_INVALID_STATE);
+            PoolLiquidity memory prevLiquidity = data.liquidity;
+            _resetTradingLiquidity(contextId, pool, data, prevLiquidity, TRADING_STATUS_UPDATE_INVALID_STATE);
             effectiveAverageRates = AverageRates({
                 blockNumber: 0,
                 rate: zeroFraction112(),
@@ -1147,6 +1147,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 contextId,
                 pool,
                 data,
+                prevLiquidity,
                 amounts.newBNTTradingLiquidity,
                 TRADING_STATUS_UPDATE_MIN_LIQUIDITY
             );
@@ -1367,17 +1368,17 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             return;
         }
 
+        PoolLiquidity memory prevLiquidity = data.liquidity;
         if (!fundingRate.isPositive()) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            _resetTradingLiquidity(contextId, pool, data, prevLiquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
             return;
         }
 
-        PoolLiquidity memory liquidity = data.liquidity;
         TargetTradingLiquidity memory targetTradingLiquidity = _calcTargetTradingLiquidity(
             baseTokenTotalLiquidity,
             _networkSettings.poolFundingLimit(pool),
             _bntPool.currentPoolFunding(pool),
-            liquidity,
+            prevLiquidity,
             fundingRate,
             minLiquidityForTrading
         );
@@ -1387,28 +1388,28 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         }
 
         if (targetTradingLiquidity.bnt == 0 || targetTradingLiquidity.baseToken == 0) {
-            _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
+            _resetTradingLiquidity(contextId, pool, data, prevLiquidity, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
             return;
         }
 
         // update funding from the BNT pool
-        if (targetTradingLiquidity.bnt > liquidity.bntTradingLiquidity) {
-            _bntPool.requestFunding(contextId, pool, targetTradingLiquidity.bnt - liquidity.bntTradingLiquidity);
-        } else if (targetTradingLiquidity.bnt < liquidity.bntTradingLiquidity) {
-            _bntPool.renounceFunding(contextId, pool, liquidity.bntTradingLiquidity - targetTradingLiquidity.bnt);
+        if (targetTradingLiquidity.bnt > prevLiquidity.bntTradingLiquidity) {
+            _bntPool.requestFunding(contextId, pool, targetTradingLiquidity.bnt - prevLiquidity.bntTradingLiquidity);
+        } else if (targetTradingLiquidity.bnt < prevLiquidity.bntTradingLiquidity) {
+            _bntPool.renounceFunding(contextId, pool, prevLiquidity.bntTradingLiquidity - targetTradingLiquidity.bnt);
         }
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
             bntTradingLiquidity: targetTradingLiquidity.bnt.toUint128(),
             baseTokenTradingLiquidity: targetTradingLiquidity.baseToken.toUint128(),
-            stakedBalance: liquidity.stakedBalance
+            stakedBalance: prevLiquidity.stakedBalance
         });
 
         // update the liquidity data of the pool
         data.liquidity = newLiquidity;
 
-        _dispatchTradingLiquidityEvents(contextId, pool, liquidity, newLiquidity);
+        _dispatchTradingLiquidityEvents(contextId, pool, prevLiquidity, newLiquidity);
     }
 
     function _dispatchTradingLiquidityEvents(
@@ -1445,9 +1446,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         bytes32 contextId,
         Token pool,
         Pool storage data,
+        PoolLiquidity memory prevLiquidity,
         uint8 reason
     ) private {
-        _resetTradingLiquidity(contextId, pool, data, data.liquidity.bntTradingLiquidity, reason);
+        _resetTradingLiquidity(contextId, pool, data, prevLiquidity, data.liquidity.bntTradingLiquidity, reason);
     }
 
     /**
@@ -1457,11 +1459,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         bytes32 contextId,
         Token pool,
         Pool storage data,
+        PoolLiquidity memory prevLiquidity,
         uint256 currentBNTTradingLiquidity,
         uint8 reason
     ) private {
-        PoolLiquidity memory prevLiquidity = data.liquidity;
-
         // reset the network and base token trading liquidities
         data.liquidity.bntTradingLiquidity = 0;
         data.liquidity.baseTokenTradingLiquidity = 0;
