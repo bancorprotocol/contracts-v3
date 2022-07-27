@@ -70,10 +70,10 @@ struct InternalWithdrawalAmounts {
     uint256 newBNTTradingLiquidity; // new BNT trading liquidity
 }
 
-struct TradingLiquidityAction {
+struct TargetTradingLiquidity {
     bool update;
-    uint256 newBNTTradingLiquidity;
-    uint256 newBaseTokenTradingLiquidity;
+    uint256 bnt;
+    uint256 baseToken;
 }
 
 enum PoolRateState {
@@ -290,7 +290,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 9;
+        return 10;
     }
 
     /**
@@ -421,8 +421,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      *
      * notes:
      *
-     * - there is no guarantee that this function will remains forward compatible, so please avoid relying on it and
-     *   rely on specific getters from the IPoolCollection interface instead
+     * - there is no guarantee that this function will remains forward compatible,
+     *   so relying on it should be avoided and instead, rely on specific getters
+     *   from the IPoolCollection interface
      */
     function poolData(Token pool) external view returns (Pool memory) {
         return _poolData[pool];
@@ -539,7 +540,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @dev enables trading in a given pool, by providing the funding rate as two virtual balances, and updates its
      * trading liquidity
      *
-     * please note that the virtual balances should be derived from token prices, normalized to the smallest unit of
+     * note that the virtual balances should be derived from token prices, normalized to the smallest unit of
      * tokens. In other words, the ratio between BNT and TKN virtual balances should be the ratio between the $ value
      * of 1 wei of TKN and 1 wei of BNT, taking both of their decimals into account. For example:
      *
@@ -1250,66 +1251,91 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * and the deltas between the new and the previous states
      */
     function _calcTargetTradingLiquidity(
-        uint256 totalBaseTokenReserveAmount,
-        uint256 availableFunding,
+        uint256 baseTokenTotalLiquidity,
+        uint256 fundingLimit,
+        uint256 currentFunding,
         PoolLiquidity memory liquidity,
         Fraction memory fundingRate,
         uint256 minLiquidityForTrading
-    ) private pure returns (TradingLiquidityAction memory) {
-        // calculate the target BNT trading liquidity delta based on the smaller between the following:
-        // - BNT liquidity required to match the total out-of-curve based token liquidity
-        // - available BNT funding
-        uint256 totalTokenDeltaAmount = totalBaseTokenReserveAmount - liquidity.baseTokenTradingLiquidity;
-        uint256 targetBNTTradingLiquidityDelta = Math.min(
-            MathEx.mulDivF(totalTokenDeltaAmount, fundingRate.n, fundingRate.d),
-            availableFunding
-        );
-        uint256 targetBNTTradingLiquidity = liquidity.bntTradingLiquidity + targetBNTTradingLiquidityDelta;
+    ) private pure returns (TargetTradingLiquidity memory) {
+        // calculate the target BNT trading liquidity based on the following:
+        // - BNT liquidity required to match the based token unused (off-curve) liquidity
+        // - BNT funding limit
+        // - current BNT funding
+        uint256 targetBNTTradingLiquidity = liquidity.bntTradingLiquidity;
+        if (fundingLimit > currentFunding) {
+            // increase the trading liquidity
+            uint256 availableFunding = fundingLimit - currentFunding;
+            uint256 baseTokenUnusedLiquidity = baseTokenTotalLiquidity - liquidity.baseTokenTradingLiquidity;
+            uint256 targetBNTTradingLiquidityDelta = Math.min(
+                MathEx.mulDivF(baseTokenUnusedLiquidity, fundingRate.n, fundingRate.d),
+                availableFunding
+            );
+            targetBNTTradingLiquidity = liquidity.bntTradingLiquidity + targetBNTTradingLiquidityDelta;
+        } else if (fundingLimit < currentFunding) {
+            // decrease the trading liquidity
+            uint256 excessFunding = currentFunding - fundingLimit;
+            targetBNTTradingLiquidity = MathEx.subMax0(liquidity.bntTradingLiquidity, excessFunding);
+        }
+
+        // if the target is equal to the current trading liquidity, no update is needed
+        if (targetBNTTradingLiquidity == liquidity.bntTradingLiquidity) {
+            return TargetTradingLiquidity({ update: false, bnt: 0, baseToken: 0 });
+        }
 
         // ensure that the target is above the minimum liquidity for trading
         if (targetBNTTradingLiquidity < minLiquidityForTrading) {
-            return TradingLiquidityAction({ update: true, newBNTTradingLiquidity: 0, newBaseTokenTradingLiquidity: 0 });
+            return TargetTradingLiquidity({ update: true, bnt: 0, baseToken: 0 });
         }
 
-        // calculate the new BNT trading liquidity and cap it by the growth factor
-        if (liquidity.bntTradingLiquidity == 0) {
-            // if the current BNT trading liquidity is 0, set it to the minimum liquidity for trading (with an
-            // additional buffer so that initial trades will be less likely to trigger disabling of trading)
-            uint256 newTargetBNTTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+        // calculate the target base token trading liquidity using the following:
+        // - calculate the delta between the current/target BNT trading liquidity
+        // - calculate the base token trading liquidity delta based on the BNT trading liquidity delta and the funding rate
+        // - apply the base token trading liquidity delta to the current base token trading liquidity
+        //
+        // note that the effective funding rate is always the rate between BNT and the base token)
+        uint256 bntTradingLiquidityDelta;
+        uint256 baseTokenTradingLiquidityDelta;
 
-            // ensure that we're not allocating more than the previously established limits
-            if (newTargetBNTTradingLiquidity > targetBNTTradingLiquidity) {
-                return
-                    TradingLiquidityAction({
-                        update: false,
-                        newBNTTradingLiquidity: 0,
-                        newBaseTokenTradingLiquidity: 0
-                    });
+        // liquidity increase
+        // note that liquidity increase is capped
+        if (targetBNTTradingLiquidity > liquidity.bntTradingLiquidity) {
+            if (liquidity.bntTradingLiquidity == 0) {
+                // the current BNT trading liquidity is 0 - set it to the minimum liquidity for trading (with an
+                // additional buffer so that initial trades will be less likely to trigger disabling of trading)
+                uint256 newTargetBNTTradingLiquidity = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
+
+                // ensure that the new target isn't higher than the previously established target
+                targetBNTTradingLiquidity = Math.min(targetBNTTradingLiquidity, newTargetBNTTradingLiquidity);
+            } else {
+                // the current BNT trading liquidity is not 0 - limit the target using the growth factor
+                targetBNTTradingLiquidity = Math.min(
+                    targetBNTTradingLiquidity,
+                    liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
+                );
             }
 
-            targetBNTTradingLiquidity = newTargetBNTTradingLiquidity;
-        } else if (targetBNTTradingLiquidity >= liquidity.bntTradingLiquidity) {
-            // if the target is above the current trading liquidity, limit it by factoring the current value up. Please
-            // note that if the target is below the current trading liquidity - it will be reduced to it immediately
-            targetBNTTradingLiquidity = Math.min(
-                targetBNTTradingLiquidity,
-                liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
-            );
+            bntTradingLiquidityDelta = targetBNTTradingLiquidity - liquidity.bntTradingLiquidity;
+            baseTokenTradingLiquidityDelta = MathEx.mulDivF(bntTradingLiquidityDelta, fundingRate.d, fundingRate.n);
+
+            return
+                TargetTradingLiquidity({
+                    update: true,
+                    bnt: targetBNTTradingLiquidity,
+                    baseToken: liquidity.baseTokenTradingLiquidity + baseTokenTradingLiquidityDelta
+                });
         }
 
-        // calculate the base token trading liquidity based on the delta between the new and the previous BNT trading
-        // liquidity and the effective funding rate (please note that the effective funding rate is always the rate
-        // between BNT and the base token)
-        uint256 bntTradingLiquidityDelta = targetBNTTradingLiquidity - liquidity.bntTradingLiquidity;
-        uint256 baseTokenTradingLiquidityDelta = bntTradingLiquidityDelta == 0
-            ? 0
-            : MathEx.mulDivF(bntTradingLiquidityDelta, fundingRate.d, fundingRate.n);
+        // liquidity decrease
+        // note that liquidity decrease isn't capped
+        bntTradingLiquidityDelta = liquidity.bntTradingLiquidity - targetBNTTradingLiquidity;
+        baseTokenTradingLiquidityDelta = MathEx.mulDivF(bntTradingLiquidityDelta, fundingRate.d, fundingRate.n);
 
         return
-            TradingLiquidityAction({
+            TargetTradingLiquidity({
                 update: true,
-                newBNTTradingLiquidity: targetBNTTradingLiquidity,
-                newBaseTokenTradingLiquidity: liquidity.baseTokenTradingLiquidity + baseTokenTradingLiquidityDelta
+                bnt: targetBNTTradingLiquidity,
+                baseToken: liquidity.baseTokenTradingLiquidity - baseTokenTradingLiquidityDelta
             });
     }
 
@@ -1324,12 +1350,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         uint256 minLiquidityForTrading
     ) private {
         // ensure that the base token reserve isn't empty
-        uint256 totalBaseTokenReserveAmount = pool.balanceOf(address(_masterVault));
-        if (totalBaseTokenReserveAmount == 0) {
+        uint256 baseTokenTotalLiquidity = pool.balanceOf(address(_masterVault));
+        if (baseTokenTotalLiquidity == 0) {
             revert InsufficientLiquidity();
         }
-
-        PoolLiquidity memory liquidity = data.liquidity;
 
         if (_poolRateState(data) == PoolRateState.Unstable) {
             return;
@@ -1337,39 +1361,39 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         if (!fundingRate.isPositive()) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
             return;
         }
 
-        TradingLiquidityAction memory action = _calcTargetTradingLiquidity(
-            totalBaseTokenReserveAmount,
-            _bntPool.availableFunding(pool),
+        PoolLiquidity memory liquidity = data.liquidity;
+        TargetTradingLiquidity memory targetTradingLiquidity = _calcTargetTradingLiquidity(
+            baseTokenTotalLiquidity,
+            _networkSettings.poolFundingLimit(pool),
+            _bntPool.currentPoolFunding(pool),
             liquidity,
             fundingRate,
             minLiquidityForTrading
         );
 
-        if (!action.update) {
+        if (!targetTradingLiquidity.update) {
             return;
         }
 
-        if (action.newBNTTradingLiquidity == 0 || action.newBaseTokenTradingLiquidity == 0) {
+        if (targetTradingLiquidity.bnt == 0 || targetTradingLiquidity.baseToken == 0) {
             _resetTradingLiquidity(contextId, pool, data, TRADING_STATUS_UPDATE_MIN_LIQUIDITY);
-
             return;
         }
 
         // update funding from the BNT pool
-        if (action.newBNTTradingLiquidity > liquidity.bntTradingLiquidity) {
-            _bntPool.requestFunding(contextId, pool, action.newBNTTradingLiquidity - liquidity.bntTradingLiquidity);
-        } else if (action.newBNTTradingLiquidity < liquidity.bntTradingLiquidity) {
-            _bntPool.renounceFunding(contextId, pool, liquidity.bntTradingLiquidity - action.newBNTTradingLiquidity);
+        if (targetTradingLiquidity.bnt > liquidity.bntTradingLiquidity) {
+            _bntPool.requestFunding(contextId, pool, targetTradingLiquidity.bnt - liquidity.bntTradingLiquidity);
+        } else if (targetTradingLiquidity.bnt < liquidity.bntTradingLiquidity) {
+            _bntPool.renounceFunding(contextId, pool, liquidity.bntTradingLiquidity - targetTradingLiquidity.bnt);
         }
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         PoolLiquidity memory newLiquidity = PoolLiquidity({
-            bntTradingLiquidity: action.newBNTTradingLiquidity.toUint128(),
-            baseTokenTradingLiquidity: action.newBaseTokenTradingLiquidity.toUint128(),
+            bntTradingLiquidity: targetTradingLiquidity.bnt.toUint128(),
+            baseTokenTradingLiquidity: targetTradingLiquidity.baseToken.toUint128(),
             stakedBalance: liquidity.stakedBalance
         });
 
@@ -1726,6 +1750,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         view
         returns (AverageRates memory)
     {
+        // if the spot rate is 0, reset the average rates
+        if (!spotRate.isPositive()) {
+            return AverageRates({ blockNumber: 0, rate: zeroFraction112(), invRate: zeroFraction112() });
+        }
+
         uint32 blockNumber = _blockNumber();
 
         // can only be updated once in a single block

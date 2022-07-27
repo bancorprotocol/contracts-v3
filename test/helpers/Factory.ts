@@ -34,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const POOL_COLLECTION_CURRENT_VERSION = 9;
+const POOL_COLLECTION_CURRENT_VERSION = 10;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
