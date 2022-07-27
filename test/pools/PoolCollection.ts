@@ -445,17 +445,14 @@ describe('PoolCollection', () => {
     describe('network fee', () => {
         const newNetworkFee = toPPM(30);
 
-        let network: TestBancorNetwork;
-        let networkSettings: NetworkSettings;
         let poolCollection: TestPoolCollection;
-        let reserveToken: TestERC20Token;
 
         beforeEach(async () => {
-            ({ network, networkSettings, poolCollection } = await createSystem());
+            ({ poolCollection } = await createSystem());
 
             expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
 
-            reserveToken = await createTestToken();
+            await createTestToken();
         });
 
         it('should revert when a non-owner attempts to set the network fee', async () => {
@@ -1229,7 +1226,7 @@ describe('PoolCollection', () => {
                                 expect(liquidity.baseTokenTradingLiquidity).to.equal(targetBaseTokenLiquidity);
                                 expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance);
 
-                                if (expectTradingLiquidityState == TradingLiquidityState.Increase) {
+                                if (expectTradingLiquidityState === TradingLiquidityState.Increase) {
                                     expect(liquidity.bntTradingLiquidity).to.gte(prevLiquidity.bntTradingLiquidity);
                                 } else {
                                     expect(liquidity.bntTradingLiquidity).to.lte(prevLiquidity.bntTradingLiquidity);
