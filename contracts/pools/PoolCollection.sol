@@ -630,8 +630,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             effectiveAverageRates.rate.fromFraction112(),
             minLiquidityForTrading
         );
-
-        _dispatchTradingLiquidityEvents(contextId, pool, data.poolToken.totalSupply(), liquidity, data.liquidity);
     }
 
     /**
@@ -668,13 +666,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             revert DepositingDisabled();
         }
 
-        PoolLiquidity memory prevLiquidity = data.liquidity;
-        uint256 currentStakedBalance = prevLiquidity.stakedBalance;
-
         // if there are no pool tokens available to support the staked balance - reset the
         // trading liquidity and the staked balance
         // in addition, get the effective average rates
         uint256 prevPoolTokenTotalSupply = data.poolToken.totalSupply();
+        uint256 currentStakedBalance = data.liquidity.stakedBalance;
         AverageRates memory effectiveAverageRates;
         if (prevPoolTokenTotalSupply == 0 && currentStakedBalance != 0) {
             currentStakedBalance = 0;
@@ -686,6 +682,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 invRate: zeroFraction112()
             });
         } else {
+            PoolLiquidity memory prevLiquidity = data.liquidity;
             effectiveAverageRates = _effectiveAverageRates(
                 data.averageRates,
                 Fraction({ n: prevLiquidity.bntTradingLiquidity, d: prevLiquidity.baseTokenTradingLiquidity })
@@ -705,6 +702,23 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // mint pool tokens to the provider
         data.poolToken.mint(provider, poolTokenAmount);
 
+        // should be triggered before the trading liquidity is updated
+        emit TokensDeposited({
+            contextId: contextId,
+            provider: provider,
+            token: pool,
+            baseTokenAmount: baseTokenAmount,
+            poolTokenAmount: poolTokenAmount
+        });
+
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            pool: pool,
+            liquidity: pool.balanceOf(address(_masterVault)),
+            stakedBalance: data.liquidity.stakedBalance,
+            poolTokenSupply: prevPoolTokenTotalSupply + poolTokenAmount
+        });
+
         // adjust the trading liquidity based on the base token vault balance and funding limits
         _updateTradingLiquidity(
             contextId,
@@ -716,27 +730,12 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // if trading is enabled, then update the recent average rates
         if (data.tradingEnabled) {
+            PoolLiquidity memory liquidity = data.liquidity;
             _updateAverageRates(
                 data,
-                Fraction({ n: data.liquidity.bntTradingLiquidity, d: data.liquidity.baseTokenTradingLiquidity })
+                Fraction({ n: liquidity.bntTradingLiquidity, d: liquidity.baseTokenTradingLiquidity })
             );
         }
-
-        emit TokensDeposited({
-            contextId: contextId,
-            provider: provider,
-            token: pool,
-            baseTokenAmount: baseTokenAmount,
-            poolTokenAmount: poolTokenAmount
-        });
-
-        _dispatchTradingLiquidityEvents(
-            contextId,
-            pool,
-            prevPoolTokenTotalSupply + poolTokenAmount,
-            prevLiquidity,
-            data.liquidity
-        );
 
         return poolTokenAmount;
     }
@@ -1089,12 +1088,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         data.poolToken.burn(amounts.poolTokenAmount);
 
         uint256 newPoolTokenTotalSupply = amounts.poolTokenTotalSupply - amounts.poolTokenAmount;
-
-        liquidity.stakedBalance = MathEx.mulDivF(
+        uint256 newStakedBalance = MathEx.mulDivF(
             liquidity.stakedBalance,
             newPoolTokenTotalSupply,
             amounts.poolTokenTotalSupply
         );
+
+        liquidity.stakedBalance = newStakedBalance;
 
         // trading liquidity is assumed to never exceed 128 bits (the cast below will revert otherwise)
         liquidity.baseTokenTradingLiquidity = amounts.newBaseTokenTradingLiquidity.toUint128();
@@ -1150,6 +1150,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 amounts.newBNTTradingLiquidity,
                 TRADING_STATUS_UPDATE_MIN_LIQUIDITY
             );
+        } else {
+            _dispatchTradingLiquidityEvents(contextId, pool, prevLiquidity, liquidity);
         }
 
         emit TokensWithdrawn({
@@ -1163,7 +1165,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });
 
-        _dispatchTradingLiquidityEvents(contextId, pool, newPoolTokenTotalSupply, prevLiquidity, data.liquidity);
+        emit TotalLiquidityUpdated({
+            contextId: contextId,
+            pool: pool,
+            liquidity: pool.balanceOf(address(_masterVault)),
+            stakedBalance: newStakedBalance,
+            poolTokenSupply: newPoolTokenTotalSupply
+        });
     }
 
     /**
@@ -1400,7 +1408,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // update the liquidity data of the pool
         data.liquidity = newLiquidity;
 
-        _dispatchTradingLiquidityEvents(contextId, pool, data.poolToken.totalSupply(), liquidity, newLiquidity);
+        _dispatchTradingLiquidityEvents(contextId, pool, liquidity, newLiquidity);
     }
 
     function _dispatchTradingLiquidityEvents(
@@ -1430,26 +1438,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         }
     }
 
-    function _dispatchTradingLiquidityEvents(
-        bytes32 contextId,
-        Token pool,
-        uint256 poolTokenTotalSupply,
-        PoolLiquidity memory prevLiquidity,
-        PoolLiquidity memory newLiquidity
-    ) private {
-        _dispatchTradingLiquidityEvents(contextId, pool, prevLiquidity, newLiquidity);
-
-        if (newLiquidity.stakedBalance != prevLiquidity.stakedBalance) {
-            emit TotalLiquidityUpdated({
-                contextId: contextId,
-                pool: pool,
-                liquidity: pool.balanceOf(address(_masterVault)),
-                stakedBalance: newLiquidity.stakedBalance,
-                poolTokenSupply: poolTokenTotalSupply
-            });
-        }
-    }
-
     /**
      * @dev resets trading liquidity and renounces any remaining BNT funding
      */
@@ -1472,6 +1460,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         uint256 currentBNTTradingLiquidity,
         uint8 reason
     ) private {
+        PoolLiquidity memory prevLiquidity = data.liquidity;
+
         // reset the network and base token trading liquidities
         data.liquidity.bntTradingLiquidity = 0;
         data.liquidity.baseTokenTradingLiquidity = 0;
@@ -1490,6 +1480,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         if (currentBNTTradingLiquidity > 0) {
             _bntPool.renounceFunding(contextId, pool, currentBNTTradingLiquidity);
         }
+
+        _dispatchTradingLiquidityEvents(contextId, pool, prevLiquidity, data.liquidity);
     }
 
     /**

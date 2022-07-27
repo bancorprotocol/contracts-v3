@@ -883,9 +883,9 @@ describe('PoolCollection', () => {
                     });
                 });
 
-                context('when the matched target network liquidity is below the minimum trading liquidity', () => {
+                context('when the target BNT trading liquidity is below the minimum trading liquidity', () => {
                     it('should revert', async () => {
-                        // use a funding rate such that the resulting matched target network liquidity is insufficient
+                        // use a funding rate such that the resulting matched target BNT trading liquidity is insufficient
                         await expect(
                             poolCollection.enableTrading(
                                 token.address,
