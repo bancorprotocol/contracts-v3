@@ -1900,7 +1900,7 @@ describe('BancorNetwork', () => {
                 true
             );
 
-            expect(retVal).to.equal(hop2.amount);
+            expect(retVal).to.equal(bySourceAmount ? hop2.amount : hop1.amount);
 
             const res = await tradeFunc(
                 amount,
