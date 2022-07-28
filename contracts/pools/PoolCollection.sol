@@ -173,11 +173,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the default trading fee (in units of PPM)
     uint32 private _defaultTradingFeePPM;
 
-    // true if protection is enabled, false otherwise
-    bool private _protectionEnabled = true;
-
     // the global network fee (in units of PPM)
     uint32 private _networkFeePPM;
+
+    // true if protection is enabled, false otherwise
+    bool private _protectionEnabled = true;
 
     /**
      * @dev triggered when the default trading fee is updated
@@ -421,7 +421,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      *
      * notes:
      *
-     * - there is no guarantee that this function will remains forward compatible,
+     * - there is no guarantee that this function will remain forward compatible,
      *   so relying on it should be avoided and instead, rely on specific getters
      *   from the IPoolCollection interface
      */
