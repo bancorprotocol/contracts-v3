@@ -1309,22 +1309,21 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // liquidity increase
         // note that liquidity increase is capped
         if (targetBNTTradingLiquidity > liquidity.bntTradingLiquidity) {
+            uint256 tradingLiquidityCap;
             if (liquidity.bntTradingLiquidity == 0) {
-                // cap the target trading liquidity by the default bootstrap amount
-                // the default bootstrap amount includes a buffer to reduce the chance for trading
-                // to be disabled as a result of trades in the pool
-                targetBNTTradingLiquidity = Math.min(
-                    targetBNTTradingLiquidity,
-                    minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR
-                );
+                // the current BNT trading liquidity is 0 - cap the target trading liquidity
+                // by the default bootstrap amount, which includes a buffer to reduce the chance
+                // for trading to be disabled as a result of trades in the pool
+                tradingLiquidityCap = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
             } else {
                 // the current BNT trading liquidity is not 0 - cap the target using the growth factor
-                targetBNTTradingLiquidity = Math.min(
-                    targetBNTTradingLiquidity,
-                    liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR
-                );
+                tradingLiquidityCap = liquidity.bntTradingLiquidity * LIQUIDITY_GROWTH_FACTOR;
             }
 
+            // apply the trading liquidity cap
+            targetBNTTradingLiquidity = Math.min(targetBNTTradingLiquidity, tradingLiquidityCap);
+
+            // calculate the trading liquidity deltas and return them
             bntTradingLiquidityDelta = targetBNTTradingLiquidity - liquidity.bntTradingLiquidity;
             baseTokenTradingLiquidityDelta = MathEx.mulDivF(bntTradingLiquidityDelta, fundingRate.d, fundingRate.n);
 
@@ -1338,6 +1337,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
 
         // liquidity decrease
         // note that liquidity decrease isn't capped
+        // calculate the trading liquidity deltas and return them
         bntTradingLiquidityDelta = liquidity.bntTradingLiquidity - targetBNTTradingLiquidity;
         baseTokenTradingLiquidityDelta = MathEx.mulDivF(bntTradingLiquidityDelta, fundingRate.d, fundingRate.n);
 
