@@ -1345,7 +1345,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             TargetTradingLiquidity({
                 update: true,
                 bnt: targetBNTTradingLiquidity,
-                baseToken: liquidity.baseTokenTradingLiquidity - baseTokenTradingLiquidityDelta
+                baseToken: MathEx.subMax0(liquidity.baseTokenTradingLiquidity, baseTokenTradingLiquidityDelta)
             });
     }
 
