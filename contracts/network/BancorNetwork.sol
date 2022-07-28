@@ -1058,7 +1058,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // update the pending network fee amount to be burned by the vortex
         _pendingNetworkFeeAmount += networkFeeAmount;
 
-        return params.bySourceAmount ? lastHopTradeResult.targetAmount : lastHopTradeResult.sourceAmount;
+        return params.bySourceAmount ? lastHopTradeResult.targetAmount : firstHopTradeResult.sourceAmount;
     }
 
     /**
