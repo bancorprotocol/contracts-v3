@@ -1310,12 +1310,13 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         // note that liquidity increase is capped
         if (targetBNTTradingLiquidity > liquidity.bntTradingLiquidity) {
             if (liquidity.bntTradingLiquidity == 0) {
-                // the current BNT trading liquidity is 0 - set it to the minimum liquidity for trading (with an
-                // additional buffer so that initial trades will be less likely to trigger disabling of trading)
-                uint256 defaultBootstrapAmount = minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR;
-
                 // cap the target trading liquidity by the default bootstrap amount
-                targetBNTTradingLiquidity = Math.min(targetBNTTradingLiquidity, defaultBootstrapAmount);
+                // the default bootstrap amount includes a buffer to reduce the chance for trading
+                // to be disabled as a result of trades in the pool
+                targetBNTTradingLiquidity = Math.min(
+                    targetBNTTradingLiquidity,
+                    minLiquidityForTrading * BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR
+                );
             } else {
                 // the current BNT trading liquidity is not 0 - cap the target using the growth factor
                 targetBNTTradingLiquidity = Math.min(
