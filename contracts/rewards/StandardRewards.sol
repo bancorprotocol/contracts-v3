@@ -848,20 +848,4 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
 
         return true;
     }
-
-    /**
-     * @dev post upgrade callback
-     */
-    function _postUpgrade(
-        bytes calldata /* data */
-    ) internal override {
-        // since we have renamed the "isEnabled" field to "isPaused", we need to manually inverse all exiting programs
-        // values (which is still manageable, as at the time of this upgrade - there were only 8 programs)
-        uint256 length = _nextProgramId - INITIAL_PROGRAM_ID;
-        for (uint256 i = 0; i < length; i++) {
-            uint256 id = i + INITIAL_PROGRAM_ID;
-
-            _programs[id].isPaused = false;
-        }
-    }
 }
