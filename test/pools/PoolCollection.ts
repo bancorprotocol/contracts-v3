@@ -17,12 +17,12 @@ import Contracts, {
 import { PoolLiquidityStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
     BOOTSTRAPPING_LIQUIDITY_BUFFER_FACTOR,
+    DEFAULT_NETWORK_FEE_PPM,
     DEFAULT_TRADING_FEE_PPM,
     EMA_AVERAGE_RATE_WEIGHT,
     EMA_SPOT_RATE_WEIGHT,
     LIQUIDITY_GROWTH_FACTOR,
     MAX_UINT256,
-    NETWORK_FEE_PPM,
     PoolType,
     PPM_RESOLUTION,
     RATE_MAX_DEVIATION_PPM,
@@ -63,8 +63,9 @@ describe('PoolCollection', () => {
     enum TradingLiquidityState {
         Reset = 0,
         Ignore = 1,
-        Update = 2,
-        InvalidState = 3
+        Increase = 2,
+        Decrease = 3,
+        InvalidState = 4
     }
 
     let deployer: SignerWithAddress;
@@ -253,8 +254,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -269,8 +269,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -285,8 +284,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -301,8 +299,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -317,8 +314,7 @@ describe('PoolCollection', () => {
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -333,8 +329,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     ZERO_ADDRESS,
                     poolTokenFactory.address,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -349,8 +344,7 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS,
-                    poolMigrator.address,
-                    NETWORK_FEE_PPM
+                    poolMigrator.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -365,26 +359,9 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    ZERO_ADDRESS,
-                    NETWORK_FEE_PPM
+                    ZERO_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
-        });
-
-        it('should revert when attempting to create with an invalid network fee', async () => {
-            await expect(
-                Contracts.PoolCollection.deploy(
-                    network.address,
-                    bnt.address,
-                    networkSettings.address,
-                    masterVault.address,
-                    bntPool.address,
-                    externalProtectionVault.address,
-                    poolTokenFactory.address,
-                    poolMigrator.address,
-                    PPM_RESOLUTION + 1
-                )
-            ).to.be.revertedWithError('InvalidFee');
         });
 
         it('should be properly initialized', async () => {
@@ -396,19 +373,22 @@ describe('PoolCollection', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address,
-                NETWORK_FEE_PPM
+                poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(8);
+            expect(await poolCollection.version()).to.equal(10);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
-            expect(await poolCollection.networkFeePPM()).to.equal(NETWORK_FEE_PPM);
+            expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
             expect(await poolCollection.protectionEnabled()).to.equal(true);
 
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
                 .withArgs(0, DEFAULT_TRADING_FEE_PPM);
+
+            await expect(poolCollection.deployTransaction)
+                .to.emit(poolCollection, 'NetworkFeePPMUpdated')
+                .withArgs(0, DEFAULT_NETWORK_FEE_PPM);
         });
     });
 
@@ -459,6 +439,46 @@ describe('PoolCollection', () => {
             await createPool(reserveToken, network, networkSettings, poolCollection);
 
             expect(await poolCollection.tradingFeePPM(reserveToken.address)).to.equal(newDefaultTradingFee);
+        });
+    });
+
+    describe('network fee', () => {
+        const newNetworkFee = toPPM(30);
+
+        let poolCollection: TestPoolCollection;
+
+        beforeEach(async () => {
+            ({ poolCollection } = await createSystem());
+
+            expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
+
+            await createTestToken();
+        });
+
+        it('should revert when a non-owner attempts to set the network fee', async () => {
+            await expect(poolCollection.connect(nonOwner).setNetworkFeePPM(newNetworkFee)).to.be.revertedWithError(
+                'AccessDenied'
+            );
+        });
+
+        it('should revert when setting the network fee to an invalid value', async () => {
+            await expect(poolCollection.setNetworkFeePPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
+        });
+
+        it('should ignore updating to the same network fee', async () => {
+            await poolCollection.setNetworkFeePPM(newNetworkFee);
+
+            const res = await poolCollection.setNetworkFeePPM(newNetworkFee);
+            await expect(res).not.to.emit(poolCollection, 'NetworkFeePPMUpdated');
+        });
+
+        it('should be able to set and update the network fee', async () => {
+            const res = await poolCollection.setNetworkFeePPM(newNetworkFee);
+            await expect(res)
+                .to.emit(poolCollection, 'NetworkFeePPMUpdated')
+                .withArgs(DEFAULT_NETWORK_FEE_PPM, newNetworkFee);
+
+            expect(await poolCollection.networkFeePPM()).to.equal(newNetworkFee);
         });
     });
 
@@ -860,9 +880,9 @@ describe('PoolCollection', () => {
                     });
                 });
 
-                context('when the matched target network liquidity is below the minimum trading liquidity', () => {
+                context('when the target BNT trading liquidity is below the minimum trading liquidity', () => {
                     it('should revert', async () => {
-                        // use a funding rate such that the resulting matched target network liquidity is insufficient
+                        // use a funding rate such that the resulting matched target BNT trading liquidity is insufficient
                         await expect(
                             poolCollection.enableTrading(
                                 token.address,
@@ -1097,8 +1117,9 @@ describe('PoolCollection', () => {
                     } = await poolCollection.poolData(token.address);
 
                     const prevPoolTokenTotalSupply = await poolToken.totalSupply();
+                    const fundingLimit = await networkSettings.poolFundingLimit(token.address);
                     const prevFunding = await bntPool.currentPoolFunding(token.address);
-                    const prevAvailableFunding = await bntPool.availableFunding(token.address);
+                    const prevAvailableFunding = fundingLimit.sub(prevFunding);
 
                     const res = await poolCollection.updateTradingLiquidity(token.address);
 
@@ -1139,7 +1160,6 @@ describe('PoolCollection', () => {
                                 prevFunding.sub(prevLiquidity.bntTradingLiquidity),
                                 TradingStatusUpdateReason.MinLiquidity
                             );
-
                             break;
 
                         case TradingLiquidityState.Ignore:
@@ -1148,10 +1168,10 @@ describe('PoolCollection', () => {
                                 prevLiquidity.baseTokenTradingLiquidity
                             );
                             expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance);
-
                             break;
 
-                        case TradingLiquidityState.Update:
+                        case TradingLiquidityState.Increase:
+                        case TradingLiquidityState.Decrease:
                             {
                                 const totalBaseTokenReserveAmount = await getBalance(token, masterVault.address);
                                 const totalTokenDeltaAmount = totalBaseTokenReserveAmount.sub(
@@ -1205,8 +1225,13 @@ describe('PoolCollection', () => {
                                 expect(liquidity.bntTradingLiquidity).to.equal(targetBNTTradingLiquidity);
                                 expect(liquidity.baseTokenTradingLiquidity).to.equal(targetBaseTokenLiquidity);
                                 expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance);
-                            }
 
+                                if (expectTradingLiquidityState === TradingLiquidityState.Increase) {
+                                    expect(liquidity.bntTradingLiquidity).to.gte(prevLiquidity.bntTradingLiquidity);
+                                } else {
+                                    expect(liquidity.bntTradingLiquidity).to.lte(prevLiquidity.bntTradingLiquidity);
+                                }
+                            }
                             break;
                     }
                 };
@@ -1250,8 +1275,8 @@ describe('PoolCollection', () => {
                             await poolCollection.enableDepositing(token.address, false);
                         });
 
-                        it('should update the trading liquidity', async () => {
-                            await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
+                        it('should increase the trading liquidity', async () => {
+                            await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Increase);
                         });
                     });
 
@@ -1274,26 +1299,7 @@ describe('PoolCollection', () => {
                         });
 
                         context('when there is available funding to exceed the target liquidity', () => {
-                            it('should update the trading liquidity', async () => {
-                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
-                            });
-                        });
-
-                        context('when there is not enough available funding to exceed the target liquidity', () => {
-                            beforeEach(async () => {
-                                const currentFunding = await bntPool.currentPoolFunding(token.address);
-                                const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
-
-                                await networkSettings.setFundingLimit(
-                                    token.address,
-                                    currentFunding.add(minLiquidityForTrading).add(1)
-                                );
-                            });
-
                             it('should not update the trading liquidity', async () => {
-                                const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
-                                const tokenAmount = minLiquidityForTrading.mul(rate.d).div(rate.n);
-
                                 const { liquidity: prevLiquidity } = await poolCollection.poolData(token.address);
 
                                 const res = await poolCollection.updateTradingLiquidity(token.address);
@@ -1313,13 +1319,17 @@ describe('PoolCollection', () => {
                                     res
                                 );
 
-                                expect(averageRates.rate).to.equal(rate);
-                                expect(averageRates.invRate).to.equal(invRate);
+                                expect(averageRates.rate).to.equal(ZERO_FRACTION);
+                                expect(averageRates.invRate).to.equal(ZERO_FRACTION);
                             });
                         });
                     });
 
                     context('when the new BNT trading liquidity is below the minimum trading liquidity', () => {
+                        beforeEach(async () => {
+                            await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
+                        });
+
                         context('when pool rates are uninitialized', () => {
                             beforeEach(async () => {
                                 await poolCollection.setAverageRatesT(token.address, {
@@ -1354,7 +1364,7 @@ describe('PoolCollection', () => {
                             });
 
                             it('should update the trading liquidity', async () => {
-                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
+                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Reset);
                             });
                         });
 
@@ -1453,8 +1463,8 @@ describe('PoolCollection', () => {
                                 expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                             });
 
-                            it('should update the trading liquidity', async () => {
-                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
+                            it('should increase the trading liquidity', async () => {
+                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Increase);
                             });
                         });
                     });
@@ -1505,8 +1515,8 @@ describe('PoolCollection', () => {
                                 expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                             });
 
-                            it('should update the trading liquidity', async () => {
-                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
+                            it('should increase the trading liquidity', async () => {
+                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Increase);
                             });
                         });
                     });
@@ -1530,8 +1540,8 @@ describe('PoolCollection', () => {
                             expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                         });
 
-                        it('should update the trading liquidity', async () => {
-                            await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
+                        it('should increase the trading liquidity', async () => {
+                            await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Increase);
                         });
 
                         it('should update the rates of the pool', async () => {
@@ -1580,37 +1590,34 @@ describe('PoolCollection', () => {
                                 await networkSettings.setFundingLimit(token.address, MIN_LIQUIDITY_FOR_TRADING.sub(1));
                             });
 
-                            it('should update the trading liquidity', async () => {
-                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
+                            it('should reset the trading liquidity', async () => {
+                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Reset);
+                            });
+                        });
+
+                        context('when the target BNT trading liquidity is below the minimum trading liquidity', () => {
+                            beforeEach(async () => {
+                                await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
+                            });
+
+                            it('should reset the trading liquidity', async () => {
+                                await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Reset);
                             });
                         });
 
                         context(
-                            'when the matched target network liquidity is below the minimum trading liquidity',
+                            'when the target BNT trading liquidity is below the current BNT trading liquidity',
                             () => {
                                 beforeEach(async () => {
-                                    await networkSettings.setMinLiquidityForTrading(MAX_UINT256);
-                                });
+                                    // increase the trading liquidity
+                                    await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Increase);
 
-                                it('should reset the trading liquidity', async () => {
-                                    await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Reset);
-                                });
-                            }
-                        );
-
-                        context(
-                            'when the matched target network liquidity is below the current network liquidity',
-                            () => {
-                                beforeEach(async () => {
-                                    // ensure that the pool grew a bit and then retroactive reduce the funding
-                                    // limit to 0 to force the shrinking of the pool
-                                    await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
-
+                                    // ensure the new target BNT trading liquidity is below the current one
                                     await networkSettings.setFundingLimit(token.address, MIN_LIQUIDITY_FOR_TRADING);
                                 });
 
-                                it('should update the trading liquidity', async () => {
-                                    await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Update);
+                                it('should decrease the trading liquidity', async () => {
+                                    await testMultipleUpdateTradingLiquidity(TradingLiquidityState.Decrease);
                                 });
                             }
                         );
@@ -1734,8 +1741,9 @@ describe('PoolCollection', () => {
 
                     const prevPoolTokenTotalSupply = await poolToken.totalSupply();
                     const prevProviderPoolTokenBalance = await poolToken.balanceOf(provider.address);
+                    const fundingLimit = await networkSettings.poolFundingLimit(token.address);
                     const prevFunding = await bntPool.currentPoolFunding(token.address);
-                    const prevAvailableFunding = await bntPool.availableFunding(token.address);
+                    const prevAvailableFunding = fundingLimit.sub(prevFunding);
 
                     let expectedPoolTokenAmount;
                     if (prevPoolTokenTotalSupply.isZero()) {
@@ -1826,7 +1834,8 @@ describe('PoolCollection', () => {
 
                             break;
 
-                        case TradingLiquidityState.Update:
+                        case TradingLiquidityState.Increase:
+                        case TradingLiquidityState.Decrease:
                             {
                                 const totalBaseTokenReserveAmount = await getBalance(token, masterVault.address);
                                 const totalTokenDeltaAmount = totalBaseTokenReserveAmount.sub(
@@ -1953,22 +1962,6 @@ describe('PoolCollection', () => {
                         });
 
                         context('when there is available funding to exceed the target liquidity', () => {
-                            it('should deposit and update the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Update);
-                            });
-                        });
-
-                        context('when there is not enough available funding to exceed the target liquidity', () => {
-                            beforeEach(async () => {
-                                const currentFunding = await bntPool.currentPoolFunding(token.address);
-                                const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
-
-                                await networkSettings.setFundingLimit(
-                                    token.address,
-                                    currentFunding.add(minLiquidityForTrading).add(1)
-                                );
-                            });
-
                             it('should deposit without updating the trading liquidity', async () => {
                                 const minLiquidityForTrading = await networkSettings.minLiquidityForTrading();
                                 const tokenAmount = minLiquidityForTrading.mul(rate.d).div(rate.n);
@@ -2016,8 +2009,8 @@ describe('PoolCollection', () => {
                                     res
                                 );
 
-                                expect(averageRates.rate).to.equal(rate);
-                                expect(averageRates.invRate).to.equal(invRate);
+                                expect(averageRates.rate).to.equal(ZERO_FRACTION);
+                                expect(averageRates.invRate).to.equal(ZERO_FRACTION);
                             });
                         });
                     });
@@ -2056,8 +2049,8 @@ describe('PoolCollection', () => {
                                 expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                             });
 
-                            it('should deposit and update the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            it('should deposit and increase the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Increase);
                             });
                         });
 
@@ -2156,8 +2149,8 @@ describe('PoolCollection', () => {
                                 expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                             });
 
-                            it('should deposit and update the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            it('should deposit and increase the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Increase);
                             });
                         });
                     });
@@ -2208,8 +2201,8 @@ describe('PoolCollection', () => {
                                 expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                             });
 
-                            it('should deposit and update the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            it('should deposit and increase the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Increase);
                             });
                         });
                     });
@@ -2233,8 +2226,8 @@ describe('PoolCollection', () => {
                             expect(await poolCollection.isPoolStable(token.address)).to.be.true;
                         });
 
-                        it('should deposit and update the trading liquidity', async () => {
-                            await testMultipleDepositsFor(TradingLiquidityState.Update);
+                        it('should deposit and increase the trading liquidity', async () => {
+                            await testMultipleDepositsFor(TradingLiquidityState.Increase);
                         });
 
                         it('should update the rates of the pool', async () => {
@@ -2283,8 +2276,8 @@ describe('PoolCollection', () => {
                                 await networkSettings.setFundingLimit(token.address, MIN_LIQUIDITY_FOR_TRADING.sub(1));
                             });
 
-                            it('should deposit and update the trading liquidity', async () => {
-                                await testMultipleDepositsFor(TradingLiquidityState.Update);
+                            it('should deposit and reset the trading liquidity', async () => {
+                                await testMultipleDepositsFor(TradingLiquidityState.Reset);
                             });
                         });
 
@@ -2305,15 +2298,15 @@ describe('PoolCollection', () => {
                             'when the matched target network liquidity is below the current network liquidity',
                             () => {
                                 beforeEach(async () => {
-                                    // ensure that the pool grew a bit and then retroactive reduce the funding
-                                    // limit to 0 to force the shrinking of the pool
-                                    await testMultipleDepositsFor(TradingLiquidityState.Update);
+                                    // increase the trading liquidity
+                                    await testMultipleDepositsFor(TradingLiquidityState.Increase);
 
+                                    // ensure the new target BNT trading liquidity is below the current one
                                     await networkSettings.setFundingLimit(token.address, MIN_LIQUIDITY_FOR_TRADING);
                                 });
 
-                                it('should deposit and update the trading liquidity', async () => {
-                                    await testMultipleDepositsFor(TradingLiquidityState.Update);
+                                it('should deposit and reduce the trading liquidity', async () => {
+                                    await testMultipleDepositsFor(TradingLiquidityState.Decrease);
                                 });
                             }
                         );
@@ -2508,7 +2501,8 @@ describe('PoolCollection', () => {
 
                     break;
 
-                case TradingLiquidityState.Update:
+                case TradingLiquidityState.Increase:
+                case TradingLiquidityState.Decrease:
                     expect(liquidity.baseTokenTradingLiquidity).to.equal(
                         poolWithdrawalAmounts.newBaseTokenTradingLiquidity
                     );
@@ -2814,7 +2808,7 @@ describe('PoolCollection', () => {
                                                         }`, async () => {
                                                             if (ok) {
                                                                 await testMultipleWithdrawals(
-                                                                    TradingLiquidityState.Update
+                                                                    TradingLiquidityState.Decrease
                                                                 );
                                                             } else {
                                                                 expect(await poolCollection.isPoolStable(token.address))
@@ -2824,7 +2818,7 @@ describe('PoolCollection', () => {
                                                                     withdrawAndVerifyState(
                                                                         totalBasePoolTokenAmount,
                                                                         withdrawalFeePPM,
-                                                                        TradingLiquidityState.Update
+                                                                        TradingLiquidityState.Decrease
                                                                     )
                                                                 ).to.be.revertedWithError('RateUnstable');
                                                             }
@@ -2855,7 +2849,7 @@ describe('PoolCollection', () => {
                         });
 
                         it('should withdraw', async () => {
-                            await testMultipleWithdrawals(TradingLiquidityState.Update);
+                            await testMultipleWithdrawals(TradingLiquidityState.Decrease);
                         });
 
                         context(
@@ -2878,7 +2872,7 @@ describe('PoolCollection', () => {
                         });
 
                         it('should withdraw', async () => {
-                            await testMultipleWithdrawals(TradingLiquidityState.Update);
+                            await testMultipleWithdrawals(TradingLiquidityState.Decrease);
                         });
                     });
                 });
@@ -2904,7 +2898,7 @@ describe('PoolCollection', () => {
             balanceOfExternalProtectionVault: BigNumber,
             tradingFeePPM: number,
             withdrawalFeePPM: number,
-            tradingLiquidityState = TradingLiquidityState.Update
+            tradingLiquidityState = TradingLiquidityState.Decrease
         ) => {
             ({ network, bnt, networkSettings, masterVault, externalProtectionVault, bntPool, poolCollection } =
                 await createSystem());
@@ -3258,9 +3252,12 @@ describe('PoolCollection', () => {
                             bntPool,
                             externalProtectionVault,
                             poolTokenFactory,
-                            poolMigrator,
-                            networkFeePPM
+                            poolMigrator
                         );
+
+                        if (networkFeePPM !== undefined) {
+                            await poolCollection.setNetworkFeePPM(networkFeePPM);
+                        }
 
                         await network.registerPoolCollection(poolCollection.address);
 
@@ -4681,7 +4678,6 @@ describe('PoolCollection', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
-                NETWORK_FEE_PPM,
                 await poolCollection.poolType(),
                 (await poolCollection.version()) + 1
             );

@@ -17,7 +17,7 @@ struct ProgramData {
     Token pool;
     IPoolToken poolToken;
     Token rewardsToken;
-    bool isEnabled;
+    bool isPaused;
     uint32 startTime;
     uint32 endTime;
     uint256 rewardRate;
@@ -78,9 +78,9 @@ interface IStandardRewards is IUpgradeable {
     function isProgramActive(uint256 id) external view returns (bool);
 
     /**
-     * @dev returns whether the specified program is enabled
+     * @dev returns whether the specified program is paused
      */
-    function isProgramEnabled(uint256 id) external view returns (bool);
+    function isProgramPaused(uint256 id) external view returns (bool);
 
     /**
      * @dev returns the ID of the latest program for a given pool (or 0 if no program is currently set)
@@ -94,11 +94,9 @@ interface IStandardRewards is IUpgradeable {
      *
      * - the caller must be the admin of the contract
      * - the pool must not have an active program
-     * - if the rewards token isn't the BNT token, then the rewards must have been deposited to the rewards vault
      */
     function createProgram(
         Token pool,
-        Token rewardsToken,
         uint256 totalRewards,
         uint32 startTime,
         uint32 endTime
@@ -115,13 +113,13 @@ interface IStandardRewards is IUpgradeable {
     function terminateProgram(uint256 id) external;
 
     /**
-     * @dev enables or disables a program
+     * @dev pauses/resumes a program
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
-    function enableProgram(uint256 id, bool status) external;
+    function pauseProgram(uint256, bool pause) external;
 
     /**
      * @dev adds a provider to the program

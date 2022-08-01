@@ -16,6 +16,7 @@ library RewardsMath {
         uint32 timeElapsed,
         uint32 programDuration
     ) internal pure returns (uint256) {
+        // ensures that the function never returns more than the total rewards
         assert(timeElapsed <= programDuration);
         return MathEx.mulDivF(totalRewards, timeElapsed, programDuration);
     }

@@ -7,6 +7,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
+import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils, DoesNotExist, AlreadyExists, InvalidParam } from "../utility/Utils.sol";
 import { Time } from "../utility/Time.sol";
@@ -50,6 +51,10 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
     // the factor used to calculate the maximum number of programs to attempt to auto-process in a single attempt
     uint8 private constant AUTO_PROCESS_MAX_PROGRAMS_FACTOR = 2;
+
+    // if a program is attempting to burn a total supply percentage equal or higher to this number,
+    // the program will terminate
+    uint32 private constant SUPPLY_BURN_TERMINATION_THRESHOLD_PPM = 500000;
 
     // the network contract
     IBancorNetwork private immutable _network;
@@ -100,9 +105,9 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     event ProgramTerminated(Token indexed pool, uint32 endTime, uint256 remainingRewards);
 
     /**
-     * @dev triggered when a program is enabled/disabled
+     * @dev triggered when a program is paused/resumed
      */
-    event ProgramEnabled(Token indexed pool, bool status, uint256 remainingRewards);
+    event ProgramPaused(Token indexed pool, bool paused);
 
     /**
      * @dev triggered when the number of programs to auto-process the rewards for is updated
@@ -166,7 +171,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * @dev performs contract-specific initialization
      */
     function __AutoCompoundingRewards_init_unchained() internal onlyInitializing {
-        _autoProcessRewardsCount = DEFAULT_AUTO_PROCESS_REWARDS_COUNT;
+        _setAutoProcessRewardsCount(DEFAULT_AUTO_PROCESS_REWARDS_COUNT);
     }
 
     // solhint-enable func-name-mixedcase
@@ -221,14 +226,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * - the caller must be the admin of the contract
      */
     function setAutoProcessRewardsCount(uint256 newCount) external greaterThanZero(newCount) onlyAdmin {
-        uint256 prevCount = _autoProcessRewardsCount;
-        if (prevCount == newCount) {
-            return;
-        }
-
-        _autoProcessRewardsCount = newCount;
-
-        emit AutoProcessRewardsCountUpdated({ prevCount: prevCount, newCount: newCount });
+        _setAutoProcessRewardsCount(newCount);
     }
 
     /**
@@ -248,6 +246,13 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         }
 
         return p.startTime <= currTime && currTime <= p.endTime;
+    }
+
+    /**
+     * @inheritdoc IAutoCompoundingRewards
+     */
+    function isProgramPaused(Token pool) external view returns (bool) {
+        return _programs[pool].isPaused;
     }
 
     /**
@@ -295,37 +300,27 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
      * @inheritdoc IAutoCompoundingRewards
      */
     function terminateProgram(Token pool) external onlyAdmin nonReentrant {
-        ProgramData memory p = _programs[pool];
-
-        if (!_programExists(p)) {
-            revert DoesNotExist();
-        }
-
-        delete _programs[pool];
-
-        assert(_pools.remove(address(pool)));
-
-        emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
+        _terminateProgram(pool);
     }
 
     /**
      * @inheritdoc IAutoCompoundingRewards
      */
-    function enableProgram(Token pool, bool status) external onlyAdmin nonReentrant {
+    function pauseProgram(Token pool, bool pause) external onlyAdmin nonReentrant {
         ProgramData memory p = _programs[pool];
 
         if (!_programExists(p)) {
             revert DoesNotExist();
         }
 
-        bool prevStatus = p.isEnabled;
-        if (prevStatus == status) {
+        bool prevStatus = p.isPaused;
+        if (prevStatus == pause) {
             return;
         }
 
-        _programs[pool].isEnabled = status;
+        _programs[pool].isPaused = pause;
 
-        emit ProgramEnabled({ pool: pool, status: status, remainingRewards: p.remainingRewards });
+        emit ProgramPaused({ pool: pool, paused: pause });
     }
 
     /**
@@ -359,6 +354,20 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     }
 
     /**
+     * @dev sets the number of programs to auto-process the rewards for
+     */
+    function _setAutoProcessRewardsCount(uint256 newCount) private {
+        uint256 prevCount = _autoProcessRewardsCount;
+        if (prevCount == newCount) {
+            return;
+        }
+
+        _autoProcessRewardsCount = newCount;
+
+        emit AutoProcessRewardsCountUpdated({ prevCount: prevCount, newCount: newCount });
+    }
+
+    /**
      * @dev processes the rewards of a given pool and returns true if the rewards processing was completed, and false
      * if it was skipped
      */
@@ -367,7 +376,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
 
         uint32 currTime = _time();
 
-        if (!p.isEnabled || currTime < p.startTime) {
+        if (p.isPaused || currTime < p.startTime) {
             return false;
         }
 
@@ -383,6 +392,15 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         uint256 poolTokenAmountToBurn = _poolTokenAmountToBurn(pool, p, tokenAmountToDistribute);
         if (poolTokenAmountToBurn == 0) {
             return true;
+        }
+
+        // sanity check, if the amount to burn is equal or higher than the termination percentage
+        // threshold, terminate the program
+        if (
+            poolTokenAmountToBurn * PPM_RESOLUTION >= p.poolToken.totalSupply() * SUPPLY_BURN_TERMINATION_THRESHOLD_PPM
+        ) {
+            _terminateProgram(pool);
+            return false;
         }
 
         IVault rewardsVault = _rewardsVault(pool);
@@ -440,7 +458,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
             halfLife: halfLife,
             prevDistributionTimestamp: 0,
             poolToken: poolToken,
-            isEnabled: true,
+            isPaused: false,
             distributionType: distributionType,
             totalRewards: totalRewards,
             remainingRewards: totalRewards
@@ -451,6 +469,23 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
         _programs[pool] = p;
 
         assert(_pools.add(address(pool)));
+    }
+
+    /**
+     * @dev terminates a rewards program
+     */
+    function _terminateProgram(Token pool) private {
+        ProgramData memory p = _programs[pool];
+
+        if (!_programExists(p)) {
+            revert DoesNotExist();
+        }
+
+        delete _programs[pool];
+
+        assert(_pools.remove(address(pool)));
+
+        emit ProgramTerminated({ pool: pool, endTime: p.endTime, remainingRewards: p.remainingRewards });
     }
 
     /**

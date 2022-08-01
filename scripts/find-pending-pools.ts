@@ -136,6 +136,13 @@ const main = async () => {
             );
         }
 
+        const fundingLimit = await networkSettings.poolFundingLimit(pool);
+        if (fundingLimit.eq(0)) {
+            Logger.error('  Skipping pool with insufficient funding limit');
+
+            continue;
+        }
+
         const estimatedRequiredLiquidity = new Decimal(minLiquidityForTrading.toString())
             .mul(rate)
             .mul(MIN_STAKED_BALANCE_FACTOR)
