@@ -1,5 +1,6 @@
 import Contracts, {
     AccessControlEnumerable,
+    AutoCompoundingRewards,
     BancorNetwork,
     BancorNetworkInfo,
     BancorPortal,
@@ -59,6 +60,7 @@ import { getNamedAccounts } from 'hardhat';
     let masterVault: MasterVault;
     let poolCollection: PoolCollection;
     let pendingWithdrawals: PendingWithdrawals;
+    let autoCompoundingRewards: AutoCompoundingRewards;
 
     let deployer: SignerWithAddress;
     let daoMultisig: SignerWithAddress;
@@ -85,6 +87,7 @@ import { getNamedAccounts } from 'hardhat';
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
+        autoCompoundingRewards = await DeployedContracts.AutoCompoundingRewards.deployed();
         networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
     });
 
@@ -170,14 +173,18 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Upgradeable.ROLE_ADMIN, [
                 daoMultisig.address
             ]);
-            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER);
+            await expectRoleMembers(externalAutoCompoundingRewardsVault, Roles.Vault.ROLE_ASSET_MANAGER, [
+                autoCompoundingRewards.address
+            ]);
 
             await expectRoleMembers(poolTokenFactory, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 
             await expectRoleMembers(networkSettings, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 
             await expectRoleMembers(bntPool, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address, network.address]);
-            await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER);
+            await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_POOL_TOKEN_MANAGER, [
+                autoCompoundingRewards.address
+            ]);
             await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_BNT_MANAGER, [poolCollection.address]);
             await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_VAULT_MANAGER, [poolCollection.address]);
             await expectRoleMembers(bntPool, Roles.BNTPool.ROLE_FUNDING_MANAGER, [poolCollection.address]);
