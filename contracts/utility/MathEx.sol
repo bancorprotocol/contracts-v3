@@ -106,6 +106,7 @@ library MathEx {
 
     /**
      * @dev returns a fraction with truncated components
+     * note that since the input value is truncated, the use of the method incurs precision loss
      */
     function truncatedFraction(Fraction memory fraction, uint256 max) internal pure returns (Fraction memory) {
         uint256 scale = Math.ceilDiv(Math.max(fraction.n, fraction.d), max);
