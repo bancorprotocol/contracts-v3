@@ -91,7 +91,7 @@ const fundAccounts = async () => {
         },
         {
             token: wbtc,
-            amount: toWei(100, 9),
+            amount: toWei(100, 8),
             whale: wbtcWhale
         }
     ];
