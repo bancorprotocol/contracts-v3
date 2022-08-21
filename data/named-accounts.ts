@@ -14,7 +14,7 @@ const TestNamedAccounts = {
         ...mainnet('0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf')
     },
     daiWhale: {
-        ...mainnet('0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503')
+        ...mainnet('0x5D38B4e4783E34e2301A2a36c39a03c45798C4dD')
     },
     linkWhale: {
         ...mainnet('0xc6bed363b30DF7F35b601a5547fE56cd31Ec63DA')
