@@ -64,7 +64,7 @@
     "clean": "rm -rf artifacts cache coverage typechain-types"
   },
   "dependencies": {
-    "hardhat": "2.9.9"
+    "hardhat": "2.11.1"
   },
   "devDependencies": {
     "@anders-t/ethers-ledger": "^1.0.4",
