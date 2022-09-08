@@ -238,7 +238,7 @@ describe('BNTPool', () => {
 
         it('should revert when attempting to burn more than the balance of the master vault', async () => {
             await expect(bntPool.connect(vaultManager).burnFromVault(amount.add(1))).to.be.revertedWithError(
-                'Transaction reverted without a reason string'
+                'undefined'
             );
         });
 
@@ -788,7 +788,7 @@ describe('BNTPool', () => {
 
                     await expect(
                         network.depositToBNTPoolForT(CONTEXT_ID, provider.address, amount, false, 0)
-                    ).to.be.revertedWithError('Transaction reverted without a reason string');
+                    ).to.be.revertedWithError('undefined');
                 });
 
                 it('should allow depositing liquidity', async () => {
