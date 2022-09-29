@@ -196,7 +196,7 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(network, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
             await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, [liquidityProtection.address]);
             await expectRoleMembers(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER);
-            await expectRoleMembers(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER);
+            await expectRoleMembers(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, [daoMultisig.address]);
 
             await expectRoleMembers(standardRewards, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 
