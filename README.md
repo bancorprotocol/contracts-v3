@@ -32,6 +32,7 @@ The security policy is available [here](./SECURITY.md).
 
 -   [PeckShield](docs/audits/PeckShield-Audit-Report-BancorV3-v1.0.pdf)
 -   [OpenZeppelin](docs/audits/OpenZeppelin-V3-Audit-Report.pdf)
+-   [ChainSecurity](docs/audits/ChainSecurity-V3-Audit-Report)
 -   [OpenZeppelin AutoCompoundingRewards](docs/audits/OpenZeppelin-AutoCompoundingRewards-Audit-Report.pdf)
 -   Certora (coming soon...)
 -   ChainSecurity (coming soon...)
