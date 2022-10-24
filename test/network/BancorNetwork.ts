@@ -1233,9 +1233,7 @@ describe('BancorNetwork', () => {
 
                                 it('should revert when attempting to deposit without approving the network', async () => {
                                     await expect(deposit(amount)).to.be.revertedWithError(
-                                        tokenData.isBNT()
-                                            ? 'Transaction reverted without a reason string'
-                                            : tokenData.errors().exceedsAllowance
+                                        tokenData.isBNT() ? 'undefined' : tokenData.errors().exceedsAllowance
                                     );
                                 });
                             }
