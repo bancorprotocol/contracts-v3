@@ -2537,7 +2537,7 @@ describe('BancorNetwork', () => {
         }
     });
 
-    describe('migrate liquidity', () => {
+    describe.skip('migrate liquidity', () => {
         let bntGovernance: TokenGovernance;
         let vbntGovernance: TokenGovernance;
         let network: TestBancorNetwork;
