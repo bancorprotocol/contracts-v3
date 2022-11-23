@@ -19,7 +19,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: InstanceName.LiquidityProtection,
         methodName: 'transferOwnership',
         args: [daoMultisig],
-        from: foundationMultisig2
+        from: deployer
     });
 
     // renounce the BNT ROLE_GOVERNOR role from the deployer
