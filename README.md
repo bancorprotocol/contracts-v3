@@ -10,16 +10,16 @@ Bancor is a decentralized trading and yield protocol. Its network of on-chain au
 
 The Dawn release includes the following features:
 
-- Token to token trades
-- Single-sided Liquidity Provision
-- Omnipool
-- Infinity Pools
-- Auto-compounding Rewards
-- Dual Rewards
-- Third Party Liquidity Protection
-- Composable Pool Tokens
-- Tokenomics Redesign
-- Flash Loans
+-   Token to token trades
+-   Single-sided Liquidity Provision
+-   Omnipool
+-   Infinity Pools
+-   Auto-compounding Rewards
+-   Dual Rewards
+-   Third Party Liquidity Protection
+-   Composable Pool Tokens
+-   Tokenomics Redesign
+-   Flash Loans
 
 ## Security
 
@@ -30,10 +30,12 @@ The security policy is available [here](./SECURITY.md).
 
 ### Security Audits
 
-- [PeckShield](docs/audits/PeckShield-Audit-Report-BancorV3-v1.0.pdf)
-- [OpenZeppelin](docs/audits/OpenZeppelin-V3-Audit-Report.pdf)
-- Certora (coming soon...)
-- ChainSecurity (coming soon...)
+-   [PeckShield](docs/audits/PeckShield-Audit-Report-BancorV3-v1.0.pdf)
+-   [OpenZeppelin](docs/audits/OpenZeppelin-V3-Audit-Report.pdf)
+-   [ChainSecurity](docs/audits/ChainSecurity-V3-Audit-Report.pdf)
+-   [OpenZeppelin AutoCompoundingRewards](docs/audits/OpenZeppelin-AutoCompoundingRewards-Audit-Report.pdf)
+-   Certora (coming soon...)
+-   ChainSecurity (coming soon...)
 
 ## Setup
 
@@ -81,10 +83,10 @@ You can find historic test coverage reports in [releases](https://github.com/ban
 
 #### Latest Test Coverage Report (2022-04-24)
 
-- 99.86% Statements 1476/1478
-- 97.36% Branches 479/492
-- 100% Functions 446/446
-- 99.31% Lines 1580/1591
+-   99.86% Statements 1476/1478
+-   97.36% Branches 479/492
+-   100% Functions 446/446
+-   99.31% Lines 1580/1591
 
 ![Coverage Report](./docs/images/coverage.png)
 
@@ -215,7 +217,7 @@ yarn deploy:fork
 
 ## Community
 
-- [Twitter](https://twitter.com/Bancor)
-- [Telegram](https://t.me/bancor)
-- [Discord](https://discord.gg/aMVTbrmgD7)
-- [Reddit](https://www.reddit.com/r/Bancor)
+-   [Twitter](https://twitter.com/Bancor)
+-   [Telegram](https://t.me/bancor)
+-   [Discord](https://discord.gg/aMVTbrmgD7)
+-   [Reddit](https://www.reddit.com/r/Bancor)

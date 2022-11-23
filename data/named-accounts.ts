@@ -14,7 +14,7 @@ const TestNamedAccounts = {
         ...mainnet('0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf')
     },
     daiWhale: {
-        ...mainnet('0x5D38B4e4783E34e2301A2a36c39a03c45798C4dD')
+        ...mainnet('0xe35A2a4586dc6C01D00E3458c9F15104DE9755D9')
     },
     linkWhale: {
         ...mainnet('0xc6bed363b30DF7F35b601a5547fE56cd31Ec63DA')
@@ -26,7 +26,7 @@ const TestNamedAccounts = {
         ...mainnet('0x55FE002aefF02F77364de339a1292923A15844B8')
     },
     wbtcWhale: {
-        ...mainnet('0x602d9aBD5671D24026e2ca473903fF2A9A957407')
+        ...mainnet('0x218B95BE3ed99141b0144Dba6cE88807c4AD7C09')
     }
 };
 

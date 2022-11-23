@@ -74,6 +74,12 @@ const decodeHardhatError = (error: any, context: any) => {
             return matches[0];
         }
 
+        regexp = /undefined/;
+        matches = regexp.exec(errorString);
+        if (matches && matches.length >= 1) {
+            return matches[0];
+        }
+
         regexp = /errorName="(.*)", errorSignature/;
         matches = regexp.exec(errorString);
         if (matches && matches.length >= 1) {

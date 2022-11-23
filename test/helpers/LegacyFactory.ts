@@ -39,7 +39,6 @@ export const createLegacySystem = async (
         contractRegistry.address
     );
     const liquidityProtection = await LegacyContracts.TestLiquidityProtection.deploy(
-        network.address,
         vault.address,
         liquidityProtectionSettings.address,
         liquidityProtectionStore.address,

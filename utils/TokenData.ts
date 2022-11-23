@@ -39,7 +39,7 @@ const TOKEN_DATA = {
         errors: {
             exceedsAllowance: 'SafeERC20: low-level call failed',
             exceedsBalance: 'SafeERC20: low-level call failed',
-            burnExceedsBalance: 'Transaction reverted without a reason string'
+            burnExceedsBalance: 'undefined'
         }
     },
     [TokenSymbol.vBNT]: {
