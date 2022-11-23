@@ -76,7 +76,7 @@ const fundAccounts = async () => {
         },
         {
             token: dai,
-            amount: toWei(500_000),
+            amount: toWei(100_000),
             whale: daiWhale
         },
         {
@@ -86,7 +86,7 @@ const fundAccounts = async () => {
         },
         {
             token: usdc,
-            amount: toWei(500_000, 6),
+            amount: toWei(100_000, 6),
             whale: usdcWhale
         },
         {
