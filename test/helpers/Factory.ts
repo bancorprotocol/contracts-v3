@@ -168,7 +168,7 @@ const createGovernedToken = async (
         await legacyToken.transferOwnership(tokenGovernance.address);
         await tokenGovernance.acceptTokenOwnership();
 
-        token = legacyToken as any as IERC20;
+        token = (legacyToken as any) as IERC20;
     }
 
     return { token, tokenGovernance };
@@ -359,6 +359,11 @@ const createSystemFixture = async () => {
         ctorArgs: [network.address]
     });
 
+    const arbitrage = await createProxy(Contracts.TestArbitrage, {
+        ctorArgs: [network.address, bnt.address],
+        skipInitialization: true
+    });
+
     await network.initialize(bntPool.address, pendingWithdrawals.address, poolMigrator.address);
 
     const networkInfo = await createProxy(Contracts.BancorNetworkInfo, {
@@ -403,7 +408,8 @@ const createSystemFixture = async () => {
         pendingWithdrawals,
         poolTokenFactory,
         poolCollection,
-        poolMigrator
+        poolMigrator,
+        arbitrage
     };
 };
 

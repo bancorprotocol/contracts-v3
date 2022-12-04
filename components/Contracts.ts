@@ -45,7 +45,8 @@ import {
     TestTokenLibrary__factory,
     TestUpgradeable__factory,
     TestVault__factory,
-    TransparentUpgradeableProxyImmutable__factory
+    TransparentUpgradeableProxyImmutable__factory,
+    TestArbitrage__factory
 } from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
 import { Signer } from 'ethers';
@@ -112,7 +113,8 @@ const getContracts = (signer?: Signer) => ({
         'TransparentUpgradeableProxyImmutable',
         TransparentUpgradeableProxyImmutable__factory,
         signer
-    )
+    ),
+    TestArbitrage: deployOrAttach('TestArbitrage', TestArbitrage__factory, signer)
 });
 
 export type ContractsType = ReturnType<typeof getContracts>;
