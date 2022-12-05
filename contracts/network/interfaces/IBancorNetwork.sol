@@ -136,6 +136,17 @@ interface IBancorNetwork is IUpgradeable {
         address beneficiary
     ) external payable returns (uint256);
 
+    function tradeBySourceAmount2(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary,
+        address trader
+    ) external payable returns (uint256);
+
+
     /**
      * @dev performs a trade by providing the output target amount, sends the proceeds to the optional beneficiary (or
      * to the address of the caller, in case it's not supplied), and returns the trade source amount

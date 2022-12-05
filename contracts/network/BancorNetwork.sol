@@ -16,6 +16,10 @@ import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Time } from "../utility/Time.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
+// TODO: remove next line
+import "hardhat/console.sol";
+
+
 // prettier-ignore
 import {
     Utils,
@@ -592,6 +596,26 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
                 TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
                 TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
+    }
+
+    function tradeBySourceAmount2(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary,
+        address trader
+    ) external payable whenNotPaused nonReentrant returns (uint256) {
+        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
+
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
+                TraderInfo({ trader: trader, beneficiary: beneficiary }),
                 deadline
             );
     }
