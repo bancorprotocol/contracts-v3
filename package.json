@@ -24,7 +24,7 @@
   "scripts": {
     "build": "hardhat compile",
     "rebuild": "yarn clean && yarn build",
-    "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test",
+    "test": "NODE_OPTIONS=${CI:+'--max-old-space-size=8192'} hardhat test test/arbitrage/Arbitrage.ts",
     "test:coverage": "yarn build && NODE_OPTIONS='--max-old-space-size=8192' hardhat coverage",
     "test:coverage:nightly": "NIGHTLY=1 yarn test:coverage",
     "test:ci": "CI=1 yarn test",
