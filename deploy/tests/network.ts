@@ -131,8 +131,8 @@ import { getNamedAccounts } from 'hardhat';
             );
 
             const expectedRoles = isMainnet()
-                ? [bntPool.address, liquidityProtection.address, stakingRewardsClaim.address]
-                : [bntPool.address];
+                ? [standardRewards.address, bntPool.address, liquidityProtection.address, stakingRewardsClaim.address]
+                : [standardRewards.address, bntPool.address];
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_MINTER,
