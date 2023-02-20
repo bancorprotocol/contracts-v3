@@ -7,6 +7,7 @@ import '@typechain/hardhat';
 import { CoinGeckoClient } from 'coingecko-api-v3';
 import Decimal from 'decimal.js';
 import fs from 'fs';
+import { ethers } from 'hardhat';
 import path from 'path';
 
 interface EnvOptions {
@@ -25,7 +26,7 @@ const TOKEN_OVERRIDES: TokenOverride[] = JSON.parse(
     fs.readFileSync(path.resolve(__dirname, '../data/token-overrides.json'), 'utf-8')
 );
 
-const MIN_STAKED_BALANCE_FACTOR = 2;
+const MIN_VAULT_BALANCE_FACTOR = 2;
 
 interface PoolData {
     address: string;
@@ -49,6 +50,7 @@ const main = async () => {
     const network = await DeployedContracts.BancorNetwork.deployed();
     const networkInfo = await DeployedContracts.BancorNetworkInfo.deployed();
     const networkSettings = await DeployedContracts.NetworkSettings.deployed();
+    const masterVault = await DeployedContracts.MasterVault.deployed();
 
     const allPools = await network.liquidityPools();
 
@@ -83,15 +85,18 @@ const main = async () => {
 
         let symbol: string;
         let decimals: number;
+        let vaultBalance;
 
         if (pool === NATIVE_TOKEN_ADDRESS) {
             symbol = TokenSymbol.ETH;
             decimals = DEFAULT_DECIMALS;
+            vaultBalance = ethers.provider.getBalance(masterVault.address);
         } else {
             const tokenOverride = TOKEN_OVERRIDES.find((t) => t.address.toLowerCase() === pool.toLowerCase());
             const token = await Contracts.ERC20.attach(pool, deployer);
             symbol = tokenOverride?.symbol ?? (await token.symbol());
             decimals = tokenOverride?.decimals ?? (await token.decimals());
+            vaultBalance = await token.balanceOf(masterVault.address);
         }
 
         Logger.log();
@@ -103,8 +108,8 @@ const main = async () => {
             continue;
         }
 
-        const stakedBalance = new Decimal((await networkInfo.stakedBalance(pool)).toString());
-        if (stakedBalance.isZero()) {
+        vaultBalance = new Decimal(vaultBalance.toString());
+        if (vaultBalance.isZero()) {
             Logger.error('  Skipping pool with no liquidity...');
 
             continue;
@@ -145,13 +150,13 @@ const main = async () => {
 
         const estimatedRequiredLiquidity = new Decimal(minLiquidityForTrading.toString())
             .mul(rate)
-            .mul(MIN_STAKED_BALANCE_FACTOR)
+            .mul(MIN_VAULT_BALANCE_FACTOR)
             .div(tokenPriceNormalizationFactor)
             .ceil();
         const decimalsFactor = new Decimal(10).pow(decimals);
 
-        Logger.log(`  Current staked ${symbol} balance (wei): ${stakedBalance.toFixed()}`);
-        Logger.log(`  Current staked ${symbol} balance: ${stakedBalance.div(decimalsFactor).toFixed(4)}`);
+        Logger.log(`  Current vault ${symbol} balance (wei): ${vaultBalance.toFixed()}`);
+        Logger.log(`  Current vault ${symbol} balance: ${vaultBalance.div(decimalsFactor).toFixed(4)}`);
         Logger.log(`  Estimating minimum required ${symbol} liquidity (wei): ${estimatedRequiredLiquidity.toFixed()}`);
         Logger.log(
             `  Estimating minimum required ${symbol} liquidity: ${estimatedRequiredLiquidity
@@ -159,7 +164,7 @@ const main = async () => {
                 .toFixed(4)}`
         );
 
-        if (stakedBalance.lt(estimatedRequiredLiquidity)) {
+        if (vaultBalance.lt(estimatedRequiredLiquidity)) {
             Logger.error('  Skipping pool with insufficient liquidity');
 
             continue;
