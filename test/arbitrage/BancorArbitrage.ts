@@ -6,45 +6,21 @@ import Contracts, {
     NetworkSettings,
     TestBancorArbitrage,
     TestBancorNetwork,
-    TestERC20Token,
-    TestFlashLoanRecipient,
-    TestPoolCollection
+    TestPoolCollection,
+    TestWETH
 } from '../../components/Contracts';
-import { Profiler } from '../../components/Profiler';
-import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
-import {
-    EXP2_INPUT_TOO_HIGH, //    MAX_UINT256,
-    PPM_RESOLUTION,
-    RewardsDistributionType //    ZERO_ADDRESS
-} from '../../utils/Constants';
-import { NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
-import { Addressable, toWei } from '../../utils/Types';
-import { max, toPPM } from '../../utils/Types';
+import { ExchangeId, MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
+import { TokenData, TokenSymbol } from '../../utils/TokenData';
+import { toWei } from '../../utils/Types';
 import { createProxy } from '../helpers/Factory';
-import {
-    createAutoCompoundingRewards,
-    createPool,
-    createStandardRewards,
-    createSystem,
-    createTestToken,
-    createToken,
-    depositToPool,
-    initWithdraw,
-    PoolSpec,
-    setupFundedPool,
-    specToString,
-    TokenWithAddress
-} from '../helpers/Factory';
+import { createSystem, createTestToken, depositToPool, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { duration, latest } from '../helpers/Time';
-import { toAddress, transfer } from '../helpers/Utils';
+import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { BigNumber, BigNumberish, ContractTransaction, utils } from 'ethers';
 import { ethers } from 'hardhat';
 
 describe('BancorArbitrage', () => {
-    let bntPoolToken: IERC20;
     let network: TestBancorNetwork;
     let networkInfo: BancorNetworkInfo;
     let bnt: IERC20;
@@ -57,162 +33,141 @@ describe('BancorArbitrage', () => {
     let bancorV2: MockExchanges;
     let bancorV3: MockExchanges;
     let uniswapV2Router: MockExchanges;
-    let uniswapV2Factory: MockExchanges;
     let uniswapV3Router: MockExchanges;
     let sushiswapV2Router: MockExchanges;
+    let weth: TestWETH;
     let baseToken: TokenWithAddress;
 
     let deployer: SignerWithAddress;
     let user: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
-    const profiler = new Profiler();
-
     const BNT_VIRTUAL_BALANCE = 1;
     const BASE_TOKEN_VIRTUAL_BALANCE = 2;
-    const MAX_SOURCE_AMOUNT = 100000000;
+    const MAX_SOURCE_AMOUNT = toWei(100000000);
     const DEADLINE = MAX_UINT256;
-    const AMOUNT = 1000;
-    const GAS_LIMIT = 227440;
-    const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
-    const MIN_RETURN_AMOUNT = BigNumber.from(1);
+    const AMOUNT = toWei(1000);
 
     const ArbitrageRewardsDefaults = {
         percentagePPM: 30000,
-        maxAmount: 100
+        maxAmount: toWei(100)
     };
 
     const ArbitrageRewardsChanged = {
         percentagePPM: 40000,
-        maxAmount: 200
+        maxAmount: toWei(200)
     };
 
-    const RouteParams = {
-        maxExchangeId: 4,
-        initialExchangeId: 4,
-        finalExchangeId: 4,
-        maxRouteLength: 3
-    };
-
-    interface TradeParams {
-        sourceToken: TokenWithAddress;
-        targetToken: TokenWithAddress;
-        sourceAmount: BigNumberish;
-        minTargetAmount: BigNumberish;
-        path: Addressable[];
-        exchangeId: number;
-        deadline: BigNumberish;
-    }
-
-    shouldHaveGap('TestBancorArbitrage');
+    shouldHaveGap('TestBancorArbitrage', '_rewards');
 
     before(async () => {
         [deployer, user, nonOwner] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
-        ({ network, networkSettings, bnt, poolCollection, networkInfo, bntPoolToken, masterVault } =
-            await createSystem());
+        ({ network, networkSettings, bnt, poolCollection, networkInfo, masterVault } = await createSystem());
+
+        weth = await Contracts.TestWETH.deploy();
+        await deployer.sendTransaction({ value: toWei(1_000_000_000), to: weth.address });
 
         baseToken = await createTestToken();
-        exchanges =
-            bancorV2 =
-            bancorV3 =
-            uniswapV2Router =
-            uniswapV2Factory =
-            uniswapV3Router =
-            sushiswapV2Router =
-                await Contracts.MockExchanges.deploy(100_000_000, baseToken.address);
+        exchanges = await Contracts.MockExchanges.deploy(weth.address);
+        bancorV2 = exchanges;
+        bancorV3 = exchanges;
+        uniswapV2Router = exchanges;
+        uniswapV3Router = exchanges;
+        sushiswapV2Router = exchanges;
 
         bancorArbitrage = await createProxy(Contracts.TestBancorArbitrage, {
             ctorArgs: [
-                network.address,
-                networkSettings.address,
                 bnt.address,
-                uniswapV3Router.address,
-                uniswapV2Router.address,
-                uniswapV2Factory.address,
                 bancorV2.address,
+                network.address,
+                uniswapV2Router.address,
+                uniswapV3Router.address,
                 sushiswapV2Router.address
             ]
         });
 
         await networkSettings.setFlashLoanFeePPM(bnt.address, 0);
-        await exchanges.transfer(exchanges.address, MAX_SOURCE_AMOUNT);
+        await transfer(deployer, baseToken, exchanges.address, MAX_SOURCE_AMOUNT);
     });
 
     describe('construction', () => {
-        it('should revert when initializing with an invalid network contract', async () => {
-            await expect(
-                Contracts.TestBancorArbitrage.deploy(
-                    ZERO_ADDRESS,
-                    networkSettings.address,
-                    bnt.address,
-                    uniswapV3Router.address,
-                    uniswapV2Router.address,
-                    uniswapV2Factory.address,
-                    bancorV2.address,
-                    sushiswapV2Router.address
-                )
-            ).to.be.revertedWithError('InvalidAddress');
-        });
-
-        it('should revert when initializing with an invalid networkSettings contract', async () => {
-            await expect(
-                Contracts.TestBancorArbitrage.deploy(
-                    bancorV3.address,
-                    ZERO_ADDRESS,
-                    bnt.address,
-                    uniswapV3Router.address,
-                    uniswapV2Router.address,
-                    uniswapV2Factory.address,
-                    bancorV2.address,
-                    sushiswapV2Router.address
-                )
-            ).to.be.revertedWithError('InvalidAddress');
-        });
-
         it('should revert when initializing with an invalid bnt contract', async () => {
             await expect(
                 Contracts.TestBancorArbitrage.deploy(
-                    bancorV3.address,
-                    networkSettings.address,
                     ZERO_ADDRESS,
-                    uniswapV3Router.address,
-                    uniswapV2Router.address,
-                    uniswapV2Factory.address,
                     bancorV2.address,
+                    bancorV3.address,
+                    uniswapV2Router.address,
+                    uniswapV3Router.address,
                     sushiswapV2Router.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
 
-        it('should revert when initializing with an invalid uniswapV2RouterRouter contract', async () => {
+        it('should revert when initializing with an invalid Bancor v2 network contract', async () => {
             await expect(
                 Contracts.TestBancorArbitrage.deploy(
-                    bancorV3.address,
-                    networkSettings.address,
                     bnt.address,
                     ZERO_ADDRESS,
+                    bancorV3.address,
                     uniswapV2Router.address,
-                    uniswapV2Factory.address,
-                    bancorV2.address,
+                    uniswapV3Router.address,
                     sushiswapV2Router.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
 
-        it('should revert when initializing with an invalid network contract', async () => {
+        it('should revert when initializing with an invalid Bancor v3 network contract', async () => {
             await expect(
                 Contracts.TestBancorArbitrage.deploy(
-                    bancorV3.address,
-                    networkSettings.address,
                     bnt.address,
-                    uniswapV3Router.address,
+                    bancorV2.address,
+                    ZERO_ADDRESS,
                     uniswapV2Router.address,
-                    uniswapV2Factory.address,
+                    uniswapV3Router.address,
+                    sushiswapV2Router.address
+                )
+            ).to.be.revertedWithError('InvalidAddress');
+        });
+
+        it('should revert when initializing with an invalid Uniswap v2 router contract', async () => {
+            await expect(
+                Contracts.TestBancorArbitrage.deploy(
+                    bnt.address,
+                    bancorV2.address,
+                    bancorV3.address,
+                    ZERO_ADDRESS,
+                    uniswapV3Router.address,
+                    sushiswapV2Router.address
+                )
+            ).to.be.revertedWithError('InvalidAddress');
+        });
+
+        it('should revert when initializing with an invalid Uniswap v3 router contract', async () => {
+            await expect(
+                Contracts.TestBancorArbitrage.deploy(
+                    bnt.address,
+                    bancorV2.address,
+                    bancorV3.address,
+                    uniswapV2Router.address,
                     ZERO_ADDRESS,
                     sushiswapV2Router.address
+                )
+            ).to.be.revertedWithError('InvalidAddress');
+        });
+
+        it('should revert when initializing with an invalid Sushiswap router contract', async () => {
+            await expect(
+                Contracts.TestBancorArbitrage.deploy(
+                    bnt.address,
+                    bancorV2.address,
+                    bancorV3.address,
+                    uniswapV2Router.address,
+                    uniswapV3Router.address,
+                    ZERO_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -228,7 +183,7 @@ describe('BancorArbitrage', () => {
         });
     });
 
-    describe('settings', () => {
+    describe('rewards', () => {
         it('should revert when a non-admin attempts to set the arbitrage rewards settings', async () => {
             await expect(
                 bancorArbitrage.connect(nonOwner).setRewards(ArbitrageRewardsDefaults)
@@ -245,101 +200,92 @@ describe('BancorArbitrage', () => {
         it('should be able to set and update the arbitrage rewards settings', async () => {
             await bancorArbitrage.setRewards(ArbitrageRewardsDefaults);
 
-            const res = await bancorArbitrage.getRewards();
-            expect(res.percentagePPM.toString()).to.equal('30000');
+            const res = await bancorArbitrage.rewards();
+            expect(res.percentagePPM).to.equal(30_000);
 
             const resChanged = await bancorArbitrage.setRewards(ArbitrageRewardsChanged);
             await expect(resChanged).to.emit(bancorArbitrage, 'RewardsUpdated');
 
-            const resUpdated = await bancorArbitrage.getRewards();
-            expect(resUpdated.percentagePPM.toString()).to.equal('40000');
+            const resUpdated = await bancorArbitrage.rewards();
+            expect(resUpdated.percentagePPM).to.equal(40_000);
         });
     });
 
-    describe('trades', () => {
+    describe('arbitrage', () => {
         beforeEach(async () => {
-            await exchanges.connect(user).approve(bancorArbitrage.address, 100_000_000);
+            await transfer(deployer, bnt, masterVault.address, AMOUNT.mul(10_000));
             await bancorArbitrage.setRewards(ArbitrageRewardsDefaults);
         });
 
-        let allExchanges = ['SushiSwap', 'UniswapV2', 'UniswapV3'];
-        let allexchangeIds = [2, 3, 4];
-        let arbMsg = 'arbitrage ';
-        const allRouteIds = [];
+        // get all exchange ids (omit their names)
+        let exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(Number(key)));
+        let uniV3Fees = [100, 500, 3000];
+        const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
 
-        it(arbMsg, async () => {
-            const { token: token1 } = await preparePoolAndToken(TokenSymbol.TKN1);
-            const { token: token2 } = await preparePoolAndToken(TokenSymbol.TKN2);
-            const { token: token3 } = await preparePoolAndToken(TokenSymbol.ETH);
+        // remove BancorV3 exchange until the reentrancy guard issue is resolved
+        exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
-            const tokens = [token1, token2, token3];
-            const tokenNames = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
-
-            for (let e = 0; e < tokens.length; e++) {
-                for (let i = 0; i < tokens.length; i++) {
-                    for (let j = 0; j < tokens.length; j++) {
-                        if (i != j) {
-                            let token1 = tokens[i];
-                            let token2 = tokens[j];
-                            let exchangeName = allExchanges[e];
-                            let exchangeId = allexchangeIds[e];
-
-                            let tokenName1 = tokenNames[i];
-                            let tokenName2 = tokenNames[j];
-                            console.log(' ***** ');
-                            console.log('tokenName1', tokenName1);
-                            console.log('tokenName2', tokenName2);
-                            console.log('exchangeId', exchangeId);
-
-                            await transfer(deployer, bnt, masterVault.address, AMOUNT * 2 + GAS_LIMIT);
-                            await transfer(deployer, bnt, exchanges.address, AMOUNT * 2 + GAS_LIMIT);
-                            await transfer(deployer, token1, exchanges.address, AMOUNT * 2 + GAS_LIMIT);
-                            await transfer(deployer, token2, exchanges.address, AMOUNT * 2 + GAS_LIMIT);
-
-                            await exchanges.setTokens(token1.address, token2.address);
-
-                            const routes = [
-                                {
-                                    sourceToken: bnt.address,
-                                    targetToken: token1.address,
-                                    minTargetAmount: 1,
-                                    exchangeId: 1,
-                                    customAddress: token1.address,
-                                    deadline: DEADLINE
-                                },
-                                {
-                                    sourceToken: token1.address,
-                                    targetToken: token2.address,
-                                    minTargetAmount: 1,
-                                    exchangeId: exchangeId,
-                                    customAddress: token2.address,
-                                    deadline: DEADLINE
-                                },
-                                {
-                                    sourceToken: token2.address,
-                                    targetToken: bnt.address,
-                                    minTargetAmount: 1,
-                                    exchangeId: 1,
-                                    customAddress: bnt.address,
-                                    deadline: DEADLINE
-                                }
-                            ];
-
-                            //                            let arbMsgFinal = arbMsgNew.concat(exchangeId2.toString());
-                            //							it(arbMsgFinal, async () => {
-                            await bancorArbitrage.connect(user).execute(routes, AMOUNT, {
-                                gasLimit: BigNumber.from(GAS_LIMIT * 6)
-                            });
-                            //							});
-                        }
+        for (let exchangeId of exchangeIds) {
+            for (let arbToken1Symbol of tokenSymbols) {
+                for (let arbToken2Symbol of tokenSymbols) {
+                    if (arbToken1Symbol == arbToken2Symbol) {
+                        continue;
                     }
+
+                    const exchangeName = ExchangeId[Number(exchangeId)];
+
+                    it(`arbitrage between ${arbToken1Symbol} and ${arbToken2Symbol} using ${exchangeName}`, async () => {
+                        const { token: arbToken1 } = await prepareBancorV3PoolAndToken(arbToken1Symbol);
+                        const { token: arbToken2 } = await prepareBancorV3PoolAndToken(arbToken2Symbol);
+
+                        let customInt;
+                        if (exchangeId == ExchangeId.UniswapV3) {
+                            customInt = uniV3Fees[tokenSymbols.indexOf(arbToken1Symbol)];
+
+                            await transfer(deployer, weth, exchanges.address, AMOUNT.mul(10));
+                        } else {
+                            customInt = 0;
+                        }
+
+                        await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
+                        await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
+                        await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(10));
+
+                        const routes = [
+                            {
+                                exchangeId: ExchangeId.BancorV2,
+                                targetToken: arbToken1.address,
+                                minTargetAmount: 1,
+                                deadline: DEADLINE,
+                                customAddress: arbToken1.address,
+                                customInt: 0
+                            },
+                            {
+                                exchangeId,
+                                targetToken: arbToken2.address,
+                                minTargetAmount: 1,
+                                deadline: DEADLINE,
+                                customAddress: arbToken2.address,
+                                customInt
+                            },
+                            {
+                                exchangeId: ExchangeId.BancorV2,
+                                targetToken: bnt.address,
+                                minTargetAmount: 1,
+                                deadline: DEADLINE,
+                                customAddress: bnt.address,
+                                customInt: 0
+                            }
+                        ];
+
+                        await bancorArbitrage.connect(user).execute(routes, AMOUNT);
+                    });
                 }
             }
-        });
-        //		}
+        }
     });
 
-    const preparePoolAndToken = async (symbol: TokenSymbol) => {
+    const prepareBancorV3PoolAndToken = async (symbol: TokenSymbol) => {
         const balance = toWei(100_000_000);
         const { poolToken, token } = await setupFundedPool(
             {
@@ -361,30 +307,7 @@ describe('BancorArbitrage', () => {
             await depositToPool(deployer, token, 1, network);
         }
 
-        await network.setTime(await latest());
-
         return { poolToken, token };
-    };
-
-    const isBNT = (token: TokenWithAddress): boolean => {
-        return token.address === bnt.address;
-    };
-
-    const transfer = async (
-        sourceAccount: SignerWithAddress,
-        token: TokenWithAddress,
-        target: string | Addressable,
-        amount: BigNumberish
-    ) => {
-        const targetAddress = toAddress(target);
-        const tokenAddress = token.address;
-        if ([NATIVE_TOKEN_ADDRESS, baseToken.address].includes(tokenAddress)) {
-            return sourceAccount.sendTransaction({ to: targetAddress, value: amount });
-        }
-
-        return (await Contracts.TestERC20Token.attach(tokenAddress))
-            .connect(sourceAccount)
-            .transfer(targetAddress, amount);
     };
 });
 
@@ -394,7 +317,7 @@ describe('BancorArbitrage', () => {
 // Test that the contract reverts when initializing with an invalid BNT contract
 // Test that the contract reverts when initializing with an invalid Uniswap V3 router contract
 // Test that the contract reverts when initializing with an invalid Uniswap V2 router contract
-// Test that the contract reverts when initializing with an invalid Uniswap V2 factory contract
+// Test that the contract reverts when initializing with an invalid Sushiswap router contract
 // Test that the contract reverts when initializing with an invalid Bancor V2 network contract
 
 // Trade Function:

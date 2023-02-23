@@ -33,6 +33,14 @@ export enum RewardsDistributionType {
     ExpDecay = 1
 }
 
+export enum ExchangeId {
+    BancorV2 = 1,
+    BancorV3 = 2,
+    UniswapV2 = 3,
+    UniswapV3 = 4,
+    Sushiswap = 5
+}
+
 export const EXP2_INPUT_TOO_HIGH = new Decimal(16).div(new Decimal(2).ln());
 
 export const DEFAULT_LOCK_DURATION = duration.days(7);

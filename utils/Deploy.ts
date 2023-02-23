@@ -1,6 +1,7 @@
 import { ArtifactData } from '../components/ContractBuilder';
 import {
     AutoCompoundingRewards,
+    BancorArbitrage,
     BancorNetwork,
     BancorNetworkInfo,
     BancorPortal,
@@ -10,6 +11,7 @@ import {
     ExternalRewardsVault,
     IVersioned,
     MasterVault,
+    MockExchanges,
     NetworkSettings,
     PendingWithdrawals,
     PoolCollection,
@@ -104,6 +106,7 @@ enum LegacyInstanceNameV3 {
 
 enum NewInstanceName {
     AutoCompoundingRewards = 'AutoCompoundingRewards',
+    BancorArbitrage = 'BancorArbitrage',
     BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',
     BancorNetwork = 'BancorNetwork',
@@ -114,6 +117,7 @@ enum NewInstanceName {
     BNTPool = 'BNTPool',
     ExternalProtectionVault = 'ExternalProtectionVault',
     ExternalAutoCompoundingRewardsVault = 'ExternalAutoCompoundingRewardsVault',
+    MockExchanges = 'MockExchanges',
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
@@ -171,6 +175,7 @@ const DeployedLegacyContracts = {
 
 const DeployedNewContracts = {
     AutoCompoundingRewards: deployed<AutoCompoundingRewards>(InstanceName.AutoCompoundingRewards),
+    BancorArbitrage: deployed<BancorArbitrage>(InstanceName.BancorArbitrage),
     BancorNetworkInfo: deployed<BancorNetworkInfo>(InstanceName.BancorNetworkInfo),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BancorNetworkProxy),
     BancorNetwork: deployed<BancorNetwork>(InstanceName.BancorNetwork),
@@ -183,6 +188,7 @@ const DeployedNewContracts = {
     ExternalAutoCompoundingRewardsVault: deployed<ExternalRewardsVault>(
         InstanceName.ExternalAutoCompoundingRewardsVault
     ),
+    MockExchanges: deployed<MockExchanges>(InstanceName.MockExchanges),
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
@@ -408,6 +414,8 @@ export const deploy = async (options: DeployOptions) => {
     });
 
     if (!proxy) {
+        console.log('!proxy ==> ', name, contractName);
+
         const data = { name, contract: contractName };
 
         await saveTypes(data);
@@ -697,7 +705,6 @@ export const getPreviousDeploymentTag = (tag: string) => {
 
 export const getLatestDeploymentTag = () => {
     const files = fs.readdirSync(config.paths.deploy[0]).sort();
-
     return Number(files[files.length - 1].split('-')[0]).toString();
 };
 
