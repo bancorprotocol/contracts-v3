@@ -415,18 +415,18 @@ export const deploy = async (options: DeployOptions) => {
 
     if (!proxy) {
         console.log('!proxy ==> ', name, contractName);
-
-        const data = { name, contract: contractName };
-
-        await saveTypes(data);
-
-        await verifyTenderlyFork({
-            address: res.address,
-            proxy: isProxy,
-            implementation: isProxy ? res.implementation : undefined,
-            ...data
-        });
     }
+
+    const data = { name, contract: contractName };
+
+    await saveTypes(data);
+
+    await verifyTenderlyFork({
+        address: res.address,
+        proxy: isProxy,
+        implementation: isProxy ? res.implementation : undefined,
+        ...data
+    });
 
     return res.address;
 };
