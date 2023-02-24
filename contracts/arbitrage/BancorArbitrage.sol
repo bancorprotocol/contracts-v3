@@ -371,7 +371,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
         }
 
         if (exchangeId == EXCHANGE_ID_UNISWAP_V2 || exchangeId == EXCHANGE_ID_SUSHISWAP) {
-            IUniswapV2Router02 router = exchangeId == EXCHANGE_ID_UNISWAP_V2 ? _sushiSwapRouter : _uniswapV2Router;
+            IUniswapV2Router02 router = exchangeId == EXCHANGE_ID_UNISWAP_V2 ? _uniswapV2Router : _sushiSwapRouter;
 
             // allow the router to withdraw the source tokens
             sourceToken.safeApprove(address(router), sourceAmount);
