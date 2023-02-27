@@ -164,6 +164,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the pool migrator contract
     IPoolMigrator private immutable _poolMigrator;
 
+    // the Bancor arbitrage contract
+    address private immutable _bancorArbitrage;
+
     // a mapping between tokens and their pools
     mapping(Token => Pool) internal _poolData;
 
@@ -262,7 +265,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolMigrator initPoolMigrator
+        IPoolMigrator initPoolMigrator,
+        address bancorArbitrage
     ) {
         _validAddress(address(initNetwork));
         _validAddress(address(initBNT));
@@ -272,6 +276,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _validAddress(address(initExternalProtectionVault));
         _validAddress(address(initPoolTokenFactory));
         _validAddress(address(initPoolMigrator));
+        _validAddress(address(bancorArbitrage));
 
         _network = initNetwork;
         _bnt = initBNT;
@@ -281,6 +286,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolMigrator = initPoolMigrator;
+        _bancorArbitrage = bancorArbitrage;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
         _setNetworkFeePPM(DEFAULT_NETWORK_FEE_PPM);
@@ -1620,7 +1626,11 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             }
         }
 
-        result.tradingFeeAmount = tradeAmountAndFee.tradingFeeAmount;
+        if(msg.sender == _bancorArbitrage) {
+            result.tradingFeeAmount = 0;
+        } else {
+            result.tradingFeeAmount = tradeAmountAndFee.tradingFeeAmount;
+        }
 
         // sync the trading and staked balance
         result.sourceBalance += result.sourceAmount;
@@ -1630,7 +1640,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             result.stakedBalance += result.tradingFeeAmount;
         }
 
-        _processNetworkFee(result);
+        if(msg.sender != _bancorArbitrage) {
+            _processNetworkFee(result);
+        }
     }
 
     /**

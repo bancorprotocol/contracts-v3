@@ -155,6 +155,44 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable returns (uint256);
 
     /**
+     * @dev performs a trade by providing the input source amount, sends the proceeds to the optional beneficiary (or
+     * to the address of the caller, in case it's not supplied), and returns the trade target amount
+     *
+     * requirements:
+     *
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
+     * - the caller must be the _bancorArbitrage contract
+     */
+    function tradeBySourceAmountArb(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary
+    ) external payable returns (uint256);
+
+    /**
+     * @dev performs a trade by providing the output target amount, sends the proceeds to the optional beneficiary (or
+     * to the address of the caller, in case it's not supplied), and returns the trade source amount
+     *
+     * requirements:
+     *
+     * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
+     *   native token case)
+     * - the caller must be the _bancorArbitrage contract
+     */
+    function tradeByTargetAmountArb(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount,
+        uint256 maxSourceAmount,
+        uint256 deadline,
+        address beneficiary
+    ) external payable returns (uint256);
+
+    /**
      * @dev provides a flash-loan
      *
      * requirements:

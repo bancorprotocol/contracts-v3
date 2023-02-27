@@ -121,6 +121,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the BNT pool token
     IPoolToken internal immutable _bntPoolToken;
 
+    // the Bancor arbitrage contract
+    address internal immutable _bancorArbitrage;
+
     // the BNT pool contract
     IBNTPool internal _bntPool;
 
@@ -221,7 +224,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         INetworkSettings initNetworkSettings,
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
-        IPoolToken initBNTPoolToken
+        IPoolToken initBNTPoolToken,
+        address bancorArbitrage
     )
         validAddress(address(initBNTGovernance))
         validAddress(address(initVBNTGovernance))
@@ -229,6 +233,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(initMasterVault))
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initBNTPoolToken))
+        validAddress(address(bancorArbitrage))
     {
         _bntGovernance = initBNTGovernance;
         _bnt = initBNTGovernance.token();
@@ -239,6 +244,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _masterVault = initMasterVault;
         _externalProtectionVault = initExternalProtectionVault;
         _bntPoolToken = initBNTPoolToken;
+        _bancorArbitrage = bancorArbitrage;
     }
 
     /**
@@ -621,6 +627,50 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
+    function tradeBySourceAmountArb(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary
+    ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
+        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
+
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function tradeByTargetAmountArb(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount,
+        uint256 maxSourceAmount,
+        uint256 deadline,
+        address beneficiary
+    ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
+        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
+
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function flashLoan(
         Token token,
         uint256 amount,
@@ -638,7 +688,13 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             revert NotWhitelisted();
         }
 
-        uint256 feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(token), PPM_RESOLUTION);
+        uint256 feeAmount;
+        if(msg.sender == _bancorArbitrage) {
+            // exempt arb contract from fees
+            feeAmount = 0;
+        } else {
+            feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(token), PPM_RESOLUTION);
+        }
 
         // save the current balance
         uint256 prevBalance = token.balanceOf(address(this));
