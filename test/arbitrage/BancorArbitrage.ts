@@ -220,7 +220,6 @@ describe('BancorArbitrage', () => {
         describe('distribution and burn', () => {
             // get all exchange ids (omit their names)
             const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
-            const uniV3Fees = [100, 500, 3000];
             const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
             let arbToken1: TokenWithAddress;
             let arbToken2: TokenWithAddress;
@@ -274,39 +273,39 @@ describe('BancorArbitrage', () => {
                 // so 3 hops = 3 * 1e18 = 3000 BNT tokens more than start
                 // so with 0 flashloan fees, when we repay the flashloan, we have 3 BNT tokens as totalRewards
 
-                let hopCount = 3;
-                let totalRewards = toWei(1).mul(hopCount);
+                const hopCount = 3;
+                const totalRewards = toWei(1).mul(hopCount);
 
                 await bancorArbitrage.setRewards(ArbitrageRewardsChanged);
 
                 const rewards = await bancorArbitrage.rewards();
 
                 // calculate expected user rewards based on total rewards and percentagePPM
-                let expectedUserReward = totalRewards.mul(rewards.percentagePPM).div(PPM_RESOLUTION);
+                const expectedUserReward = totalRewards.mul(rewards.percentagePPM).div(PPM_RESOLUTION);
 
                 // calculate how much bnt should be burnt based on the total rewards and the user rewards
-                let expectedBntBurnt = totalRewards.sub(expectedUserReward);
+                const expectedBntBurnt = totalRewards.sub(expectedUserReward);
 
-                let userBalanceBefore = await bnt.balanceOf(user.address);
+                const userBalanceBefore = await bnt.balanceOf(user.address);
 
-                let bntSupplyBefore = await bnt.totalSupply();
+                const bntSupplyBefore = await bnt.totalSupply();
 
-                let exchangeIds = [ExchangeId.BancorV2, ExchangeId.Sushiswap, ExchangeId.BancorV2];
-                let tokens = [bnt.address, arbToken1.address, arbToken2.address, bnt.address];
+                const exchangeIds = [ExchangeId.BancorV2, ExchangeId.Sushiswap, ExchangeId.BancorV2];
+                const tokens = [bnt.address, arbToken1.address, arbToken2.address, bnt.address];
 
                 await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                     .to.emit(bancorArbitrage, 'ArbitrageExecuted')
                     .withArgs(user.address, exchangeIds, tokens, AMOUNT, expectedBntBurnt, expectedUserReward);
 
-                let userBalanceAfter = await bnt.balanceOf(user.address);
-                let bntSupplyAfter = await bnt.totalSupply();
+                const userBalanceAfter = await bnt.balanceOf(user.address);
+                const bntSupplyAfter = await bnt.totalSupply();
 
                 // user rewards are sent to user address, increasing his bnt balance
-                let userGain = userBalanceAfter.sub(userBalanceBefore);
+                const userGain = userBalanceAfter.sub(userBalanceBefore);
 
                 // bnt is burnt by sending it to BNT's address
                 // total supply of BNT gets decreased
-                let amountBurnt = bntSupplyBefore.sub(bntSupplyAfter);
+                const amountBurnt = bntSupplyBefore.sub(bntSupplyAfter);
 
                 expect(userGain).to.be.eq(expectedUserReward);
                 expect(amountBurnt).to.be.eq(expectedBntBurnt);
@@ -349,8 +348,8 @@ describe('BancorArbitrage', () => {
                 // so 3 hops = 3 * 1000 = 3000 BNT tokens more than start
                 // so with 0 flashloan fees, when we repay the flashloan, we have 3000 BNT tokens as totalRewards
 
-                let hopCount = 3;
-                let totalRewards = toWei(1).mul(hopCount);
+                const hopCount = 3;
+                const totalRewards = toWei(1).mul(hopCount);
 
                 // set rewards max amount to 100
                 const RewardsUpdate = {
@@ -372,28 +371,28 @@ describe('BancorArbitrage', () => {
                 expectedUserReward = rewards.maxAmount;
 
                 // calculate how much bnt should be burnt based on the total rewards and the user rewards
-                let expectedBntBurnt = totalRewards.sub(expectedUserReward);
+                const expectedBntBurnt = totalRewards.sub(expectedUserReward);
 
-                let userBalanceBefore = await bnt.balanceOf(user.address);
+                const userBalanceBefore = await bnt.balanceOf(user.address);
 
-                let bntSupplyBefore = await bnt.totalSupply();
+                const bntSupplyBefore = await bnt.totalSupply();
 
-                let exchangeIds = [ExchangeId.BancorV2, ExchangeId.Sushiswap, ExchangeId.BancorV2];
-                let tokens = [bnt.address, arbToken1.address, arbToken2.address, bnt.address];
+                const exchangeIds = [ExchangeId.BancorV2, ExchangeId.Sushiswap, ExchangeId.BancorV2];
+                const tokens = [bnt.address, arbToken1.address, arbToken2.address, bnt.address];
 
                 await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                     .to.emit(bancorArbitrage, 'ArbitrageExecuted')
                     .withArgs(user.address, exchangeIds, tokens, AMOUNT, expectedBntBurnt, expectedUserReward);
 
-                let userBalanceAfter = await bnt.balanceOf(user.address);
-                let bntSupplyAfter = await bnt.totalSupply();
+                const userBalanceAfter = await bnt.balanceOf(user.address);
+                const bntSupplyAfter = await bnt.totalSupply();
 
                 // user rewards are sent to user address, increasing his bnt balance
-                let userGain = userBalanceAfter.sub(userBalanceBefore);
+                const userGain = userBalanceAfter.sub(userBalanceBefore);
 
                 // bnt is burnt by sending it to BNT's address
                 // total supply of BNT gets decreased
-                let amountBurnt = bntSupplyBefore.sub(bntSupplyAfter);
+                const amountBurnt = bntSupplyBefore.sub(bntSupplyAfter);
 
                 expect(userGain).to.be.eq(expectedUserReward);
                 expect(amountBurnt).to.be.eq(expectedBntBurnt);
@@ -404,7 +403,6 @@ describe('BancorArbitrage', () => {
     describe('flashloan', () => {
         // get all exchange ids (omit their names)
         const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
-        const uniV3Fees = [100, 500, 3000];
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
         let arbToken1: TokenWithAddress;
         let arbToken2: TokenWithAddress;
@@ -704,7 +702,7 @@ describe('BancorArbitrage', () => {
         });
 
         it('reverts if the route length is invalid', async () => {
-            let routeData = {
+            const routeData = {
                 exchangeId: ExchangeId.BancorV2,
                 targetToken: arbToken1.address,
                 minTargetAmount: 1,
@@ -853,7 +851,7 @@ describe('BancorArbitrage', () => {
         });
 
         it('approves ERC-20 tokens for each exchange when trading', async () => {
-            for (let exchangeId of exchangeIds) {
+            for (const exchangeId of exchangeIds) {
                 let customInt;
                 if (exchangeId === ExchangeId.UniswapV3) {
                     customInt = uniV3Fees[tokenSymbols.indexOf(TokenSymbol.TKN1)];
