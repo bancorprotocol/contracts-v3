@@ -268,7 +268,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
         );
 
         // allocate the rewards
-        allocateRewards(routes, sourceAmount, msg.sender);
+        _allocateRewards(routes, sourceAmount, msg.sender);
     }
 
     /**
@@ -439,7 +439,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
     /**
      * @dev allocates the rewards to the caller and burns the rest
      */
-    function allocateRewards(Route[] calldata routes, uint256 sourceAmount, address caller) internal {
+    function _allocateRewards(Route[] calldata routes, uint256 sourceAmount, address caller) internal {
         // get the total amount
         uint256 totalAmount = _bnt.balanceOf(address(this));
 
