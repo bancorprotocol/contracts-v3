@@ -35,14 +35,14 @@ contract MockExchanges {
     function convertByPath(
         address[] memory _path,
         uint256 _amount,
-        uint256 /* _minReturn */,
+        uint256 _minReturn,
         address /* _beneficiary */,
         address /* _affiliateAccount */,
         uint256 /* _affiliateFee */
     ) external payable returns (uint256) {
         Token sourceToken = Token(_path[0]);
         Token targetToken = Token(_path[_path.length - 1]);
-        return mockSwap(sourceToken, targetToken, _amount, msg.sender);
+        return mockSwap(sourceToken, targetToken, _amount, msg.sender, block.timestamp, _minReturn);
     }
 
     /**
@@ -52,11 +52,11 @@ contract MockExchanges {
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount,
-        uint256 /* minReturnAmount */,
-        uint256 /* deadline */,
+        uint256 minReturnAmount,
+        uint256 deadline,
         address /* beneficiary */
     ) external payable returns (uint256) {
-        return mockSwap(sourceToken, targetToken, sourceAmount, msg.sender);
+        return mockSwap(sourceToken, targetToken, sourceAmount, msg.sender, deadline, minReturnAmount);
     }
 
     /**
@@ -64,39 +64,39 @@ contract MockExchanges {
      */
     function swapExactTokensForTokens(
         uint amountIn,
-        uint /* amountOutMin */,
+        uint amountOutMin,
         address[] calldata path,
         address /* to */,
-        uint /* deadline */
+        uint deadline
     ) external returns (uint[] memory) {
         uint[] memory amounts = new uint[](2);
         amounts[0] = amountIn;
-        amounts[1] = mockSwap(Token(path[0]), Token(path[1]), amountIn, msg.sender);
+        amounts[1] = mockSwap(Token(path[0]), Token(path[1]), amountIn, msg.sender, deadline, amountOutMin);
         return amounts;
     }
 
     function swapExactETHForTokens(
-        uint /* amountOutMin */,
+        uint amountOutMin,
         address[] calldata path,
         address /* to */,
-        uint /* deadline */
+        uint deadline
     ) external payable returns (uint[] memory) {
         uint[] memory amounts = new uint[](2);
         amounts[0] = msg.value;
-        amounts[1] = mockSwap(Token(NATIVE_TOKEN_ADDRESS), Token(path[1]), msg.value, msg.sender);
+        amounts[1] = mockSwap(Token(NATIVE_TOKEN_ADDRESS), Token(path[1]), msg.value, msg.sender, deadline, amountOutMin);
         return amounts;
     }
 
     function swapExactTokensForETH(
         uint amountIn,
-        uint /* amountOutMin */,
+        uint amountOutMin,
         address[] calldata path,
         address /* to */,
-        uint /* deadline */
+        uint deadline
     ) external returns (uint[] memory) {
         uint[] memory amounts = new uint[](2);
         amounts[0] = amountIn;
-        amounts[1] = mockSwap(Token(path[0]), Token(NATIVE_TOKEN_ADDRESS), amountIn, msg.sender);
+        amounts[1] = mockSwap(Token(path[0]), Token(NATIVE_TOKEN_ADDRESS), amountIn, msg.sender, deadline, amountOutMin);
         return amounts;
     }
 
@@ -104,15 +104,20 @@ contract MockExchanges {
      * Uniswap v3 trade
      */
     function exactInputSingle(ISwapRouter.ExactInputSingleParams memory params) external returns (uint256 amountOut) {
-        return mockSwap(Token(params.tokenIn), Token(params.tokenOut), params.amountIn, msg.sender);
+        return mockSwap(Token(params.tokenIn), Token(params.tokenOut), params.amountIn, 
+            msg.sender, params.deadline, params.amountOutMinimum);
     }
 
-    function mockSwap(Token sourceToken, Token targetToken, uint256 amount, address trader) public returns (uint256) {
+    function mockSwap(Token sourceToken, Token targetToken, uint256 amount, 
+                    address trader, uint deadline, uint minTargetAmount) public returns (uint256) {
+        require(deadline >= block.timestamp, "Swap timeout");
         // withdraw source amount
         sourceToken.safeTransferFrom(trader, address(this), amount);
 
         // transfer target amount
-        uint256 targetAmount = amount + 1000;
+        // receive 1 token per swap
+        uint256 targetAmount = amount + 1e18;
+        require(targetAmount >= minTargetAmount, "Target amount not enough"); 
         targetToken.safeTransfer(trader, targetAmount);
         return targetAmount;
     }
