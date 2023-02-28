@@ -413,10 +413,6 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    if (!proxy) {
-        console.log('!proxy ==> ', name, contractName);
-    }
-
     const data = { name, contract: contractName };
 
     await saveTypes(data);
