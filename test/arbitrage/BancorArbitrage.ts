@@ -12,8 +12,14 @@ import Contracts, {
 import { ExchangeId, MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
 import { toWei } from '../../utils/Types';
-import { createProxy } from '../helpers/Factory';
-import { createSystem, createTestToken, depositToPool, setupFundedPool, TokenWithAddress } from '../helpers/Factory';
+import {
+    createProxy,
+    createSystem,
+    createTestToken,
+    depositToPool,
+    setupFundedPool,
+    TokenWithAddress
+} from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -218,17 +224,17 @@ describe('BancorArbitrage', () => {
         });
 
         // get all exchange ids (omit their names)
-        let exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(Number(key)));
-        let uniV3Fees = [100, 500, 3000];
+        const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(Number(key)));
+        const uniV3Fees = [100, 500, 3000];
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
 
         // remove BancorV3 exchange until the reentrancy guard issue is resolved
         exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
-        for (let exchangeId of exchangeIds) {
-            for (let arbToken1Symbol of tokenSymbols) {
-                for (let arbToken2Symbol of tokenSymbols) {
-                    if (arbToken1Symbol == arbToken2Symbol) {
+        for (const exchangeId of exchangeIds) {
+            for (const arbToken1Symbol of tokenSymbols) {
+                for (const arbToken2Symbol of tokenSymbols) {
+                    if (arbToken1Symbol === arbToken2Symbol) {
                         continue;
                     }
 
@@ -239,7 +245,7 @@ describe('BancorArbitrage', () => {
                         const { token: arbToken2 } = await prepareBancorV3PoolAndToken(arbToken2Symbol);
 
                         let customInt;
-                        if (exchangeId == ExchangeId.UniswapV3) {
+                        if (exchangeId === ExchangeId.UniswapV3) {
                             customInt = uniV3Fees[tokenSymbols.indexOf(arbToken1Symbol)];
 
                             await transfer(deployer, weth, exchanges.address, AMOUNT.mul(10));
