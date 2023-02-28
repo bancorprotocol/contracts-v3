@@ -220,23 +220,23 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
      * - the caller must be the admin of the contract
      */
     function setRewards(
-        Rewards calldata rewards
-    ) external onlyAdmin validFee(rewards.percentagePPM) greaterThanZero(rewards.maxAmount) {
-        uint32 prevPercentagePPM = _rewards.percentagePPM;
+        Rewards calldata newRewards
+    ) external onlyAdmin validFee(newRewards.percentagePPM) greaterThanZero(newRewards.maxAmount) {
+        uint32 prevPercentagePPM = newRewards.percentagePPM;
         uint256 prevMaxAmount = _rewards.maxAmount;
 
         // return if the rewards are the same
-        if (prevPercentagePPM == rewards.percentagePPM && prevMaxAmount == rewards.maxAmount) {
+        if (prevPercentagePPM == newRewards.percentagePPM && prevMaxAmount == newRewards.maxAmount) {
             return;
         }
 
-        _rewards = rewards;
+        _rewards = newRewards;
 
         emit RewardsUpdated({
             prevPercentagePPM: prevPercentagePPM,
-            newPercentagePPM: rewards.percentagePPM,
+            newPercentagePPM: newRewards.percentagePPM,
             prevMaxAmount: prevMaxAmount,
-            newMaxAmount: rewards.maxAmount
+            newMaxAmount: newRewards.maxAmount
         });
     }
 
