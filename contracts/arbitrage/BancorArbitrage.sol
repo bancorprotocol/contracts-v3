@@ -196,6 +196,9 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
         _;
     }
 
+    /**
+     * @dev validRouteLength logic for gas optimization
+     */
     function _validRouteLength(Route[] calldata routes) internal pure {
         if (routes.length == 0 || routes.length > MAX_ROUTE_LENGTH) {
             revert InvalidRouteLength();
