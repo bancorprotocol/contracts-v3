@@ -293,8 +293,6 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         beforeEach(async () => {
-            legacyNetwork = await DeployedContracts.LegacyBancorNetwork.deployed();
-
             const { dai, link, usdc, wbtc } = await getNamedAccounts();
             const { daiWhale, linkWhale, usdcWhale, wbtcWhale } = await getNamedSigners();
 
