@@ -268,7 +268,7 @@ describe('BancorArbitrage', () => {
                         customAddress: bnt.address,
                         customInt: 0
                     }
-                ]; 
+                ];
 
                 // each hop through the route from MockExchanges adds 1e18 tokens to the output
                 // so 3 hops = 3 * 1e18 = 3000 BNT tokens more than start
@@ -290,17 +290,17 @@ describe('BancorArbitrage', () => {
                 let userBalanceBefore = await bnt.balanceOf(user.address);
 
                 let bntSupplyBefore = await bnt.totalSupply();
-                
+
                 let exchangeIds = [ExchangeId.BancorV2, ExchangeId.Sushiswap, ExchangeId.BancorV2];
                 let tokens = [bnt.address, arbToken1.address, arbToken2.address, bnt.address];
-                
-                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                    to.emit(bancorArbitrage, 'ArbitrageExecuted').
-                    withArgs(user.address, exchangeIds, tokens, AMOUNT, expectedBntBurnt, expectedUserReward);
+
+                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                    .to.emit(bancorArbitrage, 'ArbitrageExecuted')
+                    .withArgs(user.address, exchangeIds, tokens, AMOUNT, expectedBntBurnt, expectedUserReward);
 
                 let userBalanceAfter = await bnt.balanceOf(user.address);
                 let bntSupplyAfter = await bnt.totalSupply();
-                
+
                 // user rewards are sent to user address, increasing his bnt balance
                 let userGain = userBalanceAfter.sub(userBalanceBefore);
 
@@ -343,22 +343,22 @@ describe('BancorArbitrage', () => {
                         customAddress: bnt.address,
                         customInt: 0
                     }
-                ]; 
+                ];
 
                 // each hop through the route from MockExchanges adds 1000 tokens to the output
                 // so 3 hops = 3 * 1000 = 3000 BNT tokens more than start
                 // so with 0 flashloan fees, when we repay the flashloan, we have 3000 BNT tokens as totalRewards
 
                 let hopCount = 3;
-                let totalRewards = toWei(1).mul(hopCount)
+                let totalRewards = toWei(1).mul(hopCount);
 
-                // set rewards max amount to 100 
+                // set rewards max amount to 100
                 const RewardsUpdate = {
                     percentagePPM: 100_000,
                     maxAmount: 100
                 };
 
-                await bancorArbitrage.setRewards(RewardsUpdate)
+                await bancorArbitrage.setRewards(RewardsUpdate);
 
                 const rewards = await bancorArbitrage.rewards();
 
@@ -380,14 +380,14 @@ describe('BancorArbitrage', () => {
 
                 let exchangeIds = [ExchangeId.BancorV2, ExchangeId.Sushiswap, ExchangeId.BancorV2];
                 let tokens = [bnt.address, arbToken1.address, arbToken2.address, bnt.address];
-                
-                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                    to.emit(bancorArbitrage, 'ArbitrageExecuted').
-                    withArgs(user.address, exchangeIds, tokens, AMOUNT, expectedBntBurnt, expectedUserReward);
+
+                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                    .to.emit(bancorArbitrage, 'ArbitrageExecuted')
+                    .withArgs(user.address, exchangeIds, tokens, AMOUNT, expectedBntBurnt, expectedUserReward);
 
                 let userBalanceAfter = await bnt.balanceOf(user.address);
                 let bntSupplyAfter = await bnt.totalSupply();
-                
+
                 // user rewards are sent to user address, increasing his bnt balance
                 let userGain = userBalanceAfter.sub(userBalanceBefore);
 
@@ -398,9 +398,8 @@ describe('BancorArbitrage', () => {
                 expect(userGain).to.be.eq(expectedUserReward);
                 expect(amountBurnt).to.be.eq(expectedBntBurnt);
             });
-        })
+        });
     });
-
 
     describe('flashloan', () => {
         // get all exchange ids (omit their names)
@@ -422,9 +421,10 @@ describe('BancorArbitrage', () => {
             arbToken2 = secondPool.token;
         });
 
-        it('shouldn\'t be able to call onFlashloan directly', async () => {
-            await expect(bancorArbitrage.onFlashLoan(bancorArbitrage.address, bnt.address, 1, 0, "0x")).
-                to.be.revertedWithError('InvalidFlashLoanCaller')
+        it("shouldn't be able to call onFlashloan directly", async () => {
+            await expect(
+                bancorArbitrage.onFlashLoan(bancorArbitrage.address, bnt.address, 1, 0, '0x')
+            ).to.be.revertedWithError('InvalidFlashLoanCaller');
         });
 
         it('should correctly obtain a flashloan and repay it correctly', async () => {
@@ -464,9 +464,10 @@ describe('BancorArbitrage', () => {
             // FlashLoanCompleted(Token indexed token, address indexed borrower, uint256 amount, uint256 feeAmount);
             // this also validates that the amount which is retrieved from the flashloan is correct
 
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.emit(network, 'FlashLoanCompleted').withArgs(bnt.address, bancorArbitrage.address, AMOUNT, 0);
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                .to.emit(network, 'FlashLoanCompleted')
+                .withArgs(bnt.address, bancorArbitrage.address, AMOUNT, 0);
+        });
 
         it('should correctly obtain a flashloan and repay with fees if fees are > 0', async () => {
             // transfer tokens to exchange
@@ -507,13 +508,14 @@ describe('BancorArbitrage', () => {
 
             for (const flashLoanFee of [0.01, 0.02, 0.03, 0.04, 0.05]) {
                 await networkSettings.setFlashLoanFeePPM(bnt.address, toPPM(flashLoanFee));
-    
+
                 const expectedFeeAmount = AMOUNT.mul(toPPM(flashLoanFee)).div(PPM_RESOLUTION);
-    
-                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                    to.emit(network, 'FlashLoanCompleted').withArgs(bnt.address, bancorArbitrage.address, AMOUNT, expectedFeeAmount);
+
+                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                    .to.emit(network, 'FlashLoanCompleted')
+                    .withArgs(bnt.address, bancorArbitrage.address, AMOUNT, expectedFeeAmount);
             }
-        })
+        });
 
         it('should revert if flashloan cannot be obtained', async () => {
             // transfer tokens to exchange
@@ -549,9 +551,10 @@ describe('BancorArbitrage', () => {
             ];
 
             // attempt to make flashloan with more than available BNT tokens in the pool
-            await expect(bancorArbitrage.connect(user).execute(routes, MAX_UINT256)).
-                to.be.revertedWith('SafeERC20: low-level call failed');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, MAX_UINT256)).to.be.revertedWith(
+                'SafeERC20: low-level call failed'
+            );
+        });
 
         it('should revert if flashloan + fee cannot be repaid', async () => {
             // transfer tokens to exchange
@@ -589,9 +592,10 @@ describe('BancorArbitrage', () => {
             // set fee to 1%, which is more than we receive from the trade arbitrage
             await networkSettings.setFlashLoanFeePPM(bnt.address, toPPM(1));
 
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWith('SafeERC20: low-level call failed');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
+                'SafeERC20: low-level call failed'
+            );
+        });
     });
 
     describe('trades', () => {
@@ -647,9 +651,8 @@ describe('BancorArbitrage', () => {
                 }
             ];
 
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWith('Swap timeout');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith('Swap timeout');
+        });
 
         it('reverts if source amount is 0', async () => {
             const routes = [
@@ -663,9 +666,8 @@ describe('BancorArbitrage', () => {
                 }
             ];
 
-            await expect(bancorArbitrage.connect(user).execute(routes, 0)).
-                to.be.revertedWithError('ZeroValue');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, 0)).to.be.revertedWithError('ZeroValue');
+        });
 
         it('reverts if the exchangeId is not supported', async () => {
             const InvalidExchangeId = 6;
@@ -696,9 +698,10 @@ describe('BancorArbitrage', () => {
                 }
             ];
 
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWithError('InvalidExchangeId');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWithError(
+                'InvalidExchangeId'
+            );
+        });
 
         it('reverts if the route length is invalid', async () => {
             let routeData = {
@@ -708,22 +711,24 @@ describe('BancorArbitrage', () => {
                 deadline: DEADLINE,
                 customAddress: arbToken1.address,
                 customInt: 0
-            }
+            };
 
             // create a route with 11 hops (max is 10)
             const routes = Array(11).fill(routeData);
 
             // test with > 10 hops
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWithError('InvalidRouteLength');
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWithError(
+                'InvalidRouteLength'
+            );
 
             // test with 0 hops
             const emptyRoutes: Array<any> = [];
-            await expect(bancorArbitrage.connect(user).execute(emptyRoutes, AMOUNT)).
-                to.be.revertedWithError('InvalidRouteLength');
-        })
+            await expect(bancorArbitrage.connect(user).execute(emptyRoutes, AMOUNT)).to.be.revertedWithError(
+                'InvalidRouteLength'
+            );
+        });
 
-        it('reverts if caller doesn\'t have enough balance', async () => {
+        it("reverts if caller doesn't have enough balance", async () => {
             const routes = [
                 {
                     exchangeId: ExchangeId.BancorV2,
@@ -751,9 +756,10 @@ describe('BancorArbitrage', () => {
                 }
             ];
 
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWith('ERC20: transfer amount exceeds balance');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
+                'ERC20: transfer amount exceeds balance'
+            );
+        });
 
         it('reverts if the minTargetAmount is greater than the expected target amount', async () => {
             // transfer tokens to exchange
@@ -788,11 +794,12 @@ describe('BancorArbitrage', () => {
                 }
             ];
 
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWith('Target amount not enough');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
+                'InsufficientTargetAmount'
+            );
+        });
 
-        it('reverts if the output token of the arbitrage isn\'t BNT', async () => {
+        it("reverts if the output token of the arbitrage isn't BNT", async () => {
             const routes = [
                 {
                     exchangeId: ExchangeId.BancorV2,
@@ -809,15 +816,16 @@ describe('BancorArbitrage', () => {
                     deadline: DEADLINE,
                     customAddress: arbToken2.address,
                     customInt: 0
-                },
+                }
             ];
 
             // test invalid output token
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWithError('InvalidInitialAndFinalTokens');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWithError(
+                'InvalidInitialAndFinalTokens'
+            );
+        });
 
-        it('reverts if the path isn\'t valid', async () => {
+        it("reverts if the path isn't valid", async () => {
             const routes = [
                 {
                     exchangeId: ExchangeId.BancorV2,
@@ -839,12 +847,13 @@ describe('BancorArbitrage', () => {
 
             // test invalid path result
             // reverts in the MockExchanges contract
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.be.revertedWith('SafeERC20: low-level call failed');
-        })
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
+                'SafeERC20: low-level call failed'
+            );
+        });
 
         it('approves ERC-20 tokens for each exchange when trading', async () => {
-            for(let exchangeId of exchangeIds) {
+            for (let exchangeId of exchangeIds) {
                 let customInt;
                 if (exchangeId === ExchangeId.UniswapV3) {
                     customInt = uniV3Fees[tokenSymbols.indexOf(TokenSymbol.TKN1)];
@@ -885,14 +894,14 @@ describe('BancorArbitrage', () => {
                     }
                 ];
                 const secondHopSourceAmount = AMOUNT.add(toWei(2));
-                
+
                 // expect to approve exactly the amounts needed for the second trade for each exchange
-                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                    to.emit(arbToken2, 'Approval').
-                    withArgs(bancorArbitrage.address, exchanges.address, secondHopSourceAmount);
+                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                    .to.emit(arbToken2, 'Approval')
+                    .withArgs(bancorArbitrage.address, exchanges.address, secondHopSourceAmount);
             }
-        })
-    })
+        });
+    });
 
     describe('arbitrage', () => {
         beforeEach(async () => {
@@ -941,11 +950,13 @@ describe('BancorArbitrage', () => {
                     customAddress: bnt.address,
                     customInt: 0
                 }
-            ]
-                
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).
-                to.emit(bancorArbitrage, 'ArbitrageExecuted')
-        })
+            ];
+
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.emit(
+                bancorArbitrage,
+                'ArbitrageExecuted'
+            );
+        });
 
         for (const exchangeId of exchangeIds) {
             for (const arbToken1Symbol of tokenSymbols) {
