@@ -381,12 +381,12 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
 
             // perform the trade
             if (sourceToken.isNative()) {
-                path[0] = address(router.WETH());
+                path[0] = address(_weth);
                 path[1] = address(targetToken);
                 router.swapExactETHForTokens{ value: sourceAmount }(minTargetAmount, path, address(this), deadline);
             } else if (targetToken.isNative()) {
                 path[0] = address(sourceToken);
-                path[1] = address(router.WETH());
+                path[1] = address(_weth);
                 router.swapExactTokensForETH(sourceAmount, minTargetAmount, path, address(this), deadline);
             } else {
                 path[0] = address(sourceToken);
