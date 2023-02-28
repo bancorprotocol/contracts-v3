@@ -103,7 +103,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
      * @dev triggered after a successful arb is executed
      */
     event ArbitrageExecuted(
-        address caller,
+        address indexed caller,
         uint16[] exchangeIds,
         address[] tokenPath,
         uint256 sourceAmount,
