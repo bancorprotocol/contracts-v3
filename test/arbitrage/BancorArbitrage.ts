@@ -224,7 +224,7 @@ describe('BancorArbitrage', () => {
         });
 
         // get all exchange ids (omit their names)
-        const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(Number(key)));
+        const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
         const uniV3Fees = [100, 500, 3000];
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
 
