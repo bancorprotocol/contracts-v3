@@ -189,14 +189,14 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
     /**
      * @dev checks whether the specified number of routes is supported
      */
-    modifier validRouteLength(Route[] memory routes) {
+    modifier validRouteLength(Route[] calldata routes) {
         // validate inputs
         _validRouteLength(routes);
 
         _;
     }
 
-    function _validRouteLength(Route[] memory routes) internal pure {
+    function _validRouteLength(Route[] calldata routes) internal pure {
         if (routes.length == 0 || routes.length > MAX_ROUTE_LENGTH) {
             revert InvalidRouteLength();
         }
@@ -248,7 +248,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
      * @dev execute multi-step arbitrage trade between exchanges
      */
     function execute(
-        Route[] memory routes,
+        Route[] calldata routes,
         uint256 sourceAmount
     ) public payable nonReentrant validRouteLength(routes) greaterThanZero(sourceAmount) {
         // verify that the last token in the process is BNT
@@ -436,7 +436,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
     /**
      * @dev allocates the rewards to the caller and burns the rest
      */
-    function allocateRewards(Route[] memory routes, uint256 sourceAmount, address caller) internal {
+    function allocateRewards(Route[] calldata routes, uint256 sourceAmount, address caller) internal {
         // get the total amount
         uint256 totalAmount = _bnt.balanceOf(address(this));
 
