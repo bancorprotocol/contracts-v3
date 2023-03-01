@@ -468,7 +468,7 @@ describe('BancorArbitrage', () => {
                 .withArgs(bnt.address, bancorArbitrage.address, AMOUNT, 0);
         });
 
-        it('should correctly obtain a flashloan and repay with fees if fees are > 0', async () => {
+        it('should be exempted from flashloan fees', async () => {
             // transfer tokens to exchange
             await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
             await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
@@ -508,7 +508,8 @@ describe('BancorArbitrage', () => {
             for (const flashLoanFee of [0.01, 0.02, 0.03, 0.04, 0.05]) {
                 await networkSettings.setFlashLoanFeePPM(bnt.address, toPPM(flashLoanFee));
 
-                const expectedFeeAmount = AMOUNT.mul(toPPM(flashLoanFee)).div(PPM_RESOLUTION);
+                // fee amount is 0 because the arb contract is exempt from flashloan fees
+                const expectedFeeAmount = 0;
 
                 await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                     .to.emit(network, 'FlashLoanCompleted')
@@ -628,11 +629,30 @@ describe('BancorArbitrage', () => {
             );
         });
 
-        it('should revert if flashloan + fee cannot be repaid', async () => {
-            // transfer tokens to exchange
-            await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
-            await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
-            await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(10));
+        it('should revert if flashloan cannot be repaid', async () => {
+            baseToken = await createTestToken();
+            // these exchanges swap the input amount for an output amount which is less
+            // leading to negative BNT gain, and unsuccessful repayment of flashloan
+            const negativeOutputExchanges = await Contracts.MockExchangesNegativeOutput.deploy(weth.address);
+            const bancorV2NegativeOutput = negativeOutputExchanges;
+            const uniswapV2RouterNegativeOutput = negativeOutputExchanges;
+            const uniswapV3RouterNegativeOutput = negativeOutputExchanges;
+            const sushiswapV2RouterNegativeOutput = negativeOutputExchanges;
+
+            const newBancorArbitrage = await createProxy(Contracts.TestBancorArbitrage, {
+                ctorArgs: [
+                    bnt.address,
+                    bancorV2NegativeOutput.address,
+                    network.address,
+                    uniswapV2RouterNegativeOutput.address,
+                    uniswapV3RouterNegativeOutput.address,
+                    sushiswapV2RouterNegativeOutput.address
+                ]
+            });
+
+            await transfer(deployer, bnt, negativeOutputExchanges.address, AMOUNT.mul(10));
+            await transfer(deployer, arbToken1, negativeOutputExchanges.address, AMOUNT.mul(10));
+            await transfer(deployer, arbToken2, negativeOutputExchanges.address, AMOUNT.mul(10));
 
             const routes = [
                 {
@@ -661,10 +681,7 @@ describe('BancorArbitrage', () => {
                 }
             ];
 
-            // set fee to 1%, which is more than we receive from the trade arbitrage
-            await networkSettings.setFlashLoanFeePPM(bnt.address, toPPM(1));
-
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
+            await expect(newBancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
                 'SafeERC20: low-level call failed'
             );
         });
