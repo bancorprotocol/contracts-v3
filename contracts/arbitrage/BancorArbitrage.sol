@@ -44,12 +44,7 @@ interface IBancorNetwork {
         address beneficiary
     ) external payable returns (uint256);
 
-    function flashLoan(
-        Token token,
-        uint256 amount,
-        IFlashLoanRecipient recipient,
-        bytes calldata data
-    ) external;
+    function flashLoan(Token token, uint256 amount, IFlashLoanRecipient recipient, bytes calldata data) external;
 }
 
 /**
@@ -222,13 +217,6 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
         if (routes.length == 0 || routes.length > MAX_ROUTE_LENGTH) {
             revert InvalidRouteLength();
         }
-    }
-
-    /**
-     * @dev returns true if given token is WETH
-     */
-    function _isWETH(Token token) internal view returns (bool) {
-        return address(token) == address(_weth);
     }
 
     /**
