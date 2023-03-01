@@ -15,7 +15,7 @@ import { TokenLibrary } from "../token/TokenLibrary.sol";
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
-import { IBancorNetwork, IFlashLoanRecipient } from "../network/interfaces/IBancorNetwork.sol";
+import { IFlashLoanRecipient } from "../network/interfaces/IBancorNetwork.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -31,6 +31,20 @@ interface IBancorNetworkV2 {
     ) external payable returns (uint256);
 
     function conversionPath(Token _sourceToken, Token _targetToken) external view returns (address[] memory);
+}
+
+// interface to support Bancor V3 trades
+interface IBancorNetwork {
+    function tradeBySourceAmountArb(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary
+    ) external payable returns (uint256);
+
+    function flashLoan(Token token, uint256 amount, IFlashLoanRecipient recipient, bytes calldata data) external;
 }
 
 /**
@@ -103,7 +117,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
      * @dev triggered after a successful arb is executed
      */
     event ArbitrageExecuted(
-        address caller,
+        address indexed caller,
         uint16[] exchangeIds,
         address[] tokenPath,
         uint256 sourceAmount,
@@ -189,51 +203,47 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
     /**
      * @dev checks whether the specified number of routes is supported
      */
-    modifier validRouteLength(Route[] memory routes) {
+    modifier validRouteLength(Route[] calldata routes) {
         // validate inputs
         _validRouteLength(routes);
 
         _;
     }
 
-    function _validRouteLength(Route[] memory routes) internal pure {
+    /**
+     * @dev validRouteLength logic for gas optimization
+     */
+    function _validRouteLength(Route[] calldata routes) internal pure {
         if (routes.length == 0 || routes.length > MAX_ROUTE_LENGTH) {
             revert InvalidRouteLength();
         }
     }
 
     /**
-     * @dev returns true if given token is WETH
-     */
-    function _isWETH(Token token) internal view returns (bool) {
-        return address(token) == address(_weth);
-    }
-
-    /**
-     * @dev sets the rewards parameters
+     * @dev sets the rewards settings
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
     function setRewards(
-        Rewards calldata settings
-    ) external onlyAdmin validFee(settings.percentagePPM) greaterThanZero(settings.maxAmount) {
-        uint32 prevPercentagePPM = _rewards.percentagePPM;
+        Rewards calldata newRewards
+    ) external onlyAdmin validFee(newRewards.percentagePPM) greaterThanZero(newRewards.maxAmount) {
+        uint32 prevPercentagePPM = newRewards.percentagePPM;
         uint256 prevMaxAmount = _rewards.maxAmount;
 
-        // return if the settings are the same
-        if (prevPercentagePPM == settings.percentagePPM && prevMaxAmount == settings.maxAmount) {
+        // return if the rewards are the same
+        if (prevPercentagePPM == newRewards.percentagePPM && prevMaxAmount == newRewards.maxAmount) {
             return;
         }
 
-        _rewards = settings;
+        _rewards = newRewards;
 
         emit RewardsUpdated({
             prevPercentagePPM: prevPercentagePPM,
-            newPercentagePPM: settings.percentagePPM,
+            newPercentagePPM: newRewards.percentagePPM,
             prevMaxAmount: prevMaxAmount,
-            newMaxAmount: settings.maxAmount
+            newMaxAmount: newRewards.maxAmount
         });
     }
 
@@ -248,7 +258,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
      * @dev execute multi-step arbitrage trade between exchanges
      */
     function execute(
-        Route[] memory routes,
+        Route[] calldata routes,
         uint256 sourceAmount
     ) public payable nonReentrant validRouteLength(routes) greaterThanZero(sourceAmount) {
         // verify that the last token in the process is BNT
@@ -265,7 +275,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
         );
 
         // allocate the rewards
-        allocateRewards(routes, sourceAmount, msg.sender);
+        _allocateRewards(routes, sourceAmount, msg.sender);
     }
 
     /**
@@ -381,12 +391,12 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
 
             // perform the trade
             if (sourceToken.isNative()) {
-                path[0] = address(router.WETH());
+                path[0] = address(_weth);
                 path[1] = address(targetToken);
                 router.swapExactETHForTokens{ value: sourceAmount }(minTargetAmount, path, address(this), deadline);
             } else if (targetToken.isNative()) {
                 path[0] = address(sourceToken);
-                path[1] = address(router.WETH());
+                path[1] = address(_weth);
                 router.swapExactTokensForETH(sourceAmount, minTargetAmount, path, address(this), deadline);
             } else {
                 path[0] = address(sourceToken);
@@ -436,7 +446,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
     /**
      * @dev allocates the rewards to the caller and burns the rest
      */
-    function allocateRewards(Route[] memory routes, uint256 sourceAmount, address caller) internal {
+    function _allocateRewards(Route[] calldata routes, uint256 sourceAmount, address caller) internal {
         // get the total amount
         uint256 totalAmount = _bnt.balanceOf(address(this));
 

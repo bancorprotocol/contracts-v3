@@ -9,7 +9,7 @@ import { ISwapRouter } from "@uniswap/v3-periphery/contracts/interfaces/ISwapRou
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-contract MockExchanges {
+contract MockExchangesSameOutput {
     using SafeERC20 for IERC20;
     using TokenLibrary for Token;
 
@@ -142,8 +142,8 @@ contract MockExchanges {
         sourceToken.safeTransferFrom(trader, address(this), amount);
 
         // transfer target amount
-        // receive 1 token per swap
-        uint256 targetAmount = amount + 1e18;
+        // output amount is same as input amount
+        uint256 targetAmount = amount;
         require(targetAmount >= minTargetAmount, "InsufficientTargetAmount");
         targetToken.safeTransfer(trader, targetAmount);
         return targetAmount;

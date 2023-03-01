@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import {
     AutoCompoundingRewards__factory,
+    BancorArbitrage__factory,
     BancorNetwork__factory,
     BancorNetworkInfo__factory,
     BancorPortal__factory,
@@ -11,6 +12,7 @@ import {
     ExternalRewardsVault__factory,
     MasterVault__factory,
     MockExchanges__factory,
+    MockExchangesSameOutput__factory,
     MockUniswapV2Factory__factory,
     MockUniswapV2Pair__factory,
     MockUniswapV2Router02__factory,
@@ -59,6 +61,7 @@ const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
     AutoCompoundingRewards: deployOrAttach('AutoCompoundingRewards', AutoCompoundingRewards__factory, signer),
+    BancorArbitrage: deployOrAttach('BancorArbitrage', BancorArbitrage__factory, signer),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorNetworkInfo: deployOrAttach('BancorNetworkInfo', BancorNetworkInfo__factory, signer),
     BancorPortal: deployOrAttach('BancorPortal', BancorPortal__factory, signer),
@@ -69,6 +72,7 @@ const getContracts = (signer?: Signer) => ({
     ExternalRewardsVault: deployOrAttach('ExternalRewardsVault', ExternalRewardsVault__factory, signer),
     MasterVault: deployOrAttach('MasterVault', MasterVault__factory, signer),
     MockExchanges: deployOrAttach('MockExchanges', MockExchanges__factory, signer),
+    MockExchangesSameOutput: deployOrAttach('MockExchangesSameOutput', MockExchangesSameOutput__factory, signer),
     MockUniswapV2Factory: deployOrAttach('MockUniswapV2Factory', MockUniswapV2Factory__factory, signer),
     MockUniswapV2Pair: deployOrAttach('MockUniswapV2Pair', MockUniswapV2Pair__factory, signer),
     MockUniswapV2Router02: deployOrAttach('MockUniswapV2Router02', MockUniswapV2Router02__factory, signer),

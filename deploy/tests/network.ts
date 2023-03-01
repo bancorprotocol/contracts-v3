@@ -16,21 +16,14 @@ import Contracts, {
     PoolTokenFactory,
     StandardRewards
 } from '../../components/Contracts';
-import LegacyContracts, {
+import {
     BNT,
     IUniswapV2Factory,
     IUniswapV2Factory__factory,
     IUniswapV2Router02,
     IUniswapV2Router02__factory,
-    LegacyBancorNetwork,
-    Registry as LegacyRegistry,
     LiquidityProtection,
-    LiquidityProtectionSettings,
-    LiquidityProtectionStore,
-    Owned,
     StakingRewardsClaim,
-    STANDARD_CONVERTER_TYPE,
-    STANDARD_POOL_CONVERTER_WEIGHT,
     TokenGovernance,
     VBNT
 } from '../../components/LegacyContracts';
@@ -41,7 +34,7 @@ import { DeployedContracts, fundAccount, getNamedSigners, isMainnet, runPendingD
 import Logger from '../../utils/Logger';
 import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { Fraction, toWei } from '../../utils/Types';
-import { IERC20, StandardPoolConverter } from '@bancor/contracts-solidity';
+import { IERC20 } from '@bancor/contracts-solidity';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -62,14 +55,13 @@ import { getNamedAccounts } from 'hardhat';
     let pendingWithdrawals: PendingWithdrawals;
     let autoCompoundingRewards: AutoCompoundingRewards;
 
-    let deployer: SignerWithAddress;
     let daoMultisig: SignerWithAddress;
     let foundationMultisig: SignerWithAddress;
     let bntWhale: SignerWithAddress;
     let ethWhale: SignerWithAddress;
 
     before(async () => {
-        ({ deployer, daoMultisig, foundationMultisig, ethWhale, bntWhale } = await getNamedSigners());
+        ({ daoMultisig, foundationMultisig, ethWhale, bntWhale } = await getNamedSigners());
 
         await fundAccount(bntWhale);
     });
@@ -131,8 +123,8 @@ import { getNamedAccounts } from 'hardhat';
             );
 
             const expectedRoles = isMainnet()
-                ? [bntPool.address, liquidityProtection.address, stakingRewardsClaim.address]
-                : [bntPool.address];
+                ? [standardRewards.address, bntPool.address, liquidityProtection.address, stakingRewardsClaim.address]
+                : [standardRewards.address, bntPool.address];
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
                 Roles.TokenGovernance.ROLE_MINTER,
@@ -207,11 +199,6 @@ import { getNamedAccounts } from 'hardhat';
     });
 
     describe('health checks', () => {
-        let legacyNetwork: LegacyBancorNetwork;
-        let liquidityProtection: LiquidityProtection;
-        let liquidityProtectionStore: LiquidityProtectionStore;
-        let liquidityProtectionSettings: LiquidityProtectionSettings;
-
         enum TestPools {
             BNT = 'BNT',
             ETH = 'ETH',
@@ -287,65 +274,6 @@ import { getNamedAccounts } from 'hardhat';
             }
         };
 
-        const stabilizePoolV2 = async (
-            pool: string,
-            anchor: Owned,
-            converter: StandardPoolConverter,
-            tokenWhale: SignerWithAddress
-        ) => {
-            while (true) {
-                const spotRate = {
-                    n: await converter.getConnectorBalance(bnt.address),
-                    d: await converter.getConnectorBalance(pool)
-                };
-
-                const rawAverageRate = await converter.recentAverageRate(pool);
-                const smaRate = { n: rawAverageRate[0], d: rawAverageRate[1] };
-                const rateMaxDeviation = await liquidityProtectionSettings.averageRateMaxDeviation();
-
-                if (isInRange(smaRate, spotRate, rateMaxDeviation)) {
-                    break;
-                }
-
-                let sourceToken: string;
-                let targetToken: string;
-                let trader: SignerWithAddress;
-                if (smaRate.n.mul(spotRate.d).gt(spotRate.n.mul(smaRate.d))) {
-                    // SMA > SPOT: stabilizing by trading TKN to BNT
-                    sourceToken = pool;
-                    targetToken = bnt.address;
-                    trader = tokenWhale;
-                } else {
-                    // SPOT > SMA: Stabilizing by trading BNT to TKN
-                    sourceToken = bnt.address;
-                    targetToken = pool;
-                    trader = bntWhale;
-                }
-
-                const isNativeSourceToken = sourceToken === NATIVE_TOKEN_ADDRESS;
-
-                const tradeAmount = toWei(1);
-                if (!isNativeSourceToken) {
-                    const tokenContract = await Contracts.ERC20.attach(sourceToken);
-                    await tokenContract.connect(trader).approve(legacyNetwork.address, tradeAmount);
-                }
-
-                await legacyNetwork
-                    .connect(trader)
-                    .convertByPath(
-                        [sourceToken, anchor.address, targetToken],
-                        tradeAmount,
-                        1,
-                        ZERO_ADDRESS,
-                        ZERO_ADDRESS,
-                        0,
-                        {
-                            value: isNativeSourceToken ? tradeAmount : BigNumber.from(0)
-                        }
-                    );
-            }
-        };
-
         const depositTKN = async (token: string, tokenWhale: SignerWithAddress, depositAmount: BigNumber) => {
             const isNativeToken = token === NATIVE_TOKEN_ADDRESS;
 
@@ -365,11 +293,6 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         beforeEach(async () => {
-            legacyNetwork = await DeployedContracts.LegacyBancorNetwork.deployed();
-            liquidityProtection = await DeployedContracts.LiquidityProtection.deployed();
-            liquidityProtectionStore = await DeployedContracts.LiquidityProtectionStore.deployed();
-            liquidityProtectionSettings = await DeployedContracts.LiquidityProtectionSettings.deployed();
-
             const { dai, link, usdc, wbtc } = await getNamedAccounts();
             const { daiWhale, linkWhale, usdcWhale, wbtcWhale } = await getNamedSigners();
 

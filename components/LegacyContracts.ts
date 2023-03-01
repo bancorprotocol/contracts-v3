@@ -1,5 +1,7 @@
 /* eslint-disable camelcase */
 import {
+    ISwapRouter,
+    ISwapRouter__factory,
     IUniswapV2Factory,
     IUniswapV2Factory__factory,
     IUniswapV2Router02,
@@ -92,7 +94,14 @@ export {
     Owned
 };
 
-export { IUniswapV2Factory, IUniswapV2Factory__factory, IUniswapV2Router02, IUniswapV2Router02__factory };
+export {
+    IUniswapV2Factory,
+    IUniswapV2Factory__factory,
+    IUniswapV2Router02,
+    IUniswapV2Router02__factory,
+    ISwapRouter,
+    ISwapRouter__factory
+};
 
 export const Registry = {
     BANCOR_NETWORK: formatBytes32String('BancorNetwork'),
