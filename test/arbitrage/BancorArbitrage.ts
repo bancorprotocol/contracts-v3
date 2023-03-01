@@ -403,6 +403,7 @@ describe('BancorArbitrage', () => {
     describe('flashloan', () => {
         // get all exchange ids (omit their names)
         const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
+        const uniV3Fees = [100, 500, 3000];
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
         let arbToken1: TokenWithAddress;
         let arbToken2: TokenWithAddress;
@@ -512,6 +513,79 @@ describe('BancorArbitrage', () => {
                 await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                     .to.emit(network, 'FlashLoanCompleted')
                     .withArgs(bnt.address, bancorArbitrage.address, AMOUNT, expectedFeeAmount);
+            }
+        });
+
+        it('should execute flashloan succesfully on zero reward and burn amount', async () => {
+            baseToken = await createTestToken();
+            // these exchanges swap the input amount for exactly the output amount
+            // leading to 0 BNT gain, but successful repayment of flashloan b/c fee is 0
+            // check the logic for 0 BNT gain
+            const sameOutputExchanges = await Contracts.MockExchangesSameOutput.deploy(weth.address);
+            const bancorV2SameOutput = sameOutputExchanges;
+            const uniswapV2RouterSameOutput = sameOutputExchanges;
+            const uniswapV3RouterSameOutput = sameOutputExchanges;
+            const sushiswapV2RouterSameOutput = sameOutputExchanges;
+
+            const newBancorArbitrage = await createProxy(Contracts.TestBancorArbitrage, {
+                ctorArgs: [
+                    bnt.address,
+                    bancorV2SameOutput.address,
+                    network.address,
+                    uniswapV2RouterSameOutput.address,
+                    uniswapV3RouterSameOutput.address,
+                    sushiswapV2RouterSameOutput.address
+                ]
+            });
+
+            await transfer(deployer, baseToken, sameOutputExchanges.address, MAX_SOURCE_AMOUNT);
+
+            for (const exchangeId of exchangeIds) {
+                let customInt;
+                if (exchangeId === ExchangeId.UniswapV3) {
+                    customInt = uniV3Fees[tokenSymbols.indexOf(TokenSymbol.TKN1)];
+
+                    await transfer(deployer, weth, sameOutputExchanges.address, AMOUNT.mul(10));
+                } else {
+                    customInt = 0;
+                }
+
+                await transfer(deployer, bnt, sameOutputExchanges.address, AMOUNT.mul(10));
+                await transfer(deployer, arbToken1, sameOutputExchanges.address, AMOUNT.mul(10));
+                await transfer(deployer, arbToken2, sameOutputExchanges.address, AMOUNT.mul(10));
+
+                const routes = [
+                    {
+                        exchangeId: ExchangeId.BancorV2,
+                        targetToken: arbToken1.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: arbToken1.address,
+                        customInt: 0
+                    },
+                    {
+                        exchangeId,
+                        targetToken: arbToken2.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: arbToken2.address,
+                        customInt
+                    },
+                    {
+                        exchangeId: ExchangeId.BancorV2,
+                        targetToken: bnt.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: bnt.address,
+                        customInt: 0
+                    }
+                ];
+                const exchangeIds = [ExchangeId.BancorV2, exchangeId, ExchangeId.BancorV2];
+                const tokens = [bnt.address, arbToken1.address, arbToken2.address, bnt.address];
+
+                await expect(newBancorArbitrage.connect(user).execute(routes, AMOUNT))
+                    .to.emit(newBancorArbitrage, 'ArbitrageExecuted')
+                    .withArgs(user.address, exchangeIds, tokens, AMOUNT, 0, 0);
             }
         });
 
