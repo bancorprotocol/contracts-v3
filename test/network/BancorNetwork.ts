@@ -31,7 +31,7 @@ import {
 } from '../../components/LegacyContracts';
 import LegacyContractsV3, { PoolCollectionType1V9 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import { ARB_CONTRACT_ADDRESS, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { percentsToPPM, toPPM, toWei } from '../../utils/Types';
@@ -55,7 +55,6 @@ import { createLegacySystem } from '../helpers/LegacyFactory';
 import { shouldHaveGap } from '../helpers/Proxy';
 import { duration, latest } from '../helpers/Time';
 import { getBalance, getTransactionCost, transfer } from '../helpers/Utils';
-import { Relation } from '../matchers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import Decimal from 'decimal.js';
@@ -157,7 +156,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -170,7 +170,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -183,7 +184,8 @@ describe('BancorNetwork', () => {
                     ZERO_ADDRESS,
                     masterVault.address,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -196,7 +198,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -211,7 +214,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     ZERO_ADDRESS,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -224,7 +228,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     externalProtectionVault.address,
-                    ZERO_ADDRESS
+                    ZERO_ADDRESS,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -236,7 +241,8 @@ describe('BancorNetwork', () => {
                 networkSettings.address,
                 masterVault.address,
                 externalProtectionVault.address,
-                bntPoolToken.address
+                bntPoolToken.address,
+                ARB_CONTRACT_ADDRESS
             );
 
             await expect(
@@ -251,7 +257,8 @@ describe('BancorNetwork', () => {
                 networkSettings.address,
                 masterVault.address,
                 externalProtectionVault.address,
-                bntPoolToken.address
+                bntPoolToken.address,
+                ARB_CONTRACT_ADDRESS
             );
 
             await expect(
@@ -266,7 +273,8 @@ describe('BancorNetwork', () => {
                 networkSettings.address,
                 masterVault.address,
                 externalProtectionVault.address,
-                bntPoolToken.address
+                bntPoolToken.address,
+                ARB_CONTRACT_ADDRESS
             );
 
             await expect(
@@ -447,6 +455,7 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
+                        ARB_CONTRACT_ADDRESS,
                         await poolCollection.poolType(),
                         await poolCollection.version()
                     );
@@ -468,6 +477,7 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
+                        ARB_CONTRACT_ADDRESS,
                         await poolCollection.poolType(),
                         (await poolCollection.version()) + 1
                     );
@@ -508,7 +518,8 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolMigrator
+                    poolMigrator,
+                    ARB_CONTRACT_ADDRESS
                 );
 
                 await expect(
@@ -526,6 +537,7 @@ describe('BancorNetwork', () => {
                     externalProtectionVault,
                     poolTokenFactory,
                     poolMigrator,
+                    ARB_CONTRACT_ADDRESS,
                     await poolCollection.poolType(),
                     (await poolCollection.version()) + 1
                 );
@@ -623,7 +635,8 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolMigrator
+                    poolMigrator,
+                    ARB_CONTRACT_ADDRESS
                 );
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
 
@@ -802,7 +815,8 @@ describe('BancorNetwork', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address
+                poolMigrator.address,
+                ARB_CONTRACT_ADDRESS
             );
 
             await network.registerPoolCollection(newPoolCollection.address);
@@ -827,7 +841,8 @@ describe('BancorNetwork', () => {
                 bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
-                poolMigrator
+                poolMigrator,
+                ARB_CONTRACT_ADDRESS
             );
 
             await expect(
@@ -1690,7 +1705,7 @@ describe('BancorNetwork', () => {
                 targetTokenAddress = targetToken.address
             } = overrides;
 
-            value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
+            value = value || sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
             const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
@@ -1718,7 +1733,7 @@ describe('BancorNetwork', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
+            maxSourceAmount = maxSourceAmount || await networkInfo.tradeInputByTargetAmount(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount
@@ -3508,6 +3523,7 @@ describe('BancorNetwork Financial Verification', () => {
             externalProtectionVault,
             poolTokenFactory,
             poolMigrator,
+            ARB_CONTRACT_ADDRESS,
             percentsToPPM(flow.networkFee)
         );
         await network.registerPoolCollection(poolCollection.address);

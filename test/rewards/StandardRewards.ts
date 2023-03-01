@@ -1026,7 +1026,7 @@ describe('StandardRewards', () => {
                     const [program] = await standardRewards.programs([id]);
 
                     if (program.pool === nativePool.address) {
-                        value ||= BigNumber.from(amount);
+                        value = value || BigNumber.from(amount);
                     } else {
                         const token = await Contracts.TestERC20Token.attach(pool.address);
                         await token.connect(provider).approve(standardRewards.address, amount);

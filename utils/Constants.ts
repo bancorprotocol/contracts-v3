@@ -20,6 +20,7 @@ export const ZERO_BYTES32 = '0x0000000000000000000000000000000000000000000000000
 export const ZERO_ADDRESS = AddressZero;
 export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
+export const ARB_CONTRACT_ADDRESS = '0x82e01223d51Eb87e16A03E24687EDF0F294da6f1';
 
 export enum TradingStatusUpdateReason {
     Default = 0,
@@ -31,6 +32,14 @@ export enum TradingStatusUpdateReason {
 export enum RewardsDistributionType {
     Flat = 0,
     ExpDecay = 1
+}
+
+export enum ExchangeId {
+    BancorV2 = 1,
+    BancorV3 = 2,
+    UniswapV2 = 3,
+    UniswapV3 = 4,
+    Sushiswap = 5
 }
 
 export const EXP2_INPUT_TOO_HIGH = new Decimal(16).div(new Decimal(2).ln());

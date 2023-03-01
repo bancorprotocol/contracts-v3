@@ -29,7 +29,8 @@ import {
     RATE_RESET_BLOCK_THRESHOLD,
     TradingStatusUpdateReason,
     ZERO_ADDRESS,
-    ZERO_FRACTION
+    ZERO_FRACTION,
+    ARB_CONTRACT_ADDRESS
 } from '../../utils/Constants';
 import { Roles } from '../../utils/Roles';
 import { TokenData, TokenSymbol } from '../../utils/TokenData';
@@ -254,7 +255,8 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address
+                    poolMigrator.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -269,7 +271,8 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address
+                    poolMigrator.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -284,7 +287,8 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address
+                    poolMigrator.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -299,7 +303,8 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address
+                    poolMigrator.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -314,7 +319,8 @@ describe('PoolCollection', () => {
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    poolMigrator.address
+                    poolMigrator.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -329,7 +335,8 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     ZERO_ADDRESS,
                     poolTokenFactory.address,
-                    poolMigrator.address
+                    poolMigrator.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -344,7 +351,8 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS,
-                    poolMigrator.address
+                    poolMigrator.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -359,7 +367,8 @@ describe('PoolCollection', () => {
                     bntPool.address,
                     externalProtectionVault.address,
                     poolTokenFactory.address,
-                    ZERO_ADDRESS
+                    ZERO_ADDRESS,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -373,7 +382,8 @@ describe('PoolCollection', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address
+                poolMigrator.address,
+                ARB_CONTRACT_ADDRESS
             );
             expect(await poolCollection.version()).to.equal(10);
 
@@ -3180,7 +3190,8 @@ describe('PoolCollection', () => {
                             bntPool,
                             externalProtectionVault,
                             poolTokenFactory,
-                            poolMigrator
+                            poolMigrator,
+                            ARB_CONTRACT_ADDRESS
                         );
                         await network.registerPoolCollection(poolCollection.address);
 
@@ -3252,7 +3263,8 @@ describe('PoolCollection', () => {
                             bntPool,
                             externalProtectionVault,
                             poolTokenFactory,
-                            poolMigrator
+                            poolMigrator,
+                            ARB_CONTRACT_ADDRESS
                         );
 
                         if (networkFeePPM !== undefined) {
@@ -4678,6 +4690,7 @@ describe('PoolCollection', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
+                ARB_CONTRACT_ADDRESS,
                 await poolCollection.poolType(),
                 (await poolCollection.version()) + 1
             );

@@ -13,7 +13,7 @@ import Contracts, {
     TestPoolMigrator
 } from '../../components/Contracts';
 import LegacyContractsV3, { PoolCollectionType1V9 } from '../../components/LegacyContractsV3';
-import { MAX_UINT256, ZERO_ADDRESS } from '../../utils/Constants';
+import { MAX_UINT256, ZERO_ADDRESS, ARB_CONTRACT_ADDRESS } from '../../utils/Constants';
 import { toWei } from '../../utils/Types';
 import { expectRole, expectRoles, Roles } from '../helpers/AccessControl';
 import { createPool, createPoolCollection, createSystem, createTestToken, depositToPool } from '../helpers/Factory';
@@ -135,7 +135,8 @@ describe('PoolMigrator', () => {
                 bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
-                poolMigrator
+                poolMigrator,
+                ARB_CONTRACT_ADDRESS
             );
 
             await network.registerPoolCollection(newPoolCollection.address);
@@ -184,6 +185,7 @@ describe('PoolMigrator', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
+                ARB_CONTRACT_ADDRESS,
                 (await prevPoolCollection.poolType()) + 10,
                 await newPoolCollection.version()
             );
@@ -204,6 +206,7 @@ describe('PoolMigrator', () => {
                 externalProtectionVault,
                 poolTokenFactory,
                 poolMigrator,
+                ARB_CONTRACT_ADDRESS,
                 await prevPoolCollection.poolType(),
                 0
             );

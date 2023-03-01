@@ -205,6 +205,7 @@ export const createPoolCollection = async (
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
+    arbContractAddress: string,
     type: number = PoolType.Standard,
     version: number = POOL_COLLECTION_CURRENT_VERSION
 ) =>
@@ -218,7 +219,8 @@ export const createPoolCollection = async (
         toAddress(bntPool),
         toAddress(externalProtectionVault),
         toAddress(poolTokenFactory),
-        toAddress(poolMigrator)
+        toAddress(poolMigrator),
+        arbContractAddress
     );
 
 const createBNTPool = async (
@@ -290,7 +292,8 @@ const createNetwork = async (
     networkSettings: NetworkSettings,
     masterVault: MasterVault,
     externalProtectionVault: ExternalProtectionVault,
-    bntPoolToken: PoolToken
+    bntPoolToken: PoolToken,
+    arbContractAddress: string
 ) => {
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
@@ -300,7 +303,8 @@ const createNetwork = async (
             networkSettings.address,
             masterVault.address,
             externalProtectionVault.address,
-            bntPoolToken.address
+            bntPoolToken.address,
+            arbContractAddress
         ]
     });
 
@@ -332,6 +336,12 @@ const createSystemFixture = async () => {
     const bntPoolToken = await createPoolToken(poolTokenFactory, bnt);
 
     const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [bnt.address] });
+    
+    // Pre-calculated arb contract address
+    // Used to avoid cyclical immutable dependencies
+    // (The network contract requires arb contract's address and 
+    // the arb contract requires the network's address at construction time)
+    const arbContractAddress = '0x82e01223d51Eb87e16A03E24687EDF0F294da6f1';
 
     const network = await createNetwork(
         bntGovernance,
@@ -339,7 +349,8 @@ const createSystemFixture = async () => {
         networkSettings,
         masterVault,
         externalProtectionVault,
-        bntPoolToken
+        bntPoolToken,
+        arbContractAddress
     );
 
     const bntPool = await createBNTPool(
@@ -384,7 +395,8 @@ const createSystemFixture = async () => {
         bntPool,
         externalProtectionVault,
         poolTokenFactory,
-        poolMigrator
+        poolMigrator,
+        arbContractAddress
     );
 
     return {

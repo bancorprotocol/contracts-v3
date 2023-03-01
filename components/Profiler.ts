@@ -14,7 +14,7 @@ export class Profiler {
         const gas = await getTransactionGas(res);
         Logger.log(`${description}: ${gas}`);
 
-        this.summary[description] ||= [];
+        this.summary[description] = [] || this.summary[description];
 
         this.summary[description].push(gas.toNumber());
 
