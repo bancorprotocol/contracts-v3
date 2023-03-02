@@ -1427,9 +1427,9 @@
   integrity sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==
 
 "@snyk/protect@^1.947.0":
-  version "1.1110.0"
-  resolved "https://registry.yarnpkg.com/@snyk/protect/-/protect-1.1110.0.tgz#1981b39a0229eff9e002996ab98fae17e5537d50"
-  integrity sha512-fey2HEdhCm6qD23f2sZdFu9B4ckgCgpLIDgUGFbRZhhYaF8sUhQSZe5SAegNU7npDHO52jz+J7CJjGbsk5f1ow==
+  version "1.1111.0"
+  resolved "https://registry.yarnpkg.com/@snyk/protect/-/protect-1.1111.0.tgz#c53a43b21494650496dfaa3ca32bd5a2c602b3e1"
+  integrity sha512-tcwyQGk6o6BPVNj8IDPIj3nhAKI2X//sqS0JS7CjhCyaz+gND9rCk1rvuFC24DKtbPrnPUfu8WGUgkYvE8txlA==
 
 "@solidity-parser/parser@^0.14.0", "@solidity-parser/parser@^0.14.1":
   version "0.14.5"
