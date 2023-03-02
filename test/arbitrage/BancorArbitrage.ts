@@ -1,10 +1,10 @@
 import Contracts, {
+    BancorArbitrage,
     BancorNetworkInfo,
     IERC20,
     MasterVault,
     MockExchanges,
     NetworkSettings,
-    TestBancorArbitrage,
     TestBancorNetwork,
     TestPoolCollection,
     TestWETH
@@ -32,7 +32,7 @@ describe('BancorArbitrage', () => {
     let bnt: IERC20;
     let networkSettings: NetworkSettings;
     let poolCollection: TestPoolCollection;
-    let bancorArbitrage: TestBancorArbitrage;
+    let bancorArbitrage: BancorArbitrage;
     let masterVault: MasterVault;
 
     let exchanges: MockExchanges;
@@ -65,7 +65,7 @@ describe('BancorArbitrage', () => {
         maxAmount: toWei(200)
     };
 
-    shouldHaveGap('TestBancorArbitrage', '_rewards');
+    shouldHaveGap('BancorArbitrage', '_rewards');
 
     before(async () => {
         [deployer, user, nonOwner] = await ethers.getSigners();
@@ -85,7 +85,7 @@ describe('BancorArbitrage', () => {
         uniswapV3Router = exchanges;
         sushiswapV2Router = exchanges;
 
-        bancorArbitrage = await createProxy(Contracts.TestBancorArbitrage, {
+        bancorArbitrage = await createProxy(Contracts.BancorArbitrage, {
             ctorArgs: [
                 bnt.address,
                 bancorV2.address,
@@ -103,7 +103,7 @@ describe('BancorArbitrage', () => {
     describe('construction', () => {
         it('should revert when initializing with an invalid bnt contract', async () => {
             await expect(
-                Contracts.TestBancorArbitrage.deploy(
+                Contracts.BancorArbitrage.deploy(
                     ZERO_ADDRESS,
                     bancorV2.address,
                     bancorV3.address,
@@ -116,7 +116,7 @@ describe('BancorArbitrage', () => {
 
         it('should revert when initializing with an invalid Bancor v2 network contract', async () => {
             await expect(
-                Contracts.TestBancorArbitrage.deploy(
+                Contracts.BancorArbitrage.deploy(
                     bnt.address,
                     ZERO_ADDRESS,
                     bancorV3.address,
@@ -129,7 +129,7 @@ describe('BancorArbitrage', () => {
 
         it('should revert when initializing with an invalid Bancor v3 network contract', async () => {
             await expect(
-                Contracts.TestBancorArbitrage.deploy(
+                Contracts.BancorArbitrage.deploy(
                     bnt.address,
                     bancorV2.address,
                     ZERO_ADDRESS,
@@ -142,7 +142,7 @@ describe('BancorArbitrage', () => {
 
         it('should revert when initializing with an invalid Uniswap v2 router contract', async () => {
             await expect(
-                Contracts.TestBancorArbitrage.deploy(
+                Contracts.BancorArbitrage.deploy(
                     bnt.address,
                     bancorV2.address,
                     bancorV3.address,
@@ -155,7 +155,7 @@ describe('BancorArbitrage', () => {
 
         it('should revert when initializing with an invalid Uniswap v3 router contract', async () => {
             await expect(
-                Contracts.TestBancorArbitrage.deploy(
+                Contracts.BancorArbitrage.deploy(
                     bnt.address,
                     bancorV2.address,
                     bancorV3.address,
@@ -168,7 +168,7 @@ describe('BancorArbitrage', () => {
 
         it('should revert when initializing with an invalid Sushiswap router contract', async () => {
             await expect(
-                Contracts.TestBancorArbitrage.deploy(
+                Contracts.BancorArbitrage.deploy(
                     bnt.address,
                     bancorV2.address,
                     bancorV3.address,
@@ -527,7 +527,7 @@ describe('BancorArbitrage', () => {
             const uniswapV3RouterSameOutput = sameOutputExchanges;
             const sushiswapV2RouterSameOutput = sameOutputExchanges;
 
-            const newBancorArbitrage = await createProxy(Contracts.TestBancorArbitrage, {
+            const newBancorArbitrage = await createProxy(Contracts.BancorArbitrage, {
                 ctorArgs: [
                     bnt.address,
                     bancorV2SameOutput.address,

@@ -25,7 +25,6 @@ import {
     ProxyAdmin__factory,
     StandardRewards__factory,
     TestAutoCompoundingRewards__factory,
-    TestBancorArbitrage__factory,
     TestBancorNetwork__factory,
     TestBlockNumber__factory,
     TestBNTPool__factory,
@@ -89,7 +88,6 @@ const getContracts = (signer?: Signer) => ({
         TestAutoCompoundingRewards__factory,
         signer
     ),
-    TestBancorArbitrage: deployOrAttach('TestBancorArbitrage', TestBancorArbitrage__factory, signer),
     TestBancorNetwork: deployOrAttach('TestBancorNetwork', TestBancorNetwork__factory, signer),
     TestBlockNumber: deployOrAttach('TestBlockNumber', TestBlockNumber__factory, signer),
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
