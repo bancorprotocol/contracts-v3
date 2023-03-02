@@ -26,7 +26,7 @@ const TestNamedAccounts = {
         ...mainnet('0x55FE002aefF02F77364de339a1292923A15844B8')
     },
     wbtcWhale: {
-        ...mainnet('0x218B95BE3ed99141b0144Dba6cE88807c4AD7C09')
+        ...mainnet('0x6daB3bCbFb336b29d06B9C793AEF7eaA57888922')
     }
 };
 
@@ -49,6 +49,7 @@ const TokenNamedAccounts = {
 };
 
 const UniswapNamedAccounts = {
+    uniswapV3Router: { ...mainnet('0xE592427A0AEce92De3Edee1F18E0157C05861564') },
     uniswapV2Router02: { ...mainnet('0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D') },
     uniswapV2Factory: { ...mainnet('0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f') }
 };
