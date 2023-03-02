@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import {
     AutoCompoundingRewards__factory,
+    BancorArbitrage__factory,
     BancorNetwork__factory,
     BancorNetworkInfo__factory,
     BancorPortal__factory,
@@ -10,6 +11,8 @@ import {
     ExternalProtectionVault__factory,
     ExternalRewardsVault__factory,
     MasterVault__factory,
+    MockExchanges__factory,
+    MockExchangesSameOutput__factory,
     MockUniswapV2Factory__factory,
     MockUniswapV2Pair__factory,
     MockUniswapV2Router02__factory,
@@ -45,6 +48,7 @@ import {
     TestTokenLibrary__factory,
     TestUpgradeable__factory,
     TestVault__factory,
+    TestWETH__factory,
     TransparentUpgradeableProxyImmutable__factory
 } from '../typechain-types';
 import { deployOrAttach } from './ContractBuilder';
@@ -56,6 +60,7 @@ const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
     AutoCompoundingRewards: deployOrAttach('AutoCompoundingRewards', AutoCompoundingRewards__factory, signer),
+    BancorArbitrage: deployOrAttach('BancorArbitrage', BancorArbitrage__factory, signer),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorNetworkInfo: deployOrAttach('BancorNetworkInfo', BancorNetworkInfo__factory, signer),
     BancorPortal: deployOrAttach('BancorPortal', BancorPortal__factory, signer),
@@ -65,6 +70,8 @@ const getContracts = (signer?: Signer) => ({
     ExternalProtectionVault: deployOrAttach('ExternalProtectionVault', ExternalProtectionVault__factory, signer),
     ExternalRewardsVault: deployOrAttach('ExternalRewardsVault', ExternalRewardsVault__factory, signer),
     MasterVault: deployOrAttach('MasterVault', MasterVault__factory, signer),
+    MockExchanges: deployOrAttach('MockExchanges', MockExchanges__factory, signer),
+    MockExchangesSameOutput: deployOrAttach('MockExchangesSameOutput', MockExchangesSameOutput__factory, signer),
     MockUniswapV2Factory: deployOrAttach('MockUniswapV2Factory', MockUniswapV2Factory__factory, signer),
     MockUniswapV2Pair: deployOrAttach('MockUniswapV2Pair', MockUniswapV2Pair__factory, signer),
     MockUniswapV2Router02: deployOrAttach('MockUniswapV2Router02', MockUniswapV2Router02__factory, signer),
@@ -85,6 +92,7 @@ const getContracts = (signer?: Signer) => ({
     TestBlockNumber: deployOrAttach('TestBlockNumber', TestBlockNumber__factory, signer),
     TestERC20Burnable: deployOrAttach('TestERC20Burnable', TestERC20Burnable__factory, signer),
     TestERC20Token: deployOrAttach('TestERC20Token', TestERC20Token__factory, signer),
+    TestWETH: deployOrAttach('TestWETH', TestWETH__factory, signer),
     TestFlashLoanRecipient: deployOrAttach('TestFlashLoanRecipient', TestFlashLoanRecipient__factory, signer),
     TestGovernedToken: deployOrAttach('TestGovernedToken', TestGovernedToken__factory, signer),
     TestLogic: deployOrAttach('TestLogic', TestLogic__factory, signer),
