@@ -3296,7 +3296,8 @@ describe('PoolCollection', () => {
                                         sourceToken.address,
                                         targetToken.address,
                                         1,
-                                        MIN_RETURN_AMOUNT
+                                        MIN_RETURN_AMOUNT,
+                                        false
                                     )
                             ).to.be.revertedWithError('AccessDenied');
 
@@ -3308,7 +3309,8 @@ describe('PoolCollection', () => {
                                         sourceToken.address,
                                         targetToken.address,
                                         1,
-                                        MAX_SOURCE_AMOUNT
+                                        MAX_SOURCE_AMOUNT,
+                                        false
                                     )
                             ).to.be.revertedWithError('AccessDenied');
                         });

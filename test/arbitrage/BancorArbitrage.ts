@@ -640,7 +640,7 @@ describe('BancorArbitrage', () => {
             const uniswapV3RouterNegativeOutput = negativeOutputExchanges;
             const sushiswapV2RouterNegativeOutput = negativeOutputExchanges;
 
-            const newBancorArbitrage = await createProxy(Contracts.TestBancorArbitrage, {
+            const newBancorArbitrage = await createProxy(Contracts.BancorArbitrage, {
                 ctorArgs: [
                     bnt.address,
                     bancorV2NegativeOutput.address,
