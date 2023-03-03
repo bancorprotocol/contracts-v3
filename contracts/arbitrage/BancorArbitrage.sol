@@ -367,8 +367,10 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
             // allow the network to withdraw the source tokens
             sourceToken.safeApprove(address(_bancorNetworkV3), sourceAmount);
 
+            uint256 val = sourceToken.isNative() ? sourceAmount : 0;
+
             // perform the trade
-            _bancorNetworkV3.tradeBySourceAmountArb(
+            _bancorNetworkV3.tradeBySourceAmountArb{ value: val }(
                 sourceToken,
                 targetToken,
                 sourceAmount,
