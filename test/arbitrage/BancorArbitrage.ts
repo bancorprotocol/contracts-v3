@@ -54,6 +54,7 @@ describe('BancorArbitrage', () => {
     const DEADLINE = MAX_UINT256;
     const AMOUNT = toWei(1000);
     const PPM_RESOLUTION = 1_000_000;
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
 
     const ArbitrageRewardsDefaults = {
         percentagePPM: 30000,
@@ -96,7 +97,7 @@ describe('BancorArbitrage', () => {
             ]
         });
 
-        await networkSettings.setFlashLoanFeePPM(bnt.address, 0);
+        await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         await transfer(deployer, baseToken, exchanges.address, MAX_SOURCE_AMOUNT);
     });
 
@@ -269,12 +270,12 @@ describe('BancorArbitrage', () => {
                     }
                 ];
 
-                // each hop through the route from MockExchanges adds 1e18 tokens to the output
-                // so 3 hops = 3 * 1e18 = 3000 BNT tokens more than start
-                // so with 0 flashloan fees, when we repay the flashloan, we have 3 BNT tokens as totalRewards
+                // each hop through the route from MockExchanges adds 300e18 tokens to the output
+                // so 3 hops = 3 * 300e18 = 900 BNT tokens more than start
+                // so with 0 flashloan fees, when we repay the flashloan, we have 900 BNT tokens as totalRewards
 
                 const hopCount = 3;
-                const totalRewards = toWei(1).mul(hopCount);
+                const totalRewards = toWei(300).mul(hopCount);
 
                 await bancorArbitrage.setRewards(ArbitrageRewardsChanged);
 
@@ -344,12 +345,12 @@ describe('BancorArbitrage', () => {
                     }
                 ];
 
-                // each hop through the route from MockExchanges adds 1000 tokens to the output
-                // so 3 hops = 3 * 1000 = 3000 BNT tokens more than start
-                // so with 0 flashloan fees, when we repay the flashloan, we have 3000 BNT tokens as totalRewards
+                // each hop through the route from MockExchanges adds 300e18 tokens to the output
+                // so 3 hops = 3 * 300e18 = 900 BNT tokens more than start
+                // so with 0 flashloan fees, when we repay the flashloan, we have 900 BNT tokens as totalRewards
 
                 const hopCount = 3;
-                const totalRewards = toWei(1).mul(hopCount);
+                const totalRewards = toWei(300).mul(hopCount);
 
                 // set rewards max amount to 100
                 const RewardsUpdate = {
@@ -468,7 +469,7 @@ describe('BancorArbitrage', () => {
                 .withArgs(bnt.address, bancorArbitrage.address, AMOUNT, 0);
         });
 
-        it('should be exempted from flashloan fees', async () => {
+        it('should be exempt from flashloan fees', async () => {
             // transfer tokens to exchange
             await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
             await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
@@ -982,12 +983,73 @@ describe('BancorArbitrage', () => {
                         customInt: 0
                     }
                 ];
-                const secondHopSourceAmount = AMOUNT.add(toWei(2));
+                const secondHopSourceAmount = AMOUNT.add(toWei(600)); // 300 tokens per hop
 
                 // expect to approve exactly the amounts needed for the second trade for each exchange
                 await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                     .to.emit(arbToken2, 'Approval')
                     .withArgs(bancorArbitrage.address, exchanges.address, secondHopSourceAmount);
+            }
+        });
+
+        it('should be exempt from trading fees on Bancor V3', async () => {
+            const { token: arbToken1 } = await prepareBancorV3PoolAndToken(tokenSymbols[0]);
+            const { token: arbToken2 } = await prepareBancorV3PoolAndToken(tokenSymbols[1]);
+            const { token: eth } = await prepareBancorV3PoolAndToken(tokenSymbols[2]);
+
+            // transfer tokens to mock exchanges
+            await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(20));
+            await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(20));
+            await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(20));
+
+            for(const token of [arbToken2, eth]) {
+                const routes = [
+                    {
+                        exchangeId: ExchangeId.BancorV2,
+                        targetToken: arbToken1.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: arbToken1.address,
+                        customInt: 0
+                    },
+                    {
+                        exchangeId: ExchangeId.BancorV3,
+                        targetToken: token.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: token.address,
+                        customInt: 0
+                    },
+                    {
+                        exchangeId: ExchangeId.BancorV2,
+                        targetToken: bnt.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: bnt.address,
+                        customInt: 0
+                    }
+                ];
+
+                // check that the fee amount is 0
+                // use different fees
+                for (const tradeFee of [0.03, 0.05, 1, 2, 3]) {
+                    // set trading fee
+                    await poolCollection.setTradingFeePPM(arbToken1.address, toPPM(tradeFee));
+                    await poolCollection.setTradingFeePPM(token.address, toPPM(tradeFee));
+                    // set network fee
+                    await poolCollection.setNetworkFeePPM(toPPM(tradeFee));
+
+                    // fee amount is 0 because the arb contract is exempt from trade fees
+                    const expectedFeeAmount = 0;
+
+                    // check against the `TokensTraded` event in BancorNetwork
+                    // the event is emitted on a successful trade
+                    await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                        .to.emit(network, 'TokensTraded').withNamedArgs({
+                            targetFeeAmount: expectedFeeAmount,
+                            bntFeeAmount: expectedFeeAmount
+                        });
+                }
             }
         });
     });
@@ -1002,9 +1064,6 @@ describe('BancorArbitrage', () => {
         const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
         const uniV3Fees = [100, 500, 3000];
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
-
-        // remove BancorV3 exchange until the reentrancy guard issue is resolved
-        exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
         it('should emit ArbitrageExecuted event on successful arbitrage execution', async () => {
             const { token: arbToken1 } = await prepareBancorV3PoolAndToken(tokenSymbols[0]);
@@ -1025,6 +1084,48 @@ describe('BancorArbitrage', () => {
                 },
                 {
                     exchangeId: ExchangeId.UniswapV2,
+                    targetToken: arbToken2.address,
+                    minTargetAmount: 1,
+                    deadline: DEADLINE,
+                    customAddress: arbToken2.address,
+                    customInt: 0
+                },
+                {
+                    exchangeId: ExchangeId.BancorV2,
+                    targetToken: bnt.address,
+                    minTargetAmount: 1,
+                    deadline: DEADLINE,
+                    customAddress: bnt.address,
+                    customInt: 0
+                }
+            ];
+
+            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.emit(
+                bancorArbitrage,
+                'ArbitrageExecuted'
+            );
+        });
+
+        it('should be able to arbitrage using Bancor V3', async () => {
+            const { token: arbToken1 } = await prepareBancorV3PoolAndToken(tokenSymbols[0]);
+            const { token: arbToken2 } = await prepareBancorV3PoolAndToken(tokenSymbols[1]);
+
+            // transfer tokens to mock exchanges
+            await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
+            await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
+            await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(10));
+
+            const routes = [
+                {
+                    exchangeId: ExchangeId.BancorV2,
+                    targetToken: arbToken1.address,
+                    minTargetAmount: 1,
+                    deadline: DEADLINE,
+                    customAddress: arbToken1.address,
+                    customInt: 0
+                },
+                {
+                    exchangeId: ExchangeId.BancorV3,
                     targetToken: arbToken2.address,
                     minTargetAmount: 1,
                     deadline: DEADLINE,
@@ -1132,43 +1233,3 @@ describe('BancorArbitrage', () => {
         return { poolToken, token };
     };
 });
-
-// Initialization:
-// Test that the contract reverts when initializing with an invalid network contract
-// Test that the contract reverts when initializing with an invalid network settings contract
-// Test that the contract reverts when initializing with an invalid BNT contract
-// Test that the contract reverts when initializing with an invalid Uniswap V3 router contract
-// Test that the contract reverts when initializing with an invalid Uniswap V2 router contract
-// Test that the contract reverts when initializing with an invalid Sushiswap router contract
-// Test that the contract reverts when initializing with an invalid Bancor V2 network contract
-
-// Trade Function:
-// Test that the trade function reverts if the deadline is reached
-// Test that the trade function reverts if the source amount is 0
-// Test that the trade function reverts if the exchangeId is not supported
-// Test that the trade function reverts if the route length is invalid
-// Test that the trade function reverts if the path array contains invalid addresses
-// Test that the trade function reverts if the caller does not have enough balance of the source token
-// Test that the trade function reverts if the minTargetAmount is greater than the expected target amount
-// Test that the trade function reverts if the caller does not have enough allowance of the source token
-// Test that the trade function reverts if the path is not valid
-// Test that the trade function reverts if the path is not a valid route
-// Test that the trade function reverts if the pair is not found
-// Test that the trade function reverts if the exchange is not found
-// Test that the trade function reverts if the source token is not supported
-
-// Rewards Distribution:
-// Test that the trade function correctly distributes the rewards to the caller and burns the remaining rewards
-// Test that the trade function correctly distributes the rewards based on the percentagePPM setting
-// Test that the trade function correctly distributes the rewards based on the maxAmount setting
-// Test that the trade function reverts if the rewards to be distributed exceed the maxAmount setting
-// Test that the settings function correctly updates the rewards distribution parameters
-// Test that the trade function correctly distributes the rewards based on the updated rewards distribution parameters
-
-// FlashLoan:
-// Test that the trade function correctly obtains a flash loan from the flashLoanProvider and repays it correctly
-// Test that the trade function reverts if the flash loan cannot be obtained
-// Test that the trade function reverts if the flash loan cannot be repaid
-// Test that the trade function correctly calculates the flash loan amount required
-// Test that the trade function correctly calculates the flash loan interest
-// Test that the trade function correctly distributes the flash loan interest to the flashLoanProvider
