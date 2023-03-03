@@ -21,7 +21,7 @@ import {
     TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer } from '../helpers/Utils';
+import { getEvent, parseLog, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -1044,11 +1044,13 @@ describe('BancorArbitrage', () => {
 
                     // check against the `TokensTraded` event in BancorNetwork
                     // the event is emitted on a successful trade
-                    await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
-                        .to.emit(network, 'TokensTraded').withNamedArgs({
-                            targetFeeAmount: expectedFeeAmount,
-                            bntFeeAmount: expectedFeeAmount
-                        });
+                    const tx = await bancorArbitrage.connect(user).execute(routes, AMOUNT);
+                    const eventSig = 'TokensTraded(bytes32,address,address,uint256,uint256,uint256,uint256,uint256,address)';
+                    const tokensTradedEvents = await getEvent(tx, eventSig);
+
+                    const log = await parseLog('BancorNetwork', tokensTradedEvents[0]);
+                    expect(log.args.targetFeeAmount).to.be.eq(expectedFeeAmount);
+                    expect(log.args.bntFeeAmount).to.be.eq(expectedFeeAmount);
                 }
             }
         });

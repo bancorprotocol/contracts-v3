@@ -112,7 +112,7 @@
     "eslint-plugin-mocha": "^10.0.5",
     "eslint-plugin-n": "^15.2.2",
     "eslint-plugin-promise": "^6.0.0",
-    "ethereum-waffle": "^4.0.10",
+    "ethereum-waffle": "^3.4.4",
     "ethereumjs-util": "^7.1.5",
     "ethers": "^5.6.8",
     "glob": "^8.0.3",
