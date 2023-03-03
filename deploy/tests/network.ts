@@ -329,7 +329,7 @@ import { getNamedAccounts } from 'hardhat';
         describe('deposits', () => {
             it('should perform deposits', async () => {
                 for (const { token, whale, decimals } of Object.values(pools)) {
-                    const tknDepositAmount = toWei(500, decimals);
+                    const tknDepositAmount = toWei(100, decimals);
 
                     for (let i = 0; i < 5; i++) {
                         const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
@@ -504,7 +504,7 @@ import { getNamedAccounts } from 'hardhat';
                     const isNativeToken = tokenSymbol === TestPools.ETH;
                     const tokenWithAddress = { address: token };
 
-                    const tradeAmount = toWei(2500, decimals);
+                    const tradeAmount = toWei(10, decimals);
 
                     for (let i = 0; i < 5; i++) {
                         if (!isNativeToken) {
