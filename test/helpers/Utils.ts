@@ -44,7 +44,7 @@ export const getEvent = async(tx: ContractTransaction, eventSig: string) => {
     const eventTopic = '0x' + keccakFromString(eventSig).toString('hex');
     
     const filteredEvents = events?.filter(e => e.topics[0] === eventTopic);
-    if(filteredEvents == undefined) {
+    if(filteredEvents === undefined) {
         return [];
     } else {
         return filteredEvents;
