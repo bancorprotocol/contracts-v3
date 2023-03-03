@@ -191,7 +191,8 @@ interface IPoolCollection is IVersioned {
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount,
-        uint256 minReturnAmount
+        uint256 minReturnAmount,
+        bool ignoreFees
     ) external returns (TradeAmountAndFee memory);
 
     /**
@@ -206,7 +207,8 @@ interface IPoolCollection is IVersioned {
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount,
-        uint256 maxSourceAmount
+        uint256 maxSourceAmount,
+        bool ignoreFees
     ) external returns (TradeAmountAndFee memory);
 
     /**

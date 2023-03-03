@@ -1135,20 +1135,27 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             ? TradeTokens({ sourceToken: Token(address(_bnt)), targetToken: pool })
             : TradeTokens({ sourceToken: pool, targetToken: Token(address(_bnt)) });
 
+        bool ignoreFees = false;
+        if(msg.sender == _bancorArbitrage) {
+            ignoreFees = true;
+        }
+
         TradeAmountAndFee memory tradeAmountsAndFee = params.bySourceAmount
             ? _poolCollection(pool).tradeBySourceAmount(
                 contextId,
                 tokens.sourceToken,
                 tokens.targetToken,
                 params.amount,
-                params.limit
+                params.limit,
+                ignoreFees
             )
             : _poolCollection(pool).tradeByTargetAmount(
                 contextId,
                 tokens.sourceToken,
                 tokens.targetToken,
                 params.amount,
-                params.limit
+                params.limit,
+                ignoreFees
             );
 
         // if the target token is BNT, notify the BNT pool on collected fees (which shouldn't include the network fee

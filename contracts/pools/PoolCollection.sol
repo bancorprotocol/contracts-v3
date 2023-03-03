@@ -164,9 +164,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the pool migrator contract
     IPoolMigrator private immutable _poolMigrator;
 
-    // the Bancor arbitrage contract
-    address private immutable _bancorArbitrage;
-
     // a mapping between tokens and their pools
     mapping(Token => Pool) internal _poolData;
 
@@ -265,8 +262,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         IBNTPool initBNTPool,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolTokenFactory initPoolTokenFactory,
-        IPoolMigrator initPoolMigrator,
-        address bancorArbitrage
+        IPoolMigrator initPoolMigrator
     ) {
         _validAddress(address(initNetwork));
         _validAddress(address(initBNT));
@@ -276,7 +272,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _validAddress(address(initExternalProtectionVault));
         _validAddress(address(initPoolTokenFactory));
         _validAddress(address(initPoolMigrator));
-        _validAddress(address(bancorArbitrage));
 
         _network = initNetwork;
         _bnt = initBNT;
@@ -286,7 +281,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _externalProtectionVault = initExternalProtectionVault;
         _poolTokenFactory = initPoolTokenFactory;
         _poolMigrator = initPoolMigrator;
-        _bancorArbitrage = bancorArbitrage;
 
         _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
         _setNetworkFeePPM(DEFAULT_NETWORK_FEE_PPM);
@@ -850,7 +844,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         Token sourceToken,
         Token targetToken,
         uint256 sourceAmount,
-        uint256 minReturnAmount
+        uint256 minReturnAmount,
+        bool ignoreFees
     )
         external
         only(address(_network))
@@ -866,6 +861,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             minReturnAmount,
             true
         );
+        if(ignoreFees) {
+            result.tradingFeePPM = 0;
+        }
 
         _performTrade(result);
 
@@ -885,7 +883,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         Token sourceToken,
         Token targetToken,
         uint256 targetAmount,
-        uint256 maxSourceAmount
+        uint256 maxSourceAmount,
+        bool ignoreFees
     )
         external
         only(address(_network))
@@ -901,6 +900,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             maxSourceAmount,
             false
         );
+        if(ignoreFees) {
+            result.tradingFeePPM = 0;
+        }
 
         _performTrade(result);
 
@@ -1625,12 +1627,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 revert InsufficientSourceAmount();
             }
         }
-
-        if(msg.sender == _bancorArbitrage) {
-            result.tradingFeeAmount = 0;
-        } else {
-            result.tradingFeeAmount = tradeAmountAndFee.tradingFeeAmount;
-        }
+        
+        result.tradingFeeAmount = tradeAmountAndFee.tradingFeeAmount;
 
         // sync the trading and staked balance
         result.sourceBalance += result.sourceAmount;
@@ -1640,9 +1638,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             result.stakedBalance += result.tradingFeeAmount;
         }
 
-        if(msg.sender != _bancorArbitrage) {
-            _processNetworkFee(result);
-        }
+        _processNetworkFee(result);
     }
 
     /**
