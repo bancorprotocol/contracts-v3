@@ -205,7 +205,6 @@ export const createPoolCollection = async (
     externalProtectionVault: string | ExternalProtectionVault,
     poolTokenFactory: string | PoolTokenFactory,
     poolMigrator: string | PoolMigrator,
-    arbContractAddress: string,
     type: number = PoolType.Standard,
     version: number = POOL_COLLECTION_CURRENT_VERSION
 ) =>
@@ -219,8 +218,7 @@ export const createPoolCollection = async (
         toAddress(bntPool),
         toAddress(externalProtectionVault),
         toAddress(poolTokenFactory),
-        toAddress(poolMigrator),
-        arbContractAddress
+        toAddress(poolMigrator)
     );
 
 const createBNTPool = async (
@@ -395,8 +393,7 @@ const createSystemFixture = async () => {
         bntPool,
         externalProtectionVault,
         poolTokenFactory,
-        poolMigrator,
-        arbContractAddress
+        poolMigrator
     );
 
     return {

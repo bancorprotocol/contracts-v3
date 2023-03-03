@@ -511,7 +511,7 @@ describe('Profile @profile', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            maxSourceAmount = maxSourceAmount || await networkInfo.tradeInputByTargetAmount(
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount

@@ -444,7 +444,6 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
-                        ARB_CONTRACT_ADDRESS,
                         await poolCollection.poolType(),
                         await poolCollection.version()
                     );
@@ -466,7 +465,6 @@ describe('BancorNetwork', () => {
                         externalProtectionVault,
                         poolTokenFactory,
                         poolMigrator,
-                        ARB_CONTRACT_ADDRESS,
                         await poolCollection.poolType(),
                         (await poolCollection.version()) + 1
                     );
@@ -507,8 +505,7 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolMigrator,
-                    ARB_CONTRACT_ADDRESS
+                    poolMigrator
                 );
 
                 await expect(
@@ -526,7 +523,6 @@ describe('BancorNetwork', () => {
                     externalProtectionVault,
                     poolTokenFactory,
                     poolMigrator,
-                    ARB_CONTRACT_ADDRESS,
                     await poolCollection.poolType(),
                     (await poolCollection.version()) + 1
                 );
@@ -624,8 +620,7 @@ describe('BancorNetwork', () => {
                     bntPool,
                     externalProtectionVault,
                     poolTokenFactory,
-                    poolMigrator,
-                    ARB_CONTRACT_ADDRESS
+                    poolMigrator
                 );
                 await networkSettings.addTokenToWhitelist(reserveToken.address);
 
@@ -804,8 +799,7 @@ describe('BancorNetwork', () => {
                 bntPool.address,
                 externalProtectionVault.address,
                 poolTokenFactory.address,
-                poolMigrator.address,
-                ARB_CONTRACT_ADDRESS
+                poolMigrator.address
             );
 
             await network.registerPoolCollection(newPoolCollection.address);
@@ -830,8 +824,7 @@ describe('BancorNetwork', () => {
                 bntPool,
                 externalProtectionVault,
                 poolTokenFactory,
-                poolMigrator,
-                ARB_CONTRACT_ADDRESS
+                poolMigrator
             );
 
             await expect(
@@ -1722,7 +1715,7 @@ describe('BancorNetwork', () => {
             } = overrides;
 
             // fetch the required source amount if it wasn't provided
-            maxSourceAmount = maxSourceAmount || await networkInfo.tradeInputByTargetAmount(
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount
@@ -1741,6 +1734,75 @@ describe('BancorNetwork', () => {
             const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
             return method.tradeByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                maxSourceAmount,
+                deadline,
+                beneficiary,
+                {
+                    value
+                }
+            );
+        };
+
+        const tradeBySourceAmountArb = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
+            let {
+                value,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
+                deadline = MAX_UINT256,
+                beneficiary = ZERO_ADDRESS,
+                sourceTokenAddress = sourceToken.address,
+                targetTokenAddress = targetToken.address
+            } = overrides;
+
+            value = value || sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
+
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeBySourceAmountArb(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                minReturnAmount,
+                deadline,
+                beneficiary,
+                {
+                    value
+                }
+            );
+        };
+
+        const tradeByTargetAmountArb = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
+            let {
+                value,
+                limit: maxSourceAmount,
+                deadline = MAX_UINT256,
+                beneficiary = ZERO_ADDRESS,
+                sourceTokenAddress = sourceToken.address,
+                targetTokenAddress = targetToken.address
+            } = overrides;
+
+            // fetch the required source amount if it wasn't provided
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount
+            );
+
+            // when providing the target amount, the send value (i.e., the amount to trade) is represented by the
+            // maximum source amount
+            if (!value) {
+                value = BigNumber.from(0);
+
+                if (sourceTokenAddress === NATIVE_TOKEN_ADDRESS) {
+                    value = BigNumber.from(maxSourceAmount);
+                }
+            }
+
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeByTargetAmountArb(
                 sourceTokenAddress,
                 targetTokenAddress,
                 amount,
@@ -2203,6 +2265,16 @@ describe('BancorNetwork', () => {
 
                             it('should revert when attempting to trade', async () => {
                                 await expect(tradeFunc(testAmount)).to.be.revertedWithError('Pausable: paused');
+                            });
+                        });
+
+                        context('arb contract trades', () => {
+                            it('should revert when attempting to call tradeBySourceAmountArb from address other than arb contract', async () => {
+                                await expect(tradeBySourceAmountArb(testAmount)).to.be.revertedWithError('AccessDenied');
+                            });
+
+                            it('should revert when attempting to call tradeByTargetAmountArb from address other than arb contract', async () => {
+                                await expect(tradeByTargetAmountArb(testAmount)).to.be.revertedWithError('AccessDenied');
                             });
                         });
                     });
@@ -3129,7 +3201,6 @@ describe('BancorNetwork Financial Verification', () => {
             externalProtectionVault,
             poolTokenFactory,
             poolMigrator,
-            ARB_CONTRACT_ADDRESS,
             percentsToPPM(flow.networkFee)
         );
         await network.registerPoolCollection(poolCollection.address);
