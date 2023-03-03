@@ -3,7 +3,7 @@ import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { Addressable } from '../../utils/Types';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
+import { BigNumber, BigNumberish, ContractTransaction, Event } from 'ethers';
 import { artifacts, ethers } from 'hardhat';
 import { keccakFromString } from 'ethereumjs-util';
 
@@ -44,7 +44,11 @@ export const getEvent = async(tx: ContractTransaction, eventSig: string) => {
     const eventTopic = '0x' + keccakFromString(eventSig).toString('hex');
     
     const filteredEvents = events?.filter(e => e.topics[0] === eventTopic);
-    return filteredEvents;
+    if(filteredEvents == undefined) {
+        return [];
+    } else {
+        return filteredEvents;
+    }
 };
 
 export const parseLog = async(contractName: string, event: Event) => {
