@@ -155,8 +155,8 @@ export interface PoolCollectionInterface extends utils.Interface {
     "setDefaultTradingFeePPM(uint32)": FunctionFragment;
     "setNetworkFeePPM(uint32)": FunctionFragment;
     "setTradingFeePPM(address,uint32)": FunctionFragment;
-    "tradeBySourceAmount(bytes32,address,address,uint256,uint256)": FunctionFragment;
-    "tradeByTargetAmount(bytes32,address,address,uint256,uint256)": FunctionFragment;
+    "tradeBySourceAmount(bytes32,address,address,uint256,uint256,bool)": FunctionFragment;
+    "tradeByTargetAmount(bytes32,address,address,uint256,uint256,bool)": FunctionFragment;
     "tradeInputAndFeeByTargetAmount(address,address,uint256)": FunctionFragment;
     "tradeOutputAndFeeBySourceAmount(address,address,uint256)": FunctionFragment;
     "tradingEnabled(address)": FunctionFragment;
@@ -335,7 +335,8 @@ export interface PoolCollectionInterface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<boolean>
     ]
   ): string;
   encodeFunctionData(
@@ -345,7 +346,8 @@ export interface PoolCollectionInterface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<boolean>
     ]
   ): string;
   encodeFunctionData(
@@ -867,6 +869,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       sourceAmount: PromiseOrValue<BigNumberish>,
       minReturnAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -876,6 +879,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       targetAmount: PromiseOrValue<BigNumberish>,
       maxSourceAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1076,6 +1080,7 @@ export interface PoolCollection extends BaseContract {
     targetToken: PromiseOrValue<string>,
     sourceAmount: PromiseOrValue<BigNumberish>,
     minReturnAmount: PromiseOrValue<BigNumberish>,
+    ignoreFees: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1085,6 +1090,7 @@ export interface PoolCollection extends BaseContract {
     targetToken: PromiseOrValue<string>,
     targetAmount: PromiseOrValue<BigNumberish>,
     maxSourceAmount: PromiseOrValue<BigNumberish>,
+    ignoreFees: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1283,6 +1289,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       sourceAmount: PromiseOrValue<BigNumberish>,
       minReturnAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<TradeAmountAndFeeStructOutput>;
 
@@ -1292,6 +1299,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       targetAmount: PromiseOrValue<BigNumberish>,
       maxSourceAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<TradeAmountAndFeeStructOutput>;
 
@@ -1619,6 +1627,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       sourceAmount: PromiseOrValue<BigNumberish>,
       minReturnAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1628,6 +1637,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       targetAmount: PromiseOrValue<BigNumberish>,
       maxSourceAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1831,6 +1841,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       sourceAmount: PromiseOrValue<BigNumberish>,
       minReturnAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1840,6 +1851,7 @@ export interface PoolCollection extends BaseContract {
       targetToken: PromiseOrValue<string>,
       targetAmount: PromiseOrValue<BigNumberish>,
       maxSourceAmount: PromiseOrValue<BigNumberish>,
+      ignoreFees: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
