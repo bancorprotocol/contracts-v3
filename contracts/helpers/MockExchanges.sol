@@ -18,8 +18,16 @@ contract MockExchanges {
 
     IERC20 private immutable _weth;
 
-    constructor(IERC20 weth) {
+    // what amount is added or subtracted to/from the input amount on swap
+    uint private immutable _outputAmount;
+
+    // true if the gain amount is added to the swap input, false if subtracted
+    bool private immutable _profit;
+
+    constructor(IERC20 weth, uint outputAmount, bool profit) {
         _weth = weth;
+        _outputAmount = outputAmount;
+        _profit = profit;
     }
 
     receive() external payable {}
@@ -142,8 +150,13 @@ contract MockExchanges {
         sourceToken.safeTransferFrom(trader, address(this), amount);
 
         // transfer target amount
-        // receive 300 tokens per swap
-        uint256 targetAmount = amount + 300e18;
+        // receive gainAmount tokens per swap
+        uint targetAmount;
+        if(_profit) {
+            targetAmount = amount + _outputAmount;
+        } else {
+            targetAmount = amount - _outputAmount;
+        }
         require(targetAmount >= minTargetAmount, "InsufficientTargetAmount");
         if(address(targetToken) == NATIVE_TOKEN_ADDRESS) {
             (bool sent, ) = trader.call{value: targetAmount}("");

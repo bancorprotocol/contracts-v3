@@ -79,7 +79,7 @@ describe('BancorArbitrage', () => {
         await deployer.sendTransaction({ value: toWei(1_000_000_000), to: weth.address });
 
         baseToken = await createTestToken();
-        exchanges = await Contracts.MockExchanges.deploy(weth.address);
+        exchanges = await Contracts.MockExchanges.deploy(weth.address, toWei(300), true);
         bancorV2 = exchanges;
         bancorV3 = exchanges;
         uniswapV2Router = exchanges;
@@ -523,7 +523,7 @@ describe('BancorArbitrage', () => {
             // these exchanges swap the input amount for exactly the output amount
             // leading to 0 BNT gain, but successful repayment of flashloan b/c fee is 0
             // check the logic for 0 BNT gain
-            const sameOutputExchanges = await Contracts.MockExchangesSameOutput.deploy(weth.address);
+            const sameOutputExchanges = await Contracts.MockExchanges.deploy(weth.address, 0, true);
             const bancorV2SameOutput = sameOutputExchanges;
             const uniswapV2RouterSameOutput = sameOutputExchanges;
             const uniswapV3RouterSameOutput = sameOutputExchanges;
@@ -634,7 +634,7 @@ describe('BancorArbitrage', () => {
             baseToken = await createTestToken();
             // these exchanges swap the input amount for an output amount which is less
             // leading to negative BNT gain, and unsuccessful repayment of flashloan
-            const negativeOutputExchanges = await Contracts.MockExchangesNegativeOutput.deploy(weth.address);
+            const negativeOutputExchanges = await Contracts.MockExchanges.deploy(weth.address, toWei(1), false);
             const bancorV2NegativeOutput = negativeOutputExchanges;
             const uniswapV2RouterNegativeOutput = negativeOutputExchanges;
             const uniswapV3RouterNegativeOutput = negativeOutputExchanges;
