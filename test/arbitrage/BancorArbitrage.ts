@@ -1108,48 +1108,6 @@ describe('BancorArbitrage', () => {
             );
         });
 
-        it('should be able to arbitrage using Bancor V3', async () => {
-            const { token: arbToken1 } = await prepareBancorV3PoolAndToken(tokenSymbols[0]);
-            const { token: arbToken2 } = await prepareBancorV3PoolAndToken(tokenSymbols[1]);
-
-            // transfer tokens to mock exchanges
-            await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
-            await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
-            await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(10));
-
-            const routes = [
-                {
-                    exchangeId: ExchangeId.BancorV2,
-                    targetToken: arbToken1.address,
-                    minTargetAmount: 1,
-                    deadline: DEADLINE,
-                    customAddress: arbToken1.address,
-                    customInt: 0
-                },
-                {
-                    exchangeId: ExchangeId.BancorV3,
-                    targetToken: arbToken2.address,
-                    minTargetAmount: 1,
-                    deadline: DEADLINE,
-                    customAddress: arbToken2.address,
-                    customInt: 0
-                },
-                {
-                    exchangeId: ExchangeId.BancorV2,
-                    targetToken: bnt.address,
-                    minTargetAmount: 1,
-                    deadline: DEADLINE,
-                    customAddress: bnt.address,
-                    customInt: 0
-                }
-            ];
-
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.emit(
-                bancorArbitrage,
-                'ArbitrageExecuted'
-            );
-        });
-
         for (const exchangeId of exchangeIds) {
             for (const arbToken1Symbol of tokenSymbols) {
                 for (const arbToken2Symbol of tokenSymbols) {
