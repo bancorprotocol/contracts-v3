@@ -591,15 +591,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused nonReentrant returns (uint256) {
-        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
-
-        return
-            _trade(
-                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-                deadline
-            );
+        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
     }
 
     /**
@@ -613,15 +605,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused nonReentrant returns (uint256) {
-        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
-
-        return
-            _trade(
-                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-                deadline
-            );
+        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary);
     }
 
     /**
@@ -635,15 +619,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
-        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
-
-        return
-            _trade(
-                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-                deadline
-            );
+        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
     }
 
     /**
@@ -657,15 +633,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
-        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
-
-        return
-            _trade(
-                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
-                deadline
-            );
+        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary);
     }
 
     /**
@@ -1002,6 +970,50 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         if (deadline < _time()) {
             revert DeadlineExpired();
         }
+    }
+
+    /**
+     * @dev internal trade by source amount logic
+     */
+    function _tradeBySourceAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 sourceAmount,
+        uint256 minReturnAmount,
+        uint256 deadline,
+        address beneficiary
+    ) private returns (uint256) {
+        _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
+
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
+    }
+
+    /**
+     * @dev internal trade by target amount logic
+     */
+    function _tradeByTargetAmount(
+        Token sourceToken,
+        Token targetToken,
+        uint256 targetAmount,
+        uint256 maxSourceAmount,
+        uint256 deadline,
+        address beneficiary
+    ) private returns (uint256) {
+        _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
+
+        return
+            _trade(
+                TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
+                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
+                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                deadline
+            );
     }
 
     /**
