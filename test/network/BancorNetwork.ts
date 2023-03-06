@@ -1687,7 +1687,7 @@ describe('BancorNetwork', () => {
                 targetTokenAddress = targetToken.address
             } = overrides;
 
-            value = value || sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
+            value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
             const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
@@ -1756,7 +1756,7 @@ describe('BancorNetwork', () => {
                 targetTokenAddress = targetToken.address
             } = overrides;
 
-            value = value || sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
+            value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
 
             const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
 
