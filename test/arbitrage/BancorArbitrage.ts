@@ -181,7 +181,7 @@ describe('BancorArbitrage', () => {
         });
 
         it('should be initialized', async () => {
-            expect(await bancorArbitrage.version()).to.equal(1);
+            expect(await bancorArbitrage.version()).to.equal(2);
         });
 
         it('should revert when attempting to reinitialize', async () => {
