@@ -69,6 +69,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 amount;
         uint256 limit;
         bool bySourceAmount;
+        bool ignoreFees;
     }
 
     struct TradeResult {
@@ -591,7 +592,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused nonReentrant returns (uint256) {
-        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
+        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, msg.sender);
     }
 
     /**
@@ -605,7 +606,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused nonReentrant returns (uint256) {
-        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary);
+        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary, msg.sender);
     }
 
     /**
@@ -619,7 +620,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
-        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary);
+        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, msg.sender);
     }
 
     /**
@@ -633,7 +634,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
-        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary);
+        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary, msg.sender);
     }
 
     /**
@@ -981,15 +982,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 sourceAmount,
         uint256 minReturnAmount,
         uint256 deadline,
-        address beneficiary
+        address beneficiary,
+        address sender
     ) private returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
+        bool _ignoreFees = false;
+        if(sender == _bancorArbitrage) {
+            _ignoreFees = true;
+        }
 
         return
             _trade(
                 TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount, ignoreFees: _ignoreFees }),
+                TraderInfo({ trader: sender, beneficiary: beneficiary }),
                 deadline
             );
     }
@@ -1003,15 +1009,20 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 targetAmount,
         uint256 maxSourceAmount,
         uint256 deadline,
-        address beneficiary
+        address beneficiary,
+        address sender
     ) private returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
+        bool _ignoreFees = false;
+        if(sender == _bancorArbitrage) {
+            _ignoreFees = true;
+        }
 
         return
             _trade(
                 TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount }),
-                TraderInfo({ trader: msg.sender, beneficiary: beneficiary }),
+                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount, ignoreFees: _ignoreFees }),
+                TraderInfo({ trader: sender, beneficiary: beneficiary }),
                 deadline
             );
     }
@@ -1147,11 +1158,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             ? TradeTokens({ sourceToken: Token(address(_bnt)), targetToken: pool })
             : TradeTokens({ sourceToken: pool, targetToken: Token(address(_bnt)) });
 
-        bool ignoreFees = false;
-        if(msg.sender == _bancorArbitrage) {
-            ignoreFees = true;
-        }
-
         TradeAmountAndFee memory tradeAmountsAndFee = params.bySourceAmount
             ? _poolCollection(pool).tradeBySourceAmount(
                 contextId,
@@ -1159,7 +1165,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 tokens.targetToken,
                 params.amount,
                 params.limit,
-                ignoreFees
+                params.ignoreFees
             )
             : _poolCollection(pool).tradeByTargetAmount(
                 contextId,
@@ -1167,7 +1173,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 tokens.targetToken,
                 params.amount,
                 params.limit,
-                ignoreFees
+                params.ignoreFees
             );
 
         // if the target token is BNT, notify the BNT pool on collected fees (which shouldn't include the network fee
@@ -1211,7 +1217,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 contextId,
                 tokens.sourceToken,
                 false,
-                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: 1 })
+                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: 1, ignoreFees: params.ignoreFees })
             );
 
             // trade the received BNT target amount to target tokens (while respecting the minimum return amount)
@@ -1219,7 +1225,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 contextId,
                 tokens.targetToken,
                 true,
-                TradeParams({ bySourceAmount: true, amount: targetHop1.targetAmount, limit: minReturnAmount })
+                TradeParams({ bySourceAmount: true, amount: targetHop1.targetAmount, limit: minReturnAmount, ignoreFees: params.ignoreFees })
             );
 
             return (targetHop1, targetHop2);
@@ -1234,7 +1240,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId,
             tokens.targetToken,
             true,
-            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: type(uint256).max })
+            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: type(uint256).max, ignoreFees: params.ignoreFees })
         );
 
         // trade source tokens to the required amount of BNT (while respecting the maximum source amount)
@@ -1242,7 +1248,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId,
             tokens.sourceToken,
             false,
-            TradeParams({ bySourceAmount: false, amount: sourceHop2.sourceAmount, limit: maxSourceAmount })
+            TradeParams({ bySourceAmount: false, amount: sourceHop2.sourceAmount, limit: maxSourceAmount, ignoreFees: params.ignoreFees })
         );
 
         return (sourceHop1, sourceHop2);

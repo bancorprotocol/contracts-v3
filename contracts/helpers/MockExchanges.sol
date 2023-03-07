@@ -144,13 +144,13 @@ contract MockExchanges {
         address trader,
         uint deadline,
         uint minTargetAmount
-    ) public payable returns (uint256) {
+    ) private returns (uint256) {
         require(deadline >= block.timestamp, "Swap timeout");
         // withdraw source amount
         sourceToken.safeTransferFrom(trader, address(this), amount);
 
         // transfer target amount
-        // receive gainAmount tokens per swap
+        // receive _outputAmount tokens per swap
         uint targetAmount;
         if(_profit) {
             targetAmount = amount + _outputAmount;
@@ -158,12 +158,7 @@ contract MockExchanges {
             targetAmount = amount - _outputAmount;
         }
         require(targetAmount >= minTargetAmount, "InsufficientTargetAmount");
-        if(address(targetToken) == NATIVE_TOKEN_ADDRESS) {
-            (bool sent, ) = trader.call{value: targetAmount}("");
-            require(sent, "Error sending ETH to trader");
-        } else {
-            targetToken.safeTransfer(trader, targetAmount);
-        }
+        targetToken.safeTransfer(trader, targetAmount);
         return targetAmount;
     }
 }

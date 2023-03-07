@@ -15,7 +15,7 @@ import { TokenLibrary } from "../token/TokenLibrary.sol";
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
-import { IFlashLoanRecipient } from "../network/interfaces/IBancorNetwork.sol";
+import { IBancorNetwork, IFlashLoanRecipient } from "../network/interfaces/IBancorNetwork.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -31,20 +31,6 @@ interface IBancorNetworkV2 {
     ) external payable returns (uint256);
 
     function conversionPath(Token _sourceToken, Token _targetToken) external view returns (address[] memory);
-}
-
-// interface to support Bancor V3 trades
-interface IBancorNetwork {
-    function tradeBySourceAmountArb(
-        Token sourceToken,
-        Token targetToken,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
-        uint256 deadline,
-        address beneficiary
-    ) external payable returns (uint256);
-
-    function flashLoan(Token token, uint256 amount, IFlashLoanRecipient recipient, bytes calldata data) external;
 }
 
 /**
