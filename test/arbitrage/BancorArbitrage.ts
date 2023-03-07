@@ -220,13 +220,9 @@ describe('BancorArbitrage', () => {
 
         describe('distribution and burn', () => {
             // get all exchange ids (omit their names)
-            const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
             const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
             let arbToken1: TokenWithAddress;
             let arbToken2: TokenWithAddress;
-
-            // remove BancorV3 exchange until the reentrancy guard issue is resolved
-            exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
             beforeEach(async () => {
                 await transfer(deployer, bnt, masterVault.address, AMOUNT.mul(10_000));
@@ -409,9 +405,6 @@ describe('BancorArbitrage', () => {
         let arbToken1: TokenWithAddress;
         let arbToken2: TokenWithAddress;
 
-        // remove BancorV3 exchange until the reentrancy guard issue is resolved
-        exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
-
         beforeEach(async () => {
             await transfer(deployer, bnt, masterVault.address, AMOUNT.mul(10_000));
             await bancorArbitrage.setRewards(ArbitrageRewardsDefaults);
@@ -529,6 +522,9 @@ describe('BancorArbitrage', () => {
             const uniswapV3RouterSameOutput = sameOutputExchanges;
             const sushiswapV2RouterSameOutput = sameOutputExchanges;
 
+            // exclude v3 due to new arb contract deployment
+            exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
+
             const newBancorArbitrage = await createProxy(Contracts.BancorArbitrage, {
                 ctorArgs: [
                     bnt.address,
@@ -640,6 +636,9 @@ describe('BancorArbitrage', () => {
             const uniswapV3RouterNegativeOutput = negativeOutputExchanges;
             const sushiswapV2RouterNegativeOutput = negativeOutputExchanges;
 
+            // exclude v3 due to new arb contract deployment
+            exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
+
             const newBancorArbitrage = await createProxy(Contracts.BancorArbitrage, {
                 ctorArgs: [
                     bnt.address,
@@ -695,9 +694,6 @@ describe('BancorArbitrage', () => {
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
         let arbToken1: TokenWithAddress;
         let arbToken2: TokenWithAddress;
-
-        // remove BancorV3 exchange until the reentrancy guard issue is resolved
-        exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
         beforeEach(async () => {
             await transfer(deployer, bnt, masterVault.address, AMOUNT.mul(10_000));
@@ -983,12 +979,13 @@ describe('BancorArbitrage', () => {
                         customInt: 0
                     }
                 ];
-                const secondHopSourceAmount = AMOUNT.add(toWei(600)); // 300 tokens per hop
 
                 // expect to approve exactly the amounts needed for the second trade for each exchange
+                const approveAmount = AMOUNT.add(toWei(300));
+                const approveExchange = exchangeId === ExchangeId.BancorV3 ? network.address : exchanges.address;
                 await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
-                    .to.emit(arbToken2, 'Approval')
-                    .withArgs(bancorArbitrage.address, exchanges.address, secondHopSourceAmount);
+                    .to.emit(arbToken1, 'Approval')
+                    .withArgs(bancorArbitrage.address, approveExchange, approveAmount);
             }
         });
 
