@@ -219,7 +219,6 @@ describe('BancorArbitrage', () => {
         });
 
         describe('distribution and burn', () => {
-            // get all exchange ids (omit their names)
             const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
             let arbToken1: TokenWithAddress;
             let arbToken2: TokenWithAddress;
