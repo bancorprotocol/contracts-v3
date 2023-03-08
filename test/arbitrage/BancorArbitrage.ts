@@ -937,7 +937,7 @@ describe('BancorArbitrage', () => {
             );
         });
 
-        it('approves ERC-20 tokens for each exchange when trading', async () => {
+        it('approves ERC-20 tokens for each exchange if allowance is less than the trade amount', async () => {
             for (const exchangeId of exchangeIds) {
                 let customInt;
                 if (exchangeId === ExchangeId.UniswapV3) {
@@ -979,12 +979,15 @@ describe('BancorArbitrage', () => {
                     }
                 ];
 
-                // expect to approve exactly the amounts needed for the second trade for each exchange
-                const approveAmount = AMOUNT.add(toWei(300));
+                // expect to approve MAX_UINT256 for the exchange
+                const approveAmount = MAX_UINT256;
                 const approveExchange = exchangeId === ExchangeId.BancorV3 ? network.address : exchanges.address;
-                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
-                    .to.emit(arbToken1, 'Approval')
-                    .withArgs(bancorArbitrage.address, approveExchange, approveAmount);
+                const allowance = await arbToken1.allowance(bancorArbitrage.address, approveExchange);
+                if(allowance === 0) {
+                    await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                        .to.emit(arbToken1, 'Approval')
+                        .withArgs(bancorArbitrage.address, approveExchange, approveAmount);
+                }
             }
         });
 

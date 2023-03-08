@@ -126,6 +126,23 @@ library TokenLibrary {
     }
 
     /**
+     * @dev increases allowance of the native token/ERC20 token from a specific holder
+     *
+     * note that the function does not perform any action if the native token is provided
+     */
+    function safeIncreaseAllowance(
+        Token token,
+        address spender,
+        uint256 amount
+    ) internal {
+        if (isNative(token)) {
+            return;
+        }
+
+        toIERC20(token).safeIncreaseAllowance(spender, amount);
+    }
+
+    /**
      * @dev ensures that the spender has sufficient allowance
      *
      * note that the function does not perform any action if the native token is provided

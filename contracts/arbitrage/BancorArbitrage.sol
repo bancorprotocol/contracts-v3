@@ -326,7 +326,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
     ) private {
         if (exchangeId == EXCHANGE_ID_BANCOR_V2) {
             // allow the network to withdraw the source tokens
-            sourceToken.safeApprove(address(_bancorNetworkV2), sourceAmount);
+            _setExchangeAllowance(sourceToken, address(_bancorNetworkV2), sourceAmount);
 
             // build the conversion path
             address[] memory path = new address[](3);
@@ -351,7 +351,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
 
         if (exchangeId == EXCHANGE_ID_BANCOR_V3) {
             // allow the network to withdraw the source tokens
-            sourceToken.safeApprove(address(_bancorNetworkV3), sourceAmount);
+            _setExchangeAllowance(sourceToken, address(_bancorNetworkV3), sourceAmount);
 
             uint256 val = sourceToken.isNative() ? sourceAmount : 0;
 
@@ -372,7 +372,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
             IUniswapV2Router02 router = exchangeId == EXCHANGE_ID_UNISWAP_V2 ? _uniswapV2Router : _sushiSwapRouter;
 
             // allow the router to withdraw the source tokens
-            sourceToken.safeApprove(address(router), sourceAmount);
+            _setExchangeAllowance(sourceToken, address(router), sourceAmount);
 
             // build the path
             address[] memory path = new address[](2);
@@ -404,7 +404,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
             }
 
             // allow the router to withdraw the source tokens
-            Token(tokenIn).safeApprove(address(_uniswapV3Router), sourceAmount);
+            _setExchangeAllowance(Token(tokenIn), address(_uniswapV3Router), sourceAmount);
 
             // build the params
             ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
@@ -474,4 +474,18 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
 
         emit ArbitrageExecuted(caller, exchangeIds, path, sourceAmount, burnAmount, rewardAmount);
     }
+
+    /**
+     * @dev set exchange allowance to the max amount if it's less than the input amount
+     */
+    function _setExchangeAllowance(Token token, address exchange, uint inputAmount) private {
+        if(token.isNative()) {
+            return;
+        }
+        uint allowance = token.toIERC20().allowance(address(this), exchange);
+        if(allowance < inputAmount) {
+            // increase allowance to the max amount if allowance < inputAmount
+            token.safeIncreaseAllowance(exchange, type(uint256).max - allowance);
+        }
+     }
 }
