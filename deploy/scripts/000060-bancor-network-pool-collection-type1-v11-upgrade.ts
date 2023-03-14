@@ -76,14 +76,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // enable protection for the new pool collection
-    await execute({
-        name: InstanceName.PoolCollectionType1V11,
-        methodName: 'enableProtection',
-        args: [await prevPoolCollection.protectionEnabled()],
-        from: deployer
-    });
-
     // register the new pool collection with the network
     await execute({
         name: InstanceName.BancorNetwork,
