@@ -74,11 +74,7 @@ library TokenLibrary {
     /**
      * @dev transfers a specific amount of the native token/ERC20 token
      */
-    function safeTransfer(
-        Token token,
-        address to,
-        uint256 amount
-    ) internal {
+    function safeTransfer(Token token, address to, uint256 amount) internal {
         if (amount == 0) {
             return;
         }
@@ -95,12 +91,7 @@ library TokenLibrary {
      *
      * note that the function does not perform any action if the native token is provided
      */
-    function safeTransferFrom(
-        Token token,
-        address from,
-        address to,
-        uint256 amount
-    ) internal {
+    function safeTransferFrom(Token token, address from, address to, uint256 amount) internal {
         if (amount == 0 || isNative(token)) {
             return;
         }
@@ -113,11 +104,7 @@ library TokenLibrary {
      *
      * note that the function does not perform any action if the native token is provided
      */
-    function safeApprove(
-        Token token,
-        address spender,
-        uint256 amount
-    ) internal {
+    function safeApprove(Token token, address spender, uint256 amount) internal {
         if (isNative(token)) {
             return;
         }
@@ -130,11 +117,7 @@ library TokenLibrary {
      *
      * note that the function does not perform any action if the native token is provided
      */
-    function safeIncreaseAllowance(
-        Token token,
-        address spender,
-        uint256 amount
-    ) internal {
+    function safeIncreaseAllowance(Token token, address spender, uint256 amount) internal {
         if (isNative(token)) {
             return;
         }
@@ -147,11 +130,7 @@ library TokenLibrary {
      *
      * note that the function does not perform any action if the native token is provided
      */
-    function ensureApprove(
-        Token token,
-        address spender,
-        uint256 amount
-    ) internal {
+    function ensureApprove(Token token, address spender, uint256 amount) internal {
         if (isNative(token)) {
             return;
         }

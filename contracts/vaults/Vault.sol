@@ -39,10 +39,10 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
-        validAddress(address(initBNTGovernance))
-        validAddress(address(initVBNTGovernance))
-    {
+    constructor(
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance
+    ) validAddress(address(initBNTGovernance)) validAddress(address(initVBNTGovernance)) {
         _bntGovernance = initBNTGovernance;
         _bnt = initBNTGovernance.token();
         _vbntGovernance = initVBNTGovernance;
@@ -143,12 +143,10 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     /**
      * @inheritdoc IVault
      */
-    function burn(Token token, uint256 amount)
-        external
-        nonReentrant
-        whenNotPaused
-        whenAuthorized(msg.sender, token, payable(address(0)), amount)
-    {
+    function burn(
+        Token token,
+        uint256 amount
+    ) external nonReentrant whenNotPaused whenAuthorized(msg.sender, token, payable(address(0)), amount) {
         if (amount == 0) {
             return;
         }

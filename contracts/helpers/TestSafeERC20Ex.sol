@@ -8,11 +8,7 @@ import { SafeERC20Ex } from "../token/SafeERC20Ex.sol";
 contract TestSafeERC20Ex {
     using SafeERC20Ex for IERC20;
 
-    function ensureApprove(
-        IERC20 token,
-        address spender,
-        uint256 amount
-    ) external {
+    function ensureApprove(IERC20 token, address spender, uint256 amount) external {
         token.ensureApprove(spender, amount);
     }
 }

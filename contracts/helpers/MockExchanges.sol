@@ -152,7 +152,7 @@ contract MockExchanges {
         // transfer target amount
         // receive _outputAmount tokens per swap
         uint targetAmount;
-        if(_profit) {
+        if (_profit) {
             targetAmount = amount + _outputAmount;
         } else {
             targetAmount = amount - _outputAmount;

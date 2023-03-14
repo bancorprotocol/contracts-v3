@@ -360,12 +360,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * - the caller must be the admin of the contract
      */
-    function registerPoolCollection(IPoolCollection newPoolCollection)
-        external
-        validAddress(address(newPoolCollection))
-        onlyAdmin
-        nonReentrant
-    {
+    function registerPoolCollection(
+        IPoolCollection newPoolCollection
+    ) external validAddress(address(newPoolCollection)) onlyAdmin nonReentrant {
         // verify that there is no pool collection of the same type and version
         uint16 newPoolType = newPoolCollection.poolType();
         uint16 newPoolVersion = newPoolCollection.version();
@@ -387,12 +384,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * - the caller must be the admin of the contract
      */
-    function unregisterPoolCollection(IPoolCollection poolCollection)
-        external
-        validAddress(address(poolCollection))
-        onlyAdmin
-        nonReentrant
-    {
+    function unregisterPoolCollection(
+        IPoolCollection poolCollection
+    ) external validAddress(address(poolCollection)) onlyAdmin nonReentrant {
         // verify that no pools are associated with the specified pool collection
         if (poolCollection.poolCount() != 0) {
             revert NotEmpty();
@@ -441,12 +435,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function createPools(Token[] calldata tokens, IPoolCollection poolCollection)
-        external
-        validAddress(address(poolCollection))
-        onlyAdmin
-        nonReentrant
-    {
+    function createPools(
+        Token[] calldata tokens,
+        IPoolCollection poolCollection
+    ) external validAddress(address(poolCollection)) onlyAdmin nonReentrant {
         if (!_poolCollections.contains(address(poolCollection))) {
             revert DoesNotExist();
         }
@@ -530,7 +522,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function deposit(Token pool, uint256 tokenAmount)
+    function deposit(
+        Token pool,
+        uint256 tokenAmount
+    )
         external
         payable
         depositsEnabled
@@ -546,7 +541,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function initWithdrawal(IPoolToken poolToken, uint256 poolTokenAmount)
+    function initWithdrawal(
+        IPoolToken poolToken,
+        uint256 poolTokenAmount
+    )
         external
         validAddress(address(poolToken))
         greaterThanZero(poolTokenAmount)
@@ -592,7 +590,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused nonReentrant returns (uint256) {
-        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, msg.sender);
+        return
+            _tradeBySourceAmount(
+                sourceToken,
+                targetToken,
+                sourceAmount,
+                minReturnAmount,
+                deadline,
+                beneficiary,
+                msg.sender
+            );
     }
 
     /**
@@ -606,7 +613,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused nonReentrant returns (uint256) {
-        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary, msg.sender);
+        return
+            _tradeByTargetAmount(
+                sourceToken,
+                targetToken,
+                targetAmount,
+                maxSourceAmount,
+                deadline,
+                beneficiary,
+                msg.sender
+            );
     }
 
     /**
@@ -620,7 +636,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
-        return _tradeBySourceAmount(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline, beneficiary, msg.sender);
+        return
+            _tradeBySourceAmount(
+                sourceToken,
+                targetToken,
+                sourceAmount,
+                minReturnAmount,
+                deadline,
+                beneficiary,
+                msg.sender
+            );
     }
 
     /**
@@ -634,7 +659,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 deadline,
         address beneficiary
     ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
-        return _tradeByTargetAmount(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline, beneficiary, msg.sender);
+        return
+            _tradeByTargetAmount(
+                sourceToken,
+                targetToken,
+                targetAmount,
+                maxSourceAmount,
+                deadline,
+                beneficiary,
+                msg.sender
+            );
     }
 
     /**
@@ -658,7 +692,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         uint256 feeAmount;
-        if(msg.sender == _bancorArbitrage) {
+        if (msg.sender == _bancorArbitrage) {
             // exempt arb contract from fees
             feeAmount = 0;
         } else {
@@ -727,7 +761,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawNetworkFees(address recipient)
+    function withdrawNetworkFees(
+        address recipient
+    )
         external
         whenNotPaused
         onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
@@ -819,12 +855,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      *
      * - the caller must have approved the network to transfer the liquidity tokens on its behalf
      */
-    function _depositFor(
-        address provider,
-        Token pool,
-        uint256 tokenAmount,
-        address caller
-    ) private returns (uint256) {
+    function _depositFor(address provider, Token pool, uint256 tokenAmount, address caller) private returns (uint256) {
         bytes32 contextId = _depositContextId(provider, pool, tokenAmount, caller);
 
         if (pool.isEqual(_bnt)) {
@@ -987,14 +1018,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
         bool _ignoreFees = false;
-        if(sender == _bancorArbitrage) {
+        if (sender == _bancorArbitrage) {
             _ignoreFees = true;
         }
 
         return
             _trade(
                 TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: true, amount: sourceAmount, limit: minReturnAmount, ignoreFees: _ignoreFees }),
+                TradeParams({
+                    bySourceAmount: true,
+                    amount: sourceAmount,
+                    limit: minReturnAmount,
+                    ignoreFees: _ignoreFees
+                }),
                 TraderInfo({ trader: sender, beneficiary: beneficiary }),
                 deadline
             );
@@ -1014,14 +1050,19 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     ) private returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
         bool _ignoreFees = false;
-        if(sender == _bancorArbitrage) {
+        if (sender == _bancorArbitrage) {
             _ignoreFees = true;
         }
 
         return
             _trade(
                 TradeTokens({ sourceToken: sourceToken, targetToken: targetToken }),
-                TradeParams({ bySourceAmount: false, amount: targetAmount, limit: maxSourceAmount, ignoreFees: _ignoreFees }),
+                TradeParams({
+                    bySourceAmount: false,
+                    amount: targetAmount,
+                    limit: maxSourceAmount,
+                    ignoreFees: _ignoreFees
+                }),
                 TraderInfo({ trader: sender, beneficiary: beneficiary }),
                 deadline
             );
@@ -1225,7 +1266,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 contextId,
                 tokens.targetToken,
                 true,
-                TradeParams({ bySourceAmount: true, amount: targetHop1.targetAmount, limit: minReturnAmount, ignoreFees: params.ignoreFees })
+                TradeParams({
+                    bySourceAmount: true,
+                    amount: targetHop1.targetAmount,
+                    limit: minReturnAmount,
+                    ignoreFees: params.ignoreFees
+                })
             );
 
             return (targetHop1, targetHop2);
@@ -1240,7 +1286,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId,
             tokens.targetToken,
             true,
-            TradeParams({ bySourceAmount: false, amount: targetAmount, limit: type(uint256).max, ignoreFees: params.ignoreFees })
+            TradeParams({
+                bySourceAmount: false,
+                amount: targetAmount,
+                limit: type(uint256).max,
+                ignoreFees: params.ignoreFees
+            })
         );
 
         // trade source tokens to the required amount of BNT (while respecting the maximum source amount)
@@ -1248,7 +1299,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             contextId,
             tokens.sourceToken,
             false,
-            TradeParams({ bySourceAmount: false, amount: sourceHop2.sourceAmount, limit: maxSourceAmount, ignoreFees: params.ignoreFees })
+            TradeParams({
+                bySourceAmount: false,
+                amount: sourceHop2.sourceAmount,
+                limit: maxSourceAmount,
+                ignoreFees: params.ignoreFees
+            })
         );
 
         return (sourceHop1, sourceHop2);
@@ -1257,11 +1313,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev deposits tokens to the master vault and verifies that msg.value corresponds to its type
      */
-    function _depositToMasterVault(
-        Token token,
-        address caller,
-        uint256 amount
-    ) private {
+    function _depositToMasterVault(Token token, address caller, uint256 amount) private {
         if (token.isNative()) {
             if (msg.value < amount) {
                 revert NativeTokenAmountMismatch();

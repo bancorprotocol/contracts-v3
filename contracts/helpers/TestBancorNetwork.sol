@@ -56,11 +56,7 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         poolCollection.createPool(token);
     }
 
-    function migratePoolT(
-        IPoolMigrator poolMigrator,
-        Token pool,
-        IPoolCollection newPoolCollection
-    ) external {
+    function migratePoolT(IPoolMigrator poolMigrator, Token pool, IPoolCollection newPoolCollection) external {
         poolMigrator.migratePool(pool, newPoolCollection);
     }
 
@@ -112,19 +108,11 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         return poolCollection.withdraw(contextId, provider, pool, poolTokenAmount, reserveTokenAmount);
     }
 
-    function onBNTFeesCollectedT(
-        Token pool,
-        uint256 amount,
-        bool isTraderFee
-    ) external {
+    function onBNTFeesCollectedT(Token pool, uint256 amount, bool isTraderFee) external {
         _bntPool.onFeesCollected(pool, amount, isTraderFee);
     }
 
-    function onPoolCollectionFeesCollectedT(
-        IPoolCollection poolCollection,
-        Token pool,
-        uint256 amount
-    ) external {
+    function onPoolCollectionFeesCollectedT(IPoolCollection poolCollection, Token pool, uint256 amount) external {
         poolCollection.onFeesCollected(pool, amount);
     }
 
@@ -136,7 +124,15 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 sourceAmount,
         uint256 minReturnAmount
     ) external returns (TradeAmountAndFee memory) {
-        return poolCollection.tradeBySourceAmount(contextId, sourceToken, targetToken, sourceAmount, minReturnAmount, false);
+        return
+            poolCollection.tradeBySourceAmount(
+                contextId,
+                sourceToken,
+                targetToken,
+                sourceAmount,
+                minReturnAmount,
+                false
+            );
     }
 
     function tradeByTargetPoolCollectionT(
@@ -147,7 +143,15 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         uint256 targetAmount,
         uint256 maxSourceAmount
     ) external returns (TradeAmountAndFee memory) {
-        return poolCollection.tradeByTargetAmount(contextId, sourceToken, targetToken, targetAmount, maxSourceAmount, false);
+        return
+            poolCollection.tradeByTargetAmount(
+                contextId,
+                sourceToken,
+                targetToken,
+                targetAmount,
+                maxSourceAmount,
+                false
+            );
     }
 
     function _time() internal view virtual override(Time, TestTime) returns (uint32) {

@@ -1746,7 +1746,11 @@ describe('BancorNetwork', () => {
             );
         };
 
-        const tradeBySourceAmountArb = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
+        const tradeBySourceAmountArb = async (
+            amount: BigNumberish,
+            overrides: TradeOverrides = {},
+            simulate = false
+        ) => {
             let {
                 value,
                 limit: minReturnAmount = MIN_RETURN_AMOUNT,
@@ -1773,7 +1777,11 @@ describe('BancorNetwork', () => {
             );
         };
 
-        const tradeByTargetAmountArb = async (amount: BigNumberish, overrides: TradeOverrides = {}, simulate = false) => {
+        const tradeByTargetAmountArb = async (
+            amount: BigNumberish,
+            overrides: TradeOverrides = {},
+            simulate = false
+        ) => {
             let {
                 value,
                 limit: maxSourceAmount,
@@ -2270,11 +2278,15 @@ describe('BancorNetwork', () => {
 
                         context('arb contract trades', () => {
                             it('should revert when attempting to call tradeBySourceAmountArb from address other than arb contract', async () => {
-                                await expect(tradeBySourceAmountArb(testAmount)).to.be.revertedWithError('AccessDenied');
+                                await expect(tradeBySourceAmountArb(testAmount)).to.be.revertedWithError(
+                                    'AccessDenied'
+                                );
                             });
 
                             it('should revert when attempting to call tradeByTargetAmountArb from address other than arb contract', async () => {
-                                await expect(tradeByTargetAmountArb(testAmount)).to.be.revertedWithError('AccessDenied');
+                                await expect(tradeByTargetAmountArb(testAmount)).to.be.revertedWithError(
+                                    'AccessDenied'
+                                );
                             });
                         });
                     });

@@ -424,12 +424,10 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @inheritdoc IStandardRewards
      */
-    function depositAndJoin(uint256 id, uint256 tokenAmount)
-        external
-        payable
-        greaterThanZero(tokenAmount)
-        nonReentrant
-    {
+    function depositAndJoin(
+        uint256 id,
+        uint256 tokenAmount
+    ) external payable greaterThanZero(tokenAmount) nonReentrant {
         ProgramData memory p = _programs[id];
 
         _verifyProgramActiveAndNotPaused(p);
@@ -496,12 +494,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev adds provider's stake to the program
      */
-    function _join(
-        address provider,
-        ProgramData memory p,
-        uint256 poolTokenAmount,
-        address payer
-    ) private {
+    function _join(address provider, ProgramData memory p, uint256 poolTokenAmount, address payer) private {
         // take a snapshot of the existing rewards (before increasing the stake)
         ProviderRewards storage data = _snapshotRewards(p, provider);
 
@@ -533,11 +526,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev removes (some of) provider's stake from the program
      */
-    function _leave(
-        address provider,
-        ProgramData memory p,
-        uint256 poolTokenAmount
-    ) private {
+    function _leave(address provider, ProgramData memory p, uint256 poolTokenAmount) private {
         // take a snapshot of the existing rewards (before decreasing the stake)
         ProviderRewards storage data = _snapshotRewards(p, provider);
 
@@ -620,11 +609,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev deposits and adds provider's stake to the program
      */
-    function _depositAndJoin(
-        address provider,
-        ProgramData memory p,
-        uint256 tokenAmount
-    ) private {
+    function _depositAndJoin(address provider, ProgramData memory p, uint256 tokenAmount) private {
         // deposit provider's tokens to the network and let the contract itself to claim the pool tokens so that it can
         // immediately add them to a program
         uint256 poolTokenAmount = _deposit(provider, provider, true, p.pool, tokenAmount);
@@ -637,11 +622,7 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev claims rewards
      */
-    function _claimRewards(
-        address provider,
-        uint256[] calldata ids,
-        bool stake
-    ) private returns (uint256) {
+    function _claimRewards(address provider, uint256[] calldata ids, bool stake) private returns (uint256) {
         uint256 reward = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
@@ -823,11 +804,10 @@ contract StandardRewards is IStandardRewards, ReentrancyGuardUpgradeable, Utils,
     /**
      * @dev calculates provider's pending rewards
      */
-    function _pendingRewards(uint256 updatedRewardPerToken, ProviderRewards memory providerRewardsData)
-        private
-        pure
-        returns (uint256)
-    {
+    function _pendingRewards(
+        uint256 updatedRewardPerToken,
+        ProviderRewards memory providerRewardsData
+    ) private pure returns (uint256) {
         return
             providerRewardsData.pendingRewards +
             (providerRewardsData.stakedAmount * (updatedRewardPerToken - providerRewardsData.rewardPerTokenPaid)) /

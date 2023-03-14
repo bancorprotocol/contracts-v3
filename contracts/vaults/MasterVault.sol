@@ -32,9 +32,10 @@ contract MasterVault is IMasterVault, Vault {
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
-        Vault(initBNTGovernance, initVBNTGovernance)
-    {}
+    constructor(
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance
+    ) Vault(initBNTGovernance, initVBNTGovernance) {}
 
     /**
      * @dev fully initializes the contract and its parents
@@ -97,7 +98,7 @@ contract MasterVault is IMasterVault, Vault {
     function isAuthorizedWithdrawal(
         address caller,
         Token token,
-        address, /* target */
+        address /* target */,
         uint256 /* amount */
     ) internal view override returns (bool) {
         return (token.isEqual(_bnt) && hasRole(ROLE_BNT_MANAGER, caller)) || hasRole(ROLE_ASSET_MANAGER, caller);

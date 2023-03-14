@@ -574,14 +574,14 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
 
 interface RolesOptions {
     name: InstanceName;
-    id: typeof RoleIds[number];
+    id: (typeof RoleIds)[number];
     member: string;
     from: string;
 }
 
 interface RenounceRoleOptions {
     name: InstanceName;
-    id: typeof RoleIds[number];
+    id: (typeof RoleIds)[number];
     from: string;
 }
 

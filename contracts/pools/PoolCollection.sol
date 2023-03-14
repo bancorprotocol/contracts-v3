@@ -340,11 +340,9 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      *
      * - the caller must be the owner of the contract
      */
-    function setDefaultTradingFeePPM(uint32 newDefaultTradingFeePPM)
-        external
-        onlyOwner
-        validFee(newDefaultTradingFeePPM)
-    {
+    function setDefaultTradingFeePPM(
+        uint32 newDefaultTradingFeePPM
+    ) external onlyOwner validFee(newDefaultTradingFeePPM) {
         _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
     }
 
@@ -553,11 +551,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      *
      * - the caller must be the owner of the contract
      */
-    function enableTrading(
-        Token pool,
-        uint256 bntVirtualBalance,
-        uint256 baseTokenVirtualBalance
-    ) external onlyOwner {
+    function enableTrading(Token pool, uint256 bntVirtualBalance, uint256 baseTokenVirtualBalance) external onlyOwner {
         Fraction memory fundingRate = Fraction({ n: bntVirtualBalance, d: baseTokenVirtualBalance });
         _validRate(fundingRate);
 
@@ -802,13 +796,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @inheritdoc IPoolCollection
      */
-    function withdrawalAmounts(Token pool, uint256 poolTokenAmount)
-        external
-        view
-        validAddress(address(pool))
-        greaterThanZero(poolTokenAmount)
-        returns (WithdrawalAmounts memory)
-    {
+    function withdrawalAmounts(
+        Token pool,
+        uint256 poolTokenAmount
+    ) external view validAddress(address(pool)) greaterThanZero(poolTokenAmount) returns (WithdrawalAmounts memory) {
         Pool storage data = _poolData[pool];
         PoolLiquidity memory liquidity = data.liquidity;
 
@@ -861,7 +852,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             minReturnAmount,
             true
         );
-        if(ignoreFees) {
+        if (ignoreFees) {
             result.tradingFeePPM = 0;
         }
 
@@ -900,7 +891,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             maxSourceAmount,
             false
         );
-        if(ignoreFees) {
+        if (ignoreFees) {
             result.tradingFeePPM = 0;
         }
 
@@ -978,11 +969,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @inheritdoc IPoolCollection
      */
-    function migratePoolIn(Token pool, Pool calldata data)
-        external
-        validAddress(address(pool))
-        only(address(_poolMigrator))
-    {
+    function migratePoolIn(
+        Token pool,
+        Pool calldata data
+    ) external validAddress(address(pool)) only(address(_poolMigrator)) {
         _addPool(pool, data);
 
         data.poolToken.acceptOwnership();
@@ -991,11 +981,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @inheritdoc IPoolCollection
      */
-    function migratePoolOut(Token pool, IPoolCollection targetPoolCollection)
-        external
-        validAddress(address(targetPoolCollection))
-        only(address(_poolMigrator))
-    {
+    function migratePoolOut(
+        Token pool,
+        IPoolCollection targetPoolCollection
+    ) external validAddress(address(targetPoolCollection)) only(address(_poolMigrator)) {
         IPoolToken cachedPoolToken = _poolData[pool].poolToken;
 
         _removePool(pool);
@@ -1627,7 +1616,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
                 revert InsufficientSourceAmount();
             }
         }
-        
+
         result.tradingFeeAmount = tradeAmountAndFee.tradingFeeAmount;
 
         // sync the trading and staked balance
@@ -1747,11 +1736,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev returns the effective average rates
      */
-    function _effectiveAverageRates(AverageRates memory averageRates, Fraction memory spotRate)
-        private
-        view
-        returns (AverageRates memory)
-    {
+    function _effectiveAverageRates(
+        AverageRates memory averageRates,
+        Fraction memory spotRate
+    ) private view returns (AverageRates memory) {
         // if the spot rate is 0, reset the average rates
         if (!spotRate.isPositive()) {
             return AverageRates({ blockNumber: 0, rate: zeroFraction112(), invRate: zeroFraction112() });
@@ -1795,11 +1783,10 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     /**
      * @dev calculates the average rate
      */
-    function _calcAverageRate(Fraction112 memory averageRate, Fraction memory rate)
-        private
-        pure
-        returns (Fraction112 memory)
-    {
+    function _calcAverageRate(
+        Fraction112 memory averageRate,
+        Fraction memory rate
+    ) private pure returns (Fraction112 memory) {
         if (rate.n * averageRate.d == rate.d * averageRate.n) {
             return averageRate;
         }

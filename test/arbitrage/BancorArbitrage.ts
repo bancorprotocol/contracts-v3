@@ -983,7 +983,7 @@ describe('BancorArbitrage', () => {
                 const approveAmount = MAX_UINT256;
                 const approveExchange = exchangeId === ExchangeId.BancorV3 ? network.address : exchanges.address;
                 const allowance = await arbToken1.allowance(bancorArbitrage.address, approveExchange);
-                if(allowance === 0) {
+                if (allowance === 0) {
                     await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                         .to.emit(arbToken1, 'Approval')
                         .withArgs(bancorArbitrage.address, approveExchange, approveAmount);
@@ -1001,7 +1001,7 @@ describe('BancorArbitrage', () => {
             await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(20));
             await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(20));
 
-            for(const token of [arbToken2, eth]) {
+            for (const token of [arbToken2, eth]) {
                 const routes = [
                     {
                         exchangeId: ExchangeId.BancorV2,
@@ -1044,7 +1044,8 @@ describe('BancorArbitrage', () => {
                     // check against the `TokensTraded` event in BancorNetwork
                     // the event is emitted on a successful trade
                     const tx = await bancorArbitrage.connect(user).execute(routes, AMOUNT);
-                    const eventSig = 'TokensTraded(bytes32,address,address,uint256,uint256,uint256,uint256,uint256,address)';
+                    const eventSig =
+                        'TokensTraded(bytes32,address,address,uint256,uint256,uint256,uint256,uint256,address)';
                     const tokensTradedEvents = await getEvent(tx, eventSig);
 
                     const log = await parseLog('BancorNetwork', tokensTradedEvents[0]);

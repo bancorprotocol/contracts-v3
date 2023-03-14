@@ -1,4 +1,4 @@
-import { DeployedContracts, upgradeProxy, InstanceName, isMainnet, setDeploymentMetadata } from '../../utils/Deploy';
+import { DeployedContracts, InstanceName, isMainnet, setDeploymentMetadata, upgradeProxy } from '../../utils/Deploy';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 

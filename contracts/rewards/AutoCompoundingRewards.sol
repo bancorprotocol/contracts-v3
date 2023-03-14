@@ -545,11 +545,7 @@ contract AutoCompoundingRewards is IAutoCompoundingRewards, ReentrancyGuardUpgra
     /**
      * @dev verifies that the rewards vault holds a sufficient amount of pool tokens
      */
-    function _verifyFunds(
-        uint256 requiredAmount,
-        IPoolToken poolToken,
-        IVault rewardsVault
-    ) private view {
+    function _verifyFunds(uint256 requiredAmount, IPoolToken poolToken, IVault rewardsVault) private view {
         if (requiredAmount > poolToken.balanceOf(address(rewardsVault))) {
             revert InsufficientFunds();
         }

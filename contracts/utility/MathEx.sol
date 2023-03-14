@@ -166,11 +166,7 @@ library MathEx {
     /**
      * @dev returns the largest integer smaller than or equal to `x * y / z`
      */
-    function mulDivF(
-        uint256 x,
-        uint256 y,
-        uint256 z
-    ) internal pure returns (uint256) {
+    function mulDivF(uint256 x, uint256 y, uint256 z) internal pure returns (uint256) {
         Uint512 memory xy = mul512(x, y);
 
         // if `x * y < 2 ^ 256`
@@ -200,11 +196,7 @@ library MathEx {
     /**
      * @dev returns the smallest integer larger than or equal to `x * y / z`
      */
-    function mulDivC(
-        uint256 x,
-        uint256 y,
-        uint256 z
-    ) internal pure returns (uint256) {
+    function mulDivC(uint256 x, uint256 y, uint256 z) internal pure returns (uint256) {
         uint256 w = mulDivF(x, y, z);
         if (_mulMod(x, y, z) > 0) {
             if (w >= type(uint256).max) {
@@ -330,11 +322,7 @@ library MathEx {
     /**
      * @dev returns `x * y % z`
      */
-    function _mulMod(
-        uint256 x,
-        uint256 y,
-        uint256 z
-    ) private pure returns (uint256) {
+    function _mulMod(uint256 x, uint256 y, uint256 z) private pure returns (uint256) {
         return mulmod(x, y, z);
     }
 }

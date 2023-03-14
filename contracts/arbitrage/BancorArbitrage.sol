@@ -479,13 +479,13 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
      * @dev set exchange allowance to the max amount if it's less than the input amount
      */
     function _setExchangeAllowance(Token token, address exchange, uint inputAmount) private {
-        if(token.isNative()) {
+        if (token.isNative()) {
             return;
         }
         uint allowance = token.toIERC20().allowance(address(this), exchange);
-        if(allowance < inputAmount) {
+        if (allowance < inputAmount) {
             // increase allowance to the max amount if allowance < inputAmount
             token.safeIncreaseAllowance(exchange, type(uint256).max - allowance);
         }
-     }
+    }
 }

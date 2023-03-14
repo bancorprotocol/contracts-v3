@@ -146,12 +146,12 @@ library PoolCollectionWithdrawal {
      * @dev returns `b*e*((e*(1-n)-b-c)*m+e*n) > (e*(1-n)-b-c)*x*(e-b-c)*(1-m)`
      */
     function affordableDeficit(
-        uint256, /*b*/ // <= 2**128-1
-        uint256, /*e*/ // <= 2**128-1
-        uint256, /*f*/ // == e*(1-n)-b-c <= e <= 2**128-1
-        uint256, /*g*/ // == e-b-c <= e <= 2**128-1
-        uint256, /*m*/ // <= M == 1000000
-        uint256, /*n*/ // <= M == 1000000
+        uint256 /*b*/, // <= 2**128-1
+        uint256 /*e*/, // <= 2**128-1
+        uint256 /*f*/, // == e*(1-n)-b-c <= e <= 2**128-1
+        uint256 /*g*/, // == e-b-c <= e <= 2**128-1
+        uint256 /*m*/, // <= M == 1000000
+        uint256 /*n*/, // <= M == 1000000
         uint256 /*x*/ /// <  e*c/(b+c) <= e <= 2**128-1
     ) private pure returns (bool) {
         // temporarily disabled
@@ -301,26 +301,14 @@ library PoolCollectionWithdrawal {
     /**
      * @dev returns `a*b+x*y/z`
      */
-    function mulAddMulDivF(
-        uint256 a,
-        uint256 b,
-        uint256 x,
-        uint256 y,
-        uint256 z
-    ) private pure returns (uint256) {
+    function mulAddMulDivF(uint256 a, uint256 b, uint256 x, uint256 y, uint256 z) private pure returns (uint256) {
         return a * b + MathEx.mulDivF(x, y, z);
     }
 
     /**
      * @dev returns `a*b-x*y/z`
      */
-    function mulSubMulDivF(
-        uint256 a,
-        uint256 b,
-        uint256 x,
-        uint256 y,
-        uint256 z
-    ) private pure returns (uint256) {
+    function mulSubMulDivF(uint256 a, uint256 b, uint256 x, uint256 y, uint256 z) private pure returns (uint256) {
         return a * b - MathEx.mulDivF(x, y, z);
     }
 }

@@ -334,10 +334,10 @@ const createSystemFixture = async () => {
     const bntPoolToken = await createPoolToken(poolTokenFactory, bnt);
 
     const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [bnt.address] });
-    
+
     // Pre-calculated arb contract address
     // Used to avoid cyclical immutable dependencies
-    // (The network contract requires arb contract's address and 
+    // (The network contract requires arb contract's address and
     // the arb contract requires the network's address at construction time)
     const arbContractAddress = '0x82e01223d51Eb87e16A03E24687EDF0F294da6f1';
 
