@@ -7,11 +7,7 @@ import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/draf
 contract TestERC20Token is ERC20Permit {
     uint8 private _decimals = 18;
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint256 totalSupply
-    ) ERC20(name, symbol) ERC20Permit(name) {
+    constructor(string memory name, string memory symbol, uint256 totalSupply) ERC20(name, symbol) ERC20Permit(name) {
         _mint(msg.sender, totalSupply);
     }
 

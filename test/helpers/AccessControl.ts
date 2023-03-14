@@ -11,7 +11,7 @@ export * from '../../utils/Roles';
 
 export const expectRole = async (
     contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
-    roleId: typeof RoleIds[number],
+    roleId: (typeof RoleIds)[number],
     adminRole: string,
     members: string[] = []
 ) => {
@@ -22,7 +22,7 @@ export const expectRole = async (
 
 export const expectRoleMembers = async (
     contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
-    roleId: typeof RoleIds[number],
+    roleId: (typeof RoleIds)[number],
     members: string[] = []
 ) => {
     const actualMembers = [];
@@ -38,7 +38,7 @@ export const expectRoleMembers = async (
 
 export const expectRoles = async (
     contract: AccessControlEnumerableUpgradeable | AccessControlEnumerable,
-    roles: Record<string, typeof RoleIds[number]>
+    roles: Record<string, (typeof RoleIds)[number]>
 ) => {
     const expectedRoles = Object.keys(roles).map((name) => ({
         methodName: camelCase(name).replace(capitalize(lowerCase(TokenSymbol.BNT)), TokenSymbol.BNT),

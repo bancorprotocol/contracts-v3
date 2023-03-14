@@ -15,7 +15,7 @@ import { TokenLibrary } from "../token/TokenLibrary.sol";
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Utils } from "../utility/Utils.sol";
-import { IFlashLoanRecipient } from "../network/interfaces/IBancorNetwork.sol";
+import { IBancorNetwork, IFlashLoanRecipient } from "../network/interfaces/IBancorNetwork.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { MathEx } from "../utility/MathEx.sol";
 
@@ -31,20 +31,6 @@ interface IBancorNetworkV2 {
     ) external payable returns (uint256);
 
     function conversionPath(Token _sourceToken, Token _targetToken) external view returns (address[] memory);
-}
-
-// interface to support Bancor V3 trades
-interface IBancorNetwork {
-    function tradeBySourceAmountArb(
-        Token sourceToken,
-        Token targetToken,
-        uint256 sourceAmount,
-        uint256 minReturnAmount,
-        uint256 deadline,
-        address beneficiary
-    ) external payable returns (uint256);
-
-    function flashLoan(Token token, uint256 amount, IFlashLoanRecipient recipient, bytes calldata data) external;
 }
 
 /**
@@ -197,7 +183,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(Upgradeable) returns (uint16) {
-        return 1;
+        return 2;
     }
 
     /**
@@ -340,7 +326,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
     ) private {
         if (exchangeId == EXCHANGE_ID_BANCOR_V2) {
             // allow the network to withdraw the source tokens
-            sourceToken.safeApprove(address(_bancorNetworkV2), sourceAmount);
+            _setExchangeAllowance(sourceToken, address(_bancorNetworkV2), sourceAmount);
 
             // build the conversion path
             address[] memory path = new address[](3);
@@ -365,10 +351,12 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
 
         if (exchangeId == EXCHANGE_ID_BANCOR_V3) {
             // allow the network to withdraw the source tokens
-            sourceToken.safeApprove(address(_bancorNetworkV3), sourceAmount);
+            _setExchangeAllowance(sourceToken, address(_bancorNetworkV3), sourceAmount);
+
+            uint256 val = sourceToken.isNative() ? sourceAmount : 0;
 
             // perform the trade
-            _bancorNetworkV3.tradeBySourceAmountArb(
+            _bancorNetworkV3.tradeBySourceAmountArb{ value: val }(
                 sourceToken,
                 targetToken,
                 sourceAmount,
@@ -384,7 +372,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
             IUniswapV2Router02 router = exchangeId == EXCHANGE_ID_UNISWAP_V2 ? _uniswapV2Router : _sushiSwapRouter;
 
             // allow the router to withdraw the source tokens
-            sourceToken.safeApprove(address(router), sourceAmount);
+            _setExchangeAllowance(sourceToken, address(router), sourceAmount);
 
             // build the path
             address[] memory path = new address[](2);
@@ -416,7 +404,7 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
             }
 
             // allow the router to withdraw the source tokens
-            Token(tokenIn).safeApprove(address(_uniswapV3Router), sourceAmount);
+            _setExchangeAllowance(Token(tokenIn), address(_uniswapV3Router), sourceAmount);
 
             // build the params
             ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
@@ -485,5 +473,19 @@ contract BancorArbitrage is ReentrancyGuardUpgradeable, Utils, Upgradeable {
         }
 
         emit ArbitrageExecuted(caller, exchangeIds, path, sourceAmount, burnAmount, rewardAmount);
+    }
+
+    /**
+     * @dev set exchange allowance to the max amount if it's less than the input amount
+     */
+    function _setExchangeAllowance(Token token, address exchange, uint inputAmount) private {
+        if (token.isNative()) {
+            return;
+        }
+        uint allowance = token.toIERC20().allowance(address(this), exchange);
+        if (allowance < inputAmount) {
+            // increase allowance to the max amount if allowance < inputAmount
+            token.safeIncreaseAllowance(exchange, type(uint256).max - allowance);
+        }
     }
 }

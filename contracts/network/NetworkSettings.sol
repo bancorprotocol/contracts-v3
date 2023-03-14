@@ -344,11 +344,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *
      * - the caller must be the admin of the contract
      */
-    function setDefaultFlashLoanFeePPM(uint32 newDefaultFlashLoanFeePPM)
-        external
-        onlyAdmin
-        validFee(newDefaultFlashLoanFeePPM)
-    {
+    function setDefaultFlashLoanFeePPM(
+        uint32 newDefaultFlashLoanFeePPM
+    ) external onlyAdmin validFee(newDefaultFlashLoanFeePPM) {
         _setDefaultFlashLoanFeePPM(newDefaultFlashLoanFeePPM);
     }
 
@@ -398,12 +396,9 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      *s
      * - the caller must be the admin of the contract
      */
-    function setVortexRewards(VortexRewards calldata rewards)
-        external
-        onlyAdmin
-        validFee(rewards.burnRewardPPM)
-        greaterThanZero(rewards.burnRewardMaxAmount)
-    {
+    function setVortexRewards(
+        VortexRewards calldata rewards
+    ) external onlyAdmin validFee(rewards.burnRewardPPM) greaterThanZero(rewards.burnRewardMaxAmount) {
         uint32 prevVortexBurnRewardPPM = _vortexRewards.burnRewardPPM;
         uint256 prevVortexBurnRewardMaxAmount = _vortexRewards.burnRewardMaxAmount;
 

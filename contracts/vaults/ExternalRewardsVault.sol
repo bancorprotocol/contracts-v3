@@ -22,9 +22,10 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
-    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
-        Vault(initBNTGovernance, initVBNTGovernance)
-    {}
+    constructor(
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance
+    ) Vault(initBNTGovernance, initVBNTGovernance) {}
 
     /**
      * @dev fully initializes the contract and its parents
@@ -77,8 +78,8 @@ contract ExternalRewardsVault is IExternalRewardsVault, Vault {
      */
     function isAuthorizedWithdrawal(
         address caller,
-        Token, /* Token */
-        address, /* target */
+        Token /* Token */,
+        address /* target */,
         uint256 /* amount */
     ) internal view override returns (bool) {
         return hasRole(ROLE_ASSET_MANAGER, caller);

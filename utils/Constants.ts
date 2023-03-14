@@ -20,6 +20,7 @@ export const ZERO_BYTES32 = '0x0000000000000000000000000000000000000000000000000
 export const ZERO_ADDRESS = AddressZero;
 export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
+export const ARB_CONTRACT_ADDRESS = '0x82e01223d51Eb87e16A03E24687EDF0F294da6f1';
 
 export enum TradingStatusUpdateReason {
     Default = 0,

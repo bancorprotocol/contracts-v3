@@ -13,11 +13,7 @@ library SafeERC20Ex {
     /**
      * @dev ensures that the spender has sufficient allowance
      */
-    function ensureApprove(
-        IERC20 token,
-        address spender,
-        uint256 amount
-    ) internal {
+    function ensureApprove(IERC20 token, address spender, uint256 amount) internal {
         if (amount == 0) {
             return;
         }

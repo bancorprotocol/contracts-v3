@@ -27,36 +27,19 @@ contract TestTokenLibrary {
         return token.balanceOf(account);
     }
 
-    function safeTransfer(
-        Token token,
-        address to,
-        uint256 amount
-    ) external {
+    function safeTransfer(Token token, address to, uint256 amount) external {
         token.safeTransfer(to, amount);
     }
 
-    function safeTransferFrom(
-        Token token,
-        address from,
-        address to,
-        uint256 amount
-    ) external {
+    function safeTransferFrom(Token token, address from, address to, uint256 amount) external {
         token.safeTransferFrom(from, to, amount);
     }
 
-    function safeApprove(
-        Token token,
-        address spender,
-        uint256 amount
-    ) external {
+    function safeApprove(Token token, address spender, uint256 amount) external {
         token.safeApprove(spender, amount);
     }
 
-    function ensureApprove(
-        Token token,
-        address spender,
-        uint256 amount
-    ) external {
+    function ensureApprove(Token token, address spender, uint256 amount) external {
         token.ensureApprove(spender, amount);
     }
 

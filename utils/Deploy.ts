@@ -39,7 +39,7 @@ import {
     TokenHolder,
     VBNT
 } from '../components/LegacyContracts';
-import { PoolCollectionType1V9 } from '../components/LegacyContractsV3';
+import { PoolCollectionType1V10 } from '../components/LegacyContractsV3';
 import Logger from '../utils/Logger';
 import { DeploymentNetwork, ZERO_BYTES } from './Constants';
 import { RoleIds } from './Roles';
@@ -101,7 +101,7 @@ enum LegacyInstanceNameV2 {
 }
 
 enum LegacyInstanceNameV3 {
-    PoolCollectionType1V9 = 'PoolCollectionType1V9'
+    PoolCollectionType1V10 = 'PoolCollectionType1V10'
 }
 
 enum NewInstanceName {
@@ -121,7 +121,7 @@ enum NewInstanceName {
     MasterVault = 'MasterVault',
     NetworkSettings = 'NetworkSettings',
     PendingWithdrawals = 'PendingWithdrawals',
-    PoolCollectionType1V10 = 'PoolCollectionType1V10',
+    PoolCollectionType1V11 = 'PoolCollectionType1V11',
     PoolMigrator = 'PoolMigrator',
     PoolTokenFactory = 'PoolTokenFactory',
     ProxyAdmin = 'ProxyAdmin',
@@ -170,7 +170,7 @@ const DeployedLegacyContractsV2 = {
 };
 
 const DeployedLegacyContracts = {
-    PoolCollectionType1V9: deployed<PoolCollectionType1V9>(InstanceName.PoolCollectionType1V9)
+    PoolCollectionType1V10: deployed<PoolCollectionType1V10>(InstanceName.PoolCollectionType1V10)
 };
 
 const DeployedNewContracts = {
@@ -192,7 +192,7 @@ const DeployedNewContracts = {
     MasterVault: deployed<MasterVault>(InstanceName.MasterVault),
     NetworkSettings: deployed<NetworkSettings>(InstanceName.NetworkSettings),
     PendingWithdrawals: deployed<PendingWithdrawals>(InstanceName.PendingWithdrawals),
-    PoolCollectionType1V10: deployed<PoolCollection>(InstanceName.PoolCollectionType1V10),
+    PoolCollectionType1V11: deployed<PoolCollection>(InstanceName.PoolCollectionType1V11),
     PoolMigrator: deployed<PoolMigrator>(InstanceName.PoolMigrator),
     PoolTokenFactory: deployed<PoolTokenFactory>(InstanceName.PoolTokenFactory),
     ProxyAdmin: deployed<ProxyAdmin>(InstanceName.ProxyAdmin),
@@ -574,14 +574,14 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
 
 interface RolesOptions {
     name: InstanceName;
-    id: typeof RoleIds[number];
+    id: (typeof RoleIds)[number];
     member: string;
     from: string;
 }
 
 interface RenounceRoleOptions {
     name: InstanceName;
-    id: typeof RoleIds[number];
+    id: (typeof RoleIds)[number];
     from: string;
 }
 

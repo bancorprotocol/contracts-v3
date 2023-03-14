@@ -1,12 +1,12 @@
-import { PoolCollectionType1V9__factory } from '../deployments/mainnet/types';
+import { PoolCollectionType1V10__factory } from '../deployments/mainnet/types';
 import { ArtifactData } from './ContractBuilder';
 
 /* eslint-disable camelcase */
 
 const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
-    PoolCollectionType1V9: {
-        abi: PoolCollectionType1V9__factory.abi,
-        bytecode: PoolCollectionType1V9__factory.bytecode
+    PoolCollectionType1V10: {
+        abi: PoolCollectionType1V10__factory.abi,
+        bytecode: PoolCollectionType1V10__factory.bytecode
     }
 };
 
