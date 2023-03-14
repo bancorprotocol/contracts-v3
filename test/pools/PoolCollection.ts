@@ -54,7 +54,7 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String, solidityKeccak256 } = utils;
 
-describe.only('PoolCollection', () => {
+describe('PoolCollection', () => {
     const BNT_VIRTUAL_BALANCE = 1;
     const BASE_TOKEN_VIRTUAL_BALANCE = 2;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
