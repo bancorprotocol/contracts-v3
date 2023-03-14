@@ -177,7 +177,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     uint32 private _networkFeePPM;
 
     // true if protection is enabled, false otherwise
-    bool private _protectionEnabled = true;
+    bool private _protectionEnabled = false;
 
     /**
      * @dev triggered when the default trading fee is updated
