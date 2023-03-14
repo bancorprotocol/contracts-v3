@@ -982,8 +982,9 @@ describe('BancorArbitrage', () => {
                 // expect to approve MAX_UINT256 for the exchange
                 const approveAmount = MAX_UINT256;
                 const approveExchange = exchangeId === ExchangeId.BancorV3 ? network.address : exchanges.address;
-                const allowance = await arbToken1.allowance(bancorArbitrage.address, approveExchange);
-                if (allowance === 0) {
+                const contract = await Contracts.TestERC20Token.attach(arbToken1.address);
+                const allowance = await contract.allowance(bancorArbitrage.address, approveExchange);
+                if (allowance.eq(0)) {
                     await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                         .to.emit(arbToken1, 'Approval')
                         .withArgs(bancorArbitrage.address, approveExchange, approveAmount);
