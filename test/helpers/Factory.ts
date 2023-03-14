@@ -396,6 +396,8 @@ const createSystemFixture = async () => {
         poolMigrator
     );
 
+    await poolCollection.enableProtection(true);
+
     return {
         networkSettings,
         networkInfo,

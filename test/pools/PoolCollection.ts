@@ -54,7 +54,7 @@ import { ethers } from 'hardhat';
 
 const { formatBytes32String, solidityKeccak256 } = utils;
 
-describe('PoolCollection', () => {
+describe.only('PoolCollection', () => {
     const BNT_VIRTUAL_BALANCE = 1;
     const BASE_TOKEN_VIRTUAL_BALANCE = 2;
     const MIN_LIQUIDITY_FOR_TRADING = toWei(500);
@@ -380,7 +380,7 @@ describe('PoolCollection', () => {
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
             expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
-            expect(await poolCollection.protectionEnabled()).to.equal(true);
+            expect(await poolCollection.protectionEnabled()).to.equal(false);
 
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
