@@ -339,7 +339,7 @@ const createSystemFixture = async () => {
     // Used to avoid cyclical immutable dependencies
     // (The network contract requires arb contract's address and
     // the arb contract requires the network's address at construction time)
-    const arbContractAddress = '0x82e01223d51Eb87e16A03E24687EDF0F294da6f1';
+    const arbContractAddress = '0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3';
 
     const network = await createNetwork(
         bntGovernance,
