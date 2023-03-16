@@ -34,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const POOL_COLLECTION_CURRENT_VERSION = 10;
+const POOL_COLLECTION_CURRENT_VERSION = 11;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -290,7 +290,8 @@ const createNetwork = async (
     networkSettings: NetworkSettings,
     masterVault: MasterVault,
     externalProtectionVault: ExternalProtectionVault,
-    bntPoolToken: PoolToken
+    bntPoolToken: PoolToken,
+    arbContractAddress: string
 ) => {
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
@@ -300,7 +301,8 @@ const createNetwork = async (
             networkSettings.address,
             masterVault.address,
             externalProtectionVault.address,
-            bntPoolToken.address
+            bntPoolToken.address,
+            arbContractAddress
         ]
     });
 
@@ -333,13 +335,20 @@ const createSystemFixture = async () => {
 
     const networkSettings = await createProxy(Contracts.NetworkSettings, { ctorArgs: [bnt.address] });
 
+    // Pre-calculated arb contract address
+    // Used to avoid cyclical immutable dependencies
+    // (The network contract requires arb contract's address and
+    // the arb contract requires the network's address at construction time)
+    const arbContractAddress = '0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3';
+
     const network = await createNetwork(
         bntGovernance,
         vbntGovernance,
         networkSettings,
         masterVault,
         externalProtectionVault,
-        bntPoolToken
+        bntPoolToken,
+        arbContractAddress
     );
 
     const bntPool = await createBNTPool(
@@ -386,6 +395,8 @@ const createSystemFixture = async () => {
         poolTokenFactory,
         poolMigrator
     );
+
+    await poolCollection.enableProtection(true);
 
     return {
         networkSettings,

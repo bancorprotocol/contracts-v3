@@ -16,9 +16,10 @@ contract TestVault is Vault {
 
     uint256[MAX_GAP - 1] private __gap;
 
-    constructor(ITokenGovernance initBNTGovernance, ITokenGovernance initVBNTGovernance)
-        Vault(initBNTGovernance, initVBNTGovernance)
-    {}
+    constructor(
+        ITokenGovernance initBNTGovernance,
+        ITokenGovernance initVBNTGovernance
+    ) Vault(initBNTGovernance, initVBNTGovernance) {}
 
     function initialize() external initializer {
         __TestVault_init();
@@ -53,9 +54,9 @@ contract TestVault is Vault {
     }
 
     function isAuthorizedWithdrawal(
-        address, /* caller */
-        Token, /* reserverToken */
-        address, /* target */
+        address /* caller */,
+        Token /* reserverToken */,
+        address /* target */,
         uint256 /* amount */
     ) internal view override returns (bool) {
         return _isAuthorizedWithdrawal;

@@ -21,7 +21,7 @@ import {
     TokenWithAddress
 } from '../helpers/Factory';
 import { shouldHaveGap } from '../helpers/Proxy';
-import { transfer } from '../helpers/Utils';
+import { getEvent, parseLog, transfer } from '../helpers/Utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
@@ -54,6 +54,7 @@ describe('BancorArbitrage', () => {
     const DEADLINE = MAX_UINT256;
     const AMOUNT = toWei(1000);
     const PPM_RESOLUTION = 1_000_000;
+    const MIN_LIQUIDITY_FOR_TRADING = toWei(1000);
 
     const ArbitrageRewardsDefaults = {
         percentagePPM: 30000,
@@ -78,7 +79,7 @@ describe('BancorArbitrage', () => {
         await deployer.sendTransaction({ value: toWei(1_000_000_000), to: weth.address });
 
         baseToken = await createTestToken();
-        exchanges = await Contracts.MockExchanges.deploy(weth.address);
+        exchanges = await Contracts.MockExchanges.deploy(weth.address, toWei(300), true);
         bancorV2 = exchanges;
         bancorV3 = exchanges;
         uniswapV2Router = exchanges;
@@ -96,7 +97,7 @@ describe('BancorArbitrage', () => {
             ]
         });
 
-        await networkSettings.setFlashLoanFeePPM(bnt.address, 0);
+        await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         await transfer(deployer, baseToken, exchanges.address, MAX_SOURCE_AMOUNT);
     });
 
@@ -180,7 +181,7 @@ describe('BancorArbitrage', () => {
         });
 
         it('should be initialized', async () => {
-            expect(await bancorArbitrage.version()).to.equal(1);
+            expect(await bancorArbitrage.version()).to.equal(2);
         });
 
         it('should revert when attempting to reinitialize', async () => {
@@ -218,14 +219,9 @@ describe('BancorArbitrage', () => {
         });
 
         describe('distribution and burn', () => {
-            // get all exchange ids (omit their names)
-            const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
             const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
             let arbToken1: TokenWithAddress;
             let arbToken2: TokenWithAddress;
-
-            // remove BancorV3 exchange until the reentrancy guard issue is resolved
-            exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
             beforeEach(async () => {
                 await transfer(deployer, bnt, masterVault.address, AMOUNT.mul(10_000));
@@ -269,12 +265,12 @@ describe('BancorArbitrage', () => {
                     }
                 ];
 
-                // each hop through the route from MockExchanges adds 1e18 tokens to the output
-                // so 3 hops = 3 * 1e18 = 3000 BNT tokens more than start
-                // so with 0 flashloan fees, when we repay the flashloan, we have 3 BNT tokens as totalRewards
+                // each hop through the route from MockExchanges adds 300e18 tokens to the output
+                // so 3 hops = 3 * 300e18 = 900 BNT tokens more than start
+                // so with 0 flashloan fees, when we repay the flashloan, we have 900 BNT tokens as totalRewards
 
                 const hopCount = 3;
-                const totalRewards = toWei(1).mul(hopCount);
+                const totalRewards = toWei(300).mul(hopCount);
 
                 await bancorArbitrage.setRewards(ArbitrageRewardsChanged);
 
@@ -344,12 +340,12 @@ describe('BancorArbitrage', () => {
                     }
                 ];
 
-                // each hop through the route from MockExchanges adds 1000 tokens to the output
-                // so 3 hops = 3 * 1000 = 3000 BNT tokens more than start
-                // so with 0 flashloan fees, when we repay the flashloan, we have 3000 BNT tokens as totalRewards
+                // each hop through the route from MockExchanges adds 300e18 tokens to the output
+                // so 3 hops = 3 * 300e18 = 900 BNT tokens more than start
+                // so with 0 flashloan fees, when we repay the flashloan, we have 900 BNT tokens as totalRewards
 
                 const hopCount = 3;
-                const totalRewards = toWei(1).mul(hopCount);
+                const totalRewards = toWei(300).mul(hopCount);
 
                 // set rewards max amount to 100
                 const RewardsUpdate = {
@@ -408,9 +404,6 @@ describe('BancorArbitrage', () => {
         let arbToken1: TokenWithAddress;
         let arbToken2: TokenWithAddress;
 
-        // remove BancorV3 exchange until the reentrancy guard issue is resolved
-        exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
-
         beforeEach(async () => {
             await transfer(deployer, bnt, masterVault.address, AMOUNT.mul(10_000));
             await bancorArbitrage.setRewards(ArbitrageRewardsDefaults);
@@ -468,7 +461,7 @@ describe('BancorArbitrage', () => {
                 .withArgs(bnt.address, bancorArbitrage.address, AMOUNT, 0);
         });
 
-        it('should correctly obtain a flashloan and repay with fees if fees are > 0', async () => {
+        it('should be exempt from flashloan fees', async () => {
             // transfer tokens to exchange
             await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
             await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
@@ -508,7 +501,8 @@ describe('BancorArbitrage', () => {
             for (const flashLoanFee of [0.01, 0.02, 0.03, 0.04, 0.05]) {
                 await networkSettings.setFlashLoanFeePPM(bnt.address, toPPM(flashLoanFee));
 
-                const expectedFeeAmount = AMOUNT.mul(toPPM(flashLoanFee)).div(PPM_RESOLUTION);
+                // fee amount is 0 because the arb contract is exempt from flashloan fees
+                const expectedFeeAmount = 0;
 
                 await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
                     .to.emit(network, 'FlashLoanCompleted')
@@ -521,11 +515,14 @@ describe('BancorArbitrage', () => {
             // these exchanges swap the input amount for exactly the output amount
             // leading to 0 BNT gain, but successful repayment of flashloan b/c fee is 0
             // check the logic for 0 BNT gain
-            const sameOutputExchanges = await Contracts.MockExchangesSameOutput.deploy(weth.address);
+            const sameOutputExchanges = await Contracts.MockExchanges.deploy(weth.address, 0, true);
             const bancorV2SameOutput = sameOutputExchanges;
             const uniswapV2RouterSameOutput = sameOutputExchanges;
             const uniswapV3RouterSameOutput = sameOutputExchanges;
             const sushiswapV2RouterSameOutput = sameOutputExchanges;
+
+            // exclude v3 due to new arb contract deployment
+            exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
             const newBancorArbitrage = await createProxy(Contracts.BancorArbitrage, {
                 ctorArgs: [
@@ -628,11 +625,33 @@ describe('BancorArbitrage', () => {
             );
         });
 
-        it('should revert if flashloan + fee cannot be repaid', async () => {
-            // transfer tokens to exchange
-            await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(10));
-            await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(10));
-            await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(10));
+        it('should revert if flashloan cannot be repaid', async () => {
+            baseToken = await createTestToken();
+            // these exchanges swap the input amount for an output amount which is less
+            // leading to negative BNT gain, and unsuccessful repayment of flashloan
+            const negativeOutputExchanges = await Contracts.MockExchanges.deploy(weth.address, toWei(1), false);
+            const bancorV2NegativeOutput = negativeOutputExchanges;
+            const uniswapV2RouterNegativeOutput = negativeOutputExchanges;
+            const uniswapV3RouterNegativeOutput = negativeOutputExchanges;
+            const sushiswapV2RouterNegativeOutput = negativeOutputExchanges;
+
+            // exclude v3 due to new arb contract deployment
+            exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
+
+            const newBancorArbitrage = await createProxy(Contracts.BancorArbitrage, {
+                ctorArgs: [
+                    bnt.address,
+                    bancorV2NegativeOutput.address,
+                    network.address,
+                    uniswapV2RouterNegativeOutput.address,
+                    uniswapV3RouterNegativeOutput.address,
+                    sushiswapV2RouterNegativeOutput.address
+                ]
+            });
+
+            await transfer(deployer, bnt, negativeOutputExchanges.address, AMOUNT.mul(10));
+            await transfer(deployer, arbToken1, negativeOutputExchanges.address, AMOUNT.mul(10));
+            await transfer(deployer, arbToken2, negativeOutputExchanges.address, AMOUNT.mul(10));
 
             const routes = [
                 {
@@ -661,10 +680,7 @@ describe('BancorArbitrage', () => {
                 }
             ];
 
-            // set fee to 1%, which is more than we receive from the trade arbitrage
-            await networkSettings.setFlashLoanFeePPM(bnt.address, toPPM(1));
-
-            await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
+            await expect(newBancorArbitrage.connect(user).execute(routes, AMOUNT)).to.be.revertedWith(
                 'SafeERC20: low-level call failed'
             );
         });
@@ -677,9 +693,6 @@ describe('BancorArbitrage', () => {
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
         let arbToken1: TokenWithAddress;
         let arbToken2: TokenWithAddress;
-
-        // remove BancorV3 exchange until the reentrancy guard issue is resolved
-        exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
         beforeEach(async () => {
             await transfer(deployer, bnt, masterVault.address, AMOUNT.mul(10_000));
@@ -924,7 +937,7 @@ describe('BancorArbitrage', () => {
             );
         });
 
-        it('approves ERC-20 tokens for each exchange when trading', async () => {
+        it('approves ERC-20 tokens for each exchange if allowance is less than the trade amount', async () => {
             for (const exchangeId of exchangeIds) {
                 let customInt;
                 if (exchangeId === ExchangeId.UniswapV3) {
@@ -965,12 +978,81 @@ describe('BancorArbitrage', () => {
                         customInt: 0
                     }
                 ];
-                const secondHopSourceAmount = AMOUNT.add(toWei(2));
 
-                // expect to approve exactly the amounts needed for the second trade for each exchange
-                await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
-                    .to.emit(arbToken2, 'Approval')
-                    .withArgs(bancorArbitrage.address, exchanges.address, secondHopSourceAmount);
+                // expect to approve MAX_UINT256 for the exchange
+                const approveAmount = MAX_UINT256;
+                const approveExchange = exchangeId === ExchangeId.BancorV3 ? network.address : exchanges.address;
+                const contract = await Contracts.TestERC20Token.attach(arbToken1.address);
+                const allowance = await contract.allowance(bancorArbitrage.address, approveExchange);
+                if (allowance.eq(0)) {
+                    await expect(bancorArbitrage.connect(user).execute(routes, AMOUNT))
+                        .to.emit(arbToken1, 'Approval')
+                        .withArgs(bancorArbitrage.address, approveExchange, approveAmount);
+                }
+            }
+        });
+
+        it('should be exempt from trading fees on Bancor V3', async () => {
+            const { token: arbToken1 } = await prepareBancorV3PoolAndToken(tokenSymbols[0]);
+            const { token: arbToken2 } = await prepareBancorV3PoolAndToken(tokenSymbols[1]);
+            const { token: eth } = await prepareBancorV3PoolAndToken(tokenSymbols[2]);
+
+            // transfer tokens to mock exchanges
+            await transfer(deployer, bnt, exchanges.address, AMOUNT.mul(20));
+            await transfer(deployer, arbToken1, exchanges.address, AMOUNT.mul(20));
+            await transfer(deployer, arbToken2, exchanges.address, AMOUNT.mul(20));
+
+            for (const token of [arbToken2, eth]) {
+                const routes = [
+                    {
+                        exchangeId: ExchangeId.BancorV2,
+                        targetToken: arbToken1.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: arbToken1.address,
+                        customInt: 0
+                    },
+                    {
+                        exchangeId: ExchangeId.BancorV3,
+                        targetToken: token.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: token.address,
+                        customInt: 0
+                    },
+                    {
+                        exchangeId: ExchangeId.BancorV2,
+                        targetToken: bnt.address,
+                        minTargetAmount: 1,
+                        deadline: DEADLINE,
+                        customAddress: bnt.address,
+                        customInt: 0
+                    }
+                ];
+
+                // check that the fee amount is 0
+                // use different fees
+                for (const tradeFee of [0.03, 0.05, 1, 2, 3]) {
+                    // set trading fee
+                    await poolCollection.setTradingFeePPM(arbToken1.address, toPPM(tradeFee));
+                    await poolCollection.setTradingFeePPM(token.address, toPPM(tradeFee));
+                    // set network fee
+                    await poolCollection.setNetworkFeePPM(toPPM(tradeFee));
+
+                    // fee amount is 0 because the arb contract is exempt from trade fees
+                    const expectedFeeAmount = 0;
+
+                    // check against the `TokensTraded` event in BancorNetwork
+                    // the event is emitted on a successful trade
+                    const tx = await bancorArbitrage.connect(user).execute(routes, AMOUNT);
+                    const eventSig =
+                        'TokensTraded(bytes32,address,address,uint256,uint256,uint256,uint256,uint256,address)';
+                    const tokensTradedEvents = await getEvent(tx, eventSig);
+
+                    const log = await parseLog('BancorNetwork', tokensTradedEvents[0]);
+                    expect(log.args.targetFeeAmount).to.be.eq(expectedFeeAmount);
+                    expect(log.args.bntFeeAmount).to.be.eq(expectedFeeAmount);
+                }
             }
         });
     });
@@ -985,9 +1067,6 @@ describe('BancorArbitrage', () => {
         const exchangeIds = Object.values(ExchangeId).filter((key) => !isNaN(parseInt(key as string)));
         const uniV3Fees = [100, 500, 3000];
         const tokenSymbols = [TokenSymbol.TKN1, TokenSymbol.TKN2, TokenSymbol.ETH];
-
-        // remove BancorV3 exchange until the reentrancy guard issue is resolved
-        exchangeIds.splice(exchangeIds.indexOf(ExchangeId.BancorV3), 1);
 
         it('should emit ArbitrageExecuted event on successful arbitrage execution', async () => {
             const { token: arbToken1 } = await prepareBancorV3PoolAndToken(tokenSymbols[0]);

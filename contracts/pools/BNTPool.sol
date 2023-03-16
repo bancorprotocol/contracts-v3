@@ -234,7 +234,7 @@ contract BNTPool is IBNTPool, Vault {
     function isAuthorizedWithdrawal(
         address caller,
         Token token,
-        address, /* target */
+        address /* target */,
         uint256 /* amount */
     ) internal view override returns (bool) {
         return token.isEqual(_poolToken) && hasRole(ROLE_BNT_POOL_TOKEN_MANAGER, caller);
@@ -304,12 +304,10 @@ contract BNTPool is IBNTPool, Vault {
     /**
      * @inheritdoc IBNTPool
      */
-    function mint(address recipient, uint256 bntAmount)
-        external
-        onlyRoleMember(ROLE_BNT_MANAGER)
-        validAddress(recipient)
-        greaterThanZero(bntAmount)
-    {
+    function mint(
+        address recipient,
+        uint256 bntAmount
+    ) external onlyRoleMember(ROLE_BNT_MANAGER) validAddress(recipient) greaterThanZero(bntAmount) {
         _bntGovernance.mint(recipient, bntAmount);
     }
 
@@ -433,12 +431,9 @@ contract BNTPool is IBNTPool, Vault {
     /**
      * @inheritdoc IBNTPool
      */
-    function withdrawalAmount(uint256 poolTokenAmount)
-        external
-        view
-        greaterThanZero(poolTokenAmount)
-        returns (uint256)
-    {
+    function withdrawalAmount(
+        uint256 poolTokenAmount
+    ) external view greaterThanZero(poolTokenAmount) returns (uint256) {
         return _withdrawalAmounts(_poolTokenToUnderlying(poolTokenAmount)).bntAmount;
     }
 

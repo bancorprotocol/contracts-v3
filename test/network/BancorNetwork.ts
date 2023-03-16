@@ -19,9 +19,9 @@ import Contracts, {
     TestStandardRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import LegacyContractsV3, { PoolCollectionType1V9 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V10 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
-import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import { ARB_CONTRACT_ADDRESS, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { percentsToPPM, toPPM, toWei } from '../../utils/Types';
@@ -145,7 +145,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -158,7 +159,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -171,7 +173,8 @@ describe('BancorNetwork', () => {
                     ZERO_ADDRESS,
                     masterVault.address,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -184,7 +187,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -199,7 +203,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     ZERO_ADDRESS,
-                    bntPoolToken.address
+                    bntPoolToken.address,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -212,7 +217,8 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     externalProtectionVault.address,
-                    ZERO_ADDRESS
+                    ZERO_ADDRESS,
+                    ARB_CONTRACT_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -224,7 +230,8 @@ describe('BancorNetwork', () => {
                 networkSettings.address,
                 masterVault.address,
                 externalProtectionVault.address,
-                bntPoolToken.address
+                bntPoolToken.address,
+                ARB_CONTRACT_ADDRESS
             );
 
             await expect(
@@ -239,7 +246,8 @@ describe('BancorNetwork', () => {
                 networkSettings.address,
                 masterVault.address,
                 externalProtectionVault.address,
-                bntPoolToken.address
+                bntPoolToken.address,
+                ARB_CONTRACT_ADDRESS
             );
 
             await expect(
@@ -254,7 +262,8 @@ describe('BancorNetwork', () => {
                 networkSettings.address,
                 masterVault.address,
                 externalProtectionVault.address,
-                bntPoolToken.address
+                bntPoolToken.address,
+                ARB_CONTRACT_ADDRESS
             );
 
             await expect(
@@ -269,7 +278,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(7);
+            expect(await network.version()).to.equal(8);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -725,7 +734,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let prevPoolCollection: PoolCollectionType1V9;
+        let prevPoolCollection: PoolCollectionType1V10;
         let poolMigrator: TestPoolMigrator;
         let newPoolCollection: PoolCollection;
 
@@ -756,7 +765,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V9.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V10.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -1737,6 +1746,83 @@ describe('BancorNetwork', () => {
             );
         };
 
+        const tradeBySourceAmountArb = async (
+            amount: BigNumberish,
+            overrides: TradeOverrides = {},
+            simulate = false
+        ) => {
+            let {
+                value,
+                limit: minReturnAmount = MIN_RETURN_AMOUNT,
+                deadline = MAX_UINT256,
+                beneficiary = ZERO_ADDRESS,
+                sourceTokenAddress = sourceToken.address,
+                targetTokenAddress = targetToken.address
+            } = overrides;
+
+            value ||= sourceTokenAddress === NATIVE_TOKEN_ADDRESS ? amount : BigNumber.from(0);
+
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeBySourceAmountArb(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                minReturnAmount,
+                deadline,
+                beneficiary,
+                {
+                    value
+                }
+            );
+        };
+
+        const tradeByTargetAmountArb = async (
+            amount: BigNumberish,
+            overrides: TradeOverrides = {},
+            simulate = false
+        ) => {
+            let {
+                value,
+                limit: maxSourceAmount,
+                deadline = MAX_UINT256,
+                beneficiary = ZERO_ADDRESS,
+                sourceTokenAddress = sourceToken.address,
+                targetTokenAddress = targetToken.address
+            } = overrides;
+
+            // fetch the required source amount if it wasn't provided
+            maxSourceAmount ||= await networkInfo.tradeInputByTargetAmount(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount
+            );
+
+            // when providing the target amount, the send value (i.e., the amount to trade) is represented by the
+            // maximum source amount
+            if (!value) {
+                value = BigNumber.from(0);
+
+                if (sourceTokenAddress === NATIVE_TOKEN_ADDRESS) {
+                    value = BigNumber.from(maxSourceAmount);
+                }
+            }
+
+            const method = simulate ? network.connect(trader).callStatic : network.connect(trader);
+
+            return method.tradeByTargetAmountArb(
+                sourceTokenAddress,
+                targetTokenAddress,
+                amount,
+                maxSourceAmount,
+                deadline,
+                beneficiary,
+                {
+                    value
+                }
+            );
+        };
+
         const verifyTrade = async (
             trader: SignerWithAddress,
             beneficiaryAddress: string,
@@ -2187,6 +2273,20 @@ describe('BancorNetwork', () => {
 
                             it('should revert when attempting to trade', async () => {
                                 await expect(tradeFunc(testAmount)).to.be.revertedWithError('Pausable: paused');
+                            });
+                        });
+
+                        context('arb contract trades', () => {
+                            it('should revert when attempting to call tradeBySourceAmountArb from address other than arb contract', async () => {
+                                await expect(tradeBySourceAmountArb(testAmount)).to.be.revertedWithError(
+                                    'AccessDenied'
+                                );
+                            });
+
+                            it('should revert when attempting to call tradeByTargetAmountArb from address other than arb contract', async () => {
+                                await expect(tradeByTargetAmountArb(testAmount)).to.be.revertedWithError(
+                                    'AccessDenied'
+                                );
                             });
                         });
                     });

@@ -3,8 +3,9 @@ import { NATIVE_TOKEN_ADDRESS } from '../../utils/TokenData';
 import { Addressable } from '../../utils/Types';
 import { TokenWithAddress } from './Factory';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber, BigNumberish, ContractTransaction } from 'ethers';
-import { ethers } from 'hardhat';
+import { keccakFromString } from 'ethereumjs-util';
+import { BigNumber, BigNumberish, ContractTransaction, Event } from 'ethers';
+import { artifacts, ethers } from 'hardhat';
 
 export const toAddress = (account: string | Addressable) => (typeof account === 'string' ? account : account.address);
 
@@ -36,6 +37,24 @@ export const getBalances = async (tokens: TokenWithAddress[], account: string | 
     }
 
     return balances;
+};
+
+export const getEvent = async (tx: ContractTransaction, eventSig: string) => {
+    const events = (await tx.wait()).events;
+    const eventTopic = '0x' + keccakFromString(eventSig).toString('hex');
+
+    const filteredEvents = events?.filter((e) => e.topics[0] === eventTopic);
+    if (filteredEvents === undefined) {
+        return [];
+    } else {
+        return filteredEvents;
+    }
+};
+
+export const parseLog = async (contractName: string, event: Event) => {
+    const networkAbi = (await artifacts.readArtifact(contractName)).abi;
+    const networkInterface = new ethers.utils.Interface(networkAbi);
+    return networkInterface.parseLog(event);
 };
 
 export const transfer = async (

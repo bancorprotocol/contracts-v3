@@ -84,11 +84,10 @@ contract PoolMigrator is IPoolMigrator, Upgradeable, Utils {
     /**
      * @inheritdoc IPoolMigrator
      */
-    function migratePool(Token pool, IPoolCollection newPoolCollection)
-        external
-        validAddress(address(newPoolCollection))
-        only(address(_network))
-    {
+    function migratePool(
+        Token pool,
+        IPoolCollection newPoolCollection
+    ) external validAddress(address(newPoolCollection)) only(address(_network)) {
         if (address(pool) == address(0)) {
             revert InvalidPool();
         }

@@ -87,19 +87,11 @@ contract TestPoolCollection is PoolCollection, TestBlockNumber {
             );
     }
 
-    function mintPoolTokenT(
-        Token pool,
-        address recipient,
-        uint256 poolTokenAmount
-    ) external {
+    function mintPoolTokenT(Token pool, address recipient, uint256 poolTokenAmount) external {
         return _poolData[pool].poolToken.mint(recipient, poolTokenAmount);
     }
 
-    function requestFundingT(
-        bytes32 contextId,
-        Token pool,
-        uint256 bntAmount
-    ) external {
+    function requestFundingT(bytes32 contextId, Token pool, uint256 bntAmount) external {
         _bntPool.requestFunding(contextId, pool, bntAmount);
     }
 

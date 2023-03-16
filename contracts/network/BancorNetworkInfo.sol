@@ -364,13 +364,10 @@ contract BancorNetworkInfo is IBancorNetworkInfo, Upgradeable, Utils {
     /**
      * @inheritdoc IBancorNetworkInfo
      */
-    function withdrawalAmounts(Token pool, uint256 poolTokenAmount)
-        external
-        view
-        validAddress(address(pool))
-        greaterThanZero(poolTokenAmount)
-        returns (WithdrawalAmounts memory)
-    {
+    function withdrawalAmounts(
+        Token pool,
+        uint256 poolTokenAmount
+    ) external view validAddress(address(pool)) greaterThanZero(poolTokenAmount) returns (WithdrawalAmounts memory) {
         if (pool.isEqual(_bnt)) {
             uint256 amount = _bntPool.withdrawalAmount(poolTokenAmount);
             return WithdrawalAmounts({ totalAmount: amount, baseTokenAmount: 0, bntAmount: amount });

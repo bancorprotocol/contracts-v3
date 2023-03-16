@@ -375,12 +375,12 @@ describe('PoolCollection', () => {
                 poolTokenFactory.address,
                 poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(10);
+            expect(await poolCollection.version()).to.equal(11);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
             expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
-            expect(await poolCollection.protectionEnabled()).to.equal(true);
+            expect(await poolCollection.protectionEnabled()).to.equal(false);
 
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
@@ -3296,7 +3296,8 @@ describe('PoolCollection', () => {
                                         sourceToken.address,
                                         targetToken.address,
                                         1,
-                                        MIN_RETURN_AMOUNT
+                                        MIN_RETURN_AMOUNT,
+                                        false
                                     )
                             ).to.be.revertedWithError('AccessDenied');
 
@@ -3308,7 +3309,8 @@ describe('PoolCollection', () => {
                                         sourceToken.address,
                                         targetToken.address,
                                         1,
-                                        MAX_SOURCE_AMOUNT
+                                        MAX_SOURCE_AMOUNT,
+                                        false
                                     )
                             ).to.be.revertedWithError('AccessDenied');
                         });

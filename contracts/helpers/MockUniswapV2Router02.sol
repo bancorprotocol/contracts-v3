@@ -22,12 +22,12 @@ contract MockUniswapV2Router02 {
     }
 
     function removeLiquidity(
-        address, /*tokenA*/
-        address, /*tokenB*/
+        address /*tokenA*/,
+        address /*tokenB*/,
         uint256 liquidity,
-        uint256, /*amountAMin*/
-        uint256, /*amountBMin*/
-        address, /*to*/
+        uint256 /*amountAMin*/,
+        uint256 /*amountBMin*/,
+        address /*to*/,
         uint256 /*deadline*/
     ) external returns (uint256 amountA, uint256 amountB) {
         // mimic approval
@@ -41,11 +41,11 @@ contract MockUniswapV2Router02 {
     }
 
     function removeLiquidityETH(
-        address, /*token*/
+        address /*token*/,
         uint256 liquidity,
-        uint256, /*amountTokenMin*/
-        uint256, /*amountETHMin*/
-        address, /*to*/
+        uint256 /*amountTokenMin*/,
+        uint256 /*amountETHMin*/,
+        address /*to*/,
         uint256 /*deadline*/
     ) external returns (uint256 amountToken, uint256 amountETH) {
         // mimic approval

@@ -320,11 +320,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev deposits given amount into a pool of given token
      */
-    function _deposit(
-        Token token,
-        uint256 amount,
-        address provider
-    ) private {
+    function _deposit(Token token, uint256 amount, address provider) private {
         if (token.isNative()) {
             _network.depositFor{ value: amount }(provider, token, amount);
         } else {
@@ -337,11 +333,7 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev transfer given amount of given token to the caller
      */
-    function _transferToProvider(
-        Token token,
-        uint256 amount,
-        address provider
-    ) private {
+    function _transferToProvider(Token token, uint256 amount, address provider) private {
         if (token.isNative()) {
             payable(provider).sendValue(amount);
         } else {
@@ -381,11 +373,10 @@ contract BancorPortal is IBancorPortal, ReentrancyGuardUpgradeable, Utils, Upgra
     /**
      * @dev fetches a UniswapV2 pair
      */
-    function _getUniswapV2Pair(IUniswapV2Factory factory, Token[2] memory tokens)
-        private
-        view
-        returns (IUniswapV2Pair)
-    {
+    function _getUniswapV2Pair(
+        IUniswapV2Factory factory,
+        Token[2] memory tokens
+    ) private view returns (IUniswapV2Pair) {
         // Uniswap does not support ETH input, transform to WETH if necessary
         address token0Address = tokens[0].isNative() ? address(_weth) : address(tokens[0]);
         address token1Address = tokens[1].isNative() ? address(_weth) : address(tokens[1]);

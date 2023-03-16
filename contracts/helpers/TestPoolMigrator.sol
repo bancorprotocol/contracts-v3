@@ -12,11 +12,7 @@ import { Token } from "../token/Token.sol";
 contract TestPoolMigrator is PoolMigrator {
     constructor(IBancorNetwork initNetwork) PoolMigrator(initNetwork) {}
 
-    function migratePoolInT(
-        IPoolCollection poolCollection,
-        Token pool,
-        Pool memory data
-    ) external {
+    function migratePoolInT(IPoolCollection poolCollection, Token pool, Pool memory data) external {
         poolCollection.migratePoolIn(pool, data);
     }
 
