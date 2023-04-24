@@ -410,16 +410,18 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    const data = { name, contract: contractName };
+    if(!(isProxy && isLive())) {
+        const data = { name, contract: contractName };
 
-    await saveTypes(data);
+        await saveTypes(data);
 
-    await verifyTenderlyFork({
-        address: res.address,
-        proxy: isProxy,
-        implementation: isProxy ? res.implementation : undefined,
-        ...data
-    });
+        await verifyTenderlyFork({
+            address: res.address,
+            proxy: isProxy,
+            implementation: isProxy ? res.implementation : undefined,
+            ...data
+        });
+    }
 
     return res.address;
 };
