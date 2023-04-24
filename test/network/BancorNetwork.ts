@@ -21,7 +21,13 @@ import Contracts, {
 import { TokenGovernance } from '../../components/LegacyContracts';
 import LegacyContractsV3, { PoolCollectionType1V10 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
-import { ARB_CONTRACT_ADDRESS, MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
+import {
+    ARB_CONTRACT_TEST_ADDRESS,
+    MAX_UINT256,
+    PPM_RESOLUTION,
+    ZERO_ADDRESS,
+    ZERO_BYTES
+} from '../../utils/Constants';
 import Logger from '../../utils/Logger';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { percentsToPPM, toPPM, toWei } from '../../utils/Types';
@@ -146,7 +152,7 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_ADDRESS
+                    ARB_CONTRACT_TEST_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -160,7 +166,7 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_ADDRESS
+                    ARB_CONTRACT_TEST_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -174,7 +180,7 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_ADDRESS
+                    ARB_CONTRACT_TEST_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -188,7 +194,7 @@ describe('BancorNetwork', () => {
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_ADDRESS
+                    ARB_CONTRACT_TEST_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -204,7 +210,7 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     ZERO_ADDRESS,
                     bntPoolToken.address,
-                    ARB_CONTRACT_ADDRESS
+                    ARB_CONTRACT_TEST_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -218,7 +224,7 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     ZERO_ADDRESS,
-                    ARB_CONTRACT_ADDRESS
+                    ARB_CONTRACT_TEST_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
         });
@@ -231,7 +237,7 @@ describe('BancorNetwork', () => {
                 masterVault.address,
                 externalProtectionVault.address,
                 bntPoolToken.address,
-                ARB_CONTRACT_ADDRESS
+                ARB_CONTRACT_TEST_ADDRESS
             );
 
             await expect(
@@ -247,7 +253,7 @@ describe('BancorNetwork', () => {
                 masterVault.address,
                 externalProtectionVault.address,
                 bntPoolToken.address,
-                ARB_CONTRACT_ADDRESS
+                ARB_CONTRACT_TEST_ADDRESS
             );
 
             await expect(
@@ -263,7 +269,7 @@ describe('BancorNetwork', () => {
                 masterVault.address,
                 externalProtectionVault.address,
                 bntPoolToken.address,
-                ARB_CONTRACT_ADDRESS
+                ARB_CONTRACT_TEST_ADDRESS
             );
 
             await expect(

@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 import {
     AutoCompoundingRewards__factory,
-    BancorArbitrage__factory,
     BancorNetwork__factory,
     BancorNetworkInfo__factory,
     BancorPortal__factory,
@@ -59,7 +58,6 @@ const getContracts = (signer?: Signer) => ({
     connect: (signer: Signer) => getContracts(signer),
 
     AutoCompoundingRewards: deployOrAttach('AutoCompoundingRewards', AutoCompoundingRewards__factory, signer),
-    BancorArbitrage: deployOrAttach('BancorArbitrage', BancorArbitrage__factory, signer),
     BancorNetwork: deployOrAttach('BancorNetwork', BancorNetwork__factory, signer),
     BancorNetworkInfo: deployOrAttach('BancorNetworkInfo', BancorNetworkInfo__factory, signer),
     BancorPortal: deployOrAttach('BancorPortal', BancorPortal__factory, signer),
