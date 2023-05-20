@@ -38,7 +38,7 @@ const TokenNamedAccounts = {
         ...mainnet('0x0757e27AC1631beEB37eeD3270cc6301dD3D57D4')
     },
     weth: {
-        ...mainnet('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
+        ...mainnet('0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3')
     },
     usdc: {
         ...mainnet('0x51eDF02152EBfb338e03E30d65C15fBf06cc9ECC')
