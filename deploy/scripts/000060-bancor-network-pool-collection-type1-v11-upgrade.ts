@@ -1,3 +1,4 @@
+import { ARB_CONTRACT_MAINNET_ADDRESS } from '../../utils/Constants';
 import {
     deploy,
     DeployedContracts,
@@ -20,7 +21,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
     const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
     const bnBNT = await DeployedContracts.bnBNT.deployed();
-    const bancorArbitrage = await DeployedContracts.BancorArbitrage.deployed();
 
     const network = await DeployedContracts.BancorNetwork.deployed();
     const bnt = await DeployedContracts.BNT.deployed();
@@ -46,7 +46,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             masterVault.address,
             externalProtectionVault.address,
             bnBNT.address,
-            bancorArbitrage.address
+            ARB_CONTRACT_MAINNET_ADDRESS
         ],
         from: deployer
     });
