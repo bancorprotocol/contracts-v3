@@ -20,7 +20,7 @@ const TestNamedAccounts = {
         ...mainnet('0xc6bed363b30DF7F35b601a5547fE56cd31Ec63DA')
     },
     bntWhale: {
-        ...mainnet('0xA744a64Dfd51e4feE3360f1EC1509D329047d7db')
+        ...mainnet('0x221A0e3C9AcEa6B3f1CC9DfC7063509c89bE7BC3')
     },
     usdcWhale: {
         ...mainnet('0x55FE002aefF02F77364de339a1292923A15844B8')
@@ -32,19 +32,19 @@ const TestNamedAccounts = {
 
 const TokenNamedAccounts = {
     dai: {
-        ...mainnet('0x60FaAe176336dAb62e284Fe19B885B095d29fB7F')
+        ...mainnet('0x6B175474E89094C44Da98b954EedeAC495271d0F')
     },
     link: {
-        ...mainnet('0x0757e27AC1631beEB37eeD3270cc6301dD3D57D4')
+        ...mainnet('0x514910771AF9Ca656af840dff83E8264EcF986CA')
     },
     weth: {
-        ...mainnet('0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3')
+        ...mainnet('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2')
     },
     usdc: {
-        ...mainnet('0x51eDF02152EBfb338e03E30d65C15fBf06cc9ECC')
+        ...mainnet('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48')
     },
     wbtc: {
-        ...mainnet('0x6daB3bCbFb336b29d06B9C793AEF7eaA57888922')
+        ...mainnet('0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599')
     }
 };
 
