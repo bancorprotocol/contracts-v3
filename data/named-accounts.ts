@@ -32,7 +32,7 @@ const TestNamedAccounts = {
 
 const TokenNamedAccounts = {
     dai: {
-        ...mainnet('0x6B175474E89094C44Da98b954EedeAC495271d0F')
+        ...mainnet('0x60FaAe176336dAb62e284Fe19B885B095d29fB7F')
     },
     link: {
         ...mainnet('0x0757e27AC1631beEB37eeD3270cc6301dD3D57D4')
