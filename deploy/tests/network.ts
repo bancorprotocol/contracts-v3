@@ -118,8 +118,7 @@ import { getNamedAccounts } from 'hardhat';
             );
             await expectRoleMembers(
                 bntGovernance as any as AccessControlEnumerable,
-                Roles.TokenGovernance.ROLE_GOVERNOR,
-                isMainnet() ? [deployerV2] : [deployer]
+                Roles.TokenGovernance.ROLE_GOVERNOR
             );
 
             const expectedRoles = isMainnet()
