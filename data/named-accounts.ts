@@ -14,13 +14,13 @@ const TestNamedAccounts = {
         ...mainnet('0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf')
     },
     daiWhale: {
-        ...mainnet('0xb527a981e1d415AF696936B3174f2d7aC8D11369')
+        ...mainnet('0x60FaAe176336dAb62e284Fe19B885B095d29fB7F')
     },
     linkWhale: {
         ...mainnet('0xc6bed363b30DF7F35b601a5547fE56cd31Ec63DA')
     },
     bntWhale: {
-        ...mainnet('0xA744a64Dfd51e4feE3360f1EC1509D329047d7db')
+        ...mainnet('0x221A0e3C9AcEa6B3f1CC9DfC7063509c89bE7BC3')
     },
     usdcWhale: {
         ...mainnet('0x55FE002aefF02F77364de339a1292923A15844B8')

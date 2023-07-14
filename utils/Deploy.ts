@@ -1,7 +1,6 @@
 import { ArtifactData } from '../components/ContractBuilder';
 import {
     AutoCompoundingRewards,
-    BancorArbitrage,
     BancorNetwork,
     BancorNetworkInfo,
     BancorPortal,
@@ -106,7 +105,6 @@ enum LegacyInstanceNameV3 {
 
 enum NewInstanceName {
     AutoCompoundingRewards = 'AutoCompoundingRewards',
-    BancorArbitrage = 'BancorArbitrage',
     BancorNetworkInfo = 'BancorNetworkInfo',
     BancorNetworkProxy = 'BancorNetworkProxy',
     BancorNetwork = 'BancorNetwork',
@@ -175,7 +173,6 @@ const DeployedLegacyContracts = {
 
 const DeployedNewContracts = {
     AutoCompoundingRewards: deployed<AutoCompoundingRewards>(InstanceName.AutoCompoundingRewards),
-    BancorArbitrage: deployed<BancorArbitrage>(InstanceName.BancorArbitrage),
     BancorNetworkInfo: deployed<BancorNetworkInfo>(InstanceName.BancorNetworkInfo),
     BancorNetworkProxy: deployed<TransparentUpgradeableProxyImmutable>(InstanceName.BancorNetworkProxy),
     BancorNetwork: deployed<BancorNetwork>(InstanceName.BancorNetwork),
@@ -413,16 +410,18 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    const data = { name, contract: contractName };
+    if(!(isProxy && isLive())) {
+        const data = { name, contract: contractName };
 
-    await saveTypes(data);
+        await saveTypes(data);
 
-    await verifyTenderlyFork({
-        address: res.address,
-        proxy: isProxy,
-        implementation: isProxy ? res.implementation : undefined,
-        ...data
-    });
+        await verifyTenderlyFork({
+            address: res.address,
+            proxy: isProxy,
+            implementation: isProxy ? res.implementation : undefined,
+            ...data
+        });
+    }
 
     return res.address;
 };

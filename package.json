@@ -60,7 +60,6 @@
     "format": "NODE_OPTIONS='--max-old-space-size=8192' prettier --check --write components/**/*.ts contracts/**/*.sol deploy/**/*.ts scripts/**/*.ts test/**/*.ts test/**/*.json utils/**/*.ts  --config .prettierrc",
     "snyk-protect": "snyk-protect",
     "prepare": "yarn clean && yarn build && yarn snyk-protect && tsc && copyfiles -u 1 \"typechain-types/**/*.d.ts\" dist/typechain-types",
-    "postinstall": "scripts/fix-github-hardhat-deploy.sh",
     "clean": "rm -rf artifacts cache coverage typechain-types"
   },
   "dependencies": {
@@ -118,7 +117,7 @@
     "glob": "^8.0.3",
     "hardhat-contract-sizer": "^2.5.1",
     "hardhat-dependency-compiler": "^1.1.3",
-    "hardhat-deploy": "lbeder/hardhat-deploy#817a6d",
+    "hardhat-deploy": "^0.11.29",
     "hardhat-deploy-tenderly": "^0.2.0",
     "hardhat-storage-layout": "^0.1.6",
     "hardhat-watcher": "^2.3.0",
