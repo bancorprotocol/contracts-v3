@@ -225,4 +225,9 @@ interface IBancorNetwork is IUpgradeable {
      * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
      */
     function withdrawNetworkFees(address recipient) external returns (uint256);
+
+    /**
+     * @dev withdraws surplus tokens from a disabled pool to CarbonPOL contract
+     */
+    function withdrawSurplusTokens(Token pool) external returns (uint256);
 }
