@@ -12,6 +12,6 @@ describeDeployment(__filename, () => {
 
     it('should upgrade the network contract properly', async () => {
         expect(await network.version()).to.equal(9);
-        expect(await network.rewardsPPM()).to.equal(2000);
+        expect(await network.polRewardsPPM()).to.equal(2000);
     });
 });

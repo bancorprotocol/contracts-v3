@@ -1,4 +1,3 @@
-import { ARB_CONTRACT_MAINNET_ADDRESS } from '../../utils/Constants';
 import {
     deploy,
     DeployedContracts,
@@ -12,7 +11,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { chunk } from 'lodash';
 
 const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironment) => {
-    const { deployer } = await getNamedAccounts();
+    const { deployer, bancorArbitrageAddress } = await getNamedAccounts();
 
     // get the deployed contracts
     const externalProtectionVault = await DeployedContracts.ExternalProtectionVault.deployed();
@@ -46,7 +45,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
             masterVault.address,
             externalProtectionVault.address,
             bnBNT.address,
-            ARB_CONTRACT_MAINNET_ADDRESS
+            bancorArbitrageAddress
         ],
         from: deployer
     });

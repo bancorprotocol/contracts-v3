@@ -6,4 +6,9 @@ pragma solidity 0.8.13;
  */
 contract MockCarbonPOL {
     constructor() {}
+
+    /**
+     * @dev authorize the contract to receive the native token
+     */
+    receive() external payable {}
 }

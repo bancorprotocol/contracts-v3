@@ -64,8 +64,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     error DepositingDisabled();
     error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
-    error PoolTradingShouldBeDisabled();
-    error PoolNotValid();
+    error TradingEnabled();
     error PoolNotInSurplus();
 
     struct TradeParams {
@@ -157,7 +156,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
     bool private _depositingEnabled = true;
 
-    uint32 private _rewardsPPM;
+    uint32 private _polRewardsPPM;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 11] private __gap;
@@ -227,17 +226,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when pool surplus tokens are withdrawn
      */
-    event SurplusTokensWithdrawn(
-        address indexed caller,
-        address indexed token,
-        uint256 polTokenAmount,
-        uint256 userReward
-    );
+    event POLWithdrawn(address indexed caller, address indexed token, uint256 polTokenAmount, uint256 userReward);
 
     /**
-     * @dev triggered when rewards ppm is updated
+     * @dev triggered when pol rewards ppm is updated
      */
-    event RewardsPPMUpdated(uint32 oldRewardsPPM, uint32 newRewardsPPM);
+    event POLRewardsPPMUpdated(uint32 oldRewardsPPM, uint32 newRewardsPPM);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -327,7 +321,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _depositingEnabled = true;
 
-        _setRewardsPPM(2000);
+        _setPolRewardsPPM(2000);
     }
 
     // solhint-enable func-name-mixedcase
@@ -610,12 +604,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawSurplusTokens(Token pool) external whenNotPaused nonReentrant returns (uint256) {
+    function withdrawPOL(Token pool) external whenNotPaused nonReentrant returns (uint256) {
+        // verify pool is whitelisted
+        if (!_networkSettings.isTokenWhitelisted(pool)) {
+            revert NotWhitelisted();
+        }
         // verify pool collection exists and retrieve it
         IPoolCollection poolCollection = _poolCollection(pool);
         // verify trading is disabled for pool
         if (poolCollection.tradingEnabled(pool)) {
-            revert PoolTradingShouldBeDisabled();
+            revert TradingEnabled();
         }
 
         // get token vault balance and staked balance
@@ -630,14 +628,14 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         // calculate pool surplus amount and user reward
         uint256 poolSurplus = masterVaultBalance - stakedTokenBalance;
-        uint256 userReward = (poolSurplus * _rewardsPPM) / PPM_RESOLUTION;
+        uint256 userReward = (poolSurplus * _polRewardsPPM) / PPM_RESOLUTION;
 
-        // wtihdraw surplus tokens from master vault to POL contract
+        // withdraw surplus tokens from master vault to POL contract
         _masterVault.withdrawFunds(pool, payable(_carbonPOL), poolSurplus - userReward);
-        // wtihdraw user reward to caller
+        // withdraw user reward to caller
         _masterVault.withdrawFunds(pool, payable(msg.sender), userReward);
         // emit event
-        emit SurplusTokensWithdrawn(msg.sender, address(pool), poolSurplus - userReward, userReward);
+        emit POLWithdrawn(msg.sender, address(pool), poolSurplus - userReward, userReward);
         // return pool surplus amount
         return poolSurplus;
     }
@@ -893,30 +891,30 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns the rewards ppm
+     * @dev returns the pol rewards ppm
      */
-    function rewardsPPM() external view returns (uint32) {
-        return _rewardsPPM;
+    function polRewardsPPM() external view returns (uint32) {
+        return _polRewardsPPM;
     }
 
     /**
-     * @dev set rewards ppm
+     * @dev set the pol rewards ppm
      */
-    function setRewardsPPM(uint32 newRewardsPPM) external onlyAdmin validFee(newRewardsPPM) {
-        _setRewardsPPM(newRewardsPPM);
+    function setPolRewardsPPM(uint32 newRewardsPPM) external onlyAdmin validFee(newRewardsPPM) {
+        _setPolRewardsPPM(newRewardsPPM);
     }
 
     /**
-     * @dev set rewards ppm
+     * @dev set the pol rewards ppm
      */
-    function _setRewardsPPM(uint32 newRewardsPPM) private {
-        uint32 oldRewardsPPM = _rewardsPPM;
+    function _setPolRewardsPPM(uint32 newRewardsPPM) private {
+        uint32 oldRewardsPPM = _polRewardsPPM;
         if (oldRewardsPPM == newRewardsPPM) {
             return;
         }
 
-        _rewardsPPM = newRewardsPPM;
-        emit RewardsPPMUpdated(oldRewardsPPM, newRewardsPPM);
+        _polRewardsPPM = newRewardsPPM;
+        emit POLRewardsPPMUpdated(oldRewardsPPM, newRewardsPPM);
     }
 
     /**
