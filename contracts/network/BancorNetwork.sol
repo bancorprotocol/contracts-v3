@@ -227,7 +227,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @dev triggered when pool surplus tokens are withdrawn
      */
-    event SurplusTokensWithdrawn(address indexed caller, address indexed token, uint256 polTokenAmount, uint256 userReward);
+    event SurplusTokensWithdrawn(
+        address indexed caller,
+        address indexed token,
+        uint256 polTokenAmount,
+        uint256 userReward
+    );
 
     /**
      * @dev triggered when rewards ppm is updated

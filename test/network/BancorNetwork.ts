@@ -326,7 +326,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(8);
+            expect(await network.version()).to.equal(9);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -432,9 +432,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when attempting to set rewards ppm to an invalid fee', async () => {
-            await expect(network.setRewardsPPM(PPM_RESOLUTION + 1)).to.be.revertedWithError(
-                'InvalidFee'
-            );
+            await expect(network.setRewardsPPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
         });
 
         it('owner should be able to set rewards ppm', async () => {
