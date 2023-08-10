@@ -21,10 +21,6 @@ The Dawn release includes the following features:
 -   Tokenomics Redesign
 -   Flash Loans
 
-## Security
-
-The security policy is available [here](./SECURITY.md).
-
 ### Security Audits
 
 -   [PeckShield](docs/audits/PeckShield-Audit-Report-BancorV3-v1.0.pdf)
