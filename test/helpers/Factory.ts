@@ -291,7 +291,8 @@ const createNetwork = async (
     masterVault: MasterVault,
     externalProtectionVault: ExternalProtectionVault,
     bntPoolToken: PoolToken,
-    arbContractAddress: string
+    arbContractAddress: string,
+    carbonPOLAddress: string
 ) => {
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
@@ -302,7 +303,8 @@ const createNetwork = async (
             masterVault.address,
             externalProtectionVault.address,
             bntPoolToken.address,
-            arbContractAddress
+            arbContractAddress,
+            carbonPOLAddress
         ]
     });
 
@@ -341,6 +343,8 @@ const createSystemFixture = async () => {
     // the arb contract requires the network's address at construction time)
     const arbContractAddress = '0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3';
 
+    const carbonPOL = await createProxy(Contracts.MockCarbonPOL, { skipInitialization: true });
+
     const network = await createNetwork(
         bntGovernance,
         vbntGovernance,
@@ -348,7 +352,8 @@ const createSystemFixture = async () => {
         masterVault,
         externalProtectionVault,
         bntPoolToken,
-        arbContractAddress
+        arbContractAddress,
+        carbonPOL.address
     );
 
     const bntPool = await createBNTPool(
@@ -414,7 +419,8 @@ const createSystemFixture = async () => {
         pendingWithdrawals,
         poolTokenFactory,
         poolCollection,
-        poolMigrator
+        poolMigrator,
+        carbonPOL
     };
 };
 
