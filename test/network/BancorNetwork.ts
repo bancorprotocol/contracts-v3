@@ -1608,49 +1608,59 @@ describe('BancorNetwork', () => {
             await networkSettings.setFundingLimit(token.address, MAX_UINT256);
             await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
 
-            await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
             const tokenWrapper = await Contracts.ERC20.attach(token.address);
 
-            const tradeAmount = toWei(100);
+            const tradeAmounts = [100, toWei(1), toWei(100), toWei(1000)];
+            for (const tradeAmount of tradeAmounts) {
+                // approve tkn for trading
+                await tokenWrapper.approve(network.address, tradeAmount);
 
-            // approve tkn for trading
-            await tokenWrapper.approve(network.address, tradeAmount);
+                // enabled trading
+                await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
 
-            // trade tkn for bnt - to move the pool to surplus
-            await network.tradeBySourceAmount(token.address, bnt.address, tradeAmount, 1, MAX_UINT256, ZERO_ADDRESS);
+                // trade tkn for bnt - to move the pool to surplus
+                await network.tradeBySourceAmount(
+                    token.address,
+                    bnt.address,
+                    tradeAmount,
+                    1,
+                    MAX_UINT256,
+                    ZERO_ADDRESS
+                );
 
-            // disable trading to be able to withdraw surplus tokens
-            await poolCollection.disableTrading(token.address);
+                // disable trading to be able to withdraw surplus tokens
+                await poolCollection.disableTrading(token.address);
 
-            const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
-            const poolData = await poolCollection.poolLiquidity(token.address);
-            const stakedBalance = poolData.stakedBalance;
+                const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
+                const poolData = await poolCollection.poolLiquidity(token.address);
+                const stakedBalance = poolData.stakedBalance;
 
-            // get surplus tokens
-            const surplusTokens = vaultBalance.sub(stakedBalance);
+                // get surplus tokens
+                const surplusTokens = vaultBalance.sub(stakedBalance);
 
-            // get balances of carbon POL and caller before
-            const carbonPOLBalanceBefore = await tokenWrapper.balanceOf(carbonPOL.address);
-            const userBalanceBefore = await tokenWrapper.balanceOf(deployer.address);
+                // get balances of carbon POL and caller before
+                const carbonPOLBalanceBefore = await tokenWrapper.balanceOf(carbonPOL.address);
+                const userBalanceBefore = await tokenWrapper.balanceOf(deployer.address);
 
-            // calculate expected user reward and carbon POL tokens received
-            const polRewardsPPM = await network.polRewardsPPM();
-            const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
-            const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
+                // calculate expected user reward and carbon POL tokens received
+                const polRewardsPPM = await network.polRewardsPPM();
+                const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
+                const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
 
-            // withdraw surplus tokens
-            await network.withdrawPOL(token.address);
+                // withdraw surplus tokens
+                await network.withdrawPOL(token.address);
 
-            // get balances of carbon POL and caller after
-            const carbonPOLBalanceAfter = await tokenWrapper.balanceOf(carbonPOL.address);
-            const userBalanceAfter = await tokenWrapper.balanceOf(deployer.address);
+                // get balances of carbon POL and caller after
+                const carbonPOLBalanceAfter = await tokenWrapper.balanceOf(carbonPOL.address);
+                const userBalanceAfter = await tokenWrapper.balanceOf(deployer.address);
 
-            const carbonPOLBalanceGain = carbonPOLBalanceAfter.sub(carbonPOLBalanceBefore);
-            const userBalanceGain = userBalanceAfter.sub(userBalanceBefore);
+                const carbonPOLBalanceGain = carbonPOLBalanceAfter.sub(carbonPOLBalanceBefore);
+                const userBalanceGain = userBalanceAfter.sub(userBalanceBefore);
 
-            // assert tokens sent to carbon pol and user are equal to the expected values
-            expect(carbonPOLBalanceGain).to.be.eq(expectedCarbonPOLTokenGain);
-            expect(userBalanceGain).to.be.eq(expectedUserReward);
+                // assert tokens sent to carbon pol and user are equal to the expected values
+                expect(carbonPOLBalanceGain).to.be.eq(expectedCarbonPOLTokenGain);
+                expect(userBalanceGain).to.be.eq(expectedUserReward);
+            }
         });
 
         it('withdrawing surplus tokens should withdraw tokens from vault', async () => {
