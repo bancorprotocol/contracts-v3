@@ -410,7 +410,7 @@ export const deploy = async (options: DeployOptions) => {
         log: true
     });
 
-    if(!(isProxy && isLive())) {
+    if (!(isProxy && isLive())) {
         const data = { name, contract: contractName };
 
         await saveTypes(data);

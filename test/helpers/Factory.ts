@@ -291,7 +291,8 @@ const createNetwork = async (
     masterVault: MasterVault,
     externalProtectionVault: ExternalProtectionVault,
     bntPoolToken: PoolToken,
-    arbContractAddress: string
+    bancorArbitrageAddress: string,
+    carbonPOLAddress: string
 ) => {
     const network = await createProxy(Contracts.TestBancorNetwork, {
         skipInitialization: true,
@@ -302,7 +303,8 @@ const createNetwork = async (
             masterVault.address,
             externalProtectionVault.address,
             bntPoolToken.address,
-            arbContractAddress
+            bancorArbitrageAddress,
+            carbonPOLAddress
         ]
     });
 
@@ -339,7 +341,9 @@ const createSystemFixture = async () => {
     // Used to avoid cyclical immutable dependencies
     // (The network contract requires arb contract's address and
     // the arb contract requires the network's address at construction time)
-    const arbContractAddress = '0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3';
+    const bancorArbitrageAddress = '0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3';
+
+    const carbonPOL = await createProxy(Contracts.MockCarbonPOL, { skipInitialization: true });
 
     const network = await createNetwork(
         bntGovernance,
@@ -348,7 +352,8 @@ const createSystemFixture = async () => {
         masterVault,
         externalProtectionVault,
         bntPoolToken,
-        arbContractAddress
+        bancorArbitrageAddress,
+        carbonPOL.address
     );
 
     const bntPool = await createBNTPool(
@@ -414,7 +419,8 @@ const createSystemFixture = async () => {
         pendingWithdrawals,
         poolTokenFactory,
         poolCollection,
-        poolMigrator
+        poolMigrator,
+        carbonPOL
     };
 };
 

@@ -22,6 +22,8 @@ export const ZERO_FRACTION = { n: 0, d: 1 };
 export const PPM_RESOLUTION = 1_000_000;
 export const ARB_CONTRACT_TEST_ADDRESS = '0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3';
 export const ARB_CONTRACT_MAINNET_ADDRESS = '0x41Eeba3355d7D6FF628B7982F3F9D055c39488cB';
+// TODO: change the carbon pol contract address once deployed
+export const CARBON_POL_CONTRACT_MAINNET_ADDRESS = '0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3';
 
 export enum TradingStatusUpdateReason {
     Default = 0,
