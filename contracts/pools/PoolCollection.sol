@@ -46,6 +46,7 @@ import {
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
     TRADING_STATUS_UPDATE_INVALID_STATE,
+    TRADING_STATUS_UPDATE_NETWORK_DISABLE,
     TradeAmountAndFee,
     WithdrawalAmounts
 } from "./interfaces/IPoolCollection.sol";
@@ -593,6 +594,17 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function disableTrading(Token pool) external onlyOwner {
         Pool storage data = _poolStorage(pool);
         _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_ADMIN);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function disableTradingByNetwork(Token pool) external only(address(_network)) {
+        Pool storage data = _poolStorage(pool);
+        if (data.tradingEnabled) {
+            data.tradingEnabled = false;
+            emit TradingEnabled({ pool: pool, newStatus: false, reason: TRADING_STATUS_UPDATE_NETWORK_DISABLE });
+        }
     }
 
     /**

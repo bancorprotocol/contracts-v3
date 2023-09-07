@@ -609,12 +609,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         if (!_networkSettings.isTokenWhitelisted(pool)) {
             revert NotWhitelisted();
         }
+
         // verify pool collection exists and retrieve it
         IPoolCollection poolCollection = _poolCollection(pool);
-        // verify trading is disabled for pool
-        if (poolCollection.tradingEnabled(pool)) {
-            revert TradingEnabled();
-        }
 
         // get token vault balance and staked balance
         uint256 masterVaultBalance = pool.balanceOf(address(_masterVault));
@@ -626,9 +623,12 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
             revert PoolNotInSurplus();
         }
 
+        // disable pool trading
+        poolCollection.disableTradingByNetwork(pool);
+
         // calculate pool surplus amount and user reward
         uint256 poolSurplus = masterVaultBalance - stakedTokenBalance;
-        uint256 userReward = (poolSurplus * _polRewardsPPM) / PPM_RESOLUTION;
+        uint256 userReward = MathEx.mulDivF(poolSurplus, _polRewardsPPM, PPM_RESOLUTION);
 
         // withdraw surplus tokens from master vault to POL contract
         _masterVault.withdrawFunds(pool, payable(_carbonPOL), poolSurplus - userReward);
