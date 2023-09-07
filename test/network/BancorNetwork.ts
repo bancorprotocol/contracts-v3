@@ -1573,6 +1573,11 @@ describe('BancorNetwork', () => {
                         // withdraw surplus tokens
                         await network.withdrawPOL(token.address);
 
+                        if (!disableTrading) {
+                            // assert that trading has been disabled internally in `withdrawPOL`
+                            expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                        }
+
                         // get vault and staked balances after
                         vaultBalance = await getBalance(token, masterVault.address);
                         poolData = await poolCollection.poolLiquidity(token.address);
@@ -1639,6 +1644,11 @@ describe('BancorNetwork', () => {
                         // withdraw surplus tokens
                         await network.withdrawPOL(token.address);
 
+                        if (!disableTrading) {
+                            // assert that trading has been disabled internally in `withdrawPOL`
+                            expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                        }
+
                         // get balances of carbon POL and caller after
                         const carbonPOLBalanceAfter = await tokenWrapper.balanceOf(carbonPOL.address);
                         const userBalanceAfter = await tokenWrapper.balanceOf(deployer.address);
@@ -1694,6 +1704,12 @@ describe('BancorNetwork', () => {
                         .withArgs(token.address, network.address, carbonPOL.address, expectedCarbonPOLTokenGain)
                         .to.emit(masterVault, 'FundsWithdrawn')
                         .withArgs(token.address, network.address, deployer.address, expectedUserReward);
+
+
+                    if (!disableTrading) {
+                        // assert that trading has been disabled internally in `withdrawPOL`
+                        expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                    }
                 });
 
                 it('withdrawing surplus tokens should emit an event', async () => {
@@ -1736,6 +1752,11 @@ describe('BancorNetwork', () => {
                     await expect(network.withdrawPOL(token.address))
                         .to.emit(network, 'POLWithdrawn')
                         .withArgs(deployer.address, token.address, expectedCarbonPOLTokenGain, expectedUserReward);
+
+                    if (!disableTrading) {
+                        // assert that trading has been disabled internally in `withdrawPOL`
+                        expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                    }
                 });
             });
         }
