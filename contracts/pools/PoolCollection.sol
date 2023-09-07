@@ -283,8 +283,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _poolTokenFactory = initPoolTokenFactory;
         _poolMigrator = initPoolMigrator;
 
-        _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
-        _setNetworkFeePPM(DEFAULT_NETWORK_FEE_PPM);
+        _defaultTradingFeePPM = (DEFAULT_TRADING_FEE_PPM);
+        _networkFeePPM = (DEFAULT_NETWORK_FEE_PPM);
     }
 
     /**
@@ -344,7 +344,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function setDefaultTradingFeePPM(
         uint32 newDefaultTradingFeePPM
     ) external onlyOwner validFee(newDefaultTradingFeePPM) {
-        _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
+        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
+        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
+            return;
+        }
+
+        _defaultTradingFeePPM = newDefaultTradingFeePPM;
+
+        emit DefaultTradingFeePPMUpdated({ prevFeePPM: prevDefaultTradingFeePPM, newFeePPM: newDefaultTradingFeePPM });
     }
 
     /**
@@ -355,7 +362,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * - the caller must be the owner of the contract
      */
     function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
-        _setNetworkFeePPM(newNetworkFeePPM);
+        uint32 prevNetworkFeePPM = _networkFeePPM;
+        if (prevNetworkFeePPM == newNetworkFeePPM) {
+            return;
+        }
+
+        _networkFeePPM = newNetworkFeePPM;
+
+        emit NetworkFeePPMUpdated({ prevFeePPM: prevNetworkFeePPM, newFeePPM: newNetworkFeePPM });
     }
 
     /**
@@ -1182,34 +1196,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             stakedBalance: newStakedBalance,
             poolTokenSupply: newPoolTokenTotalSupply
         });
-    }
-
-    /**
-     * @dev sets the default trading fee (in units of PPM)
-     */
-    function _setDefaultTradingFeePPM(uint32 newDefaultTradingFeePPM) private {
-        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
-        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
-            return;
-        }
-
-        _defaultTradingFeePPM = newDefaultTradingFeePPM;
-
-        emit DefaultTradingFeePPMUpdated({ prevFeePPM: prevDefaultTradingFeePPM, newFeePPM: newDefaultTradingFeePPM });
-    }
-
-    /**
-     * @dev sets the network fee (in units of PPM)
-     */
-    function _setNetworkFeePPM(uint32 newNetworkFeePPM) private {
-        uint32 prevNetworkFeePPM = _networkFeePPM;
-        if (prevNetworkFeePPM == newNetworkFeePPM) {
-            return;
-        }
-
-        _networkFeePPM = newNetworkFeePPM;
-
-        emit NetworkFeePPMUpdated({ prevFeePPM: prevNetworkFeePPM, newFeePPM: newNetworkFeePPM });
     }
 
     /**
