@@ -29,7 +29,8 @@ export enum TradingStatusUpdateReason {
     Default = 0,
     Admin = 1,
     MinLiquidity = 2,
-    InvalidState = 3
+    InvalidState = 3,
+    NetworkDisable = 4
 }
 
 export enum RewardsDistributionType {

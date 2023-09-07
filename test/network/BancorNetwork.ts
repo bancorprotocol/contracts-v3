@@ -1510,7 +1510,7 @@ describe('BancorNetwork', () => {
         });
 
         for (const disableTrading of [true, false]) {
-            describe(`when trading is ${disableTrading ? 'not yet' : 'already'} disabled`, () => {
+            context(`when trading is ${disableTrading ? 'not yet' : 'already'} disabled`, () => {
                 it('should be able to withdraw surplus tokens', async () => {
                     // test TKN and ETH
                     const tokenData = new TokenData(TokenSymbol.TKN);

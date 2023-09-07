@@ -922,7 +922,6 @@ describe('PoolCollection', () => {
     describe('disable trading', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let bnt: IERC20;
         let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
 
@@ -934,7 +933,7 @@ describe('PoolCollection', () => {
         });
 
         beforeEach(async () => {
-            ({ network, bnt, networkSettings, bntPool, poolCollection } = await createSystem());
+            ({ network, networkSettings, bntPool, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -957,15 +956,17 @@ describe('PoolCollection', () => {
             };
 
             beforeEach(async () => {
-                if (tokenData.isBNT()) {
-                    token = bnt;
-                } else {
-                    token = await createToken(tokenData);
-                }
+                token = await createToken(tokenData);
 
                 await createPool(token, network, networkSettings, poolCollection);
 
                 await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+            });
+
+            it('should revert when a non-network attempts to disable trading by network', async () => {
+                await expect(poolCollection.connect(nonOwner).disableTradingByNetwork(token.address)).to.be.revertedWithError(
+                    'AccessDenied'
+                );
             });
 
             it('should revert when a non-owner attempts to disable trading', async () => {
