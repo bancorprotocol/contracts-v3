@@ -375,7 +375,7 @@ describe('PoolCollection', () => {
                 poolTokenFactory.address,
                 poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(11);
+            expect(await poolCollection.version()).to.equal(12);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
@@ -383,12 +383,10 @@ describe('PoolCollection', () => {
             expect(await poolCollection.protectionEnabled()).to.equal(false);
 
             await expect(poolCollection.deployTransaction)
-                .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
-                .withArgs(0, DEFAULT_TRADING_FEE_PPM);
+                .to.not.emit(poolCollection, 'DefaultTradingFeePPMUpdated');
 
             await expect(poolCollection.deployTransaction)
-                .to.emit(poolCollection, 'NetworkFeePPMUpdated')
-                .withArgs(0, DEFAULT_NETWORK_FEE_PPM);
+                .to.not.emit(poolCollection, 'NetworkFeePPMUpdated');
         });
     });
 
