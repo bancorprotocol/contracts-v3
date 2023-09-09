@@ -64,7 +64,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     error DepositingDisabled();
     error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
-    error TradingEnabled();
     error PoolNotInSurplus();
 
     struct TradeParams {
