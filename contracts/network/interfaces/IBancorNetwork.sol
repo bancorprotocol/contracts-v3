@@ -227,7 +227,8 @@ interface IBancorNetwork is IUpgradeable {
     function withdrawNetworkFees(address recipient) external returns (uint256);
 
     /**
-     * @dev withdraws surplus tokens from a disabled pool to CarbonPOL contract
+     * @dev withdraws surplus tokens from a given pool to CarbonPOL contract,
+     * and disables trading on the given pool if it is not already disabled
      */
     function withdrawPOL(Token pool) external returns (uint256);
 }
