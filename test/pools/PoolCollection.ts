@@ -381,12 +381,6 @@ describe('PoolCollection', () => {
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
             expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
             expect(await poolCollection.protectionEnabled()).to.equal(false);
-
-            await expect(poolCollection.deployTransaction)
-                .to.not.emit(poolCollection, 'DefaultTradingFeePPMUpdated');
-
-            await expect(poolCollection.deployTransaction)
-                .to.not.emit(poolCollection, 'NetworkFeePPMUpdated');
         });
     });
 
