@@ -58,7 +58,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     EnumerableSetUpgradeable.AddressSet private _tokenWhitelistForPOL;
 
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 9] private __gap;
+    uint256[MAX_GAP - 10] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
