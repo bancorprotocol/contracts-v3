@@ -615,10 +615,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function disableTradingByNetwork(Token pool) external only(address(_network)) {
         Pool storage data = _poolStorage(pool);
-        if (data.tradingEnabled) {
-            data.tradingEnabled = false;
-            emit TradingEnabled({ pool: pool, newStatus: false, reason: TRADING_STATUS_UPDATE_NETWORK_DISABLE });
-        }
+        _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_NETWORK_DISABLE);
     }
 
     /**
