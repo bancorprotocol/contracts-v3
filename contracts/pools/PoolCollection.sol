@@ -280,8 +280,8 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
         _poolTokenFactory = initPoolTokenFactory;
         _poolMigrator = initPoolMigrator;
 
-        _defaultTradingFeePPM = (DEFAULT_TRADING_FEE_PPM);
-        _networkFeePPM = (DEFAULT_NETWORK_FEE_PPM);
+        _setDefaultTradingFeePPM(DEFAULT_TRADING_FEE_PPM);
+        _setNetworkFeePPM(DEFAULT_NETWORK_FEE_PPM);
     }
 
     /**
