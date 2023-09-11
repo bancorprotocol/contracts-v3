@@ -30,9 +30,9 @@ interface INetworkSettings is IUpgradeable {
     function isTokenWhitelisted(Token pool) external view returns (bool);
 
     /**
-     * @dev returns the protected tokens whitelist for POL
+     * @dev returns the tokens whitelist for POL
      */
-    function protectedTokenWhitelistForPOL() external view returns (Token[] memory);
+    function tokenWhitelistForPOL() external view returns (Token[] memory);
 
     /**
      * @dev checks whether a given token is whitelist for POL

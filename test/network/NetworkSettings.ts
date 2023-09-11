@@ -178,9 +178,9 @@ describe('NetworkSettings', () => {
         });
     });
 
-    describe('protected tokens whitelist for POL', () => {
+    describe('tokens whitelist for POL', () => {
         beforeEach(async () => {
-            expect(await networkSettings.protectedTokenWhitelistForPOL()).to.be.empty;
+            expect(await networkSettings.tokenWhitelistForPOL()).to.be.empty;
         });
 
         describe('adding', () => {
@@ -205,7 +205,7 @@ describe('NetworkSettings', () => {
 
             it('should whitelist a token for POL', async () => {
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.false;
-                expect(await networkSettings.protectedTokenWhitelistForPOL()).not.to.include(reserveToken.address);
+                expect(await networkSettings.tokenWhitelistForPOL()).not.to.include(reserveToken.address);
 
                 const res = await networkSettings.addTokenToWhitelistForPOL(reserveToken.address);
                 await expect(res)
@@ -213,7 +213,7 @@ describe('NetworkSettings', () => {
                     .withArgs(reserveToken.address);
 
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.true;
-                expect(await networkSettings.protectedTokenWhitelistForPOL()).to.include(reserveToken.address);
+                expect(await networkSettings.tokenWhitelistForPOL()).to.include(reserveToken.address);
             });
 
             it('should revert when a non-admin attempts to add tokens', async () => {
@@ -245,7 +245,7 @@ describe('NetworkSettings', () => {
                 const reserveToken2 = await createTestToken();
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.false;
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken2.address)).to.be.false;
-                expect(await networkSettings.protectedTokenWhitelistForPOL()).not.to.have.members([
+                expect(await networkSettings.tokenWhitelistForPOL()).not.to.have.members([
                     reserveToken.address,
                     reserveToken2.address
                 ]);
@@ -263,7 +263,7 @@ describe('NetworkSettings', () => {
 
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.true;
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken2.address)).to.be.true;
-                expect(await networkSettings.protectedTokenWhitelistForPOL()).to.have.members([
+                expect(await networkSettings.tokenWhitelistForPOL()).to.have.members([
                     reserveToken.address,
                     reserveToken2.address
                 ]);
@@ -294,7 +294,7 @@ describe('NetworkSettings', () => {
 
             it('should remove a token', async () => {
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.true;
-                expect(await networkSettings.protectedTokenWhitelistForPOL()).to.include(reserveToken.address);
+                expect(await networkSettings.tokenWhitelistForPOL()).to.include(reserveToken.address);
 
                 const res = await networkSettings.removeTokenFromWhitelistForPOL(reserveToken.address);
                 await expect(res)
@@ -302,7 +302,7 @@ describe('NetworkSettings', () => {
                     .withArgs(reserveToken.address);
 
                 expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.false;
-                expect(await networkSettings.protectedTokenWhitelistForPOL()).not.to.include(reserveToken.address);
+                expect(await networkSettings.tokenWhitelistForPOL()).not.to.include(reserveToken.address);
             });
         });
     });

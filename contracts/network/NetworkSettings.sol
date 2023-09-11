@@ -54,8 +54,8 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // a mapping between pools and their flash-loan fees
     mapping(Token => FlashLoanFee) private _flashLoanFees;
 
-    // a set of protected tokens which are eligible for POL
-    EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelistForPOL;
+    // a set of tokens which are eligible for POL
+    EnumerableSetUpgradeable.AddressSet private _tokenWhitelistForPOL;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 7] private __gap;
@@ -71,12 +71,12 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     event TokenRemovedFromWhitelist(Token indexed token);
 
     /**
-     * @dev triggered when a token is added to the protection whitelist for POL
+     * @dev triggered when a token is added to the whitelist for POL
      */
     event TokenAddedToWhitelistForPOL(Token indexed token);
 
     /**
-     * @dev triggered when a token is removed from the protection whitelist for POL
+     * @dev triggered when a token is removed from the whitelist for POL
      */
     event TokenRemovedFromWhitelistForPOL(Token indexed token);
 
@@ -227,17 +227,17 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     /**
      * @inheritdoc INetworkSettings
      */
-    function protectedTokenWhitelistForPOL() external view returns (Token[] memory) {
-        uint256 length = _protectedTokenWhitelistForPOL.length();
+    function tokenWhitelistForPOL() external view returns (Token[] memory) {
+        uint256 length = _tokenWhitelistForPOL.length();
         Token[] memory list = new Token[](length);
         for (uint256 i = 0; i < length; i++) {
-            list[i] = Token(_protectedTokenWhitelistForPOL.at(i));
+            list[i] = Token(_tokenWhitelistForPOL.at(i));
         }
         return list;
     }
 
     /**
-     * @dev adds a token to the protected tokens whitelist for POL
+     * @dev adds a token to the tokens whitelist for POL
      *
      * requirements:
      *
@@ -248,7 +248,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev adds tokens to the protected tokens whitelist for POL
+     * @dev adds tokens to the tokens whitelist for POL
      *
      * requirements:
      *
@@ -263,10 +263,10 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev adds a token to the protected tokens whitelist for POL
+     * @dev adds a token to the tokens whitelist for POL
      */
     function _addTokenToWhitelistForPOL(Token token) private validExternalAddress(address(token)) {
-        if (!_protectedTokenWhitelistForPOL.add(address(token))) {
+        if (!_tokenWhitelistForPOL.add(address(token))) {
             revert AlreadyExists();
         }
 
@@ -274,14 +274,14 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     }
 
     /**
-     * @dev removes a token from the protected tokens whitelist for POL
+     * @dev removes a token from the tokens whitelist for POL
      *
      * requirements:
      *
      * - the caller must be the admin of the contract
      */
     function removeTokenFromWhitelistForPOL(Token token) external onlyAdmin {
-        if (!_protectedTokenWhitelistForPOL.remove(address(token))) {
+        if (!_tokenWhitelistForPOL.remove(address(token))) {
             revert DoesNotExist();
         }
 
@@ -514,7 +514,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev checks whether a given token is whitelisted for POL
      */
     function _isTokenWhitelistedForPOL(Token token) private view returns (bool) {
-        return _protectedTokenWhitelistForPOL.contains(address(token));
+        return _tokenWhitelistForPOL.contains(address(token));
     }
 
     /**
