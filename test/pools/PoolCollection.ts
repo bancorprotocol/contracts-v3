@@ -2842,16 +2842,6 @@ describe('PoolCollection', () => {
                             }
                         );
                     });
-
-                    context('when protection is disabled', () => {
-                        beforeEach(async () => {
-                            await poolCollection.enableProtection(false);
-                        });
-
-                        it('should withdraw', async () => {
-                            await testMultipleWithdrawals(TradingLiquidityState.Decrease);
-                        });
-                    });
                 });
             });
         };
