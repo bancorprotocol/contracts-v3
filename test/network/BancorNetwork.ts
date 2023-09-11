@@ -1478,14 +1478,14 @@ describe('BancorNetwork', () => {
             await expect(network.withdraw(12_345)).to.be.revertedWithError('AccessDenied');
         });
 
-        it('should revert when attempting to withdraw surplus tokens for non-whitelisted tokens', async () => {
-            await expect(network.withdrawPOL(ZERO_ADDRESS)).to.be.revertedWithError('NotWhitelisted');
+        it('should revert when attempting to withdraw surplus tokens for non-whitelisted tokens for POL', async () => {
+            await expect(network.withdrawPOL(ZERO_ADDRESS)).to.be.revertedWithError('NotWhitelistedForPOL');
         });
 
         it('should revert when attempting to withdraw surplus tokens for invalid pools', async () => {
             const tokenData = new TokenData(TokenSymbol.TKN);
             const token = await createToken(tokenData);
-            await networkSettings.addTokenToWhitelist(token.address);
+            await networkSettings.addTokenToWhitelistForPOL(token.address);
             await expect(network.withdrawPOL(token.address)).to.be.revertedWithError('InvalidToken');
         });
 
@@ -1497,6 +1497,7 @@ describe('BancorNetwork', () => {
 
             await networkSettings.setFundingLimit(token.address, MAX_UINT256);
             await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+            await networkSettings.addTokenToWhitelistForPOL(token.address);
 
             const tokenWrapper = await Contracts.ERC20.attach(token.address);
             const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
@@ -1523,8 +1524,13 @@ describe('BancorNetwork', () => {
 
                         await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                         await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                        await networkSettings.addTokenToWhitelistForPOL(token.address);
 
-                        await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
+                        await poolCollection.enableTrading(
+                            token.address,
+                            BNT_VIRTUAL_BALANCE,
+                            BASE_TOKEN_VIRTUAL_BALANCE
+                        );
                         const tokenWrapper = await Contracts.ERC20.attach(token.address);
 
                         const tradeAmount = toWei(100);
@@ -1600,6 +1606,7 @@ describe('BancorNetwork', () => {
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                     await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                    await networkSettings.addTokenToWhitelistForPOL(token.address);
 
                     const tokenWrapper = await Contracts.ERC20.attach(token.address);
 
@@ -1609,7 +1616,11 @@ describe('BancorNetwork', () => {
                         await tokenWrapper.approve(network.address, tradeAmount);
 
                         // enabled trading
-                        await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
+                        await poolCollection.enableTrading(
+                            token.address,
+                            BNT_VIRTUAL_BALANCE,
+                            BASE_TOKEN_VIRTUAL_BALANCE
+                        );
 
                         // trade tkn for bnt - to move the pool to surplus
                         await network.tradeBySourceAmount(
@@ -1670,6 +1681,7 @@ describe('BancorNetwork', () => {
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                     await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                    await networkSettings.addTokenToWhitelistForPOL(token.address);
 
                     await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                     const tokenWrapper = await Contracts.ERC20.attach(token.address);
@@ -1680,7 +1692,14 @@ describe('BancorNetwork', () => {
                     await tokenWrapper.approve(network.address, tradeAmount);
 
                     // trade tkn for bnt - to move the pool to surplus
-                    await network.tradeBySourceAmount(token.address, bnt.address, tradeAmount, 1, MAX_UINT256, ZERO_ADDRESS);
+                    await network.tradeBySourceAmount(
+                        token.address,
+                        bnt.address,
+                        tradeAmount,
+                        1,
+                        MAX_UINT256,
+                        ZERO_ADDRESS
+                    );
 
                     if (disableTrading) {
                         await poolCollection.disableTrading(token.address);
@@ -1705,7 +1724,6 @@ describe('BancorNetwork', () => {
                         .to.emit(masterVault, 'FundsWithdrawn')
                         .withArgs(token.address, network.address, deployer.address, expectedUserReward);
 
-
                     if (!disableTrading) {
                         // assert that trading has been disabled internally in `withdrawPOL`
                         expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
@@ -1720,6 +1738,7 @@ describe('BancorNetwork', () => {
 
                     await networkSettings.setFundingLimit(token.address, MAX_UINT256);
                     await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                    await networkSettings.addTokenToWhitelistForPOL(token.address);
 
                     await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
                     const tokenWrapper = await Contracts.ERC20.attach(token.address);
@@ -1730,7 +1749,14 @@ describe('BancorNetwork', () => {
                     await tokenWrapper.approve(network.address, tradeAmount);
 
                     // trade tkn for bnt - to move the pool to surplus
-                    await network.tradeBySourceAmount(token.address, bnt.address, tradeAmount, 1, MAX_UINT256, ZERO_ADDRESS);
+                    await network.tradeBySourceAmount(
+                        token.address,
+                        bnt.address,
+                        tradeAmount,
+                        1,
+                        MAX_UINT256,
+                        ZERO_ADDRESS
+                    );
 
                     if (disableTrading) {
                         await poolCollection.disableTrading(token.address);

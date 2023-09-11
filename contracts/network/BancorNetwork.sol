@@ -47,7 +47,7 @@ import {
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted, NotWhitelistedForPOL } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 
@@ -605,8 +605,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      */
     function withdrawPOL(Token pool) external whenNotPaused nonReentrant returns (uint256) {
         // verify pool is whitelisted
-        if (!_networkSettings.isTokenWhitelisted(pool)) {
-            revert NotWhitelisted();
+        if (!_networkSettings.isTokenWhitelistedForPOL(pool)) {
+            revert NotWhitelistedForPOL();
         }
 
         // verify pool collection exists and retrieve it

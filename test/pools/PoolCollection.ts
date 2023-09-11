@@ -956,9 +956,9 @@ describe('PoolCollection', () => {
             });
 
             it('should revert when a non-network attempts to disable trading by network', async () => {
-                await expect(poolCollection.connect(nonOwner).disableTradingByNetwork(token.address)).to.be.revertedWithError(
-                    'AccessDenied'
-                );
+                await expect(
+                    poolCollection.connect(nonOwner).disableTradingByNetwork(token.address)
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when a non-owner attempts to disable trading', async () => {

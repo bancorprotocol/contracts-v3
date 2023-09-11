@@ -11,7 +11,7 @@ import { Utils, AlreadyExists, DoesNotExist, InvalidParam } from "../utility/Uti
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, VortexRewards, NotWhitelisted, NotWhitelistedForPOL } from "./interfaces/INetworkSettings.sol";
 
 /**
  * @dev Network Settings contract
@@ -54,8 +54,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // a mapping between pools and their flash-loan fees
     mapping(Token => FlashLoanFee) private _flashLoanFees;
 
+    // a set of protected tokens which are eligible for POL
+    EnumerableSetUpgradeable.AddressSet private _protectedTokenWhitelistForPOL;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 8] private __gap;
+    uint256[MAX_GAP - 7] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
@@ -66,6 +69,16 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when a token is removed from the protection whitelist
      */
     event TokenRemovedFromWhitelist(Token indexed token);
+
+    /**
+     * @dev triggered when a token is added to the protection whitelist for POL
+     */
+    event TokenAddedToWhitelistForPOL(Token indexed token);
+
+    /**
+     * @dev triggered when a token is removed from the protection whitelist for POL
+     */
+    event TokenRemovedFromWhitelistForPOL(Token indexed token);
 
     /**
      * @dev triggered when a per-pool funding limit is updated
@@ -137,7 +150,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
@@ -209,6 +222,77 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      */
     function isTokenWhitelisted(Token token) external view returns (bool) {
         return _isTokenWhitelisted(token);
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function protectedTokenWhitelistForPOL() external view returns (Token[] memory) {
+        uint256 length = _protectedTokenWhitelistForPOL.length();
+        Token[] memory list = new Token[](length);
+        for (uint256 i = 0; i < length; i++) {
+            list[i] = Token(_protectedTokenWhitelistForPOL.at(i));
+        }
+        return list;
+    }
+
+    /**
+     * @dev adds a token to the protected tokens whitelist for POL
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addTokenToWhitelistForPOL(Token token) external onlyAdmin {
+        _addTokenToWhitelistForPOL(token);
+    }
+
+    /**
+     * @dev adds tokens to the protected tokens whitelist for POL
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addTokensToWhitelistForPOL(Token[] calldata tokens) external onlyAdmin {
+        uint256 length = tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            _addTokenToWhitelistForPOL(tokens[i]);
+        }
+    }
+
+    /**
+     * @dev adds a token to the protected tokens whitelist for POL
+     */
+    function _addTokenToWhitelistForPOL(Token token) private validExternalAddress(address(token)) {
+        if (!_protectedTokenWhitelistForPOL.add(address(token))) {
+            revert AlreadyExists();
+        }
+
+        emit TokenAddedToWhitelistForPOL({ token: token });
+    }
+
+    /**
+     * @dev removes a token from the protected tokens whitelist for POL
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function removeTokenFromWhitelistForPOL(Token token) external onlyAdmin {
+        if (!_protectedTokenWhitelistForPOL.remove(address(token))) {
+            revert DoesNotExist();
+        }
+
+        emit TokenRemovedFromWhitelistForPOL({ token: token });
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function isTokenWhitelistedForPOL(Token token) external view returns (bool) {
+        return _isTokenWhitelistedForPOL(token);
     }
 
     /**
@@ -424,6 +508,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      */
     function _isTokenWhitelisted(Token token) private view returns (bool) {
         return _protectedTokenWhitelist.contains(address(token));
+    }
+
+    /**
+     * @dev checks whether a given token is whitelisted for POL
+     */
+    function _isTokenWhitelistedForPOL(Token token) private view returns (bool) {
+        return _protectedTokenWhitelistForPOL.contains(address(token));
     }
 
     /**
