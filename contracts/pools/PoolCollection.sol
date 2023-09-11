@@ -177,9 +177,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the global network fee (in units of PPM)
     uint32 private _networkFeePPM;
 
-    // true if protection is enabled, false otherwise
-    bool private _protectionEnabled = false;
-
     /**
      * @dev triggered when the default trading fee is updated
      */
@@ -344,14 +341,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function setDefaultTradingFeePPM(
         uint32 newDefaultTradingFeePPM
     ) external onlyOwner validFee(newDefaultTradingFeePPM) {
-        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
-        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
-            return;
-        }
-
-        _defaultTradingFeePPM = newDefaultTradingFeePPM;
-
-        emit DefaultTradingFeePPMUpdated({ prevFeePPM: prevDefaultTradingFeePPM, newFeePPM: newDefaultTradingFeePPM });
+        _setDefaultTradingFeePPM(newDefaultTradingFeePPM);
     }
 
     /**
@@ -362,36 +352,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * - the caller must be the owner of the contract
      */
     function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
-        uint32 prevNetworkFeePPM = _networkFeePPM;
-        if (prevNetworkFeePPM == newNetworkFeePPM) {
-            return;
-        }
-
-        _networkFeePPM = newNetworkFeePPM;
-
-        emit NetworkFeePPMUpdated({ prevFeePPM: prevNetworkFeePPM, newFeePPM: newNetworkFeePPM });
-    }
-
-    /**
-     * @dev enables/disables protection
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function enableProtection(bool status) external onlyOwner {
-        if (_protectionEnabled == status) {
-            return;
-        }
-
-        _protectionEnabled = status;
-    }
-
-    /**
-     * @dev returns the status of the protection
-     */
-    function protectionEnabled() external view returns (bool) {
-        return _protectionEnabled;
+        _setNetworkFeePPM(newNetworkFeePPM);
     }
 
     /**
@@ -846,7 +807,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             WithdrawalAmounts({
                 totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
                 baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
-                bntAmount: _protectionEnabled ? amounts.bntToMintForProvider : 0
+                bntAmount: 0
             });
     }
 
@@ -1132,12 +1093,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             }
         }
 
-        // if the provider should receive some BNT - ask the BNT pool to mint BNT to the provider
-        bool isProtectionEnabled = _protectionEnabled;
-        if (amounts.bntToMintForProvider > 0 && isProtectionEnabled) {
-            _bntPool.mint(address(provider), amounts.bntToMintForProvider);
-        }
-
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from
         // the external protection vault and send them to the master vault
         if (amounts.baseTokensToTransferFromEPV > 0) {
@@ -1182,7 +1137,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             baseTokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: amounts.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
-            bntAmount: isProtectionEnabled ? amounts.bntToMintForProvider : 0,
+            bntAmount: 0,
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });
 
@@ -1193,6 +1148,34 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             stakedBalance: newStakedBalance,
             poolTokenSupply: newPoolTokenTotalSupply
         });
+    }
+
+    /**
+     * @dev sets the default trading fee (in units of PPM)
+     */
+    function _setDefaultTradingFeePPM(uint32 newDefaultTradingFeePPM) private {
+        uint32 prevDefaultTradingFeePPM = _defaultTradingFeePPM;
+        if (prevDefaultTradingFeePPM == newDefaultTradingFeePPM) {
+            return;
+        }
+
+        _defaultTradingFeePPM = newDefaultTradingFeePPM;
+
+        emit DefaultTradingFeePPMUpdated({ prevFeePPM: prevDefaultTradingFeePPM, newFeePPM: newDefaultTradingFeePPM });
+    }
+
+    /**
+     * @dev sets the network fee (in units of PPM)
+     */
+    function _setNetworkFeePPM(uint32 newNetworkFeePPM) private {
+        uint32 prevNetworkFeePPM = _networkFeePPM;
+        if (prevNetworkFeePPM == newNetworkFeePPM) {
+            return;
+        }
+
+        _networkFeePPM = newNetworkFeePPM;
+
+        emit NetworkFeePPMUpdated({ prevFeePPM: prevNetworkFeePPM, newFeePPM: newNetworkFeePPM });
     }
 
     /**

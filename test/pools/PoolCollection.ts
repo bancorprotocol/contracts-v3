@@ -380,7 +380,14 @@ describe('PoolCollection', () => {
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
             expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
-            expect(await poolCollection.protectionEnabled()).to.equal(false);
+
+            await expect(poolCollection.deployTransaction)
+                .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
+                .withArgs(0, DEFAULT_TRADING_FEE_PPM);
+
+            await expect(poolCollection.deployTransaction)
+                .to.emit(poolCollection, 'NetworkFeePPMUpdated')
+                .withArgs(0, DEFAULT_NETWORK_FEE_PPM);
         });
     });
 
@@ -671,26 +678,6 @@ describe('PoolCollection', () => {
                 await expect(res2).to.emit(poolCollection, 'DepositingEnabled').withArgs(reserveToken.address, true);
 
                 expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
-            });
-        });
-
-        describe('enabling/disabling protection', () => {
-            it('should revert when a non-owner attempts to enable protection', async () => {
-                await expect(poolCollection.connect(nonOwner).enableProtection(false)).to.be.revertedWithError(
-                    'AccessDenied'
-                );
-            });
-
-            it('should allow enabling and disabling protection', async () => {
-                expect(await poolCollection.protectionEnabled()).to.be.true;
-
-                await poolCollection.enableProtection(false);
-
-                expect(await poolCollection.protectionEnabled()).to.be.false;
-
-                await poolCollection.enableProtection(true);
-
-                expect(await poolCollection.protectionEnabled()).to.be.true;
             });
         });
     });
@@ -2381,8 +2368,6 @@ describe('PoolCollection', () => {
                 underlyingAmount
             );
 
-            const protectionEnabled = await poolCollection.protectionEnabled();
-
             const bntAmountRenouncedOnResetLiquidity = poolWithdrawalAmounts.newBNTTradingLiquidity.lt(
                 await networkSettings.minLiquidityForTrading()
             )
@@ -2406,7 +2391,6 @@ describe('PoolCollection', () => {
                     poolWithdrawalAmounts.baseTokensToTransferFromEPV
                 )
             );
-            expect(bntAmount).to.equal(protectionEnabled ? poolWithdrawalAmounts.bntToMintForProvider : 0);
 
             const res = await network.withdrawFromPoolCollectionT(
                 poolCollection.address,
