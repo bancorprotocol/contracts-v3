@@ -61,7 +61,7 @@ const SushiSwapNamedAccounts = {
 
 const BancorNamedAccounts = {
     bancorArbitrageAddress: { ...mainnet('0x41Eeba3355d7D6FF628B7982F3F9D055c39488cB') },
-    carbonPOLAddress: { ...mainnet('0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3') }
+    carbonPOLAddress: { ...mainnet('0xD06146D292F9651C1D7cf54A3162791DFc2bEf46') }
 };
 
 export const NamedAccounts = {
