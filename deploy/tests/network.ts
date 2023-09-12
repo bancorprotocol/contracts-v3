@@ -75,7 +75,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V11.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V12.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();

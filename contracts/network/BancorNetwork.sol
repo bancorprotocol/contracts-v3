@@ -228,7 +228,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     event POLWithdrawn(address indexed caller, address indexed token, uint256 polTokenAmount, uint256 userReward);
 
     /**
-     * @dev triggered when pol rewards ppm is updated
+     * @dev triggered when POL rewards ppm is updated
      */
     event POLRewardsPPMUpdated(uint32 oldRewardsPPM, uint32 newRewardsPPM);
 
@@ -320,7 +320,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _depositingEnabled = true;
 
-        _setPolRewardsPPM(2000);
+        _setPOLRewardsPPM(2000);
     }
 
     // solhint-enable func-name-mixedcase
@@ -343,7 +343,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 10;
+        return 9;
     }
 
     /**
@@ -890,23 +890,23 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns the pol rewards ppm
+     * @dev returns the POL rewards ppm
      */
     function polRewardsPPM() external view returns (uint32) {
         return _polRewardsPPM;
     }
 
     /**
-     * @dev set the pol rewards ppm
+     * @dev set the POL rewards ppm
      */
-    function setPolRewardsPPM(uint32 newRewardsPPM) external onlyAdmin validFee(newRewardsPPM) {
-        _setPolRewardsPPM(newRewardsPPM);
+    function setPOLRewardsPPM(uint32 newRewardsPPM) external onlyAdmin validFee(newRewardsPPM) {
+        _setPOLRewardsPPM(newRewardsPPM);
     }
 
     /**
-     * @dev set the pol rewards ppm
+     * @dev set the POL rewards ppm
      */
-    function _setPolRewardsPPM(uint32 newRewardsPPM) private {
+    function _setPOLRewardsPPM(uint32 newRewardsPPM) private {
         uint32 oldRewardsPPM = _polRewardsPPM;
         if (oldRewardsPPM == newRewardsPPM) {
             return;

@@ -29,10 +29,10 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // set the pol rewards ppm to 2000 (0.2%)
+    // set the POL rewards ppm to 2000 (0.2%)
     await execute({
         name: InstanceName.BancorNetwork,
-        methodName: 'setPolRewardsPPM',
+        methodName: 'setPOLRewardsPPM',
         args: [2000],
         from: deployer
     });

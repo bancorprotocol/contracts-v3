@@ -4,7 +4,7 @@
 
 /* eslint-disable */
 import type { PromiseOrValue } from '../../../common';
-import type { PoolCollection, PoolCollectionInterface } from '../../../contracts/pools/PoolCollectionType1V11';
+import type { PoolCollection, PoolCollectionInterface } from '../../../contracts/pools/PoolCollectionType1V12';
 import type { Provider, TransactionRequest } from '@ethersproject/providers';
 import { Contract, ContractFactory, Overrides, Signer, utils } from 'ethers';
 

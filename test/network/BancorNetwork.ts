@@ -20,7 +20,7 @@ import Contracts, {
     TestStandardRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import LegacyContractsV3, { PoolCollectionType1V10 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V11 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
     ARB_CONTRACT_TEST_ADDRESS,
@@ -326,7 +326,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(10);
+            expect(await network.version()).to.equal(9);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -427,31 +427,31 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when non-owner attempts to set rewards ppm', async () => {
-            await expect(network.connect(nonOwner).setPolRewardsPPM(newRewardsPPM)).to.be.revertedWithError(
+            await expect(network.connect(nonOwner).setPOLRewardsPPM(newRewardsPPM)).to.be.revertedWithError(
                 'AccessDenied'
             );
         });
 
         it('should revert when attempting to set rewards ppm to an invalid fee', async () => {
-            await expect(network.setPolRewardsPPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
+            await expect(network.setPOLRewardsPPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
         });
 
         it('owner should be able to set rewards ppm', async () => {
-            await network.connect(deployer).setPolRewardsPPM(newRewardsPPM);
+            await network.connect(deployer).setPOLRewardsPPM(newRewardsPPM);
             const polRewardsPPM = await network.polRewardsPPM();
             expect(polRewardsPPM).to.be.eq(newRewardsPPM);
         });
 
         it('setting rewards ppm should emit an event', async () => {
             const oldRewardsPPM = await network.polRewardsPPM();
-            await expect(network.connect(deployer).setPolRewardsPPM(newRewardsPPM))
+            await expect(network.connect(deployer).setPOLRewardsPPM(newRewardsPPM))
                 .to.emit(network, 'POLRewardsPPMUpdated')
                 .withArgs(oldRewardsPPM, newRewardsPPM);
         });
 
         it('should ignore setting rewards ppm to the same value', async () => {
             const oldRewardsPPM = await network.polRewardsPPM();
-            await expect(network.connect(deployer).setPolRewardsPPM(oldRewardsPPM)).not.to.emit(
+            await expect(network.connect(deployer).setPOLRewardsPPM(oldRewardsPPM)).not.to.emit(
                 network,
                 'POLRewardsPPMUpdated'
             );
@@ -830,7 +830,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let prevPoolCollection: PoolCollectionType1V10;
+        let prevPoolCollection: PoolCollectionType1V11;
         let poolMigrator: TestPoolMigrator;
         let newPoolCollection: PoolCollection;
 
@@ -861,7 +861,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V10.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V11.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
