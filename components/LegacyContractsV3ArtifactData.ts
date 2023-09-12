@@ -5,7 +5,7 @@ import { ArtifactData } from './ContractBuilder';
 
 const LegacyContractsV3ArtifactData: Record<string, ArtifactData> = {
     PoolCollectionType1V11: {
-        abi: PoolCollectionType1V11__factory.abi,
+        abi: PoolCollectionType1V11__factory.abi as any,
         bytecode: PoolCollectionType1V11__factory.bytecode
     }
 };
