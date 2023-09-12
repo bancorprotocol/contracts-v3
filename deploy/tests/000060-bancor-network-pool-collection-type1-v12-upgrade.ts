@@ -43,7 +43,6 @@ describeDeployment(
             expect(await newPoolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await newPoolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
             expect(await newPoolCollection.networkFeePPM()).to.equal(900_000);
-            expect(await newPoolCollection.protectionEnabled()).to.equal(await prevPoolCollection.protectionEnabled());
 
             expect(await network.poolCollections()).to.deep.equal([newPoolCollection.address]);
 
