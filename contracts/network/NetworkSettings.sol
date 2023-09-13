@@ -11,7 +11,7 @@ import { Utils, AlreadyExists, DoesNotExist, InvalidParam } from "../utility/Uti
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { INetworkSettings, VortexRewards, NotWhitelisted, NotWhitelistedForPOL } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, VortexRewards, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
 
 /**
  * @dev Network Settings contract

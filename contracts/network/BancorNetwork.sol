@@ -23,8 +23,7 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidPool,
-    InvalidPoolCollection,
-    NotEmpty
+NotEmpty
 } from "../utility/Utils.sol";
 
 import { ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";

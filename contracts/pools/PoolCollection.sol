@@ -16,7 +16,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
-import { Fraction, Fraction112, FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
+import { Fraction, Fraction112, FractionLibrary, zeroFraction112 } from "../utility/FractionLibrary.sol";
 import { Sint256, MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
@@ -25,7 +25,6 @@ import {
     AlreadyExists,
     DoesNotExist,
     InvalidParam,
-    InvalidPoolCollection,
     InvalidStakedBalance
 } from "../utility/Utils.sol";
 

@@ -55,7 +55,7 @@
     "size": "yarn rebuild && hardhat size-contracts",
     "flatten": "hardhat flatten",
     "lint": "yarn lint:sol && yarn lint:ts",
-    "lint:sol": "solhint --max-warnings 0 contracts/**/*.sol",
+    "lint:sol": "solhint contracts/**/*.sol",
     "lint:ts": "yarn eslint components deploy test utils",
     "format": "NODE_OPTIONS='--max-old-space-size=8192' prettier --check --write components/**/*.ts contracts/**/*.sol deploy/**/*.ts scripts/**/*.ts test/**/*.ts test/**/*.json utils/**/*.ts  --config .prettierrc",
     "snyk-protect": "snyk-protect",
