@@ -34,7 +34,7 @@ import { ethers, waffle } from 'hardhat';
 const { formatBytes32String } = utils;
 
 const TOTAL_SUPPLY = toWei(1_000_000_000);
-const POOL_COLLECTION_CURRENT_VERSION = 11;
+const POOL_COLLECTION_CURRENT_VERSION = 12;
 
 type CtorArgs = Parameters<any>;
 type InitArgs = Parameters<any>;
@@ -400,8 +400,6 @@ const createSystemFixture = async () => {
         poolTokenFactory,
         poolMigrator
     );
-
-    await poolCollection.enableProtection(true);
 
     return {
         networkSettings,

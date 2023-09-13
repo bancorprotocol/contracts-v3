@@ -375,12 +375,11 @@ describe('PoolCollection', () => {
                 poolTokenFactory.address,
                 poolMigrator.address
             );
-            expect(await poolCollection.version()).to.equal(11);
+            expect(await poolCollection.version()).to.equal(12);
 
             expect(await poolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await poolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
             expect(await poolCollection.networkFeePPM()).to.equal(DEFAULT_NETWORK_FEE_PPM);
-            expect(await poolCollection.protectionEnabled()).to.equal(false);
 
             await expect(poolCollection.deployTransaction)
                 .to.emit(poolCollection, 'DefaultTradingFeePPMUpdated')
@@ -681,26 +680,6 @@ describe('PoolCollection', () => {
                 expect(await poolCollection.depositingEnabled(reserveToken.address)).to.be.true;
             });
         });
-
-        describe('enabling/disabling protection', () => {
-            it('should revert when a non-owner attempts to enable protection', async () => {
-                await expect(poolCollection.connect(nonOwner).enableProtection(false)).to.be.revertedWithError(
-                    'AccessDenied'
-                );
-            });
-
-            it('should allow enabling and disabling protection', async () => {
-                expect(await poolCollection.protectionEnabled()).to.be.true;
-
-                await poolCollection.enableProtection(false);
-
-                expect(await poolCollection.protectionEnabled()).to.be.false;
-
-                await poolCollection.enableProtection(true);
-
-                expect(await poolCollection.protectionEnabled()).to.be.true;
-            });
-        });
     });
 
     describe('enable trading', () => {
@@ -922,7 +901,6 @@ describe('PoolCollection', () => {
     describe('disable trading', () => {
         let networkSettings: NetworkSettings;
         let network: TestBancorNetwork;
-        let bnt: IERC20;
         let bntPool: TestBNTPool;
         let poolCollection: TestPoolCollection;
 
@@ -934,7 +912,7 @@ describe('PoolCollection', () => {
         });
 
         beforeEach(async () => {
-            ({ network, bnt, networkSettings, bntPool, poolCollection } = await createSystem());
+            ({ network, networkSettings, bntPool, poolCollection } = await createSystem());
 
             await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
         });
@@ -957,15 +935,17 @@ describe('PoolCollection', () => {
             };
 
             beforeEach(async () => {
-                if (tokenData.isBNT()) {
-                    token = bnt;
-                } else {
-                    token = await createToken(tokenData);
-                }
+                token = await createToken(tokenData);
 
                 await createPool(token, network, networkSettings, poolCollection);
 
                 await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+            });
+
+            it('should revert when a non-network attempts to disable trading by network', async () => {
+                await expect(
+                    poolCollection.connect(nonOwner).disableTradingByNetwork(token.address)
+                ).to.be.revertedWithError('AccessDenied');
             });
 
             it('should revert when a non-owner attempts to disable trading', async () => {
@@ -2388,8 +2368,6 @@ describe('PoolCollection', () => {
                 underlyingAmount
             );
 
-            const protectionEnabled = await poolCollection.protectionEnabled();
-
             const bntAmountRenouncedOnResetLiquidity = poolWithdrawalAmounts.newBNTTradingLiquidity.lt(
                 await networkSettings.minLiquidityForTrading()
             )
@@ -2413,7 +2391,6 @@ describe('PoolCollection', () => {
                     poolWithdrawalAmounts.baseTokensToTransferFromEPV
                 )
             );
-            expect(bntAmount).to.equal(protectionEnabled ? poolWithdrawalAmounts.bntToMintForProvider : 0);
 
             const res = await network.withdrawFromPoolCollectionT(
                 poolCollection.address,
@@ -2864,16 +2841,6 @@ describe('PoolCollection', () => {
                                 });
                             }
                         );
-                    });
-
-                    context('when protection is disabled', () => {
-                        beforeEach(async () => {
-                            await poolCollection.enableProtection(false);
-                        });
-
-                        it('should withdraw', async () => {
-                            await testMultipleWithdrawals(TradingLiquidityState.Decrease);
-                        });
                     });
                 });
             });

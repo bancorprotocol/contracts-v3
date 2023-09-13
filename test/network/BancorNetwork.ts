@@ -20,7 +20,7 @@ import Contracts, {
     TestStandardRewards
 } from '../../components/Contracts';
 import { TokenGovernance } from '../../components/LegacyContracts';
-import LegacyContractsV3, { PoolCollectionType1V10 } from '../../components/LegacyContractsV3';
+import LegacyContractsV3, { PoolCollectionType1V11 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
 import {
     ARB_CONTRACT_TEST_ADDRESS,
@@ -427,31 +427,31 @@ describe('BancorNetwork', () => {
         });
 
         it('should revert when non-owner attempts to set rewards ppm', async () => {
-            await expect(network.connect(nonOwner).setPolRewardsPPM(newRewardsPPM)).to.be.revertedWithError(
+            await expect(network.connect(nonOwner).setPOLRewardsPPM(newRewardsPPM)).to.be.revertedWithError(
                 'AccessDenied'
             );
         });
 
         it('should revert when attempting to set rewards ppm to an invalid fee', async () => {
-            await expect(network.setPolRewardsPPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
+            await expect(network.setPOLRewardsPPM(PPM_RESOLUTION + 1)).to.be.revertedWithError('InvalidFee');
         });
 
         it('owner should be able to set rewards ppm', async () => {
-            await network.connect(deployer).setPolRewardsPPM(newRewardsPPM);
+            await network.connect(deployer).setPOLRewardsPPM(newRewardsPPM);
             const polRewardsPPM = await network.polRewardsPPM();
             expect(polRewardsPPM).to.be.eq(newRewardsPPM);
         });
 
         it('setting rewards ppm should emit an event', async () => {
             const oldRewardsPPM = await network.polRewardsPPM();
-            await expect(network.connect(deployer).setPolRewardsPPM(newRewardsPPM))
+            await expect(network.connect(deployer).setPOLRewardsPPM(newRewardsPPM))
                 .to.emit(network, 'POLRewardsPPMUpdated')
                 .withArgs(oldRewardsPPM, newRewardsPPM);
         });
 
         it('should ignore setting rewards ppm to the same value', async () => {
             const oldRewardsPPM = await network.polRewardsPPM();
-            await expect(network.connect(deployer).setPolRewardsPPM(oldRewardsPPM)).not.to.emit(
+            await expect(network.connect(deployer).setPOLRewardsPPM(oldRewardsPPM)).not.to.emit(
                 network,
                 'POLRewardsPPMUpdated'
             );
@@ -830,7 +830,7 @@ describe('BancorNetwork', () => {
         let externalProtectionVault: ExternalProtectionVault;
         let pendingWithdrawals: TestPendingWithdrawals;
         let poolTokenFactory: PoolTokenFactory;
-        let prevPoolCollection: PoolCollectionType1V10;
+        let prevPoolCollection: PoolCollectionType1V11;
         let poolMigrator: TestPoolMigrator;
         let newPoolCollection: PoolCollection;
 
@@ -861,7 +861,7 @@ describe('BancorNetwork', () => {
 
             reserveTokenAddresses = [];
 
-            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V10.deploy(
+            prevPoolCollection = await LegacyContractsV3.PoolCollectionType1V11.deploy(
                 network.address,
                 bnt.address,
                 networkSettings.address,
@@ -1478,30 +1478,15 @@ describe('BancorNetwork', () => {
             await expect(network.withdraw(12_345)).to.be.revertedWithError('AccessDenied');
         });
 
-        it('should revert when attempting to withdraw surplus tokens for non-whitelisted tokens', async () => {
-            await expect(network.withdrawPOL(ZERO_ADDRESS)).to.be.revertedWithError('NotWhitelisted');
+        it('should revert when attempting to withdraw surplus tokens for non-whitelisted tokens for POL', async () => {
+            await expect(network.withdrawPOL(ZERO_ADDRESS)).to.be.revertedWithError('NotWhitelistedForPOL');
         });
 
         it('should revert when attempting to withdraw surplus tokens for invalid pools', async () => {
             const tokenData = new TokenData(TokenSymbol.TKN);
             const token = await createToken(tokenData);
-            await networkSettings.addTokenToWhitelist(token.address);
+            await networkSettings.addTokenToWhitelistForPOL(token.address);
             await expect(network.withdrawPOL(token.address)).to.be.revertedWithError('InvalidToken');
-        });
-
-        it('should revert when attempting to withdraw surplus tokens for pools with enabled trading', async () => {
-            // set up token and pool
-            const tokenData = new TokenData(TokenSymbol.TKN);
-            const token = await createToken(tokenData);
-            await createPool(token, network, networkSettings, poolCollection);
-
-            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-            await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
-
-            // enable trading
-            await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
-            // expect revert
-            await expect(network.withdrawPOL(token.address)).to.be.revertedWithError('TradingEnabled');
         });
 
         it('should revert when attempting to withdraw surplus tokens for pools which are not in surplus', async () => {
@@ -1512,6 +1497,7 @@ describe('BancorNetwork', () => {
 
             await networkSettings.setFundingLimit(token.address, MAX_UINT256);
             await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+            await networkSettings.addTokenToWhitelistForPOL(token.address);
 
             const tokenWrapper = await Contracts.ERC20.attach(token.address);
             const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
@@ -1524,39 +1510,188 @@ describe('BancorNetwork', () => {
             await expect(network.withdrawPOL(token.address)).to.be.revertedWithError('PoolNotInSurplus');
         });
 
-        it('should be able to withdraw surplus tokens', async () => {
-            // test TKN and ETH
-            const tokenData = new TokenData(TokenSymbol.TKN);
-            const ethData = new TokenData(TokenSymbol.ETH);
-            const tokens = [tokenData, ethData];
-            for (const tokenData of tokens) {
-                // set up token and pool
-                const token = await createToken(tokenData);
-                await createPool(token, network, networkSettings, poolCollection);
+        for (const disableTrading of [true, false]) {
+            context(`when trading is ${disableTrading ? 'not yet' : 'already'} disabled`, () => {
+                it('should be able to withdraw surplus tokens', async () => {
+                    // test TKN and ETH
+                    const tokenData = new TokenData(TokenSymbol.TKN);
+                    const ethData = new TokenData(TokenSymbol.ETH);
+                    const tokens = [tokenData, ethData];
+                    for (const tokenData of tokens) {
+                        // set up token and pool
+                        const token = await createToken(tokenData);
+                        await createPool(token, network, networkSettings, poolCollection);
 
-                await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-                await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                        await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                        await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                        await networkSettings.addTokenToWhitelistForPOL(token.address);
 
-                await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
-                const tokenWrapper = await Contracts.ERC20.attach(token.address);
+                        await poolCollection.enableTrading(
+                            token.address,
+                            BNT_VIRTUAL_BALANCE,
+                            BASE_TOKEN_VIRTUAL_BALANCE
+                        );
+                        const tokenWrapper = await Contracts.ERC20.attach(token.address);
 
-                const tradeAmount = toWei(100);
+                        const tradeAmount = toWei(100);
 
-                // approve tkn for trading
-                await tokenWrapper.approve(network.address, tradeAmount);
+                        // approve tkn for trading
+                        await tokenWrapper.approve(network.address, tradeAmount);
 
-                // trade tkn for bnt - to move the pool to surplus
-                if (token.address === NATIVE_TOKEN_ADDRESS) {
-                    await network.tradeBySourceAmount(
-                        token.address,
-                        bnt.address,
-                        tradeAmount,
-                        1,
-                        MAX_UINT256,
-                        ZERO_ADDRESS,
-                        { value: tradeAmount }
-                    );
-                } else {
+                        // trade tkn for bnt - to move the pool to surplus
+                        if (token.address === NATIVE_TOKEN_ADDRESS) {
+                            await network.tradeBySourceAmount(
+                                token.address,
+                                bnt.address,
+                                tradeAmount,
+                                1,
+                                MAX_UINT256,
+                                ZERO_ADDRESS,
+                                { value: tradeAmount }
+                            );
+                        } else {
+                            await network.tradeBySourceAmount(
+                                token.address,
+                                bnt.address,
+                                tradeAmount,
+                                1,
+                                MAX_UINT256,
+                                ZERO_ADDRESS
+                            );
+                        }
+
+                        if (disableTrading) {
+                            await poolCollection.disableTrading(token.address);
+                        }
+
+                        // get vault and staked balances before
+                        let vaultBalance = await getBalance(token, masterVault.address);
+                        let poolData = await poolCollection.poolLiquidity(token.address);
+                        let stakedBalance = poolData.stakedBalance;
+
+                        expect(vaultBalance).to.be.gt(stakedBalance);
+
+                        const surplusTokensBefore = vaultBalance.sub(stakedBalance);
+
+                        // get returned surplus tokens withdrawn
+                        const surplusTokensWithdrawn = await network.callStatic.withdrawPOL(token.address);
+
+                        // withdraw surplus tokens
+                        await network.withdrawPOL(token.address);
+
+                        if (!disableTrading) {
+                            // assert that trading has been disabled internally in `withdrawPOL`
+                            expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                        }
+
+                        // get vault and staked balances after
+                        vaultBalance = await getBalance(token, masterVault.address);
+                        poolData = await poolCollection.poolLiquidity(token.address);
+                        stakedBalance = poolData.stakedBalance;
+
+                        const surplusTokensAfter = vaultBalance.sub(stakedBalance);
+
+                        // assert entire token surplus gets withdrawn
+                        expect(surplusTokensBefore.sub(surplusTokensWithdrawn)).to.be.eq(surplusTokensAfter);
+                        expect(surplusTokensBefore).to.be.gt(surplusTokensAfter);
+                        expect(surplusTokensAfter).to.be.eq(0);
+                    }
+                });
+
+                it('should properly allocate carbon pol and reward amounts when withdrawing surplus tokens', async () => {
+                    // set up token and pool
+                    const tokenData = new TokenData(TokenSymbol.TKN);
+                    const token = await createToken(tokenData);
+                    await createPool(token, network, networkSettings, poolCollection);
+
+                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                    await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                    await networkSettings.addTokenToWhitelistForPOL(token.address);
+
+                    const tokenWrapper = await Contracts.ERC20.attach(token.address);
+
+                    const tradeAmounts = [100, toWei(1), toWei(100), toWei(1000)];
+                    for (const tradeAmount of tradeAmounts) {
+                        // approve tkn for trading
+                        await tokenWrapper.approve(network.address, tradeAmount);
+
+                        // enabled trading
+                        await poolCollection.enableTrading(
+                            token.address,
+                            BNT_VIRTUAL_BALANCE,
+                            BASE_TOKEN_VIRTUAL_BALANCE
+                        );
+
+                        // trade tkn for bnt - to move the pool to surplus
+                        await network.tradeBySourceAmount(
+                            token.address,
+                            bnt.address,
+                            tradeAmount,
+                            1,
+                            MAX_UINT256,
+                            ZERO_ADDRESS
+                        );
+
+                        if (disableTrading) {
+                            await poolCollection.disableTrading(token.address);
+                        }
+
+                        const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
+                        const poolData = await poolCollection.poolLiquidity(token.address);
+                        const stakedBalance = poolData.stakedBalance;
+
+                        // get surplus tokens
+                        const surplusTokens = vaultBalance.sub(stakedBalance);
+
+                        // get balances of carbon POL and caller before
+                        const carbonPOLBalanceBefore = await tokenWrapper.balanceOf(carbonPOL.address);
+                        const userBalanceBefore = await tokenWrapper.balanceOf(deployer.address);
+
+                        // calculate expected user reward and carbon POL tokens received
+                        const polRewardsPPM = await network.polRewardsPPM();
+                        const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
+                        const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
+
+                        // withdraw surplus tokens
+                        await network.withdrawPOL(token.address);
+
+                        if (!disableTrading) {
+                            // assert that trading has been disabled internally in `withdrawPOL`
+                            expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                        }
+
+                        // get balances of carbon POL and caller after
+                        const carbonPOLBalanceAfter = await tokenWrapper.balanceOf(carbonPOL.address);
+                        const userBalanceAfter = await tokenWrapper.balanceOf(deployer.address);
+
+                        const carbonPOLBalanceGain = carbonPOLBalanceAfter.sub(carbonPOLBalanceBefore);
+                        const userBalanceGain = userBalanceAfter.sub(userBalanceBefore);
+
+                        // assert tokens sent to carbon pol and user are equal to the expected values
+                        expect(carbonPOLBalanceGain).to.be.eq(expectedCarbonPOLTokenGain);
+                        expect(userBalanceGain).to.be.eq(expectedUserReward);
+                    }
+                });
+
+                it('withdrawing surplus tokens should withdraw tokens from vault', async () => {
+                    // set up token and pool
+                    const tokenData = new TokenData(TokenSymbol.TKN);
+                    const token = await createToken(tokenData);
+                    await createPool(token, network, networkSettings, poolCollection);
+
+                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                    await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                    await networkSettings.addTokenToWhitelistForPOL(token.address);
+
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
+                    const tokenWrapper = await Contracts.ERC20.attach(token.address);
+
+                    const tradeAmount = toWei(100);
+
+                    // approve tkn for trading
+                    await tokenWrapper.approve(network.address, tradeAmount);
+
+                    // trade tkn for bnt - to move the pool to surplus
                     await network.tradeBySourceAmount(
                         token.address,
                         bnt.address,
@@ -1565,187 +1700,92 @@ describe('BancorNetwork', () => {
                         MAX_UINT256,
                         ZERO_ADDRESS
                     );
-                }
 
-                // disable trading to be able to withdraw surplus tokens
-                await poolCollection.disableTrading(token.address);
+                    if (disableTrading) {
+                        await poolCollection.disableTrading(token.address);
+                    }
 
-                // get vault and staked balances before
-                let vaultBalance = await getBalance(token, masterVault.address);
-                let poolData = await poolCollection.poolLiquidity(token.address);
-                let stakedBalance = poolData.stakedBalance;
+                    const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
+                    const poolData = await poolCollection.poolLiquidity(token.address);
+                    const stakedBalance = poolData.stakedBalance;
 
-                expect(vaultBalance).to.be.gt(stakedBalance);
+                    // get surplus tokens
+                    const surplusTokens = vaultBalance.sub(stakedBalance);
 
-                const surplusTokensBefore = vaultBalance.sub(stakedBalance);
+                    // calculate expected user reward and carbon POL tokens received
+                    const polRewardsPPM = await network.polRewardsPPM();
+                    const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
+                    const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
 
-                // get returned surplus tokens withdrawn
-                const surplusTokensWithdrawn = await network.callStatic.withdrawPOL(token.address);
+                    // withdraw surplus tokens
+                    await expect(network.withdrawPOL(token.address))
+                        .to.emit(masterVault, 'FundsWithdrawn')
+                        .withArgs(token.address, network.address, carbonPOL.address, expectedCarbonPOLTokenGain)
+                        .to.emit(masterVault, 'FundsWithdrawn')
+                        .withArgs(token.address, network.address, deployer.address, expectedUserReward);
 
-                // withdraw surplus tokens
-                await network.withdrawPOL(token.address);
+                    if (!disableTrading) {
+                        // assert that trading has been disabled internally in `withdrawPOL`
+                        expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                    }
+                });
 
-                // get vault and staked balances after
-                vaultBalance = await getBalance(token, masterVault.address);
-                poolData = await poolCollection.poolLiquidity(token.address);
-                stakedBalance = poolData.stakedBalance;
+                it('withdrawing surplus tokens should emit an event', async () => {
+                    // set up token and pool
+                    const tokenData = new TokenData(TokenSymbol.TKN);
+                    const token = await createToken(tokenData);
+                    await createPool(token, network, networkSettings, poolCollection);
 
-                const surplusTokensAfter = vaultBalance.sub(stakedBalance);
+                    await networkSettings.setFundingLimit(token.address, MAX_UINT256);
+                    await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                    await networkSettings.addTokenToWhitelistForPOL(token.address);
 
-                // assert entire token surplus gets withdrawn
-                expect(surplusTokensBefore.sub(surplusTokensWithdrawn)).to.be.eq(surplusTokensAfter);
-                expect(surplusTokensBefore).to.be.gt(surplusTokensAfter);
-                expect(surplusTokensAfter).to.be.eq(0);
-            }
-        });
+                    await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
+                    const tokenWrapper = await Contracts.ERC20.attach(token.address);
 
-        it('should properly allocate carbon pol and reward amounts when withdrawing surplus tokens', async () => {
-            // set up token and pool
-            const tokenData = new TokenData(TokenSymbol.TKN);
-            const token = await createToken(tokenData);
-            await createPool(token, network, networkSettings, poolCollection);
+                    const tradeAmount = toWei(100);
 
-            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-            await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
+                    // approve tkn for trading
+                    await tokenWrapper.approve(network.address, tradeAmount);
 
-            const tokenWrapper = await Contracts.ERC20.attach(token.address);
+                    // trade tkn for bnt - to move the pool to surplus
+                    await network.tradeBySourceAmount(
+                        token.address,
+                        bnt.address,
+                        tradeAmount,
+                        1,
+                        MAX_UINT256,
+                        ZERO_ADDRESS
+                    );
 
-            const tradeAmounts = [100, toWei(1), toWei(100), toWei(1000)];
-            for (const tradeAmount of tradeAmounts) {
-                // approve tkn for trading
-                await tokenWrapper.approve(network.address, tradeAmount);
+                    if (disableTrading) {
+                        await poolCollection.disableTrading(token.address);
+                    }
 
-                // enabled trading
-                await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
+                    const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
+                    const poolData = await poolCollection.poolLiquidity(token.address);
+                    const stakedBalance = poolData.stakedBalance;
 
-                // trade tkn for bnt - to move the pool to surplus
-                await network.tradeBySourceAmount(
-                    token.address,
-                    bnt.address,
-                    tradeAmount,
-                    1,
-                    MAX_UINT256,
-                    ZERO_ADDRESS
-                );
+                    // get surplus tokens
+                    const surplusTokens = vaultBalance.sub(stakedBalance);
 
-                // disable trading to be able to withdraw surplus tokens
-                await poolCollection.disableTrading(token.address);
+                    // calculate expected user reward and carbon POL tokens received
+                    const polRewardsPPM = await network.polRewardsPPM();
+                    const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
+                    const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
 
-                const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
-                const poolData = await poolCollection.poolLiquidity(token.address);
-                const stakedBalance = poolData.stakedBalance;
+                    // withdraw surplus tokens
+                    await expect(network.withdrawPOL(token.address))
+                        .to.emit(network, 'POLWithdrawn')
+                        .withArgs(deployer.address, token.address, expectedCarbonPOLTokenGain, expectedUserReward);
 
-                // get surplus tokens
-                const surplusTokens = vaultBalance.sub(stakedBalance);
-
-                // get balances of carbon POL and caller before
-                const carbonPOLBalanceBefore = await tokenWrapper.balanceOf(carbonPOL.address);
-                const userBalanceBefore = await tokenWrapper.balanceOf(deployer.address);
-
-                // calculate expected user reward and carbon POL tokens received
-                const polRewardsPPM = await network.polRewardsPPM();
-                const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
-                const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
-
-                // withdraw surplus tokens
-                await network.withdrawPOL(token.address);
-
-                // get balances of carbon POL and caller after
-                const carbonPOLBalanceAfter = await tokenWrapper.balanceOf(carbonPOL.address);
-                const userBalanceAfter = await tokenWrapper.balanceOf(deployer.address);
-
-                const carbonPOLBalanceGain = carbonPOLBalanceAfter.sub(carbonPOLBalanceBefore);
-                const userBalanceGain = userBalanceAfter.sub(userBalanceBefore);
-
-                // assert tokens sent to carbon pol and user are equal to the expected values
-                expect(carbonPOLBalanceGain).to.be.eq(expectedCarbonPOLTokenGain);
-                expect(userBalanceGain).to.be.eq(expectedUserReward);
-            }
-        });
-
-        it('withdrawing surplus tokens should withdraw tokens from vault', async () => {
-            // set up token and pool
-            const tokenData = new TokenData(TokenSymbol.TKN);
-            const token = await createToken(tokenData);
-            await createPool(token, network, networkSettings, poolCollection);
-
-            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-            await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
-
-            await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
-            const tokenWrapper = await Contracts.ERC20.attach(token.address);
-
-            const tradeAmount = toWei(100);
-
-            // approve tkn for trading
-            await tokenWrapper.approve(network.address, tradeAmount);
-
-            // trade tkn for bnt - to move the pool to surplus
-            await network.tradeBySourceAmount(token.address, bnt.address, tradeAmount, 1, MAX_UINT256, ZERO_ADDRESS);
-
-            // disable trading to be able to withdraw surplus tokens
-            await poolCollection.disableTrading(token.address);
-
-            const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
-            const poolData = await poolCollection.poolLiquidity(token.address);
-            const stakedBalance = poolData.stakedBalance;
-
-            // get surplus tokens
-            const surplusTokens = vaultBalance.sub(stakedBalance);
-
-            // calculate expected user reward and carbon POL tokens received
-            const polRewardsPPM = await network.polRewardsPPM();
-            const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
-            const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
-
-            // withdraw surplus tokens
-            await expect(network.withdrawPOL(token.address))
-                .to.emit(masterVault, 'FundsWithdrawn')
-                .withArgs(token.address, network.address, carbonPOL.address, expectedCarbonPOLTokenGain)
-                .to.emit(masterVault, 'FundsWithdrawn')
-                .withArgs(token.address, network.address, deployer.address, expectedUserReward);
-        });
-
-        it('withdrawing surplus tokens should emit an event', async () => {
-            // set up token and pool
-            const tokenData = new TokenData(TokenSymbol.TKN);
-            const token = await createToken(tokenData);
-            await createPool(token, network, networkSettings, poolCollection);
-
-            await networkSettings.setFundingLimit(token.address, MAX_UINT256);
-            await depositToPool(emergencyStopper, token, INITIAL_LIQUIDITY, network);
-
-            await poolCollection.enableTrading(token.address, BNT_VIRTUAL_BALANCE, BASE_TOKEN_VIRTUAL_BALANCE);
-            const tokenWrapper = await Contracts.ERC20.attach(token.address);
-
-            const tradeAmount = toWei(100);
-
-            // approve tkn for trading
-            await tokenWrapper.approve(network.address, tradeAmount);
-
-            // trade tkn for bnt - to move the pool to surplus
-            await network.tradeBySourceAmount(token.address, bnt.address, tradeAmount, 1, MAX_UINT256, ZERO_ADDRESS);
-
-            // disable trading to be able to withdraw surplus tokens
-            await poolCollection.disableTrading(token.address);
-
-            const vaultBalance = await tokenWrapper.balanceOf(masterVault.address);
-            const poolData = await poolCollection.poolLiquidity(token.address);
-            const stakedBalance = poolData.stakedBalance;
-
-            // get surplus tokens
-            const surplusTokens = vaultBalance.sub(stakedBalance);
-
-            // calculate expected user reward and carbon POL tokens received
-            const polRewardsPPM = await network.polRewardsPPM();
-            const expectedUserReward = surplusTokens.mul(polRewardsPPM).div(PPM_RESOLUTION);
-            const expectedCarbonPOLTokenGain = surplusTokens.sub(expectedUserReward);
-
-            // withdraw surplus tokens
-            await expect(network.withdrawPOL(token.address))
-                .to.emit(network, 'POLWithdrawn')
-                .withArgs(deployer.address, token.address, expectedCarbonPOLTokenGain, expectedUserReward);
-        });
+                    if (!disableTrading) {
+                        // assert that trading has been disabled internally in `withdrawPOL`
+                        expect(await poolCollection.tradingEnabled(token.address)).to.be.false;
+                    }
+                });
+            });
+        }
 
         interface Request {
             id: BigNumber;

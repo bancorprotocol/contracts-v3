@@ -54,8 +54,11 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
     // a mapping between pools and their flash-loan fees
     mapping(Token => FlashLoanFee) private _flashLoanFees;
 
+    // a set of tokens which are eligible for POL
+    EnumerableSetUpgradeable.AddressSet private _tokenWhitelistForPOL;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 8] private __gap;
+    uint256[MAX_GAP - 10] private __gap;
 
     /**
      * @dev triggered when a token is added to the protection whitelist
@@ -66,6 +69,16 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @dev triggered when a token is removed from the protection whitelist
      */
     event TokenRemovedFromWhitelist(Token indexed token);
+
+    /**
+     * @dev triggered when a token is added to the whitelist for POL
+     */
+    event TokenAddedToWhitelistForPOL(Token indexed token);
+
+    /**
+     * @dev triggered when a token is removed from the whitelist for POL
+     */
+    event TokenRemovedFromWhitelistForPOL(Token indexed token);
 
     /**
      * @dev triggered when a per-pool funding limit is updated
@@ -137,7 +150,7 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 3;
+        return 4;
     }
 
     /**
@@ -209,6 +222,77 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      */
     function isTokenWhitelisted(Token token) external view returns (bool) {
         return _isTokenWhitelisted(token);
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function tokenWhitelistForPOL() external view returns (Token[] memory) {
+        uint256 length = _tokenWhitelistForPOL.length();
+        Token[] memory list = new Token[](length);
+        for (uint256 i = 0; i < length; i++) {
+            list[i] = Token(_tokenWhitelistForPOL.at(i));
+        }
+        return list;
+    }
+
+    /**
+     * @dev adds a token to the tokens whitelist for POL
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addTokenToWhitelistForPOL(Token token) external onlyAdmin {
+        _addTokenToWhitelistForPOL(token);
+    }
+
+    /**
+     * @dev adds tokens to the tokens whitelist for POL
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addTokensToWhitelistForPOL(Token[] calldata tokens) external onlyAdmin {
+        uint256 length = tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            _addTokenToWhitelistForPOL(tokens[i]);
+        }
+    }
+
+    /**
+     * @dev adds a token to the tokens whitelist for POL
+     */
+    function _addTokenToWhitelistForPOL(Token token) private validExternalAddress(address(token)) {
+        if (!_tokenWhitelistForPOL.add(address(token))) {
+            revert AlreadyExists();
+        }
+
+        emit TokenAddedToWhitelistForPOL({ token: token });
+    }
+
+    /**
+     * @dev removes a token from the tokens whitelist for POL
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function removeTokenFromWhitelistForPOL(Token token) external onlyAdmin {
+        if (!_tokenWhitelistForPOL.remove(address(token))) {
+            revert DoesNotExist();
+        }
+
+        emit TokenRemovedFromWhitelistForPOL({ token: token });
+    }
+
+    /**
+     * @inheritdoc INetworkSettings
+     */
+    function isTokenWhitelistedForPOL(Token token) external view returns (bool) {
+        return _isTokenWhitelistedForPOL(token);
     }
 
     /**
@@ -424,6 +508,13 @@ contract NetworkSettings is INetworkSettings, Upgradeable, Utils {
      */
     function _isTokenWhitelisted(Token token) private view returns (bool) {
         return _protectedTokenWhitelist.contains(address(token));
+    }
+
+    /**
+     * @dev checks whether a given token is whitelisted for POL
+     */
+    function _isTokenWhitelistedForPOL(Token token) private view returns (bool) {
+        return _tokenWhitelistForPOL.contains(address(token));
     }
 
     /**

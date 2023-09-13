@@ -6,6 +6,7 @@ import { IUpgradeable } from "../../utility/interfaces/IUpgradeable.sol";
 import { Token } from "../../token/Token.sol";
 
 error NotWhitelisted();
+error NotWhitelistedForPOL();
 
 struct VortexRewards {
     // the percentage of converted BNT to be sent to the initiator of the burning event (in units of PPM)
@@ -27,6 +28,16 @@ interface INetworkSettings is IUpgradeable {
      * @dev checks whether a given token is whitelisted
      */
     function isTokenWhitelisted(Token pool) external view returns (bool);
+
+    /**
+     * @dev returns the tokens whitelist for POL
+     */
+    function tokenWhitelistForPOL() external view returns (Token[] memory);
+
+    /**
+     * @dev checks whether a given token is whitelist for POL
+     */
+    function isTokenWhitelistedForPOL(Token pool) external view returns (bool);
 
     /**
      * @dev returns the BNT funding limit for a given pool

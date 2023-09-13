@@ -40,6 +40,7 @@ uint8 constant TRADING_STATUS_UPDATE_DEFAULT = 0;
 uint8 constant TRADING_STATUS_UPDATE_ADMIN = 1;
 uint8 constant TRADING_STATUS_UPDATE_MIN_LIQUIDITY = 2;
 uint8 constant TRADING_STATUS_UPDATE_INVALID_STATE = 3;
+uint8 constant TRADING_STATUS_UPDATE_NETWORK_DISABLE = 4;
 
 struct TradeAmountAndFee {
     uint256 amount; // the source/target amount (depending on the context) resulting from the trade
@@ -255,4 +256,13 @@ interface IPoolCollection is IVersioned {
      * - the caller must be the pool migrator contract
      */
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;
+
+    /**
+     * @dev disables trading on a pool
+     *
+     * requirements:
+     *
+     * - the caller must be the network contract
+     */
+    function disableTradingByNetwork(Token pool) external;
 }
