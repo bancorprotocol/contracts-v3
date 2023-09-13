@@ -59,6 +59,11 @@ const SushiSwapNamedAccounts = {
     sushiSwapFactory: { ...mainnet('0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac') }
 };
 
+const BancorNamedAccounts = {
+    bancorArbitrageAddress: { ...mainnet('0x41Eeba3355d7D6FF628B7982F3F9D055c39488cB') },
+    carbonPOLAddress: { ...mainnet('0xD06146D292F9651C1D7cf54A3162791DFc2bEf46') }
+};
+
 export const NamedAccounts = {
     deployer: {
         ...mainnet('ledger://0x5bEBA4D3533a963Dedb270a95ae5f7752fA0Fe22'),
@@ -73,5 +78,6 @@ export const NamedAccounts = {
     ...TokenNamedAccounts,
     ...TestNamedAccounts,
     ...UniswapNamedAccounts,
-    ...SushiSwapNamedAccounts
+    ...SushiSwapNamedAccounts,
+    ...BancorNamedAccounts
 };

@@ -1,6 +1,6 @@
 import { AsyncReturnType } from '../../components/ContractBuilder';
 import { BancorNetwork, PoolCollection } from '../../components/Contracts';
-import { PoolCollectionType1V10 } from '../../components/LegacyContractsV3';
+import { PoolCollectionType1V11 } from '../../components/LegacyContractsV3';
 import { describeDeployment } from '../../test/helpers/Deploy';
 import { DEFAULT_TRADING_FEE_PPM, PoolType } from '../../utils/Constants';
 import { DeployedContracts } from '../../utils/Deploy';
@@ -8,14 +8,14 @@ import { expect } from 'chai';
 
 interface State {
     pools: string[];
-    data: Record<string, AsyncReturnType<PoolCollectionType1V10['poolData']>>;
+    data: Record<string, AsyncReturnType<PoolCollectionType1V11['poolData']>>;
 }
 
 const prevState: State = { pools: [], data: {} };
 
 const savePreviousPoolData = async () => {
     const network = await DeployedContracts.BancorNetwork.deployed();
-    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V10.deployed();
+    const prevPoolCollection = await DeployedContracts.PoolCollectionType1V11.deployed();
 
     prevState.pools = await network.liquidityPools();
 
@@ -28,22 +28,21 @@ describeDeployment(
     __filename,
     () => {
         let network: BancorNetwork;
-        let prevPoolCollection: PoolCollectionType1V10;
+        let prevPoolCollection: PoolCollectionType1V11;
         let newPoolCollection: PoolCollection;
 
         beforeEach(async () => {
             network = await DeployedContracts.BancorNetwork.deployed();
-            prevPoolCollection = await DeployedContracts.PoolCollectionType1V10.deployed();
-            newPoolCollection = await DeployedContracts.PoolCollectionType1V11.deployed();
+            prevPoolCollection = await DeployedContracts.PoolCollectionType1V11.deployed();
+            newPoolCollection = await DeployedContracts.PoolCollectionType1V12.deployed();
         });
 
         it('should deploy and migrate the new pool migration and pool collection contracts', async () => {
-            expect(await newPoolCollection.version()).to.equal(11);
+            expect(await newPoolCollection.version()).to.equal(12);
 
             expect(await newPoolCollection.poolType()).to.equal(PoolType.Standard);
             expect(await newPoolCollection.defaultTradingFeePPM()).to.equal(DEFAULT_TRADING_FEE_PPM);
-            expect(await newPoolCollection.networkFeePPM()).to.equal(900_000);
-            expect(await newPoolCollection.protectionEnabled()).to.equal(await prevPoolCollection.protectionEnabled());
+            expect(await newPoolCollection.networkFeePPM()).to.equal(await prevPoolCollection.networkFeePPM());
 
             expect(await network.poolCollections()).to.deep.equal([newPoolCollection.address]);
 

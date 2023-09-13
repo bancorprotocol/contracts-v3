@@ -58,5 +58,8 @@
   "000057-upgrade-v2-liquidity-protection-v5": 1669191829,
   "000058-bancor-arbitrage": 1677763108,
   "000059-bancor-arbitrage-upgrade": 1678818388,
-  "000060-bancor-network-pool-collection-type1-v11-upgrade": 1678818774
+  "000060-bancor-network-pool-collection-type1-v11-upgrade": 1678818774,
+  "000061-upgrade-network-settings-v4": 1694606550,
+  "000062-pool-collection-type1-v12": 1694606727,
+  "000063-upgrade-network-v9": 1694606812
 }

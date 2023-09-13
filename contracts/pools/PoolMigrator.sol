@@ -10,7 +10,7 @@ import { IPoolMigrator } from "./interfaces/IPoolMigrator.sol";
 import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { Upgradeable } from "../utility/Upgradeable.sol";
 import { Token } from "../token/Token.sol";
-import { Utils, AlreadyExists, InvalidPool, InvalidPoolCollection } from "../utility/Utils.sol";
+import { Utils, AlreadyExists, InvalidPool } from "../utility/Utils.sol";
 
 interface IPoolCollectionBase {
     function migratePoolOut(Token pool, IPoolCollection targetPoolCollection) external;

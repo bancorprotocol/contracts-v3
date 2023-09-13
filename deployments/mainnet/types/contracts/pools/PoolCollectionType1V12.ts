@@ -8,7 +8,6 @@ import type {
   TypedEvent,
   TypedListener,
   OnEvent,
-  PromiseOrValue,
 } from "../../common";
 import type {
   FunctionFragment,
@@ -29,10 +28,7 @@ import type {
   utils,
 } from "ethers";
 
-export type Fraction112Struct = {
-  n: PromiseOrValue<BigNumberish>;
-  d: PromiseOrValue<BigNumberish>;
-};
+export type Fraction112Struct = { n: BigNumberish; d: BigNumberish };
 
 export type Fraction112StructOutput = [BigNumber, BigNumber] & {
   n: BigNumber;
@@ -40,7 +36,7 @@ export type Fraction112StructOutput = [BigNumber, BigNumber] & {
 };
 
 export type AverageRatesStruct = {
-  blockNumber: PromiseOrValue<BigNumberish>;
+  blockNumber: BigNumberish;
   rate: Fraction112Struct;
   invRate: Fraction112Struct;
 };
@@ -56,9 +52,9 @@ export type AverageRatesStructOutput = [
 };
 
 export type PoolLiquidityStruct = {
-  bntTradingLiquidity: PromiseOrValue<BigNumberish>;
-  baseTokenTradingLiquidity: PromiseOrValue<BigNumberish>;
-  stakedBalance: PromiseOrValue<BigNumberish>;
+  bntTradingLiquidity: BigNumberish;
+  baseTokenTradingLiquidity: BigNumberish;
+  stakedBalance: BigNumberish;
 };
 
 export type PoolLiquidityStructOutput = [BigNumber, BigNumber, BigNumber] & {
@@ -68,10 +64,10 @@ export type PoolLiquidityStructOutput = [BigNumber, BigNumber, BigNumber] & {
 };
 
 export type PoolStruct = {
-  poolToken: PromiseOrValue<string>;
-  tradingFeePPM: PromiseOrValue<BigNumberish>;
-  tradingEnabled: PromiseOrValue<boolean>;
-  depositingEnabled: PromiseOrValue<boolean>;
+  poolToken: string;
+  tradingFeePPM: BigNumberish;
+  tradingEnabled: boolean;
+  depositingEnabled: boolean;
   averageRates: AverageRatesStruct;
   liquidity: PoolLiquidityStruct;
 };
@@ -93,9 +89,9 @@ export type PoolStructOutput = [
 };
 
 export type TradeAmountAndFeeStruct = {
-  amount: PromiseOrValue<BigNumberish>;
-  tradingFeeAmount: PromiseOrValue<BigNumberish>;
-  networkFeeAmount: PromiseOrValue<BigNumberish>;
+  amount: BigNumberish;
+  tradingFeeAmount: BigNumberish;
+  networkFeeAmount: BigNumberish;
 };
 
 export type TradeAmountAndFeeStructOutput = [
@@ -109,9 +105,9 @@ export type TradeAmountAndFeeStructOutput = [
 };
 
 export type WithdrawalAmountsStruct = {
-  totalAmount: PromiseOrValue<BigNumberish>;
-  baseTokenAmount: PromiseOrValue<BigNumberish>;
-  bntAmount: PromiseOrValue<BigNumberish>;
+  totalAmount: BigNumberish;
+  baseTokenAmount: BigNumberish;
+  bntAmount: BigNumberish;
 };
 
 export type WithdrawalAmountsStructOutput = [
@@ -132,8 +128,8 @@ export interface PoolCollectionInterface extends utils.Interface {
     "depositFor(bytes32,address,address,uint256)": FunctionFragment;
     "depositingEnabled(address)": FunctionFragment;
     "disableTrading(address)": FunctionFragment;
+    "disableTradingByNetwork(address)": FunctionFragment;
     "enableDepositing(address,bool)": FunctionFragment;
-    "enableProtection(bool)": FunctionFragment;
     "enableTrading(address,uint256,uint256)": FunctionFragment;
     "isPoolStable(address)": FunctionFragment;
     "isPoolValid(address)": FunctionFragment;
@@ -151,12 +147,11 @@ export interface PoolCollectionInterface extends utils.Interface {
     "poolTokenToUnderlying(address,uint256)": FunctionFragment;
     "poolType()": FunctionFragment;
     "pools()": FunctionFragment;
-    "protectionEnabled()": FunctionFragment;
     "setDefaultTradingFeePPM(uint32)": FunctionFragment;
     "setNetworkFeePPM(uint32)": FunctionFragment;
     "setTradingFeePPM(address,uint32)": FunctionFragment;
-    "tradeBySourceAmount(bytes32,address,address,uint256,uint256)": FunctionFragment;
-    "tradeByTargetAmount(bytes32,address,address,uint256,uint256)": FunctionFragment;
+    "tradeBySourceAmount(bytes32,address,address,uint256,uint256,bool)": FunctionFragment;
+    "tradeByTargetAmount(bytes32,address,address,uint256,uint256,bool)": FunctionFragment;
     "tradeInputAndFeeByTargetAmount(address,address,uint256)": FunctionFragment;
     "tradeOutputAndFeeBySourceAmount(address,address,uint256)": FunctionFragment;
     "tradingEnabled(address)": FunctionFragment;
@@ -177,8 +172,8 @@ export interface PoolCollectionInterface extends utils.Interface {
       | "depositFor"
       | "depositingEnabled"
       | "disableTrading"
+      | "disableTradingByNetwork"
       | "enableDepositing"
-      | "enableProtection"
       | "enableTrading"
       | "isPoolStable"
       | "isPoolValid"
@@ -196,7 +191,6 @@ export interface PoolCollectionInterface extends utils.Interface {
       | "poolTokenToUnderlying"
       | "poolType"
       | "pools"
-      | "protectionEnabled"
       | "setDefaultTradingFeePPM"
       | "setNetworkFeePPM"
       | "setTradingFeePPM"
@@ -218,62 +212,47 @@ export interface PoolCollectionInterface extends utils.Interface {
     functionFragment: "acceptOwnership",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "createPool",
-    values: [PromiseOrValue<string>]
-  ): string;
+  encodeFunctionData(functionFragment: "createPool", values: [string]): string;
   encodeFunctionData(
     functionFragment: "defaultTradingFeePPM",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "depositFor",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "depositingEnabled",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "disableTrading",
-    values: [PromiseOrValue<string>]
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "disableTradingByNetwork",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "enableDepositing",
-    values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "enableProtection",
-    values: [PromiseOrValue<boolean>]
+    values: [string, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "enableTrading",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "isPoolStable",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "isPoolValid",
-    values: [PromiseOrValue<string>]
-  ): string;
+  encodeFunctionData(functionFragment: "isPoolValid", values: [string]): string;
   encodeFunctionData(
     functionFragment: "migratePoolIn",
-    values: [PromiseOrValue<string>, PoolStruct]
+    values: [string, PoolStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "migratePoolOut",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "networkFeePPM",
@@ -282,122 +261,82 @@ export interface PoolCollectionInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "newOwner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "onFeesCollected",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "poolCount", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "poolData",
-    values: [PromiseOrValue<string>]
-  ): string;
+  encodeFunctionData(functionFragment: "poolData", values: [string]): string;
   encodeFunctionData(
     functionFragment: "poolLiquidity",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "poolToken",
-    values: [PromiseOrValue<string>]
-  ): string;
+  encodeFunctionData(functionFragment: "poolToken", values: [string]): string;
   encodeFunctionData(
     functionFragment: "poolTokenAmountToBurn",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "poolTokenToUnderlying",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "poolType", values?: undefined): string;
   encodeFunctionData(functionFragment: "pools", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "protectionEnabled",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "setDefaultTradingFeePPM",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setNetworkFeePPM",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setTradingFeePPM",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "tradeBySourceAmount",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, string, string, BigNumberish, BigNumberish, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "tradeByTargetAmount",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, string, string, BigNumberish, BigNumberish, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "tradeInputAndFeeByTargetAmount",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "tradeOutputAndFeeBySourceAmount",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "tradingEnabled",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "tradingFeePPM",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "underlyingToPoolToken",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "updateTradingLiquidity",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
   encodeFunctionData(functionFragment: "version", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "withdraw",
-    values: [
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [BytesLike, string, string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawalAmounts",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [string, BigNumberish]
   ): string;
 
   decodeFunctionResult(
@@ -419,11 +358,11 @@ export interface PoolCollectionInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "enableDepositing",
+    functionFragment: "disableTradingByNetwork",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "enableProtection",
+    functionFragment: "enableDepositing",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -473,10 +412,6 @@ export interface PoolCollectionInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "poolType", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pools", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "protectionEnabled",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "setDefaultTradingFeePPM",
     data: BytesLike
@@ -729,72 +664,66 @@ export interface PoolCollection extends BaseContract {
 
   functions: {
     acceptOwnership(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     createPool(
-      token: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      token: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     defaultTradingFeePPM(overrides?: CallOverrides): Promise<[number]>;
 
     depositFor(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      baseTokenAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     depositingEnabled(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     disableTrading(
-      pool: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<ContractTransaction>;
+
+    disableTradingByNetwork(
+      pool: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     enableDepositing(
-      pool: PromiseOrValue<string>,
-      status: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    enableProtection(
-      status: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      status: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     enableTrading(
-      pool: PromiseOrValue<string>,
-      bntVirtualBalance: PromiseOrValue<BigNumberish>,
-      baseTokenVirtualBalance: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      bntVirtualBalance: BigNumberish,
+      baseTokenVirtualBalance: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    isPoolStable(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    isPoolStable(pool: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    isPoolValid(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    isPoolValid(pool: string, overrides?: CallOverrides): Promise<[boolean]>;
 
     migratePoolIn(
-      pool: PromiseOrValue<string>,
+      pool: string,
       data: PoolStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     migratePoolOut(
-      pool: PromiseOrValue<string>,
-      targetPoolCollection: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      targetPoolCollection: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     networkFeePPM(overrides?: CallOverrides): Promise<[number]>;
@@ -802,9 +731,9 @@ export interface PoolCollection extends BaseContract {
     newOwner(overrides?: CallOverrides): Promise<[string]>;
 
     onFeesCollected(
-      pool: PromiseOrValue<string>,
-      feeAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      feeAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
@@ -812,30 +741,27 @@ export interface PoolCollection extends BaseContract {
     poolCount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     poolData(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<[PoolStructOutput]>;
 
     poolLiquidity(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<[PoolLiquidityStructOutput]>;
 
-    poolToken(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+    poolToken(pool: string, overrides?: CallOverrides): Promise<[string]>;
 
     poolTokenAmountToBurn(
-      pool: PromiseOrValue<string>,
-      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
-      protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmountToDistribute: BigNumberish,
+      protocolPoolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
     poolTokenToUnderlying(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -843,167 +769,152 @@ export interface PoolCollection extends BaseContract {
 
     pools(overrides?: CallOverrides): Promise<[string[]]>;
 
-    protectionEnabled(overrides?: CallOverrides): Promise<[boolean]>;
-
     setDefaultTradingFeePPM(
-      newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      newDefaultTradingFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     setNetworkFeePPM(
-      newNetworkFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      newNetworkFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     setTradingFeePPM(
-      pool: PromiseOrValue<string>,
-      newTradingFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      newTradingFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     tradeBySourceAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
-      minReturnAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
+      minReturnAmount: BigNumberish,
+      ignoreFees: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     tradeByTargetAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
-      maxSourceAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
+      maxSourceAmount: BigNumberish,
+      ignoreFees: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     tradeInputAndFeeByTargetAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[TradeAmountAndFeeStructOutput]>;
 
     tradeOutputAndFeeBySourceAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[TradeAmountAndFeeStructOutput]>;
 
-    tradingEnabled(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    tradingEnabled(pool: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    tradingFeePPM(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[number]>;
+    tradingFeePPM(pool: string, overrides?: CallOverrides): Promise<[number]>;
 
     transferOwnership(
-      ownerCandidate: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      ownerCandidate: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     underlyingToPoolToken(
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
     updateTradingLiquidity(
-      pool: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     version(overrides?: CallOverrides): Promise<[number]>;
 
     withdraw(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      poolTokenAmount: BigNumberish,
+      baseTokenAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     withdrawalAmounts(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[WithdrawalAmountsStructOutput]>;
   };
 
   acceptOwnership(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   createPool(
-    token: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    token: string,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   defaultTradingFeePPM(overrides?: CallOverrides): Promise<number>;
 
   depositFor(
-    contextId: PromiseOrValue<BytesLike>,
-    provider: PromiseOrValue<string>,
-    pool: PromiseOrValue<string>,
-    baseTokenAmount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    contextId: BytesLike,
+    provider: string,
+    pool: string,
+    baseTokenAmount: BigNumberish,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  depositingEnabled(
-    pool: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  depositingEnabled(pool: string, overrides?: CallOverrides): Promise<boolean>;
 
   disableTrading(
-    pool: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    pool: string,
+    overrides?: Overrides & { from?: string }
+  ): Promise<ContractTransaction>;
+
+  disableTradingByNetwork(
+    pool: string,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   enableDepositing(
-    pool: PromiseOrValue<string>,
-    status: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  enableProtection(
-    status: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    pool: string,
+    status: boolean,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   enableTrading(
-    pool: PromiseOrValue<string>,
-    bntVirtualBalance: PromiseOrValue<BigNumberish>,
-    baseTokenVirtualBalance: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    pool: string,
+    bntVirtualBalance: BigNumberish,
+    baseTokenVirtualBalance: BigNumberish,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  isPoolStable(
-    pool: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  isPoolStable(pool: string, overrides?: CallOverrides): Promise<boolean>;
 
-  isPoolValid(
-    pool: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  isPoolValid(pool: string, overrides?: CallOverrides): Promise<boolean>;
 
   migratePoolIn(
-    pool: PromiseOrValue<string>,
+    pool: string,
     data: PoolStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   migratePoolOut(
-    pool: PromiseOrValue<string>,
-    targetPoolCollection: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    pool: string,
+    targetPoolCollection: string,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   networkFeePPM(overrides?: CallOverrides): Promise<number>;
@@ -1011,40 +922,34 @@ export interface PoolCollection extends BaseContract {
   newOwner(overrides?: CallOverrides): Promise<string>;
 
   onFeesCollected(
-    pool: PromiseOrValue<string>,
-    feeAmount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    pool: string,
+    feeAmount: BigNumberish,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
   poolCount(overrides?: CallOverrides): Promise<BigNumber>;
 
-  poolData(
-    pool: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<PoolStructOutput>;
+  poolData(pool: string, overrides?: CallOverrides): Promise<PoolStructOutput>;
 
   poolLiquidity(
-    pool: PromiseOrValue<string>,
+    pool: string,
     overrides?: CallOverrides
   ): Promise<PoolLiquidityStructOutput>;
 
-  poolToken(
-    pool: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string>;
+  poolToken(pool: string, overrides?: CallOverrides): Promise<string>;
 
   poolTokenAmountToBurn(
-    pool: PromiseOrValue<string>,
-    baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
-    protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
+    pool: string,
+    baseTokenAmountToDistribute: BigNumberish,
+    protocolPoolTokenAmount: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
   poolTokenToUnderlying(
-    pool: PromiseOrValue<string>,
-    poolTokenAmount: PromiseOrValue<BigNumberish>,
+    pool: string,
+    poolTokenAmount: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -1052,164 +957,146 @@ export interface PoolCollection extends BaseContract {
 
   pools(overrides?: CallOverrides): Promise<string[]>;
 
-  protectionEnabled(overrides?: CallOverrides): Promise<boolean>;
-
   setDefaultTradingFeePPM(
-    newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    newDefaultTradingFeePPM: BigNumberish,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   setNetworkFeePPM(
-    newNetworkFeePPM: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    newNetworkFeePPM: BigNumberish,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   setTradingFeePPM(
-    pool: PromiseOrValue<string>,
-    newTradingFeePPM: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    pool: string,
+    newTradingFeePPM: BigNumberish,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   tradeBySourceAmount(
-    contextId: PromiseOrValue<BytesLike>,
-    sourceToken: PromiseOrValue<string>,
-    targetToken: PromiseOrValue<string>,
-    sourceAmount: PromiseOrValue<BigNumberish>,
-    minReturnAmount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    contextId: BytesLike,
+    sourceToken: string,
+    targetToken: string,
+    sourceAmount: BigNumberish,
+    minReturnAmount: BigNumberish,
+    ignoreFees: boolean,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   tradeByTargetAmount(
-    contextId: PromiseOrValue<BytesLike>,
-    sourceToken: PromiseOrValue<string>,
-    targetToken: PromiseOrValue<string>,
-    targetAmount: PromiseOrValue<BigNumberish>,
-    maxSourceAmount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    contextId: BytesLike,
+    sourceToken: string,
+    targetToken: string,
+    targetAmount: BigNumberish,
+    maxSourceAmount: BigNumberish,
+    ignoreFees: boolean,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   tradeInputAndFeeByTargetAmount(
-    sourceToken: PromiseOrValue<string>,
-    targetToken: PromiseOrValue<string>,
-    targetAmount: PromiseOrValue<BigNumberish>,
+    sourceToken: string,
+    targetToken: string,
+    targetAmount: BigNumberish,
     overrides?: CallOverrides
   ): Promise<TradeAmountAndFeeStructOutput>;
 
   tradeOutputAndFeeBySourceAmount(
-    sourceToken: PromiseOrValue<string>,
-    targetToken: PromiseOrValue<string>,
-    sourceAmount: PromiseOrValue<BigNumberish>,
+    sourceToken: string,
+    targetToken: string,
+    sourceAmount: BigNumberish,
     overrides?: CallOverrides
   ): Promise<TradeAmountAndFeeStructOutput>;
 
-  tradingEnabled(
-    pool: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  tradingEnabled(pool: string, overrides?: CallOverrides): Promise<boolean>;
 
-  tradingFeePPM(
-    pool: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<number>;
+  tradingFeePPM(pool: string, overrides?: CallOverrides): Promise<number>;
 
   transferOwnership(
-    ownerCandidate: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ownerCandidate: string,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   underlyingToPoolToken(
-    pool: PromiseOrValue<string>,
-    baseTokenAmount: PromiseOrValue<BigNumberish>,
+    pool: string,
+    baseTokenAmount: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
   updateTradingLiquidity(
-    pool: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    pool: string,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   version(overrides?: CallOverrides): Promise<number>;
 
   withdraw(
-    contextId: PromiseOrValue<BytesLike>,
-    provider: PromiseOrValue<string>,
-    pool: PromiseOrValue<string>,
-    poolTokenAmount: PromiseOrValue<BigNumberish>,
-    baseTokenAmount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    contextId: BytesLike,
+    provider: string,
+    pool: string,
+    poolTokenAmount: BigNumberish,
+    baseTokenAmount: BigNumberish,
+    overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   withdrawalAmounts(
-    pool: PromiseOrValue<string>,
-    poolTokenAmount: PromiseOrValue<BigNumberish>,
+    pool: string,
+    poolTokenAmount: BigNumberish,
     overrides?: CallOverrides
   ): Promise<WithdrawalAmountsStructOutput>;
 
   callStatic: {
     acceptOwnership(overrides?: CallOverrides): Promise<void>;
 
-    createPool(
-      token: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    createPool(token: string, overrides?: CallOverrides): Promise<void>;
 
     defaultTradingFeePPM(overrides?: CallOverrides): Promise<number>;
 
     depositFor(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     depositingEnabled(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    disableTrading(
-      pool: PromiseOrValue<string>,
+    disableTrading(pool: string, overrides?: CallOverrides): Promise<void>;
+
+    disableTradingByNetwork(
+      pool: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
     enableDepositing(
-      pool: PromiseOrValue<string>,
-      status: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    enableProtection(
-      status: PromiseOrValue<boolean>,
+      pool: string,
+      status: boolean,
       overrides?: CallOverrides
     ): Promise<void>;
 
     enableTrading(
-      pool: PromiseOrValue<string>,
-      bntVirtualBalance: PromiseOrValue<BigNumberish>,
-      baseTokenVirtualBalance: PromiseOrValue<BigNumberish>,
+      pool: string,
+      bntVirtualBalance: BigNumberish,
+      baseTokenVirtualBalance: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    isPoolStable(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    isPoolStable(pool: string, overrides?: CallOverrides): Promise<boolean>;
 
-    isPoolValid(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    isPoolValid(pool: string, overrides?: CallOverrides): Promise<boolean>;
 
     migratePoolIn(
-      pool: PromiseOrValue<string>,
+      pool: string,
       data: PoolStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
     migratePoolOut(
-      pool: PromiseOrValue<string>,
-      targetPoolCollection: PromiseOrValue<string>,
+      pool: string,
+      targetPoolCollection: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1218,8 +1105,8 @@ export interface PoolCollection extends BaseContract {
     newOwner(overrides?: CallOverrides): Promise<string>;
 
     onFeesCollected(
-      pool: PromiseOrValue<string>,
-      feeAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      feeAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1228,30 +1115,27 @@ export interface PoolCollection extends BaseContract {
     poolCount(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolData(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PoolStructOutput>;
 
     poolLiquidity(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PoolLiquidityStructOutput>;
 
-    poolToken(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string>;
+    poolToken(pool: string, overrides?: CallOverrides): Promise<string>;
 
     poolTokenAmountToBurn(
-      pool: PromiseOrValue<string>,
-      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
-      protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmountToDistribute: BigNumberish,
+      protocolPoolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     poolTokenToUnderlying(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1259,96 +1143,90 @@ export interface PoolCollection extends BaseContract {
 
     pools(overrides?: CallOverrides): Promise<string[]>;
 
-    protectionEnabled(overrides?: CallOverrides): Promise<boolean>;
-
     setDefaultTradingFeePPM(
-      newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
+      newDefaultTradingFeePPM: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     setNetworkFeePPM(
-      newNetworkFeePPM: PromiseOrValue<BigNumberish>,
+      newNetworkFeePPM: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     setTradingFeePPM(
-      pool: PromiseOrValue<string>,
-      newTradingFeePPM: PromiseOrValue<BigNumberish>,
+      pool: string,
+      newTradingFeePPM: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     tradeBySourceAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
-      minReturnAmount: PromiseOrValue<BigNumberish>,
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
+      minReturnAmount: BigNumberish,
+      ignoreFees: boolean,
       overrides?: CallOverrides
     ): Promise<TradeAmountAndFeeStructOutput>;
 
     tradeByTargetAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
-      maxSourceAmount: PromiseOrValue<BigNumberish>,
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
+      maxSourceAmount: BigNumberish,
+      ignoreFees: boolean,
       overrides?: CallOverrides
     ): Promise<TradeAmountAndFeeStructOutput>;
 
     tradeInputAndFeeByTargetAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<TradeAmountAndFeeStructOutput>;
 
     tradeOutputAndFeeBySourceAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<TradeAmountAndFeeStructOutput>;
 
-    tradingEnabled(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    tradingEnabled(pool: string, overrides?: CallOverrides): Promise<boolean>;
 
-    tradingFeePPM(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<number>;
+    tradingFeePPM(pool: string, overrides?: CallOverrides): Promise<number>;
 
     transferOwnership(
-      ownerCandidate: PromiseOrValue<string>,
+      ownerCandidate: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
     underlyingToPoolToken(
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     updateTradingLiquidity(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
     version(overrides?: CallOverrides): Promise<number>;
 
     withdraw(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      poolTokenAmount: BigNumberish,
+      baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     withdrawalAmounts(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<WithdrawalAmountsStructOutput>;
   };
@@ -1364,12 +1242,12 @@ export interface PoolCollection extends BaseContract {
     ): DefaultTradingFeePPMUpdatedEventFilter;
 
     "DepositingEnabled(address,bool)"(
-      pool?: PromiseOrValue<string> | null,
-      newStatus?: PromiseOrValue<boolean> | null
+      pool?: string | null,
+      newStatus?: boolean | null
     ): DepositingEnabledEventFilter;
     DepositingEnabled(
-      pool?: PromiseOrValue<string> | null,
-      newStatus?: PromiseOrValue<boolean> | null
+      pool?: string | null,
+      newStatus?: boolean | null
     ): DepositingEnabledEventFilter;
 
     "NetworkFeePPMUpdated(uint32,uint32)"(
@@ -1382,33 +1260,33 @@ export interface PoolCollection extends BaseContract {
     ): NetworkFeePPMUpdatedEventFilter;
 
     "OwnerUpdate(address,address)"(
-      prevOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
+      prevOwner?: string | null,
+      newOwner?: string | null
     ): OwnerUpdateEventFilter;
     OwnerUpdate(
-      prevOwner?: PromiseOrValue<string> | null,
-      newOwner?: PromiseOrValue<string> | null
+      prevOwner?: string | null,
+      newOwner?: string | null
     ): OwnerUpdateEventFilter;
 
     "TokensDeposited(bytes32,address,address,uint256,uint256)"(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      provider?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      provider?: string | null,
+      token?: string | null,
       baseTokenAmount?: null,
       poolTokenAmount?: null
     ): TokensDepositedEventFilter;
     TokensDeposited(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      provider?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      provider?: string | null,
+      token?: string | null,
       baseTokenAmount?: null,
       poolTokenAmount?: null
     ): TokensDepositedEventFilter;
 
     "TokensWithdrawn(bytes32,address,address,uint256,uint256,uint256,uint256,uint256)"(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      provider?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      provider?: string | null,
+      token?: string | null,
       baseTokenAmount?: null,
       poolTokenAmount?: null,
       externalProtectionBaseTokenAmount?: null,
@@ -1416,9 +1294,9 @@ export interface PoolCollection extends BaseContract {
       withdrawalFeeAmount?: null
     ): TokensWithdrawnEventFilter;
     TokensWithdrawn(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      provider?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      provider?: string | null,
+      token?: string | null,
       baseTokenAmount?: null,
       poolTokenAmount?: null,
       externalProtectionBaseTokenAmount?: null,
@@ -1427,53 +1305,53 @@ export interface PoolCollection extends BaseContract {
     ): TokensWithdrawnEventFilter;
 
     "TotalLiquidityUpdated(bytes32,address,uint256,uint256,uint256)"(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      pool?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      pool?: string | null,
       liquidity?: null,
       stakedBalance?: null,
       poolTokenSupply?: null
     ): TotalLiquidityUpdatedEventFilter;
     TotalLiquidityUpdated(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      pool?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      pool?: string | null,
       liquidity?: null,
       stakedBalance?: null,
       poolTokenSupply?: null
     ): TotalLiquidityUpdatedEventFilter;
 
     "TradingEnabled(address,bool,uint8)"(
-      pool?: PromiseOrValue<string> | null,
-      newStatus?: PromiseOrValue<boolean> | null,
-      reason?: PromiseOrValue<BigNumberish> | null
+      pool?: string | null,
+      newStatus?: boolean | null,
+      reason?: BigNumberish | null
     ): TradingEnabledEventFilter;
     TradingEnabled(
-      pool?: PromiseOrValue<string> | null,
-      newStatus?: PromiseOrValue<boolean> | null,
-      reason?: PromiseOrValue<BigNumberish> | null
+      pool?: string | null,
+      newStatus?: boolean | null,
+      reason?: BigNumberish | null
     ): TradingEnabledEventFilter;
 
     "TradingFeePPMUpdated(address,uint32,uint32)"(
-      pool?: PromiseOrValue<string> | null,
+      pool?: string | null,
       prevFeePPM?: null,
       newFeePPM?: null
     ): TradingFeePPMUpdatedEventFilter;
     TradingFeePPMUpdated(
-      pool?: PromiseOrValue<string> | null,
+      pool?: string | null,
       prevFeePPM?: null,
       newFeePPM?: null
     ): TradingFeePPMUpdatedEventFilter;
 
     "TradingLiquidityUpdated(bytes32,address,address,uint256,uint256)"(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      pool?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      pool?: string | null,
+      token?: string | null,
       prevLiquidity?: null,
       newLiquidity?: null
     ): TradingLiquidityUpdatedEventFilter;
     TradingLiquidityUpdated(
-      contextId?: PromiseOrValue<BytesLike> | null,
-      pool?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
+      contextId?: BytesLike | null,
+      pool?: string | null,
+      token?: string | null,
       prevLiquidity?: null,
       newLiquidity?: null
     ): TradingLiquidityUpdatedEventFilter;
@@ -1481,72 +1359,66 @@ export interface PoolCollection extends BaseContract {
 
   estimateGas: {
     acceptOwnership(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     createPool(
-      token: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      token: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     defaultTradingFeePPM(overrides?: CallOverrides): Promise<BigNumber>;
 
     depositFor(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      baseTokenAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     depositingEnabled(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     disableTrading(
-      pool: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<BigNumber>;
+
+    disableTradingByNetwork(
+      pool: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     enableDepositing(
-      pool: PromiseOrValue<string>,
-      status: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    enableProtection(
-      status: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      status: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     enableTrading(
-      pool: PromiseOrValue<string>,
-      bntVirtualBalance: PromiseOrValue<BigNumberish>,
-      baseTokenVirtualBalance: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      bntVirtualBalance: BigNumberish,
+      baseTokenVirtualBalance: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    isPoolStable(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    isPoolStable(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    isPoolValid(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    isPoolValid(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     migratePoolIn(
-      pool: PromiseOrValue<string>,
+      pool: string,
       data: PoolStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     migratePoolOut(
-      pool: PromiseOrValue<string>,
-      targetPoolCollection: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      targetPoolCollection: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     networkFeePPM(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1554,40 +1426,31 @@ export interface PoolCollection extends BaseContract {
     newOwner(overrides?: CallOverrides): Promise<BigNumber>;
 
     onFeesCollected(
-      pool: PromiseOrValue<string>,
-      feeAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      feeAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolCount(overrides?: CallOverrides): Promise<BigNumber>;
 
-    poolData(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    poolData(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    poolLiquidity(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    poolLiquidity(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    poolToken(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    poolToken(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     poolTokenAmountToBurn(
-      pool: PromiseOrValue<string>,
-      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
-      protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmountToDistribute: BigNumberish,
+      protocolPoolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     poolTokenToUnderlying(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1595,108 +1458,102 @@ export interface PoolCollection extends BaseContract {
 
     pools(overrides?: CallOverrides): Promise<BigNumber>;
 
-    protectionEnabled(overrides?: CallOverrides): Promise<BigNumber>;
-
     setDefaultTradingFeePPM(
-      newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      newDefaultTradingFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     setNetworkFeePPM(
-      newNetworkFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      newNetworkFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     setTradingFeePPM(
-      pool: PromiseOrValue<string>,
-      newTradingFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      newTradingFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     tradeBySourceAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
-      minReturnAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
+      minReturnAmount: BigNumberish,
+      ignoreFees: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     tradeByTargetAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
-      maxSourceAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
+      maxSourceAmount: BigNumberish,
+      ignoreFees: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     tradeInputAndFeeByTargetAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     tradeOutputAndFeeBySourceAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    tradingEnabled(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    tradingEnabled(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    tradingFeePPM(
-      pool: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    tradingFeePPM(pool: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     transferOwnership(
-      ownerCandidate: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      ownerCandidate: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     underlyingToPoolToken(
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     updateTradingLiquidity(
-      pool: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     version(overrides?: CallOverrides): Promise<BigNumber>;
 
     withdraw(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      poolTokenAmount: BigNumberish,
+      baseTokenAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     withdrawalAmounts(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     acceptOwnership(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     createPool(
-      token: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      token: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     defaultTradingFeePPM(
@@ -1704,61 +1561,61 @@ export interface PoolCollection extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     depositFor(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      baseTokenAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     depositingEnabled(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     disableTrading(
-      pool: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      overrides?: Overrides & { from?: string }
+    ): Promise<PopulatedTransaction>;
+
+    disableTradingByNetwork(
+      pool: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     enableDepositing(
-      pool: PromiseOrValue<string>,
-      status: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    enableProtection(
-      status: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      status: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     enableTrading(
-      pool: PromiseOrValue<string>,
-      bntVirtualBalance: PromiseOrValue<BigNumberish>,
-      baseTokenVirtualBalance: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      bntVirtualBalance: BigNumberish,
+      baseTokenVirtualBalance: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     isPoolStable(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     isPoolValid(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     migratePoolIn(
-      pool: PromiseOrValue<string>,
+      pool: string,
       data: PoolStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     migratePoolOut(
-      pool: PromiseOrValue<string>,
-      targetPoolCollection: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      targetPoolCollection: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     networkFeePPM(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -1766,9 +1623,9 @@ export interface PoolCollection extends BaseContract {
     newOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     onFeesCollected(
-      pool: PromiseOrValue<string>,
-      feeAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      feeAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -1776,30 +1633,30 @@ export interface PoolCollection extends BaseContract {
     poolCount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     poolData(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     poolLiquidity(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     poolToken(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     poolTokenAmountToBurn(
-      pool: PromiseOrValue<string>,
-      baseTokenAmountToDistribute: PromiseOrValue<BigNumberish>,
-      protocolPoolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmountToDistribute: BigNumberish,
+      protocolPoolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     poolTokenToUnderlying(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1807,96 +1664,96 @@ export interface PoolCollection extends BaseContract {
 
     pools(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    protectionEnabled(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     setDefaultTradingFeePPM(
-      newDefaultTradingFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      newDefaultTradingFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     setNetworkFeePPM(
-      newNetworkFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      newNetworkFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     setTradingFeePPM(
-      pool: PromiseOrValue<string>,
-      newTradingFeePPM: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      newTradingFeePPM: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     tradeBySourceAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
-      minReturnAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
+      minReturnAmount: BigNumberish,
+      ignoreFees: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     tradeByTargetAmount(
-      contextId: PromiseOrValue<BytesLike>,
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
-      maxSourceAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
+      maxSourceAmount: BigNumberish,
+      ignoreFees: boolean,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     tradeInputAndFeeByTargetAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      targetAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      targetAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     tradeOutputAndFeeBySourceAmount(
-      sourceToken: PromiseOrValue<string>,
-      targetToken: PromiseOrValue<string>,
-      sourceAmount: PromiseOrValue<BigNumberish>,
+      sourceToken: string,
+      targetToken: string,
+      sourceAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     tradingEnabled(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     tradingFeePPM(
-      pool: PromiseOrValue<string>,
+      pool: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     transferOwnership(
-      ownerCandidate: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      ownerCandidate: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     underlyingToPoolToken(
-      pool: PromiseOrValue<string>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      baseTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     updateTradingLiquidity(
-      pool: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      pool: string,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     version(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     withdraw(
-      contextId: PromiseOrValue<BytesLike>,
-      provider: PromiseOrValue<string>,
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
-      baseTokenAmount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      contextId: BytesLike,
+      provider: string,
+      pool: string,
+      poolTokenAmount: BigNumberish,
+      baseTokenAmount: BigNumberish,
+      overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     withdrawalAmounts(
-      pool: PromiseOrValue<string>,
-      poolTokenAmount: PromiseOrValue<BigNumberish>,
+      pool: string,
+      poolTokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };

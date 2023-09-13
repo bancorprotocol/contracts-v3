@@ -23,8 +23,7 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidPool,
-    InvalidPoolCollection,
-    NotEmpty
+NotEmpty
 } from "../utility/Utils.sol";
 
 import { ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
@@ -34,7 +33,7 @@ import { IExternalProtectionVault } from "../vaults/interfaces/IExternalProtecti
 import { Token } from "../token/Token.sol";
 import { TokenLibrary } from "../token/TokenLibrary.sol";
 
-import { IPoolCollection, TradeAmountAndFee } from "../pools/interfaces/IPoolCollection.sol";
+import { IPoolCollection, TradeAmountAndFee, PoolLiquidity } from "../pools/interfaces/IPoolCollection.sol";
 import { IPoolMigrator } from "../pools/interfaces/IPoolMigrator.sol";
 
 // prettier-ignore
@@ -47,7 +46,7 @@ import {
 
 import { IPoolToken } from "../pools/interfaces/IPoolToken.sol";
 
-import { INetworkSettings, NotWhitelisted } from "./interfaces/INetworkSettings.sol";
+import { INetworkSettings, NotWhitelisted, NotWhitelistedForPOL } from "./interfaces/INetworkSettings.sol";
 import { IPendingWithdrawals, CompletedWithdrawal } from "./interfaces/IPendingWithdrawals.sol";
 import { IBancorNetwork, IFlashLoanRecipient } from "./interfaces/IBancorNetwork.sol";
 
@@ -64,6 +63,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     error DepositingDisabled();
     error NativeTokenAmountMismatch();
     error InsufficientFlashLoanReturn();
+    error PoolNotInSurplus();
 
     struct TradeParams {
         uint256 amount;
@@ -125,6 +125,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the Bancor arbitrage contract
     address internal immutable _bancorArbitrage;
 
+    // the carbon POL contract
+    address internal immutable _carbonPOL;
+
     // the BNT pool contract
     IBNTPool internal _bntPool;
 
@@ -150,6 +153,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     uint256 internal _pendingNetworkFeeAmount;
 
     bool private _depositingEnabled = true;
+
+    uint32 private _polRewardsPPM;
 
     // upgrade forward-compatibility storage gap
     uint256[MAX_GAP - 11] private __gap;
@@ -217,6 +222,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     event NetworkFeesWithdrawn(address indexed caller, address indexed recipient, uint256 amount);
 
     /**
+     * @dev triggered when pool surplus tokens are withdrawn
+     */
+    event POLWithdrawn(address indexed caller, address indexed token, uint256 polTokenAmount, uint256 userReward);
+
+    /**
+     * @dev triggered when POL rewards ppm is updated
+     */
+    event POLRewardsPPMUpdated(uint32 oldRewardsPPM, uint32 newRewardsPPM);
+
+    /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(
@@ -226,7 +241,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initBNTPoolToken,
-        address bancorArbitrage
+        address bancorArbitrage,
+        address carbonPOL
     )
         validAddress(address(initBNTGovernance))
         validAddress(address(initVBNTGovernance))
@@ -235,6 +251,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initBNTPoolToken))
         validAddress(address(bancorArbitrage))
+        validAddress(address(carbonPOL))
     {
         _bntGovernance = initBNTGovernance;
         _bnt = initBNTGovernance.token();
@@ -246,6 +263,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _externalProtectionVault = initExternalProtectionVault;
         _bntPoolToken = initBNTPoolToken;
         _bancorArbitrage = bancorArbitrage;
+        _carbonPOL = carbonPOL;
     }
 
     /**
@@ -300,6 +318,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _setRoleAdmin(ROLE_NETWORK_FEE_MANAGER, ROLE_ADMIN);
 
         _depositingEnabled = true;
+
+        _setPOLRewardsPPM(2000);
     }
 
     // solhint-enable func-name-mixedcase
@@ -322,7 +342,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 8;
+        return 9;
     }
 
     /**
@@ -582,6 +602,45 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
+    function withdrawPOL(Token pool) external whenNotPaused nonReentrant returns (uint256) {
+        // verify pool is whitelisted
+        if (!_networkSettings.isTokenWhitelistedForPOL(pool)) {
+            revert NotWhitelistedForPOL();
+        }
+
+        // verify pool collection exists and retrieve it
+        IPoolCollection poolCollection = _poolCollection(pool);
+
+        // get token vault balance and staked balance
+        uint256 masterVaultBalance = pool.balanceOf(address(_masterVault));
+        PoolLiquidity memory poolLiquidity = poolCollection.poolLiquidity(pool);
+        uint256 stakedTokenBalance = poolLiquidity.stakedBalance;
+
+        // verify pool is in surplus
+        if (stakedTokenBalance >= masterVaultBalance) {
+            revert PoolNotInSurplus();
+        }
+
+        // disable pool trading
+        poolCollection.disableTradingByNetwork(pool);
+
+        // calculate pool surplus amount and user reward
+        uint256 poolSurplus = masterVaultBalance - stakedTokenBalance;
+        uint256 userReward = MathEx.mulDivF(poolSurplus, _polRewardsPPM, PPM_RESOLUTION);
+
+        // withdraw surplus tokens from master vault to POL contract
+        _masterVault.withdrawFunds(pool, payable(_carbonPOL), poolSurplus - userReward);
+        // withdraw user reward to caller
+        _masterVault.withdrawFunds(pool, payable(msg.sender), userReward);
+        // emit event
+        emit POLWithdrawn(msg.sender, address(pool), poolSurplus - userReward, userReward);
+        // return pool surplus amount
+        return poolSurplus;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
     function tradeBySourceAmount(
         Token sourceToken,
         Token targetToken,
@@ -827,6 +886,33 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         _depositingEnabled = status;
+    }
+
+    /**
+     * @dev returns the POL rewards ppm
+     */
+    function polRewardsPPM() external view returns (uint32) {
+        return _polRewardsPPM;
+    }
+
+    /**
+     * @dev set the POL rewards ppm
+     */
+    function setPOLRewardsPPM(uint32 newRewardsPPM) external onlyAdmin validFee(newRewardsPPM) {
+        _setPOLRewardsPPM(newRewardsPPM);
+    }
+
+    /**
+     * @dev set the POL rewards ppm
+     */
+    function _setPOLRewardsPPM(uint32 newRewardsPPM) private {
+        uint32 oldRewardsPPM = _polRewardsPPM;
+        if (oldRewardsPPM == newRewardsPPM) {
+            return;
+        }
+
+        _polRewardsPPM = newRewardsPPM;
+        emit POLRewardsPPMUpdated(oldRewardsPPM, newRewardsPPM);
     }
 
     /**

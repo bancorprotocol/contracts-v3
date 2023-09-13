@@ -16,7 +16,7 @@ import { IVersioned } from "../utility/interfaces/IVersioned.sol";
 import { PPM_RESOLUTION } from "../utility/Constants.sol";
 import { Owned } from "../utility/Owned.sol";
 import { BlockNumber } from "../utility/BlockNumber.sol";
-import { Fraction, Fraction112, FractionLibrary, zeroFraction, zeroFraction112 } from "../utility/FractionLibrary.sol";
+import { Fraction, Fraction112, FractionLibrary, zeroFraction112 } from "../utility/FractionLibrary.sol";
 import { Sint256, MathEx } from "../utility/MathEx.sol";
 
 // prettier-ignore
@@ -25,7 +25,6 @@ import {
     AlreadyExists,
     DoesNotExist,
     InvalidParam,
-    InvalidPoolCollection,
     InvalidStakedBalance
 } from "../utility/Utils.sol";
 
@@ -46,6 +45,7 @@ import {
     TRADING_STATUS_UPDATE_ADMIN,
     TRADING_STATUS_UPDATE_MIN_LIQUIDITY,
     TRADING_STATUS_UPDATE_INVALID_STATE,
+    TRADING_STATUS_UPDATE_NETWORK_DISABLE,
     TradeAmountAndFee,
     WithdrawalAmounts
 } from "./interfaces/IPoolCollection.sol";
@@ -176,9 +176,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     // the global network fee (in units of PPM)
     uint32 private _networkFeePPM;
 
-    // true if protection is enabled, false otherwise
-    bool private _protectionEnabled = false;
-
     /**
      * @dev triggered when the default trading fee is updated
      */
@@ -290,7 +287,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      * @inheritdoc IVersioned
      */
     function version() external view virtual returns (uint16) {
-        return 11;
+        return 12;
     }
 
     /**
@@ -355,28 +352,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
      */
     function setNetworkFeePPM(uint32 newNetworkFeePPM) external onlyOwner validFee(newNetworkFeePPM) {
         _setNetworkFeePPM(newNetworkFeePPM);
-    }
-
-    /**
-     * @dev enables/disables protection
-     *
-     * requirements:
-     *
-     * - the caller must be the owner of the contract
-     */
-    function enableProtection(bool status) external onlyOwner {
-        if (_protectionEnabled == status) {
-            return;
-        }
-
-        _protectionEnabled = status;
-    }
-
-    /**
-     * @dev returns the status of the protection
-     */
-    function protectionEnabled() external view returns (bool) {
-        return _protectionEnabled;
     }
 
     /**
@@ -593,6 +568,14 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
     function disableTrading(Token pool) external onlyOwner {
         Pool storage data = _poolStorage(pool);
         _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_ADMIN);
+    }
+
+    /**
+     * @inheritdoc IPoolCollection
+     */
+    function disableTradingByNetwork(Token pool) external only(address(_network)) {
+        Pool storage data = _poolStorage(pool);
+        _resetTradingLiquidity(bytes32(0), pool, data, data.liquidity, TRADING_STATUS_UPDATE_NETWORK_DISABLE);
     }
 
     /**
@@ -823,7 +806,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             WithdrawalAmounts({
                 totalAmount: amounts.baseTokensWithdrawalAmount - amounts.baseTokensWithdrawalFee,
                 baseTokenAmount: amounts.baseTokensToTransferFromMasterVault + amounts.baseTokensToTransferFromEPV,
-                bntAmount: _protectionEnabled ? amounts.bntToMintForProvider : 0
+                bntAmount: 0
             });
     }
 
@@ -1109,12 +1092,6 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             }
         }
 
-        // if the provider should receive some BNT - ask the BNT pool to mint BNT to the provider
-        bool isProtectionEnabled = _protectionEnabled;
-        if (amounts.bntToMintForProvider > 0 && isProtectionEnabled) {
-            _bntPool.mint(address(provider), amounts.bntToMintForProvider);
-        }
-
         // if the provider should receive some base tokens from the external protection vault - remove the tokens from
         // the external protection vault and send them to the master vault
         if (amounts.baseTokensToTransferFromEPV > 0) {
@@ -1159,7 +1136,7 @@ contract PoolCollection is IPoolCollection, Owned, BlockNumber, Utils {
             baseTokenAmount: amounts.baseTokensToTransferFromMasterVault,
             poolTokenAmount: amounts.poolTokenAmount,
             externalProtectionBaseTokenAmount: amounts.baseTokensToTransferFromEPV,
-            bntAmount: isProtectionEnabled ? amounts.bntToMintForProvider : 0,
+            bntAmount: 0,
             withdrawalFeeAmount: amounts.baseTokensWithdrawalFee
         });
 

@@ -75,7 +75,7 @@ import { getNamedAccounts } from 'hardhat';
         vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
         bnt = await DeployedContracts.BNT.deployed();
         vbnt = await DeployedContracts.VBNT.deployed();
-        poolCollection = await DeployedContracts.PoolCollectionType1V11.deployed();
+        poolCollection = await DeployedContracts.PoolCollectionType1V12.deployed();
         bntPool = await DeployedContracts.BNTPool.deployed();
         masterVault = await DeployedContracts.MasterVault.deployed();
         pendingWithdrawals = await DeployedContracts.PendingWithdrawals.deployed();
@@ -201,7 +201,6 @@ import { getNamedAccounts } from 'hardhat';
         enum TestPools {
             BNT = 'BNT',
             ETH = 'ETH',
-            DAI = 'DAI',
             LINK = 'LINK',
             USDC = 'USDC',
             WBTC = 'WBTC'
@@ -292,17 +291,13 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         beforeEach(async () => {
-            const { dai, link, usdc, wbtc } = await getNamedAccounts();
-            const { daiWhale, linkWhale, usdcWhale, wbtcWhale } = await getNamedSigners();
+            const { link, usdc, wbtc } = await getNamedAccounts();
+            const { linkWhale, usdcWhale, wbtcWhale } = await getNamedSigners();
 
             pools = {
                 [TestPools.ETH]: {
                     token: NATIVE_TOKEN_ADDRESS,
                     whale: ethWhale
-                },
-                [TestPools.DAI]: {
-                    token: dai,
-                    whale: daiWhale
                 },
                 [TestPools.LINK]: {
                     token: link,

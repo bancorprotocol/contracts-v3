@@ -41,7 +41,7 @@ describe('NetworkSettings', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await networkSettings.version()).to.equal(3);
+            expect(await networkSettings.version()).to.equal(4);
 
             await expectRoles(networkSettings, Roles.Upgradeable);
 
@@ -174,6 +174,135 @@ describe('NetworkSettings', () => {
 
                 expect(await networkSettings.isTokenWhitelisted(reserveToken.address)).to.be.false;
                 expect(await networkSettings.protectedTokenWhitelist()).not.to.include(reserveToken.address);
+            });
+        });
+    });
+
+    describe('tokens whitelist for POL', () => {
+        beforeEach(async () => {
+            expect(await networkSettings.tokenWhitelistForPOL()).to.be.empty;
+        });
+
+        describe('adding', () => {
+            it('should revert when a non-admin attempts to add a token', async () => {
+                await expect(
+                    networkSettings.connect(nonOwner).addTokenToWhitelistForPOL(reserveToken.address)
+                ).to.be.revertedWithError('AccessDenied');
+            });
+
+            it('should revert when adding an invalid address', async () => {
+                await expect(networkSettings.addTokenToWhitelistForPOL(ZERO_ADDRESS)).to.be.revertedWithError(
+                    'InvalidExternalAddress'
+                );
+            });
+
+            it('should revert when adding an already whitelisted token for POL', async () => {
+                await networkSettings.addTokenToWhitelistForPOL(reserveToken.address);
+                await expect(networkSettings.addTokenToWhitelistForPOL(reserveToken.address)).to.be.revertedWithError(
+                    'AlreadyExists'
+                );
+            });
+
+            it('should whitelist a token for POL', async () => {
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.false;
+                expect(await networkSettings.tokenWhitelistForPOL()).not.to.include(reserveToken.address);
+
+                const res = await networkSettings.addTokenToWhitelistForPOL(reserveToken.address);
+                await expect(res)
+                    .to.emit(networkSettings, 'TokenAddedToWhitelistForPOL')
+                    .withArgs(reserveToken.address);
+
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.true;
+                expect(await networkSettings.tokenWhitelistForPOL()).to.include(reserveToken.address);
+            });
+
+            it('should revert when a non-admin attempts to add tokens', async () => {
+                await expect(
+                    networkSettings.connect(nonOwner).addTokensToWhitelistForPOL([reserveToken.address])
+                ).to.be.revertedWithError('AccessDenied');
+            });
+
+            it('should revert when adding invalid addresses', async () => {
+                await expect(networkSettings.addTokensToWhitelistForPOL([ZERO_ADDRESS])).to.be.revertedWithError(
+                    'InvalidExternalAddress'
+                );
+            });
+
+            it('should revert when adding already whitelisted tokens for POL in the same transaction', async () => {
+                await expect(
+                    networkSettings.addTokensToWhitelistForPOL([reserveToken.address, reserveToken.address])
+                ).to.be.revertedWithError('AlreadyExists');
+            });
+
+            it('should revert when adding already whitelisted tokens for POL in different transactions', async () => {
+                await networkSettings.addTokensToWhitelistForPOL([reserveToken.address]);
+                await expect(
+                    networkSettings.addTokensToWhitelistForPOL([reserveToken.address])
+                ).to.be.revertedWithError('AlreadyExists');
+            });
+
+            it('should whitelist tokens for POL', async () => {
+                const reserveToken2 = await createTestToken();
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.false;
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken2.address)).to.be.false;
+                expect(await networkSettings.tokenWhitelistForPOL()).not.to.have.members([
+                    reserveToken.address,
+                    reserveToken2.address
+                ]);
+
+                const res = await networkSettings.addTokensToWhitelistForPOL([
+                    reserveToken.address,
+                    reserveToken2.address
+                ]);
+                await expect(res)
+                    .to.emit(networkSettings, 'TokenAddedToWhitelistForPOL')
+                    .withArgs(reserveToken.address);
+                await expect(res)
+                    .to.emit(networkSettings, 'TokenAddedToWhitelistForPOL')
+                    .withArgs(reserveToken2.address);
+
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.true;
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken2.address)).to.be.true;
+                expect(await networkSettings.tokenWhitelistForPOL()).to.have.members([
+                    reserveToken.address,
+                    reserveToken2.address
+                ]);
+            });
+        });
+
+        describe('removing', () => {
+            beforeEach(async () => {
+                await networkSettings.addTokenToWhitelistForPOL(reserveToken.address);
+            });
+
+            it('should revert when a non-admin attempts to remove a token', async () => {
+                await expect(
+                    networkSettings.connect(nonOwner).removeTokenFromWhitelistForPOL(reserveToken.address)
+                ).to.be.revertedWithError('AccessDenied');
+            });
+
+            it('should revert when removing a non-whitelisted token', async () => {
+                await expect(networkSettings.removeTokenFromWhitelistForPOL(ZERO_ADDRESS)).to.be.revertedWithError(
+                    'DoesNotExist'
+                );
+
+                const reserveToken2 = await createTestToken();
+                await expect(
+                    networkSettings.removeTokenFromWhitelistForPOL(reserveToken2.address)
+                ).to.be.revertedWithError('DoesNotExist');
+            });
+
+            it('should remove a token', async () => {
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.true;
+                expect(await networkSettings.tokenWhitelistForPOL()).to.include(reserveToken.address);
+
+                const res = await networkSettings.removeTokenFromWhitelistForPOL(reserveToken.address);
+                await expect(res)
+                    .to.emit(networkSettings, 'TokenRemovedFromWhitelistForPOL')
+                    .withArgs(reserveToken.address);
+
+                expect(await networkSettings.isTokenWhitelistedForPOL(reserveToken.address)).to.be.false;
+                expect(await networkSettings.tokenWhitelistForPOL()).not.to.include(reserveToken.address);
             });
         });
     });
