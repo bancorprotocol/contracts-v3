@@ -333,7 +333,6 @@ describe('BancorNetwork', () => {
             await expectRole(network, Roles.Upgradeable.ROLE_ADMIN, Roles.Upgradeable.ROLE_ADMIN, [deployer.address]);
             await expectRole(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
             await expectRole(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, Roles.Upgradeable.ROLE_ADMIN);
-            await expectRole(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, Roles.Upgradeable.ROLE_ADMIN);
 
             expect(await network.paused()).to.be.false;
             expect(await network.poolCollections()).to.be.empty;
@@ -3224,29 +3223,53 @@ describe('BancorNetwork', () => {
             await network
                 .connect(deployer)
                 .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
-            await network
-                .connect(deployer)
-                .grantRole(Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, networkFeeManager.address);
         });
 
-        it('should revert when a non-network fee manager is attempting to withdraw the fees', async () => {
-            await expect(network.connect(deployer).pause()).to.be.revertedWithError('AccessDenied');
+        it('should revert when a non-admin is attempting to set the min burn amount', async () => {
+            await expect(network.connect(emergencyStopper).setMinNetworkFeeBurn(1)).to.be.revertedWithError(
+                'AccessDenied'
+            );
+        });
+
+        it('should revert when attempting to set min burn amount to an invalid amount', async () => {
+            await expect(network.setMinNetworkFeeBurn(0)).to.be.revertedWithError('ZeroValue');
+        });
+
+        it('admin should be able to set min network fee burn', async () => {
+            const newMinNetworkFeeBurn = toWei(1000);
+            await network.connect(deployer).setMinNetworkFeeBurn(newMinNetworkFeeBurn);
+            const minNetworkFeeBurn = await network.minNetworkFeeBurn();
+            expect(minNetworkFeeBurn).to.be.eq(newMinNetworkFeeBurn);
+        });
+
+        it('setting min network fee burn should emit an event', async () => {
+            const newMinNetworkFeeBurn = toWei(1000);
+            const oldNetworkFeeBurn = await network.minNetworkFeeBurn();
+            await expect(network.connect(deployer).setMinNetworkFeeBurn(newMinNetworkFeeBurn))
+                .to.emit(network, 'MinNetworkFeeBurnUpdated')
+                .withArgs(oldNetworkFeeBurn, newMinNetworkFeeBurn);
+        });
+
+        it('should ignore setting the min network fee burn to the same value', async () => {
+            const oldMinNetworkFeeBurn = await network.minNetworkFeeBurn();
+            await expect(network.connect(deployer).setMinNetworkFeeBurn(oldMinNetworkFeeBurn)).not.to.emit(
+                network,
+                'MinNetworkFeeBurnUpdated'
+            );
         });
 
         context('without any pending network fees', () => {
-            it('should not withdraw any pending network fees', async () => {
-                const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
+            it('should not burn any pending network fees', async () => {
+                const burnedNetworkFees = await network.callStatic.burnNetworkFees();
+                expect(burnedNetworkFees).to.equal(0);
 
-                const withdrawNetworkFees = await network
-                    .connect(networkFeeManager)
-                    .callStatic.withdrawNetworkFees(networkFeeManager.address);
-                expect(withdrawNetworkFees).to.equal(0);
+                const totalSupplyBefore = await bnt.totalSupply();
 
-                const res = await network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address);
+                const res = await network.burnNetworkFees();
 
-                await expect(res).to.not.emit(network, 'NetworkFeesWithdrawn');
+                await expect(res).to.not.emit(network, 'NetworkFeesBurned');
 
-                expect(await bnt.balanceOf(networkFeeManager.address)).to.equal(prevBNTBalance);
+                expect(await bnt.totalSupply()).to.equal(totalSupplyBefore);
             });
         });
 
@@ -3255,37 +3278,52 @@ describe('BancorNetwork', () => {
                 await tradeBySourceAmount(deployer, bnt, token, toWei(1000), 1, MAX_UINT256, deployer.address, network);
 
                 expect(await network.pendingNetworkFeeAmount()).to.be.gt(0);
+                expect(await network.minNetworkFeeBurn()).to.be.eq(toWei(1_000_000));
             });
 
-            it('should revert when the withdrawal caller is not a network-fee manager', async () => {
-                await expect(
-                    network.connect(deployer).withdrawNetworkFees(networkFeeManager.address)
-                ).to.be.revertedWithError('AccessDenied');
+            it('should not burn any pending network fees if the pending amount is below the min network fee burn amount', async () => {
+                const minNetworkFeeBurnAmount = await network.minNetworkFeeBurn();
+                expect(await network.pendingNetworkFeeAmount()).to.be.lt(minNetworkFeeBurnAmount);
+
+                const burnedNetworkFees = await network.callStatic.burnNetworkFees();
+                expect(burnedNetworkFees).to.equal(0);
+
+                const totalSupplyBefore = await bnt.totalSupply();
+
+                const res = await network.burnNetworkFees();
+
+                await expect(res).to.not.emit(network, 'NetworkFeesBurned');
+
+                expect(await bnt.totalSupply()).to.equal(totalSupplyBefore);
             });
 
-            it('should revert when the withdrawal recipient is invalid', async () => {
-                await expect(
-                    network.connect(networkFeeManager).withdrawNetworkFees(ZERO_ADDRESS)
-                ).to.be.revertedWithError('InvalidAddress');
-            });
-
-            it('should withdraw all the pending network fees', async () => {
-                const recipient = nonOwner.address;
-                const prevBNTBalance = await bnt.balanceOf(networkFeeManager.address);
+            it('should burn all the pending network fees if the amount is above the min network fee burn amount', async () => {
+                await tradeBySourceAmount(
+                    deployer,
+                    bnt,
+                    token,
+                    toWei(10000000),
+                    1,
+                    MAX_UINT256,
+                    deployer.address,
+                    network
+                );
+                const minNetworkFeeBurnAmount = await network.minNetworkFeeBurn();
                 const pendingNetworkFeeAmount = await network.pendingNetworkFeeAmount();
+                expect(await network.pendingNetworkFeeAmount()).to.be.gt(minNetworkFeeBurnAmount);
 
-                const withdrawNetworkFees = await network
-                    .connect(networkFeeManager)
-                    .callStatic.withdrawNetworkFees(recipient);
-                expect(withdrawNetworkFees).to.equal(pendingNetworkFeeAmount);
+                const burnedNetworkFees = await network.callStatic.burnNetworkFees();
+                expect(burnedNetworkFees).to.equal(pendingNetworkFeeAmount);
 
-                const res = await network.connect(networkFeeManager).withdrawNetworkFees(recipient);
+                const totalSupplyBefore = await bnt.totalSupply();
+
+                const res = await network.burnNetworkFees();
 
                 await expect(res)
-                    .to.emit(network, 'NetworkFeesWithdrawn')
-                    .withArgs(networkFeeManager.address, recipient, pendingNetworkFeeAmount);
+                    .to.emit(network, 'NetworkFeesBurned')
+                    .withArgs(deployer.address, pendingNetworkFeeAmount);
 
-                expect(await bnt.balanceOf(recipient)).to.equal(prevBNTBalance.add(pendingNetworkFeeAmount));
+                expect(await bnt.totalSupply()).to.equal(totalSupplyBefore.sub(pendingNetworkFeeAmount));
 
                 expect(await network.pendingNetworkFeeAmount()).to.equal(0);
             });
@@ -3296,9 +3334,7 @@ describe('BancorNetwork', () => {
                 });
 
                 it('should revert when attempting to withdraw the pending network fees', async () => {
-                    await expect(
-                        network.connect(networkFeeManager).withdrawNetworkFees(networkFeeManager.address)
-                    ).to.be.revertedWithError('Pausable: paused');
+                    await expect(network.burnNetworkFees()).to.be.revertedWithError('Pausable: paused');
                 });
             });
         });
