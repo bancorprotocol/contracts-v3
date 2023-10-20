@@ -347,7 +347,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 9;
+        return 10;
     }
 
     /**
@@ -826,6 +826,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _pendingNetworkFeeAmount = 0;
 
+        // transferring bnt to the token's address burns the tokens
         _masterVault.withdrawFunds(Token(address(_bnt)), payable(address(_bnt)), currentPendingNetworkFeeAmount);
 
         emit NetworkFeesBurned(msg.sender, currentPendingNetworkFeeAmount);
