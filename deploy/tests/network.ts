@@ -137,13 +137,7 @@ import { getNamedAccounts } from 'hardhat';
             );
             await expectRoleMembers(
                 vbntGovernance as any as AccessControlEnumerable,
-                Roles.TokenGovernance.ROLE_GOVERNOR,
-                isMainnet() ? [deployerV2] : [deployer]
-            );
-            await expectRoleMembers(
-                vbntGovernance as any as AccessControlEnumerable,
-                Roles.TokenGovernance.ROLE_MINTER,
-                isMainnet() ? [bntPool.address, liquidityProtection.address] : [bntPool.address]
+                Roles.TokenGovernance.ROLE_GOVERNOR
             );
 
             await expectRoleMembers(masterVault, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address, network.address]);
@@ -187,7 +181,6 @@ import { getNamedAccounts } from 'hardhat';
             await expectRoleMembers(network, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
             await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, [liquidityProtection.address]);
             await expectRoleMembers(network, Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER);
-            await expectRoleMembers(network, Roles.BancorNetwork.ROLE_NETWORK_FEE_MANAGER, [daoMultisig.address]);
 
             await expectRoleMembers(standardRewards, Roles.Upgradeable.ROLE_ADMIN, [daoMultisig.address]);
 
@@ -337,6 +330,11 @@ import { getNamedAccounts } from 'hardhat';
 
                 // perform a few BNT deposit tests
                 const bntDepositAmount = toWei(10);
+
+                await vbntGovernance
+                    .connect(foundationMultisig)
+                    .grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, daoMultisig.address);
+                await vbntGovernance.connect(daoMultisig).grantRole(Roles.TokenGovernance.ROLE_MINTER, bntPool.address);
 
                 for (let i = 0; i < 5; i++) {
                     const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);

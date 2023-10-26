@@ -9,8 +9,7 @@ export const Roles = {
 
     BancorNetwork: {
         ROLE_MIGRATION_MANAGER: id('ROLE_MIGRATION_MANAGER'),
-        ROLE_EMERGENCY_STOPPER: id('ROLE_EMERGENCY_STOPPER'),
-        ROLE_NETWORK_FEE_MANAGER: id('ROLE_NETWORK_FEE_MANAGER')
+        ROLE_EMERGENCY_STOPPER: id('ROLE_EMERGENCY_STOPPER')
     },
 
     MasterVault: {
