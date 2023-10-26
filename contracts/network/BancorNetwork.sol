@@ -95,9 +95,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the emergency manager role is required to pause/unpause the network
     bytes32 private constant ROLE_EMERGENCY_STOPPER = keccak256("ROLE_EMERGENCY_STOPPER");
 
-    // the network fee manager role is required to pull the accumulated pending network fees
-    bytes32 private constant ROLE_NETWORK_FEE_MANAGER = keccak256("ROLE_NETWORK_FEE_MANAGER");
-
     // the address of the BNT token
     IERC20 private immutable _bnt;
 
@@ -149,15 +146,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // a mapping between pools and their respective pool collections
     mapping(Token => IPoolCollection) private _collectionByPool;
 
-    // the pending network fee amount to be burned by the vortex
+    // the pending network fee amount to be burned
     uint256 internal _pendingNetworkFeeAmount;
 
     bool private _depositingEnabled = true;
 
     uint32 private _polRewardsPPM;
 
+    // min network fee amount that can be burned
+    uint256 private _minNetworkFeeBurn;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 11] private __gap;
+    uint256[MAX_GAP - 12] private __gap;
 
     /**
      * @dev triggered when a new pool collection is added
@@ -217,9 +217,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     event FlashLoanCompleted(Token indexed token, address indexed borrower, uint256 amount, uint256 feeAmount);
 
     /**
-     * @dev triggered when network fees are withdrawn
+     * @dev triggered when network fees are burned
      */
-    event NetworkFeesWithdrawn(address indexed caller, address indexed recipient, uint256 amount);
+    event NetworkFeesBurned(address indexed caller, uint256 amount);
 
     /**
      * @dev triggered when pool surplus tokens are withdrawn
@@ -230,6 +230,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @dev triggered when POL rewards ppm is updated
      */
     event POLRewardsPPMUpdated(uint32 oldRewardsPPM, uint32 newRewardsPPM);
+
+    /**
+     * @dev triggered when the min network fee burn is updated
+     */
+    event MinNetworkFeeBurnUpdated(uint256 oldMinNetworkFeeBurn, uint256 newMinNetworkFeeBurn);
 
     /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
@@ -315,11 +320,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         // set up administrative roles
         _setRoleAdmin(ROLE_MIGRATION_MANAGER, ROLE_ADMIN);
         _setRoleAdmin(ROLE_EMERGENCY_STOPPER, ROLE_ADMIN);
-        _setRoleAdmin(ROLE_NETWORK_FEE_MANAGER, ROLE_ADMIN);
 
         _depositingEnabled = true;
 
         _setPOLRewardsPPM(2000);
+        _setMinNetworkFeeBurn(1_000_000e18);
     }
 
     // solhint-enable func-name-mixedcase
@@ -342,7 +347,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 9;
+        return 10;
     }
 
     /**
@@ -360,14 +365,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev returns the network fee manager role
-     */
-    function roleNetworkFeeManager() external pure returns (bytes32) {
-        return ROLE_NETWORK_FEE_MANAGER;
-    }
-
-    /**
-     * @dev returns the pending network fee amount to be burned by the vortex
+     * @dev returns the pending network fee amount to be burned
      */
     function pendingNetworkFeeAmount() external view returns (uint256) {
         return _pendingNetworkFeeAmount;
@@ -820,26 +818,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     /**
      * @inheritdoc IBancorNetwork
      */
-    function withdrawNetworkFees(
-        address recipient
-    )
-        external
-        whenNotPaused
-        onlyRoleMember(ROLE_NETWORK_FEE_MANAGER)
-        validAddress(recipient)
-        nonReentrant
-        returns (uint256)
-    {
+    function burnNetworkFees() external whenNotPaused nonReentrant returns (uint256) {
         uint256 currentPendingNetworkFeeAmount = _pendingNetworkFeeAmount;
-        if (currentPendingNetworkFeeAmount == 0) {
+        if (currentPendingNetworkFeeAmount < _minNetworkFeeBurn) {
             return 0;
         }
 
         _pendingNetworkFeeAmount = 0;
 
-        _masterVault.withdrawFunds(Token(address(_bnt)), payable(recipient), currentPendingNetworkFeeAmount);
+        // transferring bnt to the token's address burns the tokens
+        _masterVault.withdrawFunds(Token(address(_bnt)), payable(address(_bnt)), currentPendingNetworkFeeAmount);
 
-        emit NetworkFeesWithdrawn(msg.sender, recipient, currentPendingNetworkFeeAmount);
+        emit NetworkFeesBurned(msg.sender, currentPendingNetworkFeeAmount);
 
         return currentPendingNetworkFeeAmount;
     }
@@ -913,6 +903,35 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _polRewardsPPM = newRewardsPPM;
         emit POLRewardsPPMUpdated(oldRewardsPPM, newRewardsPPM);
+    }
+
+    /**
+     * @dev returns the min network fee burn
+     */
+    function minNetworkFeeBurn() external view returns (uint256) {
+        return _minNetworkFeeBurn;
+    }
+
+    /**
+     * @dev set the min network fee burn
+     */
+    function setMinNetworkFeeBurn(
+        uint256 newMinNetworkFeeBurn
+    ) external onlyAdmin greaterThanZero(newMinNetworkFeeBurn) {
+        _setMinNetworkFeeBurn(newMinNetworkFeeBurn);
+    }
+
+    /**
+     * @dev set the min network fee burn
+     */
+    function _setMinNetworkFeeBurn(uint256 newMinNetworkFeeBurn) private {
+        uint256 oldMinNetworkFeeBurn = _minNetworkFeeBurn;
+        if (oldMinNetworkFeeBurn == newMinNetworkFeeBurn) {
+            return;
+        }
+
+        _minNetworkFeeBurn = newMinNetworkFeeBurn;
+        emit MinNetworkFeeBurnUpdated(oldMinNetworkFeeBurn, newMinNetworkFeeBurn);
     }
 
     /**

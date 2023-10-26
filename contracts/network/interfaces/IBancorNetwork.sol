@@ -218,13 +218,9 @@ interface IBancorNetwork is IUpgradeable {
     ) external payable;
 
     /**
-     * @dev withdraws pending network fees, and returns the amount of fees withdrawn
-     *
-     * requirements:
-     *
-     * - the caller must have the ROLE_NETWORK_FEE_MANAGER privilege
+     * @dev burns pending network fees, and returns the amount of fees burned
      */
-    function withdrawNetworkFees(address recipient) external returns (uint256);
+    function burnNetworkFees() external returns (uint256);
 
     /**
      * @dev withdraws surplus tokens from a given pool to CarbonPOL contract,
