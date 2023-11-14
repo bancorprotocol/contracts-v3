@@ -195,7 +195,6 @@ import { getNamedAccounts } from 'hardhat';
             BNT = 'BNT',
             ETH = 'ETH',
             LINK = 'LINK',
-            USDC = 'USDC',
             WBTC = 'WBTC'
         }
 
@@ -284,8 +283,8 @@ import { getNamedAccounts } from 'hardhat';
         };
 
         beforeEach(async () => {
-            const { link, usdc, wbtc } = await getNamedAccounts();
-            const { linkWhale, usdcWhale, wbtcWhale } = await getNamedSigners();
+            const { link, wbtc } = await getNamedAccounts();
+            const { linkWhale, wbtcWhale } = await getNamedSigners();
 
             pools = {
                 [TestPools.ETH]: {
@@ -295,11 +294,6 @@ import { getNamedAccounts } from 'hardhat';
                 [TestPools.LINK]: {
                     token: link,
                     whale: linkWhale
-                },
-                [TestPools.USDC]: {
-                    token: usdc,
-                    whale: usdcWhale,
-                    decimals: 6
                 },
                 [TestPools.WBTC]: {
                     token: wbtc,
