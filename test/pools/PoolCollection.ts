@@ -3665,7 +3665,7 @@ describe('PoolCollection', () => {
                                 const targetBNTLiquidity = MIN_LIQUIDITY_FOR_TRADING.div(4);
                                 const bntTradeAmountToTrade = prevLiquidity.bntTradingLiquidity.sub(targetBNTLiquidity);
 
-                                // trade enough BNT out such that the total BNT trading liquidity falls bellow the
+                                // trade enough BNT out such that the total BNT trading liquidity falls below the
                                 // minimum trading liquidity
                                 const { amount } = await poolCollection.tradeInputAndFeeByTargetAmount(
                                     reserveToken.address,
