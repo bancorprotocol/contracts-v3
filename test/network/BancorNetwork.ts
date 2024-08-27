@@ -3190,7 +3190,6 @@ describe('BancorNetwork', () => {
         let token: TokenWithAddress;
 
         let emergencyStopper: SignerWithAddress;
-        let networkFeeManager: SignerWithAddress;
 
         const INITIAL_LIQUIDITY = toWei(50_000_000);
         const TRADING_FEE_PPM = toPPM(10);

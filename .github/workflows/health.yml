@@ -9,8 +9,7 @@ jobs:
   test:
     name: Health Checks
 
-    runs-on: [self-hosted, HEALTH]
-    timeout-minutes: 600
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out the repository
@@ -43,6 +42,14 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Setup tenderly 
+        run: |
+          mkdir ~/.tenderly
+          touch ~/.tenderly/config.yaml
+          echo "access_key: $TENDERLY_ACCESS_KEY" >> ~/.tenderly/config.yaml
+        env:
+          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
+
       - name: Test deployment and network health
         run: yarn test:health
         env:
@@ -50,4 +57,3 @@ jobs:
           TENDERLY_TEST_PROJECT: v3-temp-forks
           TENDERLY_USERNAME: bancor
           TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}

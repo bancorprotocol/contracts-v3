@@ -106,8 +106,6 @@ import { getNamedAccounts } from 'hardhat';
         });
 
         it('should have the correct set of roles', async () => {
-            const { deployer, deployerV2 } = await getNamedAccounts();
-
             // ensure that ownership transfer to the DAO was initiated
             expect(await liquidityProtection.newOwner()).to.equal(daoMultisig.address);
 
