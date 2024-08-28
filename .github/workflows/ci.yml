@@ -11,7 +11,7 @@ jobs:
   test:
     name: Test
 
-    runs-on: [self-hosted, CI]
+    runs-on: ubuntu-latest
     timeout-minutes: 600
 
     steps:
@@ -53,6 +53,14 @@ jobs:
 
       - name: Build
         run: yarn build
+
+      - name: Setup tenderly 
+        run: |
+          mkdir ~/.tenderly
+          touch ~/.tenderly/config.yaml
+          echo "access_key: $TENDERLY_ACCESS_KEY" >> ~/.tenderly/config.yaml
+        env:
+          TENDERLY_ACCESS_KEY: ${{ secrets.TENDERLY_ACCESS_KEY }}
 
       - name: Test
         run: yarn test:ci

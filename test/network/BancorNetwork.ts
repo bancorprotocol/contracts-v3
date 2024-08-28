@@ -3190,13 +3190,12 @@ describe('BancorNetwork', () => {
         let token: TokenWithAddress;
 
         let emergencyStopper: SignerWithAddress;
-        let networkFeeManager: SignerWithAddress;
 
         const INITIAL_LIQUIDITY = toWei(50_000_000);
         const TRADING_FEE_PPM = toPPM(10);
 
         before(async () => {
-            [, emergencyStopper, networkFeeManager] = await ethers.getSigners();
+            [, emergencyStopper] = await ethers.getSigners();
         });
 
         beforeEach(async () => {
