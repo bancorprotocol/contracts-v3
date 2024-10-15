@@ -74,7 +74,7 @@
     "@nomiclabs/hardhat-etherscan": "^3.1.6",
     "@nomiclabs/hardhat-solhint": "^3.0.1",
     "@nomiclabs/hardhat-waffle": "2.0.4",
-    "@openzeppelin/contracts": "4.5.0",
+    "@openzeppelin/contracts": "4.9.3",
     "@openzeppelin/contracts-upgradeable": "4.5.2",
     "@sentry/hub": "^7.56.0",
     "@sentry/node": "^7.56.0",
