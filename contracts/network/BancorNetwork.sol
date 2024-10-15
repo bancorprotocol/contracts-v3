@@ -23,7 +23,8 @@ import {
     DoesNotExist,
     InvalidToken,
     InvalidPool,
-NotEmpty
+    NotEmpty,
+    AccessDenied
 } from "../utility/Utils.sol";
 
 import { ROLE_ASSET_MANAGER } from "../vaults/interfaces/IVault.sol";
@@ -119,9 +120,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // the BNT pool token
     IPoolToken internal immutable _bntPoolToken;
 
-    // the Bancor arbitrage contract
-    address internal immutable _bancorArbitrage;
-
     // the carbon POL contract
     address internal immutable _carbonPOL;
 
@@ -156,8 +154,11 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     // min network fee amount that can be burned
     uint256 private _minNetworkFeeBurn;
 
+    // a set of addresses which are exempt from trading / flashloan fees
+    EnumerableSetUpgradeable.AddressSet private _feeExemptionWhitelist;
+
     // upgrade forward-compatibility storage gap
-    uint256[MAX_GAP - 12] private __gap;
+    uint256[MAX_GAP - 14] private __gap;
 
     /**
      * @dev triggered when a new pool collection is added
@@ -237,6 +238,16 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     event MinNetworkFeeBurnUpdated(uint256 oldMinNetworkFeeBurn, uint256 newMinNetworkFeeBurn);
 
     /**
+     * @dev triggered when an address gets added to the fee exemption whitelist
+     */
+    event AddressAddedToWhitelist(address indexed addr);
+
+    /**
+     * @dev triggered when an address gets removed from the fee exemption whitelist
+     */
+    event AddressRemovedFromWhitelist(address indexed addr);
+
+    /**
      * @dev a "virtual" constructor that is only used to set immutable state variables
      */
     constructor(
@@ -246,7 +257,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initBNTPoolToken,
-        address bancorArbitrage,
         address carbonPOL
     )
         validAddress(address(initBNTGovernance))
@@ -255,7 +265,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         validAddress(address(initMasterVault))
         validAddress(address(initExternalProtectionVault))
         validAddress(address(initBNTPoolToken))
-        validAddress(address(bancorArbitrage))
         validAddress(address(carbonPOL))
     {
         _bntGovernance = initBNTGovernance;
@@ -267,7 +276,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         _masterVault = initMasterVault;
         _externalProtectionVault = initExternalProtectionVault;
         _bntPoolToken = initBNTPoolToken;
-        _bancorArbitrage = bancorArbitrage;
         _carbonPOL = carbonPOL;
     }
 
@@ -347,7 +355,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
      * @inheritdoc Upgradeable
      */
     function version() public pure override(IVersioned, Upgradeable) returns (uint16) {
-        return 10;
+        return 11;
     }
 
     /**
@@ -655,7 +663,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 minReturnAmount,
                 deadline,
                 beneficiary,
-                msg.sender
+                msg.sender,
+                false
             );
     }
 
@@ -678,7 +687,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 maxSourceAmount,
                 deadline,
                 beneficiary,
-                msg.sender
+                msg.sender,
+                false
             );
     }
 
@@ -692,7 +702,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
+    ) external payable whenNotPaused returns (uint256) {
+        if (!_feeExemptionWhitelist.contains(msg.sender)) {
+            revert AccessDenied();
+        }
         return
             _tradeBySourceAmount(
                 sourceToken,
@@ -701,7 +714,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 minReturnAmount,
                 deadline,
                 beneficiary,
-                msg.sender
+                msg.sender,
+                true
             );
     }
 
@@ -715,7 +729,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable whenNotPaused only(_bancorArbitrage) returns (uint256) {
+    ) external payable whenNotPaused returns (uint256) {
+        if (!_feeExemptionWhitelist.contains(msg.sender)) {
+            revert AccessDenied();
+        }
         return
             _tradeByTargetAmount(
                 sourceToken,
@@ -724,7 +741,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                 maxSourceAmount,
                 deadline,
                 beneficiary,
-                msg.sender
+                msg.sender,
+                true
             );
     }
 
@@ -749,8 +767,8 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         uint256 feeAmount;
-        if (msg.sender == _bancorArbitrage) {
-            // exempt arb contract from fees
+        if (_feeExemptionWhitelist.contains(msg.sender)) {
+            // exempt from fees
             feeAmount = 0;
         } else {
             feeAmount = MathEx.mulDivF(amount, _networkSettings.flashLoanFeePPM(token), PPM_RESOLUTION);
@@ -876,6 +894,77 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
 
         _depositingEnabled = status;
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function feeExemptionWhitelist() external view returns (address[] memory) {
+        uint256 length = _feeExemptionWhitelist.length();
+        address[] memory list = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            list[i] = _feeExemptionWhitelist.at(i);
+        }
+        return list;
+    }
+
+    /**
+     * @dev adds an address to the fee exemption whitelist
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addToWhitelist(address addr) external onlyAdmin {
+        _addToWhitelist(addr);
+    }
+
+    /**
+     * @dev adds multiple addresses to the fee exemption whitelist
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function addAddressesToWhitelist(address[] calldata addrs) external onlyAdmin {
+        uint256 length = addrs.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            _addToWhitelist(addrs[i]);
+        }
+    }
+
+    /**
+     * @dev adds an address to the fee exemption whitelist
+     */
+    function _addToWhitelist(address addr) private validExternalAddress(addr) {
+        if (!_feeExemptionWhitelist.add(addr)) {
+            revert AlreadyExists();
+        }
+
+        emit AddressAddedToWhitelist(addr);
+    }
+
+    /**
+     * @dev removes an address from the fee exemption whitelist
+     *
+     * requirements:
+     *
+     * - the caller must be the admin of the contract
+     */
+    function removeFromWhitelist(address addr) external onlyAdmin {
+        if (!_feeExemptionWhitelist.remove(addr)) {
+            revert DoesNotExist();
+        }
+
+        emit AddressRemovedFromWhitelist(addr);
+    }
+
+    /**
+     * @inheritdoc IBancorNetwork
+     */
+    function isWhitelisted(address addr) external view returns (bool) {
+        return _feeExemptionWhitelist.contains(addr);
     }
 
     /**
@@ -1119,13 +1208,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary,
-        address sender
+        address sender,
+        bool ignoreFees
     ) private returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, sourceAmount, minReturnAmount, deadline);
-        bool _ignoreFees = false;
-        if (sender == _bancorArbitrage) {
-            _ignoreFees = true;
-        }
 
         return
             _trade(
@@ -1134,7 +1220,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                     bySourceAmount: true,
                     amount: sourceAmount,
                     limit: minReturnAmount,
-                    ignoreFees: _ignoreFees
+                    ignoreFees: ignoreFees
                 }),
                 TraderInfo({ trader: sender, beneficiary: beneficiary }),
                 deadline
@@ -1151,13 +1237,10 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary,
-        address sender
+        address sender,
+        bool ignoreFees
     ) private returns (uint256) {
         _verifyTradeParams(sourceToken, targetToken, targetAmount, maxSourceAmount, deadline);
-        bool _ignoreFees = false;
-        if (sender == _bancorArbitrage) {
-            _ignoreFees = true;
-        }
 
         return
             _trade(
@@ -1166,7 +1249,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
                     bySourceAmount: false,
                     amount: targetAmount,
                     limit: maxSourceAmount,
-                    ignoreFees: _ignoreFees
+                    ignoreFees: ignoreFees
                 }),
                 TraderInfo({ trader: sender, beneficiary: beneficiary }),
                 deadline
