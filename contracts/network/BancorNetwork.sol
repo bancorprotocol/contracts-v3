@@ -349,6 +349,18 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         }
     }
 
+    modifier onlyWhitelisted(address addr) {
+        _onlyWhitelisted(addr);
+
+        _;
+    }
+
+    function _onlyWhitelisted(address addr) internal view {
+        if (!_feeExemptionWhitelist.contains(addr)) {
+            revert AccessDenied();
+        }
+    }
+
     receive() external payable {}
 
     /**
@@ -702,10 +714,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 minReturnAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable whenNotPaused returns (uint256) {
-        if (!_feeExemptionWhitelist.contains(msg.sender)) {
-            revert AccessDenied();
-        }
+    ) external payable whenNotPaused onlyWhitelisted(msg.sender) returns (uint256) {
         return
             _tradeBySourceAmount(
                 sourceToken,
@@ -729,10 +738,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
         uint256 maxSourceAmount,
         uint256 deadline,
         address beneficiary
-    ) external payable whenNotPaused returns (uint256) {
-        if (!_feeExemptionWhitelist.contains(msg.sender)) {
-            revert AccessDenied();
-        }
+    ) external payable whenNotPaused onlyWhitelisted(msg.sender) returns (uint256) {
         return
             _tradeByTargetAmount(
                 sourceToken,
@@ -902,7 +908,7 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function feeExemptionWhitelist() external view returns (address[] memory) {
         uint256 length = _feeExemptionWhitelist.length();
         address[] memory list = new address[](length);
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; ++i) {
             list[i] = _feeExemptionWhitelist.at(i);
         }
         return list;
@@ -929,20 +935,9 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     function addAddressesToWhitelist(address[] calldata addrs) external onlyAdmin {
         uint256 length = addrs.length;
 
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length; ++i) {
             _addToWhitelist(addrs[i]);
         }
-    }
-
-    /**
-     * @dev adds an address to the fee exemption whitelist
-     */
-    function _addToWhitelist(address addr) private validExternalAddress(addr) {
-        if (!_feeExemptionWhitelist.add(addr)) {
-            revert AlreadyExists();
-        }
-
-        emit AddressAddedToWhitelist(addr);
     }
 
     /**
@@ -1021,6 +1016,17 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
 
         _minNetworkFeeBurn = newMinNetworkFeeBurn;
         emit MinNetworkFeeBurnUpdated(oldMinNetworkFeeBurn, newMinNetworkFeeBurn);
+    }
+
+    /**
+     * @dev adds an address to the fee exemption whitelist
+     */
+    function _addToWhitelist(address addr) private validExternalAddress(addr) {
+        if (!_feeExemptionWhitelist.add(addr)) {
+            revert AlreadyExists();
+        }
+
+        emit AddressAddedToWhitelist(addr);
     }
 
     /**
