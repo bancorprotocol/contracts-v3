@@ -3378,43 +3378,6 @@ describe('BancorNetwork', () => {
                 expect(await network.isWhitelisted(user1.address)).to.be.true;
                 expect(await network.feeExemptionWhitelist()).to.include(user1.address);
             });
-
-            it('should revert when a non-admin attempts to add addresses', async () => {
-                await expect(
-                    network.connect(nonOwner).addAddressesToWhitelist([user1.address])
-                ).to.be.revertedWithError('AccessDenied');
-            });
-
-            it('should revert when adding invalid addresses', async () => {
-                await expect(network.addAddressesToWhitelist([ZERO_ADDRESS])).to.be.revertedWithError(
-                    'InvalidExternalAddress'
-                );
-            });
-
-            it('should revert when adding already whitelisted addresses in the same transaction', async () => {
-                await expect(network.addAddressesToWhitelist([user1.address, user1.address])).to.be.revertedWithError(
-                    'AlreadyExists'
-                );
-            });
-
-            it('should revert when adding already whitelisted addresses in different transactions', async () => {
-                await network.addAddressesToWhitelist([user1.address]);
-                await expect(network.addAddressesToWhitelist([user1.address])).to.be.revertedWithError('AlreadyExists');
-            });
-
-            it('should whitelist addresses', async () => {
-                expect(await network.isWhitelisted(user1.address)).to.be.false;
-                expect(await network.isWhitelisted(user2.address)).to.be.false;
-                expect(await network.feeExemptionWhitelist()).not.to.have.members([user1.address, user2.address]);
-
-                const res = await network.addAddressesToWhitelist([user1.address, user2.address]);
-                await expect(res).to.emit(network, 'AddressAddedToWhitelist').withArgs(user1.address);
-                await expect(res).to.emit(network, 'AddressAddedToWhitelist').withArgs(user2.address);
-
-                expect(await network.isWhitelisted(user1.address)).to.be.true;
-                expect(await network.isWhitelisted(user2.address)).to.be.true;
-                expect(await network.feeExemptionWhitelist()).to.have.members([user1.address, user2.address]);
-            });
         });
 
         describe('removing', () => {

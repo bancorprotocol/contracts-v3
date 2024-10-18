@@ -926,21 +926,6 @@ contract BancorNetwork is IBancorNetwork, Upgradeable, ReentrancyGuardUpgradeabl
     }
 
     /**
-     * @dev adds multiple addresses to the fee exemption whitelist
-     *
-     * requirements:
-     *
-     * - the caller must be the admin of the contract
-     */
-    function addAddressesToWhitelist(address[] calldata addrs) external onlyAdmin {
-        uint256 length = addrs.length;
-
-        for (uint256 i = 0; i < length; ++i) {
-            _addToWhitelist(addrs[i]);
-        }
-    }
-
-    /**
      * @dev removes an address from the fee exemption whitelist
      *
      * requirements:
