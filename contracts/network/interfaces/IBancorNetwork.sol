@@ -162,7 +162,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
      *   native token case)
-     * - the caller must be the _bancorArbitrage contract
+     * - the caller must be in the fee exemption whitelist
      */
     function tradeBySourceAmountArb(
         Token sourceToken,
@@ -181,7 +181,7 @@ interface IBancorNetwork is IUpgradeable {
      *
      * - the caller must have approved the network to transfer the source tokens on its behalf (except for in the
      *   native token case)
-     * - the caller must be the _bancorArbitrage contract
+     * - the caller must be in the fee exemption whitelist
      */
     function tradeByTargetAmountArb(
         Token sourceToken,
@@ -227,4 +227,14 @@ interface IBancorNetwork is IUpgradeable {
      * and disables trading on the given pool if it is not already disabled
      */
     function withdrawPOL(Token pool) external returns (uint256);
+
+    /**
+     * @dev returns whether an address is in the fee exemption whitelist
+     */
+    function isWhitelisted(address _address) external view returns (bool);
+
+    /**
+     * @dev returns the fee exemption whitelist
+     */
+    function feeExemptionWhitelist() external view returns (address[] memory);
 }

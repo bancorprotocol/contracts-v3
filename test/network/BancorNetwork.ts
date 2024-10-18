@@ -22,13 +22,7 @@ import Contracts, {
 import { TokenGovernance } from '../../components/LegacyContracts';
 import LegacyContractsV3, { PoolCollectionType1V11 } from '../../components/LegacyContractsV3';
 import { TradeAmountAndFeeStructOutput } from '../../typechain-types/contracts/pools/PoolCollection';
-import {
-    ARB_CONTRACT_TEST_ADDRESS,
-    MAX_UINT256,
-    PPM_RESOLUTION,
-    ZERO_ADDRESS,
-    ZERO_BYTES
-} from '../../utils/Constants';
+import { MAX_UINT256, PPM_RESOLUTION, ZERO_ADDRESS, ZERO_BYTES } from '../../utils/Constants';
 import Logger from '../../utils/Logger';
 import { DEFAULT_DECIMALS, NATIVE_TOKEN_ADDRESS, TokenData, TokenSymbol } from '../../utils/TokenData';
 import { percentsToPPM, toPPM, toWei } from '../../utils/Types';
@@ -155,7 +149,6 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_TEST_ADDRESS,
                     carbonPOL.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
@@ -170,7 +163,6 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_TEST_ADDRESS,
                     carbonPOL.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
@@ -185,7 +177,6 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_TEST_ADDRESS,
                     carbonPOL.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
@@ -200,7 +191,6 @@ describe('BancorNetwork', () => {
                     ZERO_ADDRESS,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_TEST_ADDRESS,
                     carbonPOL.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
@@ -217,7 +207,6 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     ZERO_ADDRESS,
                     bntPoolToken.address,
-                    ARB_CONTRACT_TEST_ADDRESS,
                     carbonPOL.address
                 )
             ).to.be.revertedWithError('InvalidAddress');
@@ -231,22 +220,6 @@ describe('BancorNetwork', () => {
                     networkSettings.address,
                     masterVault.address,
                     externalProtectionVault.address,
-                    ZERO_ADDRESS,
-                    ARB_CONTRACT_TEST_ADDRESS,
-                    carbonPOL.address
-                )
-            ).to.be.revertedWithError('InvalidAddress');
-        });
-
-        it('should revert when attempting to create with an invalid arb contract', async () => {
-            await expect(
-                Contracts.BancorNetwork.deploy(
-                    bntGovernance.address,
-                    vbntGovernance.address,
-                    networkSettings.address,
-                    masterVault.address,
-                    externalProtectionVault.address,
-                    bntPoolToken.address,
                     ZERO_ADDRESS,
                     carbonPOL.address
                 )
@@ -262,7 +235,6 @@ describe('BancorNetwork', () => {
                     masterVault.address,
                     externalProtectionVault.address,
                     bntPoolToken.address,
-                    ARB_CONTRACT_TEST_ADDRESS,
                     ZERO_ADDRESS
                 )
             ).to.be.revertedWithError('InvalidAddress');
@@ -276,7 +248,6 @@ describe('BancorNetwork', () => {
                 masterVault.address,
                 externalProtectionVault.address,
                 bntPoolToken.address,
-                ARB_CONTRACT_TEST_ADDRESS,
                 carbonPOL.address
             );
 
@@ -293,7 +264,6 @@ describe('BancorNetwork', () => {
                 masterVault.address,
                 externalProtectionVault.address,
                 bntPoolToken.address,
-                ARB_CONTRACT_TEST_ADDRESS,
                 carbonPOL.address
             );
 
@@ -310,7 +280,6 @@ describe('BancorNetwork', () => {
                 masterVault.address,
                 externalProtectionVault.address,
                 bntPoolToken.address,
-                ARB_CONTRACT_TEST_ADDRESS,
                 carbonPOL.address
             );
 
@@ -326,7 +295,7 @@ describe('BancorNetwork', () => {
         });
 
         it('should be properly initialized', async () => {
-            expect(await network.version()).to.equal(10);
+            expect(await network.version()).to.equal(11);
 
             await expectRoles(network, Roles.BancorNetwork);
 
@@ -2686,13 +2655,13 @@ describe('BancorNetwork', () => {
                         });
 
                         context('arb contract trades', () => {
-                            it('should revert when attempting to call tradeBySourceAmountArb from address other than arb contract', async () => {
+                            it('should revert when attempting to call tradeBySourceAmountArb from non-whitelisted address', async () => {
                                 await expect(tradeBySourceAmountArb(testAmount)).to.be.revertedWithError(
                                     'AccessDenied'
                                 );
                             });
 
-                            it('should revert when attempting to call tradeByTargetAmountArb from address other than arb contract', async () => {
+                            it('should revert when attempting to call tradeByTargetAmountArb from non-whitelisted address', async () => {
                                 await expect(tradeByTargetAmountArb(testAmount)).to.be.revertedWithError(
                                     'AccessDenied'
                                 );
@@ -2924,7 +2893,7 @@ describe('BancorNetwork', () => {
             });
         });
 
-        const testFlashLoan = (tokenData: TokenData, flashLoanFeePPM: number) => {
+        const testFlashLoan = (tokenData: TokenData, flashLoanFeePPM: number, isWhitelisted: boolean) => {
             const FEE_AMOUNT = LOAN_AMOUNT.mul(flashLoanFeePPM).div(PPM_RESOLUTION);
 
             beforeEach(async () => {
@@ -2986,17 +2955,33 @@ describe('BancorNetwork', () => {
             });
 
             if (flashLoanFeePPM > 0) {
-                context('not repaying the fee', () => {
-                    beforeEach(async () => {
-                        await recipient.setAmountToReturn(LOAN_AMOUNT);
-                    });
+                if (isWhitelisted) {
+                    context('not repaying the fee', () => {
+                        beforeEach(async () => {
+                            await recipient.setAmountToReturn(LOAN_AMOUNT);
+                            // whitelist deployer
+                            await network.addToWhitelist(deployer.address);
+                        });
 
-                    it('should revert when attempting to request a flash-loan', async () => {
-                        await expect(
-                            network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
-                        ).to.be.revertedWithError('InsufficientFlashLoanReturn');
+                        it('should succeed requesting a flash-loan', async () => {
+                            await expect(
+                                network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
+                            ).not.to.be.revertedWithError('InsufficientFlashLoanReturn');
+                        });
                     });
-                });
+                } else {
+                    context('not repaying the fee', () => {
+                        beforeEach(async () => {
+                            await recipient.setAmountToReturn(LOAN_AMOUNT);
+                        });
+
+                        it('should revert when attempting to request a flash-loan', async () => {
+                            await expect(
+                                network.flashLoan(token.address, LOAN_AMOUNT, recipient.address, ZERO_BYTES)
+                            ).to.be.revertedWithError('InsufficientFlashLoanReturn');
+                        });
+                    });
+                }
             }
 
             context('repaying more than required', () => {
@@ -3027,9 +3012,11 @@ describe('BancorNetwork', () => {
 
         for (const symbol of [TokenSymbol.BNT, TokenSymbol.ETH, TokenSymbol.TKN]) {
             for (const flashLoanFee of [0, 2.5]) {
-                context(`${symbol} with fee=${flashLoanFee}%`, () => {
-                    testFlashLoan(new TokenData(symbol), toPPM(flashLoanFee));
-                });
+                for (const isWhitelisted of [true, false]) {
+                    context(`${symbol} with fee=${flashLoanFee}%, isWhitelisted=${isWhitelisted}`, () => {
+                        testFlashLoan(new TokenData(symbol), toPPM(flashLoanFee), isWhitelisted);
+                    });
+                }
             }
         }
     });
@@ -3335,6 +3322,90 @@ describe('BancorNetwork', () => {
                 it('should revert when attempting to withdraw the pending network fees', async () => {
                     await expect(network.burnNetworkFees()).to.be.revertedWithError('Pausable: paused');
                 });
+            });
+        });
+    });
+
+    describe('fee exemption whitelist', () => {
+        let network: TestBancorNetwork;
+        let networkSettings: NetworkSettings;
+
+        let emergencyStopper: SignerWithAddress;
+        let user1: SignerWithAddress;
+        let user2: SignerWithAddress;
+
+        before(async () => {
+            [, emergencyStopper, user1, user2] = await ethers.getSigners();
+        });
+
+        beforeEach(async () => {
+            ({ network, networkSettings } = await createSystem());
+
+            await networkSettings.setMinLiquidityForTrading(MIN_LIQUIDITY_FOR_TRADING);
+
+            await network
+                .connect(deployer)
+                .grantRole(Roles.BancorNetwork.ROLE_EMERGENCY_STOPPER, emergencyStopper.address);
+        });
+
+        beforeEach(async () => {
+            expect(await network.feeExemptionWhitelist()).to.be.empty;
+        });
+
+        describe('adding', () => {
+            it('should revert when a non-admin attempts to add an address', async () => {
+                await expect(network.connect(nonOwner).addToWhitelist(user1.address)).to.be.revertedWithError(
+                    'AccessDenied'
+                );
+            });
+
+            it('should revert when adding an invalid address', async () => {
+                await expect(network.addToWhitelist(ZERO_ADDRESS)).to.be.revertedWithError('InvalidExternalAddress');
+            });
+
+            it('should revert when adding an already whitelisted address', async () => {
+                await network.addToWhitelist(user1.address);
+                await expect(network.addToWhitelist(user1.address)).to.be.revertedWithError('AlreadyExists');
+            });
+
+            it('should whitelist an address', async () => {
+                expect(await network.isWhitelisted(user1.address)).to.be.false;
+                expect(await network.feeExemptionWhitelist()).not.to.include(user1.address);
+
+                const res = await network.addToWhitelist(user1.address);
+                await expect(res).to.emit(network, 'AddressAddedToWhitelist').withArgs(user1.address);
+
+                expect(await network.isWhitelisted(user1.address)).to.be.true;
+                expect(await network.feeExemptionWhitelist()).to.include(user1.address);
+            });
+        });
+
+        describe('removing', () => {
+            beforeEach(async () => {
+                await network.addToWhitelist(user1.address);
+            });
+
+            it('should revert when a non-admin attempts to remove an address', async () => {
+                await expect(network.connect(nonOwner).removeFromWhitelist(user1.address)).to.be.revertedWithError(
+                    'AccessDenied'
+                );
+            });
+
+            it('should revert when removing a non-whitelisted token', async () => {
+                await expect(network.removeFromWhitelist(ZERO_ADDRESS)).to.be.revertedWithError('DoesNotExist');
+
+                await expect(network.removeFromWhitelist(user2.address)).to.be.revertedWithError('DoesNotExist');
+            });
+
+            it('should remove a token', async () => {
+                expect(await network.isWhitelisted(user1.address)).to.be.true;
+                expect(await network.feeExemptionWhitelist()).to.include(user1.address);
+
+                const res = await network.removeFromWhitelist(user1.address);
+                await expect(res).to.emit(network, 'AddressRemovedFromWhitelist').withArgs(user1.address);
+
+                expect(await network.isWhitelisted(user1.address)).to.be.false;
+                expect(await network.feeExemptionWhitelist()).not.to.include(user1.address);
             });
         });
     });
