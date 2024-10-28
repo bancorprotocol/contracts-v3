@@ -12,6 +12,7 @@ import AdmZip from 'adm-zip';
 import { BigNumber } from 'ethers';
 import { getNamedAccounts } from 'hardhat';
 import 'hardhat-deploy';
+import { isEmpty } from 'lodash';
 import path from 'path';
 
 interface EnvOptions {
@@ -42,31 +43,31 @@ const fundAccount = async (account: string, fundingRequests: FundingRequest[]) =
     Logger.log(`Funding ${account}...`);
 
     for (const fundingRequest of fundingRequests) {
+        const { whale, token, amount } = fundingRequest;
         // for tokens which are missing skip funding request
-        if (fundingRequest.token === ZERO_ADDRESS) {
+        if (token === ZERO_ADDRESS) {
             continue;
         }
-        const { whale } = fundingRequest;
         if (!whale) {
             continue;
         }
-        if (fundingRequest.token === NATIVE_TOKEN_ADDRESS) {
-            await fundingRequest.whale.sendTransaction({
-                value: fundingRequest.amount,
+        if (token === NATIVE_TOKEN_ADDRESS) {
+            await whale.sendTransaction({
+                value: amount,
                 to: account
             });
 
             continue;
         }
 
-        const tokenContract = await Contracts.ERC20.attach(fundingRequest.token);
+        const tokenContract = await Contracts.ERC20.attach(token);
         // check if whale has enough balance
         const whaleBalance = await tokenContract.balanceOf(whale.address);
-        if (whaleBalance.lt(fundingRequest.amount)) {
-            Logger.error(`Whale ${whale.address} has insufficient balance for ${fundingRequest.token}`);
+        if (whaleBalance.lt(amount)) {
+            Logger.error(`Whale ${whale.address} has insufficient balance for ${token}`);
             continue;
         }
-        await tokenContract.connect(whale).transfer(account, fundingRequest.amount);
+        await tokenContract.connect(whale).transfer(account, amount);
     }
 };
 
@@ -111,15 +112,15 @@ const fundAccounts = async () => {
         }
     ];
 
-    if (DEV_ADDRESSES === undefined || DEV_ADDRESSES === '') {
+    if (isEmpty(DEV_ADDRESSES)) {
         Logger.log('No dev addresses to fund');
         return;
     }
 
     const devAddresses = DEV_ADDRESSES.split(',');
 
-    for(const fundingRequest of fundingRequests) {
-        if(fundingRequest.token == ZERO_ADDRESS) {
+    for (const fundingRequest of fundingRequests) {
+        if (fundingRequest.token === ZERO_ADDRESS) {
             Logger.log(`Skipping funding for ${fundingRequest.token}`);
         }
         const { whale } = fundingRequest;
@@ -130,14 +131,14 @@ const fundAccounts = async () => {
         // transfer ETH to the funding account if it doesn't have ETH
 
         if (whaleBalance.lt(toWei(1))) {
-            await fundingRequests[0].whale.sendTransaction({
+            await ethWhale.sendTransaction({
                 value: toWei(1),
                 to: whale.address
             });
         }
     }
 
-    for (const account of devAddresses) {
+    for  (const account of devAddresses) {
         await fundAccount(account, fundingRequests);
     }
 
