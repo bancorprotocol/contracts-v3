@@ -3,6 +3,7 @@ import { DeployedContracts, getNamedSigners, isTenderlyFork, runPendingDeploymen
 import Logger from '../utils/Logger';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
+import { ZERO_ADDRESS } from '../utils/Constants';
 import '@nomiclabs/hardhat-ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import '@tenderly/hardhat-tenderly';
@@ -41,6 +42,14 @@ const fundAccount = async (account: string, fundingRequests: FundingRequest[]) =
     Logger.log(`Funding ${account}...`);
 
     for (const fundingRequest of fundingRequests) {
+        // for tokens which are missing skip funding request
+        if (fundingRequest.token === ZERO_ADDRESS) {
+            continue;
+        }
+        const { whale } = fundingRequest;
+        if (!whale) {
+            continue;
+        }
         if (fundingRequest.token === NATIVE_TOKEN_ADDRESS) {
             await fundingRequest.whale.sendTransaction({
                 value: fundingRequest.amount,
@@ -51,7 +60,13 @@ const fundAccount = async (account: string, fundingRequests: FundingRequest[]) =
         }
 
         const tokenContract = await Contracts.ERC20.attach(fundingRequest.token);
-        await tokenContract.connect(fundingRequest.whale).transfer(account, fundingRequest.amount);
+        // check if whale has enough balance
+        const whaleBalance = await tokenContract.balanceOf(whale.address);
+        if (whaleBalance.lt(fundingRequest.amount)) {
+            Logger.error(`Whale ${whale.address} has insufficient balance for ${fundingRequest.token}`);
+            continue;
+        }
+        await tokenContract.connect(whale).transfer(account, fundingRequest.amount);
     }
 };
 
@@ -96,7 +111,31 @@ const fundAccounts = async () => {
         }
     ];
 
+    if (DEV_ADDRESSES === undefined || DEV_ADDRESSES === '') {
+        Logger.log('No dev addresses to fund');
+        return;
+    }
+
     const devAddresses = DEV_ADDRESSES.split(',');
+
+    for(const fundingRequest of fundingRequests) {
+        if(fundingRequest.token == ZERO_ADDRESS) {
+            Logger.log(`Skipping funding for ${fundingRequest.token}`);
+        }
+        const { whale } = fundingRequest;
+        if (!whale) {
+            continue;
+        }
+        const whaleBalance = await whale.getBalance();
+        // transfer ETH to the funding account if it doesn't have ETH
+
+        if (whaleBalance.lt(toWei(1))) {
+            await fundingRequests[0].whale.sendTransaction({
+                value: toWei(1),
+                to: whale.address
+            });
+        }
+    }
 
     for (const account of devAddresses) {
         await fundAccount(account, fundingRequests);
@@ -156,7 +195,7 @@ const main = async () => {
 
     await archiveArtifacts();
 
-    const description = `${FORK_NAME} Fork`;
+    const description = FORK_NAME ? `Bancor V3 ${FORK_NAME} Fork` : 'Bancor V3 Mainnet Fork';
 
     Logger.log('********************************************************************************');
     Logger.log();
