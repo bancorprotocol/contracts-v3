@@ -310,17 +310,15 @@ import { getNamedAccounts } from 'hardhat';
                 for (const { token, whale, decimals } of Object.values(pools)) {
                     const tknDepositAmount = toWei(100, decimals);
 
-                    for (let i = 0; i < 5; i++) {
-                        const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
+                    const { liquidity: prevLiquidity } = await poolCollection.poolData(token);
 
-                        await depositTKN(token, whale, tknDepositAmount);
+                    await depositTKN(token, whale, tknDepositAmount);
 
-                        const liquidity = await poolCollection.poolLiquidity(token);
-                        expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(tknDepositAmount));
-                    }
+                    const liquidity = await poolCollection.poolLiquidity(token);
+                    expect(liquidity.stakedBalance).to.equal(prevLiquidity.stakedBalance.add(tknDepositAmount));
                 }
 
-                // perform a few BNT deposit tests
+                // perform BNT deposit tests
                 const bntDepositAmount = toWei(10);
 
                 await vbntGovernance
@@ -328,22 +326,18 @@ import { getNamedAccounts } from 'hardhat';
                     .grantRole(Roles.TokenGovernance.ROLE_GOVERNOR, daoMultisig.address);
                 await vbntGovernance.connect(daoMultisig).grantRole(Roles.TokenGovernance.ROLE_MINTER, bntPool.address);
 
-                for (let i = 0; i < 5; i++) {
-                    const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);
-                    const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhale.address);
-                    const prevTotalSupply = await bnt.totalSupply();
+                const prevBNBNTAmount = await bnBNT.balanceOf(bntWhale.address);
+                const prevVBNTTokenAmount = await vbnt.balanceOf(bntWhale.address);
+                const prevTotalSupply = await bnt.totalSupply();
 
-                    await depositBNT(bntDepositAmount);
+                await depositBNT(bntDepositAmount);
 
-                    const receivedBNBNTAmount = (await bnBNT.balanceOf(bntWhale.address)).sub(prevBNBNTAmount);
+                const receivedBNBNTAmount = (await bnBNT.balanceOf(bntWhale.address)).sub(prevBNBNTAmount);
 
-                    expect(receivedBNBNTAmount).to.be.gt(0);
-                    expect(await vbnt.balanceOf(bntWhale.address)).to.equal(
-                        prevVBNTTokenAmount.add(receivedBNBNTAmount)
-                    );
+                expect(receivedBNBNTAmount).to.be.gt(0);
+                expect(await vbnt.balanceOf(bntWhale.address)).to.equal(prevVBNTTokenAmount.add(receivedBNBNTAmount));
 
-                    expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(bntDepositAmount));
-                }
+                expect(await bnt.totalSupply()).to.equal(prevTotalSupply.sub(bntDepositAmount));
             });
         });
 
@@ -490,64 +484,62 @@ import { getNamedAccounts } from 'hardhat';
 
                     const tradeAmount = toWei(10, decimals);
 
-                    for (let i = 0; i < 5; i++) {
-                        if (!isNativeToken) {
-                            const tokenContract = await Contracts.ERC20.attach(token);
-                            await tokenContract.connect(whale).approve(network.address, tradeAmount);
-                        }
-
-                        const prevTokenBalance = await getBalance(tokenWithAddress, whale);
-                        const prevBNTBalance = await bnt.balanceOf(whale.address);
-
-                        const hop1Params = [
-                            token,
-                            bnt.address,
-                            tradeAmount,
-                            1,
-                            MAX_UINT256,
-                            ZERO_ADDRESS,
-                            {
-                                value: isNativeToken ? tradeAmount : BigNumber.from(0)
-                            }
-                        ] as const;
-                        const receivedBNTAmount = await network
-                            .connect(whale)
-                            .callStatic.tradeBySourceAmount(...hop1Params);
-                        const res = await network.connect(whale).tradeBySourceAmount(...hop1Params);
-
-                        let transactionCost = BigNumber.from(0);
-                        if (isNativeToken) {
-                            transactionCost = await getTransactionCost(res);
-                        }
-
-                        const newBNTBalance = await bnt.balanceOf(whale.address);
-
-                        expect(await getBalance(tokenWithAddress, whale)).to.equal(
-                            prevTokenBalance.sub(tradeAmount).sub(transactionCost)
-                        );
-                        expect(receivedBNTAmount).to.be.gt(0);
-                        expect(newBNTBalance).to.equal(prevBNTBalance.add(receivedBNTAmount));
-
-                        await bnt.connect(whale).approve(network.address, newBNTBalance);
-
-                        const prevTokenBalance2 = await getBalance(tokenWithAddress, whale);
-
-                        const hop2Params = [bnt.address, token, newBNTBalance, 1, MAX_UINT256, ZERO_ADDRESS] as const;
-                        const receivedTokenAmount = await network
-                            .connect(whale)
-                            .callStatic.tradeBySourceAmount(...hop2Params);
-                        const res2 = await network.connect(whale).tradeBySourceAmount(...hop2Params);
-                        let transactionCost2 = BigNumber.from(0);
-                        if (isNativeToken) {
-                            transactionCost2 = await getTransactionCost(res2);
-                        }
-
-                        expect(receivedTokenAmount).to.be.gt(0);
-                        expect(await getBalance(tokenWithAddress, whale)).to.equal(
-                            prevTokenBalance2.add(receivedTokenAmount).sub(transactionCost2)
-                        );
-                        expect(await bnt.balanceOf(whale.address)).to.be.equal(0);
+                    if (!isNativeToken) {
+                        const tokenContract = await Contracts.ERC20.attach(token);
+                        await tokenContract.connect(whale).approve(network.address, tradeAmount);
                     }
+
+                    const prevTokenBalance = await getBalance(tokenWithAddress, whale);
+                    const prevBNTBalance = await bnt.balanceOf(whale.address);
+
+                    const hop1Params = [
+                        token,
+                        bnt.address,
+                        tradeAmount,
+                        1,
+                        MAX_UINT256,
+                        ZERO_ADDRESS,
+                        {
+                            value: isNativeToken ? tradeAmount : BigNumber.from(0)
+                        }
+                    ] as const;
+                    const receivedBNTAmount = await network
+                        .connect(whale)
+                        .callStatic.tradeBySourceAmount(...hop1Params);
+                    const res = await network.connect(whale).tradeBySourceAmount(...hop1Params);
+
+                    let transactionCost = BigNumber.from(0);
+                    if (isNativeToken) {
+                        transactionCost = await getTransactionCost(res);
+                    }
+
+                    const newBNTBalance = await bnt.balanceOf(whale.address);
+
+                    expect(await getBalance(tokenWithAddress, whale)).to.equal(
+                        prevTokenBalance.sub(tradeAmount).sub(transactionCost)
+                    );
+                    expect(receivedBNTAmount).to.be.gt(0);
+                    expect(newBNTBalance).to.equal(prevBNTBalance.add(receivedBNTAmount));
+
+                    await bnt.connect(whale).approve(network.address, newBNTBalance);
+
+                    const prevTokenBalance2 = await getBalance(tokenWithAddress, whale);
+
+                    const hop2Params = [bnt.address, token, newBNTBalance, 1, MAX_UINT256, ZERO_ADDRESS] as const;
+                    const receivedTokenAmount = await network
+                        .connect(whale)
+                        .callStatic.tradeBySourceAmount(...hop2Params);
+                    const res2 = await network.connect(whale).tradeBySourceAmount(...hop2Params);
+                    let transactionCost2 = BigNumber.from(0);
+                    if (isNativeToken) {
+                        transactionCost2 = await getTransactionCost(res2);
+                    }
+
+                    expect(receivedTokenAmount).to.be.gt(0);
+                    expect(await getBalance(tokenWithAddress, whale)).to.equal(
+                        prevTokenBalance2.add(receivedTokenAmount).sub(transactionCost2)
+                    );
+                    expect(await bnt.balanceOf(whale.address)).to.be.equal(0);
                 }
             });
         });

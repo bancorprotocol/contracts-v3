@@ -15,7 +15,7 @@ jobs:
       should-run: ${{ steps.should-run.outputs.should-run }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Check the latest commit
         id: should-run
@@ -44,9 +44,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '20'
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path

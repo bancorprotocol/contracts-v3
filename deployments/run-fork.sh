@@ -12,6 +12,9 @@ else
     project=${TENDERLY_PROJECT}
 fi
 
+echo "Creating a Mainnet Tenderly Fork... "
+echo
+
 TENDERLY_FORK_API="https://api.tenderly.co/api/v1/account/${username}/project/${project}/fork"
 
 cleanup() {
@@ -30,8 +33,11 @@ fork_id=$(curl -sX POST "${TENDERLY_FORK_API}" \
     -H "Content-Type: application/json" -H "X-Access-Key: ${TENDERLY_ACCESS_KEY}" \
     -d '{"network_id": "1"}' | jq -r '.simulation_fork.id')
 
-echo "Created a fork ${fork_id} at ${username}/${project}..."
+echo "Created Tenderly Fork ${fork_id} at ${username}/${project}..."
 echo
+
+# Create a new dir for the deploy script files and copy them there
+rm -rf deployments/tenderly && cp -rf deployments/mainnet/. deployments/tenderly
 
 command="TENDERLY_FORK_ID=${fork_id} ${@:1}"
 

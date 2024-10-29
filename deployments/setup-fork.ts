@@ -3,6 +3,7 @@ import { DeployedContracts, getNamedSigners, isTenderlyFork, runPendingDeploymen
 import Logger from '../utils/Logger';
 import { NATIVE_TOKEN_ADDRESS } from '../utils/TokenData';
 import { toWei } from '../utils/Types';
+import { ZERO_ADDRESS } from '../utils/Constants';
 import '@nomiclabs/hardhat-ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import '@tenderly/hardhat-tenderly';
@@ -11,6 +12,7 @@ import AdmZip from 'adm-zip';
 import { BigNumber } from 'ethers';
 import { getNamedAccounts } from 'hardhat';
 import 'hardhat-deploy';
+import { isEmpty } from 'lodash';
 import path from 'path';
 
 interface EnvOptions {
@@ -41,17 +43,31 @@ const fundAccount = async (account: string, fundingRequests: FundingRequest[]) =
     Logger.log(`Funding ${account}...`);
 
     for (const fundingRequest of fundingRequests) {
-        if (fundingRequest.token === NATIVE_TOKEN_ADDRESS) {
-            await fundingRequest.whale.sendTransaction({
-                value: fundingRequest.amount,
+        const { whale, token, amount } = fundingRequest;
+        // for tokens which are missing skip funding request
+        if (token === ZERO_ADDRESS) {
+            continue;
+        }
+        if (!whale) {
+            continue;
+        }
+        if (token === NATIVE_TOKEN_ADDRESS) {
+            await whale.sendTransaction({
+                value: amount,
                 to: account
             });
 
             continue;
         }
 
-        const tokenContract = await Contracts.ERC20.attach(fundingRequest.token);
-        await tokenContract.connect(fundingRequest.whale).transfer(account, fundingRequest.amount);
+        const tokenContract = await Contracts.ERC20.attach(token);
+        // check if whale has enough balance
+        const whaleBalance = await tokenContract.balanceOf(whale.address);
+        if (whaleBalance.lt(amount)) {
+            Logger.error(`Whale ${whale.address} has insufficient balance for ${token}`);
+            continue;
+        }
+        await tokenContract.connect(whale).transfer(account, amount);
     }
 };
 
@@ -96,9 +112,33 @@ const fundAccounts = async () => {
         }
     ];
 
+    if (isEmpty(DEV_ADDRESSES)) {
+        Logger.log('No dev addresses to fund');
+        return;
+    }
+
     const devAddresses = DEV_ADDRESSES.split(',');
 
-    for (const account of devAddresses) {
+    for (const fundingRequest of fundingRequests) {
+        if (fundingRequest.token === ZERO_ADDRESS) {
+            Logger.log(`Skipping funding for ${fundingRequest.token}`);
+        }
+        const { whale } = fundingRequest;
+        if (!whale) {
+            continue;
+        }
+        const whaleBalance = await whale.getBalance();
+        // transfer ETH to the funding account if it doesn't have ETH
+
+        if (whaleBalance.lt(toWei(1))) {
+            await ethWhale.sendTransaction({
+                value: toWei(1),
+                to: whale.address
+            });
+        }
+    }
+
+    for  (const account of devAddresses) {
         await fundAccount(account, fundingRequests);
     }
 
@@ -156,7 +196,7 @@ const main = async () => {
 
     await archiveArtifacts();
 
-    const description = `${FORK_NAME} Fork`;
+    const description = FORK_NAME ? `Bancor V3 ${FORK_NAME} Fork` : 'Bancor V3 Mainnet Fork';
 
     Logger.log('********************************************************************************');
     Logger.log();

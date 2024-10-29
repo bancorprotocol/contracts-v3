@@ -139,8 +139,10 @@
   },
   "resolutions": {
     "@tenderly/hardhat-tenderly/@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@0.3.0-beta.13",
-  "solhint/@solidity-parser/parser": "0.16",
-  "solidity-coverage/@solidity-parser/parser": "0.16"
+    "solhint/@solidity-parser/parser": "0.16",
+    "solidity-coverage/@solidity-parser/parser": "0.16",
+    "@bancor/contracts-solidity/hardhat": "2.15.0",
+    "glob/path-scurry/lru-cache": "11.0.1"
   },
   "snyk": true
 }
