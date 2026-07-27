@@ -5,7 +5,6 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-solhint';
 import '@nomiclabs/hardhat-waffle';
-import '@tenderly/hardhat-tenderly';
 import '@typechain/hardhat';
 import 'dotenv/config';
 import 'hardhat-contract-sizer';
@@ -24,10 +23,7 @@ interface EnvOptions {
     GAS_PRICE?: number | 'auto';
     NIGHTLY?: boolean;
     PROFILE?: boolean;
-    TENDERLY_FORK_ID?: string;
-    TENDERLY_PROJECT?: string;
-    TENDERLY_TEST_PROJECT?: string;
-    TENDERLY_USERNAME?: string;
+    TENDERLY_TESTNET_PROVIDER_URL?: string;
 }
 
 const {
@@ -37,10 +33,7 @@ const {
     GAS_PRICE: gasPrice = 'auto',
     NIGHTLY: isNightly,
     PROFILE: isProfiling,
-    TENDERLY_FORK_ID = '',
-    TENDERLY_PROJECT = '',
-    TENDERLY_TEST_PROJECT = '',
-    TENDERLY_USERNAME = ''
+    TENDERLY_TESTNET_PROVIDER_URL = ''
 }: EnvOptions = process.env as any as EnvOptions;
 
 const mochaOptions = (): MochaOptions => {
@@ -100,7 +93,8 @@ const config: HardhatUserConfig = {
         },
         [DeploymentNetwork.Tenderly]: {
             chainId: 1,
-            url: `https://rpc.tenderly.co/fork/${TENDERLY_FORK_ID}`,
+            // provided by run-testnet.sh, which creates the Tenderly Virtual TestNet this network points at
+            url: TENDERLY_TESTNET_PROVIDER_URL,
             autoImpersonate: true,
             saveDeployments: true,
             live: true
@@ -109,12 +103,6 @@ const config: HardhatUserConfig = {
 
     paths: {
         deploy: ['deploy/scripts']
-    },
-
-    tenderly: {
-        forkNetwork: '1',
-        project: TENDERLY_PROJECT || TENDERLY_TEST_PROJECT,
-        username: TENDERLY_USERNAME
     },
 
     solidity: {
@@ -133,6 +121,21 @@ const config: HardhatUserConfig = {
                         '*': {
                             '*': ['storageLayout'] // Enable slots, offsets and types of the contract's state variables
                         }
+                    }
+                }
+            },
+
+            // required by the vendored v2 sources under contracts/legacy-v2. these settings mirror the ones used by
+            // the @bancor/contracts-solidity repo, so that the resulting bytecode is comparable to the v2 deployments
+            {
+                version: '0.6.12',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200
+                    },
+                    metadata: {
+                        bytecodeHash: 'none'
                     }
                 }
             }
