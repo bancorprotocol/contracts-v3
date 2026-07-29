@@ -21,8 +21,7 @@ const beforeDeployments = async () => {
     const { deployer, foundationMultisig } = await getNamedAccounts();
     const bntGovernance = await DeployedContracts.BNTGovernance.deployed();
 
-    // mirror the mainnet prerequisite: the foundation multisig grants the deployer the BNT ROLE_GOVERNOR role before
-    // the migration runs (000100-revoke-roles renounces it at the end of the pipeline)
+    // grants the deployer the BNT ROLE_GOVERNOR role
     if (!(await bntGovernance.hasRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer))) {
         await grantRole({
             name: InstanceName.BNTGovernance,
@@ -103,9 +102,6 @@ describeDeployment(
                 [standardRewards.address, bntPool.address, liquidityProtection.address, stakingRewardsClaim.address]
             );
 
-            // the vBNT ROLE_MINTER role has no members: the superseded instance's grant from 000057 has since been
-            // revoked on mainnet, and the new instance deliberately doesn't receive the role, since it's only
-            // reachable from addLiquidity() and depositing stays disabled for the wind-down
             const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
             await expectRoleMembers(vbntGovernance as any as AccessControlEnumerable, Roles.TokenGovernance.ROLE_MINTER);
 

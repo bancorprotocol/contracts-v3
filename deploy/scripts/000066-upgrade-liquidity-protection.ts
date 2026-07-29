@@ -86,8 +86,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // grant the BNT ROLE_MINTER role to the contract. note that the vBNT ROLE_MINTER role is deliberately not
-    // granted, since it's only reachable from addLiquidity() and depositing stays disabled for the wind-down
+    // grant the BNT ROLE_MINTER role to the contract.
     await grantRole({
         name: InstanceName.BNTGovernance,
         id: Roles.TokenGovernance.ROLE_MINTER,
@@ -144,14 +143,6 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         name: InstanceName.LiquidityProtection,
         methodName: 'enableRemoving',
         args: [true],
-        from: deployer
-    });
-
-    // grant the ROLE_MIGRATION_MANAGER role to the contract
-    await grantRole({
-        name: InstanceName.BancorNetwork,
-        id: Roles.BancorNetwork.ROLE_MIGRATION_MANAGER,
-        member: liquidityProtection,
         from: deployer
     });
 
