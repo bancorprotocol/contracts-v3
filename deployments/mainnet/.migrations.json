@@ -62,5 +62,7 @@
   "000061-upgrade-network-settings-v4": 1694606550,
   "000062-pool-collection-type1-v12": 1694606727,
   "000063-upgrade-network-v9": 1694606812,
-  "000064-upgrade-network-v10": 1698318798
+  "000064-upgrade-network-v10": 1698318798,
+  "000065-upgrade-network-v11": 1730276341,
+  "000066-upgrade-liquidity-protection": 1785321637
 }

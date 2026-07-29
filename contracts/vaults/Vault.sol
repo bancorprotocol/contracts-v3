@@ -75,12 +75,7 @@ abstract contract Vault is IVault, Upgradeable, PausableUpgradeable, ReentrancyG
     }
 
     // allows execution only by an authorized operation
-    modifier whenAuthorized(
-        address caller,
-        Token token,
-        address payable target,
-        uint256 amount
-    ) {
+    modifier whenAuthorized(address caller, Token token, address payable target, uint256 amount) {
         if (!isAuthorizedWithdrawal(caller, token, target, amount)) {
             revert AccessDenied();
         }

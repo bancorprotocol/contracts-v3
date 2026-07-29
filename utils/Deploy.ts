@@ -47,7 +47,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, Contract, ContractInterface, utils } from 'ethers';
 import fs from 'fs';
 import glob from 'glob';
-import { config, deployments, ethers, getNamedAccounts, tenderly } from 'hardhat';
+import { config, deployments, ethers, getNamedAccounts } from 'hardhat';
 import {
     Address,
     DeployFunction,
@@ -68,14 +68,6 @@ const {
 
 const { AbiCoder } = utils;
 
-const tenderlyNetwork = tenderly.network();
-
-interface EnvOptions {
-    TEST_FORK?: boolean;
-}
-
-const { TEST_FORK: isTestFork }: EnvOptions = process.env as any as EnvOptions;
-
 enum LegacyInstanceNameV2 {
     BNT = 'BNT',
     BNTGovernance = 'BNTGovernance',
@@ -87,6 +79,7 @@ enum LegacyInstanceNameV2 {
     LegacyLiquidityProtection2 = 'LegacyLiquidityProtection2',
     LegacyLiquidityProtection3 = 'LegacyLiquidityProtection3',
     LegacyLiquidityProtection4 = 'LegacyLiquidityProtection4',
+    LegacyLiquidityProtection5 = 'LegacyLiquidityProtection5',
     LiquidityProtection = 'LiquidityProtection',
     LiquidityProtectionSettings = 'LiquidityProtectionSettings',
     LiquidityProtectionStats = 'LiquidityProtectionStats',
@@ -153,6 +146,7 @@ const DeployedLegacyContractsV2 = {
     LegacyLiquidityProtection2: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection2),
     LegacyLiquidityProtection3: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection3),
     LegacyLiquidityProtection4: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection4),
+    LegacyLiquidityProtection5: deployed<LiquidityProtection>(InstanceName.LegacyLiquidityProtection5),
     LiquidityProtection: deployed<LiquidityProtection>(InstanceName.LiquidityProtection),
     LiquidityProtectionSettings: deployed<LiquidityProtectionSettings>(InstanceName.LiquidityProtectionSettings),
     LiquidityProtectionStats: deployed<LiquidityProtectionStats>(InstanceName.LiquidityProtectionStats),
@@ -202,14 +196,14 @@ export const DeployedContracts = {
     ...DeployedNewContracts
 };
 
-export const isTenderlyFork = () => getNetworkName() === DeploymentNetwork.Tenderly;
-export const isMainnetFork = () => isTenderlyFork();
-export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isMainnetFork();
+export const isTenderly = () => getNetworkName() === DeploymentNetwork.Tenderly;
+export const isMainnet = () => getNetworkName() === DeploymentNetwork.Mainnet || isTenderly();
 export const isRinkeby = () => getNetworkName() === DeploymentNetwork.Rinkeby;
-export const isLive = () => (isMainnet() && !isMainnetFork()) || isRinkeby();
+export const isLive = () => (isMainnet() && !isTenderly()) || isRinkeby();
 
-const TEST_MINIMUM_BALANCE = toWei(10);
 const TEST_FUNDING = toWei(10);
+
+const BALANCE_OF_ABI = ['function balanceOf(address account) view returns (uint256)'];
 
 export const getNamedSigners = async (): Promise<Record<string, SignerWithAddress>> => {
     const signers: Record<string, SignerWithAddress> = {};
@@ -221,24 +215,60 @@ export const getNamedSigners = async (): Promise<Record<string, SignerWithAddres
     return signers;
 };
 
-export const fundAccount = async (account: string | SignerWithAddress) => {
-    if (!isMainnetFork()) {
+const setBalance = async (method: string, params: any[], description: string) => {
+    try {
+        return await ethers.provider.send(method, params);
+    } catch (error: unknown) {
+        throw new Error(`Unable to fund ${description}: ${error}`);
+    }
+};
+
+/**
+ * @dev ensures that the account holds at least the given amount of the native token
+ *
+ * note that the balance is credited directly rather than transferred from a whale, whose balance we don't control and
+ * which has since been drained
+ */
+export const fundAccount = async (account: string | SignerWithAddress, amount = TEST_FUNDING) => {
+    if (!isTenderly()) {
         return;
     }
 
     const address = typeof account === 'string' ? account : account.address;
 
     const balance = await ethers.provider.getBalance(address);
-    if (balance.gte(TEST_MINIMUM_BALANCE)) {
+    if (balance.gte(amount)) {
         return;
     }
 
-    const { ethWhale } = await getNamedSigners();
+    // hexValue rather than toHexString: the latter pads to an even digit count, and the strict JSON-RPC quantity
+    // validation on tenderly testnets rejects hex values with leading zeros
+    const target = utils.hexValue(amount);
 
-    return ethWhale.sendTransaction({
-        value: TEST_FUNDING,
-        to: address
-    });
+    return setBalance('tenderly_setBalance', [[address], target], address);
+};
+
+/**
+ * @dev ensures that the account holds at least the given amount of the given ERC20 token
+ */
+export const fundAccountWithToken = async (token: string, account: string | SignerWithAddress, amount: BigNumber) => {
+    if (!isTenderly()) {
+        return;
+    }
+
+    const address = typeof account === 'string' ? account : account.address;
+
+    const tokenContract = new Contract(token, BALANCE_OF_ABI, ethers.provider);
+    const balance = await tokenContract.balanceOf(address);
+    if (balance.gte(amount)) {
+        return;
+    }
+
+    // hexValue rather than toHexString: the latter pads to an even digit count, and the strict JSON-RPC quantity
+    // validation on tenderly testnets rejects hex values with leading zeros
+    const target = utils.hexValue(amount);
+
+    return setBalance('tenderly_setErc20Balance', [token, address, target], `${address} with ${token}`);
 };
 
 interface SaveTypeOptions {
@@ -411,16 +441,7 @@ export const deploy = async (options: DeployOptions) => {
     });
 
     if (!(isProxy && isLive())) {
-        const data = { name, contract: contractName };
-
-        await saveTypes(data);
-
-        await verifyTenderlyFork({
-            address: res.address,
-            proxy: isProxy,
-            implementation: isProxy ? res.implementation : undefined,
-            ...data
-        });
+        await saveTypes({ name, contract: contractName });
     }
 
     return res.address;
@@ -503,14 +524,6 @@ export const upgradeProxy = async (options: UpgradeProxyOptions) => {
 
     Logger.log(`  upgraded proxy ${contractName} V${prevVersion} to V${newVersion}`);
 
-    await verifyTenderlyFork({
-        name,
-        contract: contractName,
-        address: res.address,
-        proxy: true,
-        implementation: res.implementation
-    });
-
     return res.address;
 };
 
@@ -564,8 +577,7 @@ export const initializeProxy = async (options: InitializeProxyOptions) => {
     await save({
         name,
         address,
-        proxy: true,
-        skipVerification: true
+        proxy: true
     });
 
     return address;
@@ -605,12 +617,10 @@ interface Deployment {
     contract?: string;
     address: Address;
     proxy?: boolean;
-    implementation?: Address;
-    skipVerification?: boolean;
 }
 
 export const save = async (deployment: Deployment) => {
-    const { name, contract, address, proxy, skipVerification } = deployment;
+    const { name, contract, address, proxy } = deployment;
 
     const contractName = contract ?? name;
     const { abi } = await getExtendedArtifact(contractName);
@@ -621,48 +631,6 @@ export const save = async (deployment: Deployment) => {
     if (proxy) {
         const { abi } = await getExtendedArtifact(PROXY_CONTRACT);
         await saveContract(`${name}_Proxy`, { abi, address });
-    }
-
-    // publish the contract to a Tenderly fork
-    if (!skipVerification) {
-        await verifyTenderlyFork(deployment);
-    }
-};
-
-interface ContractData {
-    name: string;
-    address: Address;
-}
-
-const verifyTenderlyFork = async (deployment: Deployment) => {
-    // verify contracts on Tenderly only for mainnet or tenderly mainnet forks deployments
-    if (!isTenderlyFork() || isTestFork) {
-        return;
-    }
-
-    const { name, contract, address, proxy, implementation } = deployment;
-
-    const contracts: ContractData[] = [];
-    let contractAddress = address;
-
-    if (proxy) {
-        contracts.push({
-            name: PROXY_CONTRACT,
-            address
-        });
-
-        contractAddress = implementation!;
-    }
-
-    contracts.push({
-        name: contract ?? name,
-        address: contractAddress
-    });
-
-    for (const contract of contracts) {
-        Logger.log('  verifying on tenderly', contract.name, 'at', contract.address);
-
-        await tenderlyNetwork.verify(contract);
     }
 };
 

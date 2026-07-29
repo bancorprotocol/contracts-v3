@@ -14,7 +14,7 @@ const TestNamedAccounts = {
         ...mainnet('0xDA9dfA130Df4dE4673b89022EE50ff26f6EA73Cf')
     },
     daiWhale: {
-        ...mainnet('0x60FaAe176336dAb62e284Fe19B885B095d29fB7F')
+        ...mainnet('0x66F62574ab04989737228D18C3624f7FC1edAe14')
     },
     linkWhale: {
         ...mainnet('0xc6bed363b30DF7F35b601a5547fE56cd31Ec63DA')
@@ -26,7 +26,7 @@ const TestNamedAccounts = {
         ...mainnet('0x55FE002aefF02F77364de339a1292923A15844B8')
     },
     wbtcWhale: {
-        ...mainnet('0x6daB3bCbFb336b29d06B9C793AEF7eaA57888922')
+        ...mainnet('0x28C6c06298d514Db089934071355E5743bf21d60')
     }
 };
 
@@ -74,6 +74,7 @@ export const NamedAccounts = {
     foundationMultisig2: { ...mainnet('0x0c333d48Af19c2b42577f3C8f4779F0347F8C819') },
     daoMultisig: { ...mainnet('0x7e3692a6d8c34a762079fa9057aed87be7e67cb8') },
     daoPauserMultisig: { ...mainnet('0xc140c1CD2e587fC04DAa780d49b616F768476660') },
+    proxyAdminOwner: { ...mainnet('0xe01EA58F6DA98488E4C92fD9b3E49607639C5370') },
 
     ...TokenNamedAccounts,
     ...TestNamedAccounts,

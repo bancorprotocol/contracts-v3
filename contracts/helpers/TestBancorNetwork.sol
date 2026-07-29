@@ -31,7 +31,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
         IMasterVault initMasterVault,
         IExternalProtectionVault initExternalProtectionVault,
         IPoolToken initBNTPoolToken,
-        address bancorArbitrage,
         address carbonPOL
     )
         BancorNetwork(
@@ -41,7 +40,6 @@ contract TestBancorNetwork is BancorNetwork, TestTime {
             initMasterVault,
             initExternalProtectionVault,
             initBNTPoolToken,
-            bancorArbitrage,
             carbonPOL
         )
     {}
