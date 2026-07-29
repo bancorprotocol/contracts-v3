@@ -65,8 +65,7 @@ const func: DeployFunction = async ({ getNamedAccounts }: HardhatRuntimeEnvironm
         from: deployer
     });
 
-    // seed the per-pool total positions value backing the deficit haircut. it lives in the contract's own storage, so
-    // the new instance starts at zero for every pool and would otherwise pay out unhaircut amounts
+    // seed the per-pool total positions value
     const pools = await liquidityProtectionSettings.poolWhitelist();
     const seeded: [string, string][] = [];
     for (const pool of pools) {
