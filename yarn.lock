@@ -127,12 +127,12 @@
     "@babel/helper-string-parser" "^7.25.9"
     "@babel/helper-validator-identifier" "^7.25.9"
 
-"@bancor/contracts-solidity@0.7.13":
-  version "0.7.13"
-  resolved "https://registry.yarnpkg.com/@bancor/contracts-solidity/-/contracts-solidity-0.7.13.tgz#9b096db953353af49c1f163f4181b6ea84431a0e"
-  integrity sha512-5A9J8pK895/8FD5w8e2OAJE+KMfuORJIZXzHwCyUwKQp4HwHcsQyfS4erd4X+Ob3Fb8LWTeu7khZGP6n7xbTjQ==
+"@bancor/contracts-solidity@0.7.15":
+  version "0.7.15"
+  resolved "https://registry.yarnpkg.com/@bancor/contracts-solidity/-/contracts-solidity-0.7.15.tgz#e35f54908db4b75784837bd0d532d00f777b1ba4"
+  integrity sha512-uduhUUHUzzMBTsVuG0FQ6UV1xQ+TaBOFtH9YyZ0HQBtucE3cxn0K/VPEo53z1BEFgV1xlI8yFYwfMyj1fFEIOg==
   dependencies:
-    hardhat "2.9.3"
+    hardhat "2.14.0"
 
 "@bancor/token-governance@^0.1.8":
   version "0.1.8"
@@ -6114,7 +6114,7 @@ hardhat-watcher@^2.1.1, hardhat-watcher@^2.5.0:
   dependencies:
     chokidar "^3.5.3"
 
-hardhat@2.15.0, hardhat@2.9.3:
+hardhat@2.14.0, hardhat@2.15.0:
   version "2.15.0"
   resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.15.0.tgz#0cacb2b44c4c4651aa8ab649fef12804848b0267"
   integrity sha512-cC9tM/N10YaES04zPOp7yR13iX3YibqaNmi0//Ep40Nt9ELIJx3kFpQmucur0PAIfXYpGnw5RuXHNLkxpnVHEw==

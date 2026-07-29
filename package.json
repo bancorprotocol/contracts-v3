@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@anders-t/ethers-ledger": "^1.0.4",
-    "@bancor/contracts-solidity": "0.7.13",
+    "@bancor/contracts-solidity": "0.7.15",
     "@bancor/token-governance": "^0.1.8",
     "@metamask/eth-sig-util": "^5.0.2",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@0.3.0-beta.13",
