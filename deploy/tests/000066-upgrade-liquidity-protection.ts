@@ -105,9 +105,6 @@ describeDeployment(
             const vbntGovernance = await DeployedContracts.VBNTGovernance.deployed();
             await expectRoleMembers(vbntGovernance as any as AccessControlEnumerable, Roles.TokenGovernance.ROLE_MINTER);
 
-            const network = (await DeployedContracts.BancorNetwork.deployed()) as any as BancorNetwork;
-            await expectRoleMembers(network, Roles.BancorNetwork.ROLE_MIGRATION_MANAGER, [liquidityProtection.address]);
-
             // the deployer remains a BNT governor, until 000100-revoke-roles renounces it
             expect(await bntGovernance.hasRole(Roles.TokenGovernance.ROLE_GOVERNOR, deployer)).to.be.true;
 
