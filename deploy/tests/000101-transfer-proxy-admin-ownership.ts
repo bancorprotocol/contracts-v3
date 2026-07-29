@@ -7,11 +7,11 @@ import { getNamedAccounts } from 'hardhat';
 describeDeployment(
     __filename,
     () => {
-        let daoMultisig: string;
+        let proxyAdminOwner: string;
         let proxyAdmin: ProxyAdmin;
 
         before(async () => {
-            ({ daoMultisig } = await getNamedAccounts());
+            ({ proxyAdminOwner } = await getNamedAccounts());
         });
 
         beforeEach(async () => {
@@ -19,7 +19,7 @@ describeDeployment(
         });
 
         it('should transfer the ownership of the proxy admin contract', async () => {
-            expect(await proxyAdmin.owner()).to.equal(daoMultisig);
+            expect(await proxyAdmin.owner()).to.equal(proxyAdminOwner);
         });
     },
     { skip: isLive }

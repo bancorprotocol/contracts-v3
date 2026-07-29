@@ -1,4 +1,4 @@
-import { getNamedSigners, isTenderlyFork } from '../utils/Deploy';
+import { getNamedSigners, isTenderly } from '../utils/Deploy';
 import Logger from '../utils/Logger';
 import { toWei } from '../utils/Types';
 import '@nomiclabs/hardhat-ethers';
@@ -10,7 +10,7 @@ import { setTimeout } from 'timers/promises';
 const TIMEOUT = 30 * 1000; // 30 seconds
 
 const main = async () => {
-    if (!isTenderlyFork()) {
+    if (!isTenderly()) {
         throw new Error('Invalid network');
     }
 
