@@ -29,7 +29,7 @@
     "test:coverage:nightly": "NIGHTLY=1 yarn test:coverage",
     "test:ci": "CI=1 yarn test",
     "test:nightly": "NIGHTLY=1 CI=1 NODE_OPTIONS='--max-old-space-size=8192' hardhat test",
-    "test:deploy": "TEST_FORK=1 ./deployments/run-testnet.sh HARDHAT_NETWORK=tenderly mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 --bail --no-exit 'deploy/tests/**/*.ts'",
+    "test:deploy": "TEST_FORK=1 ./deployments/run-testnet.sh HARDHAT_NETWORK=tenderly NODE_OPTIONS=--no-experimental-strip-types mocha --require hardhat/register --extension ts --recursive --exit --timeout 600000 --bail --no-exit 'deploy/tests/**/*.ts'",
     "test:health": "yarn test:deploy",
     "export:storage": "yarn rebuild && hardhat run deployments/storage-layout.ts",
     "deploy:prepare": "rm -rf ./node_modules && rm yarn.lock && yarn && yarn rebuild",
@@ -136,7 +136,8 @@
     "solhint/@solidity-parser/parser": "0.16",
     "solidity-coverage/@solidity-parser/parser": "0.16",
     "@bancor/contracts-solidity/hardhat": "2.15.0",
-    "glob/path-scurry/lru-cache": "11.0.1"
+    "glob/path-scurry/lru-cache": "11.0.1",
+    "@types/minimatch": "5.1.2"
   },
   "snyk": true
 }
